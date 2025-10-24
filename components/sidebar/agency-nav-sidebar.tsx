@@ -1,0 +1,174 @@
+/**
+ * Agency Admin Sidebar Component
+ *
+ * Custom sidebar navigation for agency administrators.
+ * Provides admin-focused navigation with proper multi-tenant URL routing.
+ *
+ * Following the established pattern from AgencyLearningSidebar,
+ * this component builds navigation URLs dynamically based on the agency slug.
+ */
+
+"use client";
+
+import * as React from "react";
+import {
+  IconHome,
+  IconChartBar,
+  IconSettings,
+  IconHelp,
+  IconSearch,
+  IconSchool,
+  IconAddressBook,
+  IconCalendarMonth,
+  IconMessage,
+  IconPackage,
+  IconBrain,
+  IconUsers,
+  IconCash,
+  IconDots,
+} from "@tabler/icons-react";
+
+import { NavMain } from "@/components/sidebar/nav-main";
+import { NavSecondary } from "@/components/sidebar/nav-secondary";
+import { NavUser } from "@/components/sidebar/nav-user";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import Link from "next/link";
+
+interface AgencyNavSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  brandName?: string;
+  homeUrl?: string;
+  agencySlug: string;
+}
+
+export function AgencyNavSidebar({
+  brandName = "SideCar.",
+  homeUrl,
+  agencySlug,
+  ...props
+}: AgencyNavSidebarProps) {
+  // Build agency-specific admin navigation URLs
+  // CRM features are primary, training/courses are secondary
+  const navMain = [
+    {
+      title: "Dashboard",
+      url: `/agency/${agencySlug}/admin`,
+      icon: IconHome,
+    },
+    {
+      title: "Contacts",
+      url: `/agency/${agencySlug}/admin/contacts`,
+      icon: IconAddressBook,
+    },
+    {
+      title: "Calendar",
+      url: `/agency/${agencySlug}/admin/calendar`,
+      icon: IconCalendarMonth,
+    },
+    {
+      title: "Conversations",
+      url: `/agency/${agencySlug}/admin/conversations`,
+      icon: IconMessage,
+    },
+    {
+      title: "Payments",
+      url: `/agency/${agencySlug}/admin/payments`,
+      icon: IconCash,
+    },
+    // Collapsible "More" section for secondary features
+    {
+      title: "More",
+      url: "#",
+      icon: IconDots,
+      className: "mt-4",
+      items: [
+        {
+          title: "Team",
+          url: `/agency/${agencySlug}/admin/team`,
+          icon: IconUsers,
+        },
+        {
+          title: "Inventory",
+          url: `/agency/${agencySlug}/admin/inventory`,
+          icon: IconPackage,
+        },
+        {
+          title: "AI Insights",
+          url: `/agency/${agencySlug}/admin/insights`,
+          icon: IconBrain,
+        },
+        {
+          title: "Analytics",
+          url: `/agency/${agencySlug}/admin/analytics`,
+          icon: IconChartBar,
+        },
+        {
+          title: "Training Center",
+          url: `/agency/${agencySlug}/admin/courses`,
+          icon: IconSchool,
+        },
+      ],
+    },
+  ];
+
+  const navSecondary = [
+    {
+      title: "Settings",
+      url: `/agency/${agencySlug}/admin/settings`,
+      icon: IconSettings,
+    },
+    {
+      title: "Get Help",
+      url: `/agency/${agencySlug}/support`,
+      icon: IconHelp,
+    },
+    {
+      title: "Search",
+      url: "#",
+      icon: IconSearch,
+    },
+  ];
+
+  // Use the provided homeUrl or default to agency admin dashboard
+  const effectiveHomeUrl = homeUrl || `/agency/${agencySlug}/admin`;
+
+  return (
+    <Sidebar collapsible="offcanvas" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="data-[slot=sidebar-menu-button]:!p-1.5"
+            >
+              <Link href={effectiveHomeUrl}>
+                {/* Following existing pattern - CSS truncate like AppSidebar */}
+                <span
+                  className={`font-semibold truncate max-w-[180px] block ${
+                    brandName === "SideCar." ? "text-[1.75rem]" : "text-base"
+                  }`}
+                >
+                  {brandName}
+                </span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        <NavMain items={navMain} />
+        <NavSecondary items={navSecondary} className="mt-auto" />
+      </SidebarContent>
+      <SidebarFooter>
+        <NavUser />
+      </SidebarFooter>
+    </Sidebar>
+  );
+}

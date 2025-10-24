@@ -1,0 +1,51 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnType": false,
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
+  "files.autoSave": "onFocusChange",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.tokenColorCustomizations": {
+    "[Aura Dark]": {
+      "textMateRules": [
+        {
+          "name": "JSX/HTML Text Content",
+          "scope": ["meta.jsx.children", "string.quoted.jsx"],
+          "settings": {
+            "foreground": "#ffffff"
+          }
+        }
+      ]
+    }
+  },
+  "mcp": {
+    "servers": {
+      "context7": {
+        "type": "stdio",
+        "command": "npx",
+        "args": ["-y", "@upstash/context7-mcp"],
+        "env": {
+          "CONTEXT7_API_KEY": "ctx7sk-92c0f5d2-76bf-48ee-83e5-71b9099d743d"
+        }
+      }
+    }
+  }
+}

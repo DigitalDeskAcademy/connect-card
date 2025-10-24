@@ -1,0 +1,8 @@
+Project Notes:
+
+AI prompt to understand an element:
+
+Im following along in the course, but want to 
+understand at a deeper level what certain pages do. 
+Can you provide a short brief on how this page fits 
+in the project?

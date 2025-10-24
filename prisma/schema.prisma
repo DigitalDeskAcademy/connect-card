@@ -1,0 +1,854 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Organization entity for multi-tenant agency structure
+/// Represents agencies (DigitalDesk, GHL agencies) that purchase and customize courses
+model Organization {
+  id                    String             @id @default(uuid())
+  /// Organization display name (e.g., "DigitalDesk", "Sidecar Platform")
+  name                  String
+  /// URL-friendly identifier for organization
+  slug                  String             @unique
+  /// Organization type for business logic and access control
+  type                  OrganizationType   @default(AGENCY)
+  /// Business domain for email validation and branding
+  domain                String?
+  /// Organization website URL for branding
+  website               String?
+  /// Subscription status for billing and access control
+  subscriptionStatus    SubscriptionStatus @default(TRIAL)
+  /// Trial expiration date for access control
+  trialEndsAt           DateTime?
+  /// Stripe customer ID for billing
+  stripeCustomerId      String?            @unique
+  /// Stripe subscription ID for recurring billing
+  stripeSubscriptionId  String?            @unique
+  /// Subscription start date for billing cycle
+  subscriptionStartDate DateTime?
+  /// Subscription end date for cancellations
+  subscriptionEndDate   DateTime?
+  /// Organization creation timestamp
+  createdAt             DateTime           @default(now())
+  /// Last modification date
+  updatedAt             DateTime           @updatedAt
+  courses               Course[]
+  invitations           Invitation[]
+  members               Member[]
+  users                 User[]
+  contacts              Contact[]
+  ghlToken              GHLToken?
+  services              Service[]
+  payments              Payment[]
+
+  @@map("organization")
+}
+
+/// Organization membership for Better Auth organization plugin
+model Member {
+  id             String       @id @default(uuid())
+  /// User ID from Better Auth
+  userId         String
+  /// Organization ID
+  organizationId String
+  /// Member role within organization (owner, admin, member)
+  role           String
+  /// Membership creation date
+  createdAt      DateTime     @default(now())
+  /// Last update timestamp
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("member")
+}
+
+/// Team invitation system for organization onboarding
+model Invitation {
+  id             String           @id @default(uuid())
+  /// Recipient email address
+  email          String
+  /// Invited user role in organization
+  role           String
+  /// Invitation token for secure acceptance
+  token          String           @unique
+  /// Invitation status
+  status         InvitationStatus @default(PENDING)
+  /// Token expiration date for security
+  expiresAt      DateTime
+  /// Organization extending the invitation
+  organizationId String
+  /// User who sent the invitation
+  invitedBy      String
+  /// User who accepted the invitation (if accepted)
+  acceptedBy     String?
+  /// Invitation creation timestamp
+  createdAt      DateTime         @default(now())
+  /// Last status update timestamp
+  updatedAt      DateTime         @updatedAt
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([email, organizationId])
+  @@map("invitation")
+}
+
+/// Core user entity supporting multi-tenant authentication and role-based access control
+/// Integrates with Better Auth for OAuth flows and Stripe for payment processing
+model User {
+  id               String           @id
+  /// Primary identifier for authentication and communication
+  email            String           @unique
+  name             String
+  /// Better Auth email verification status
+  emailVerified    Boolean
+  /// Profile avatar URL from OAuth provider
+  image            String?
+  createdAt        DateTime
+  updatedAt        DateTime
+  /// Temporary ban expiration date
+  banExpires       DateTime?
+  /// Reason for account suspension
+  banReason        String?
+  /// Account suspension status
+  banned           Boolean?
+  /// Organization/Agency ID for multi-tenant structure
+  /// Optional initially, set after organization creation/joining
+  organizationId   String?
+  /// Role-based access control for multi-tenant architecture
+  role             UserRole?
+  /// Clinic ID for clinic staff association (used when user is clinic_admin or clinic_staff)
+  /// Links staff members to their specific clinic in the Contact table
+  clinicId         String?
+  /// Stripe customer ID for payment processing
+  stripeCustomerId String?          @unique
+  courses          Course[]
+  enrollment       Enrollment[]
+  lessonProgress   LessonProgress[]
+  accounts         Account[]
+  memberships      Member[]
+  sessions         Session[]
+  organization     Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Clinic association for staff members (references Contact with type CLINIC)
+  clinic           Contact?         @relation("ClinicStaff", fields: [clinicId], references: [id], onDelete: Cascade)
+
+  @@map("user")
+}
+
+/// Better Auth session management with security tracking and admin impersonation support
+model Session {
+  id                   String   @id
+  token                String   @unique
+  userId               String
+  expiresAt            DateTime
+  /// Security tracking for suspicious activity detection
+  ipAddress            String?
+  /// Browser/device identification for security analysis
+  userAgent            String?
+  createdAt            DateTime
+  updatedAt            DateTime
+  /// Active organization ID for multi-tenant context
+  activeOrganizationId String?
+  /// Admin user ID when session is impersonated for support
+  impersonatedBy       String?
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+/// OAuth provider accounts (GitHub, Google, etc.) linked to user profiles
+model Account {
+  id                    String    @id
+  userId                String
+  /// Provider-specific account identifier
+  accountId             String
+  /// OAuth provider (github, google, etc.)
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  idToken               String?
+  /// For email/password authentication
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+/// Email verification codes and password reset tokens
+model Verification {
+  id         String    @id
+  /// Email address or user identifier
+  identifier String
+  /// Verification code or token
+  value      String
+  /// Security expiration for verification attempts
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
+
+/// Course catalog entity representing individual learning modules with hierarchical content structure
+/// Supports Stripe payment integration, multi-level difficulty progression, and instructor management
+model Course {
+  id                  String        @id @default(uuid())
+  /// Display title for course catalog and student dashboard
+  title               String
+  /// Rich text course description supporting JSON format for Tiptap editor
+  description         String
+  /// S3/Tigris storage key for course thumbnail and promotional materials
+  fileKey             String
+  /// Course price in dollars (converted to cents for Stripe processing)
+  price               Int
+  /// Indicates if course is free within organization subscription
+  isFree              Boolean       @default(true)
+  /// Estimated completion time in minutes for progress tracking
+  duration            Int
+  /// Skill level requirement for student filtering
+  level               CourseLevel   @default(Beginner)
+  /// Stripe Price ID for payment processing and subscription management (optional for free courses)
+  stripePriceId       String?       @unique
+  /// Course categorization for catalog organization (Development, Design, etc.)
+  category            String
+  /// Brief course summary for card displays and SEO meta descriptions
+  smallDescription    String
+  /// URL-friendly identifier for course routing and SEO
+  slug                String        @unique
+  /// Publication workflow state for instructor content management
+  status              CourseStatus  @default(Draft)
+  /// Course creation timestamp for analytics and sorting
+  createdAt           DateTime      @default(now())
+  /// Last modification date for content freshness tracking
+  updatedAt           DateTime      @updatedAt
+  userId              String
+  /// Organization ID for multi-tenant course management (null for platform courses)
+  organizationId      String?
+  /// Agency control to hide courses from clients
+  isHiddenFromClients Boolean       @default(false)
+  /// Platform course flag for SideCar-provided courses
+  isPlatformCourse    Boolean       @default(false)
+  /// S3/Tigris directory prefix for all course files (enables efficient bulk deletion)
+  s3Prefix            String?
+  chapter             Chapter[]
+  organization        Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment          Enrollment[]
+}
+
+/// Chapter organization entity for course content structuring and sequential lesson delivery
+/// Supports drag-and-drop reordering through DND Kit integration for instructor content management
+model Chapter {
+  id        String   @id @default(uuid())
+  /// URL-friendly identifier for chapter routing and customer support
+  slug      String
+  /// Chapter heading displayed in course navigation and student progress tracking
+  title     String
+  /// Ordinal sequence number for chapter ordering within course (1, 2, 3...)
+  position  Int
+  /// Chapter creation timestamp for content development tracking
+  createdAt DateTime @default(now())
+  /// Last modification date for instructor workflow management
+  updatedAt DateTime @updatedAt
+  courseId  String
+  Course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons   Lesson[]
+
+  @@unique([courseId, slug])
+}
+
+/// Individual lesson content entity supporting video delivery and progress tracking
+/// Core learning unit with multimedia content hosted on S3/Tigris storage
+model Lesson {
+  id             String           @id @default(uuid())
+  /// URL-friendly identifier for lesson routing and customer support
+  slug           String
+  /// Lesson display title for navigation and student dashboard
+  title          String
+  /// Optional rich text lesson description (JSON format for Tiptap editor)
+  description    String?
+  /// S3/Tigris storage key for lesson preview image and video poster
+  thumbnailKey   String?
+  /// S3/Tigris storage key for primary lesson video content
+  videoKey       String?
+  /// Sequential order within chapter for structured learning progression
+  position       Int
+  /// S3/Tigris directory prefix for all lesson files (enables efficient bulk deletion)
+  s3Prefix       String?
+  /// Lesson creation timestamp for instructor workflow tracking
+  createdAt      DateTime         @default(now())
+  /// Last modification date for content management
+  updatedAt      DateTime         @updatedAt
+  chapterId      String
+  Chapter        Chapter          @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  lessonProgress LessonProgress[]
+
+  @@unique([chapterId, slug])
+}
+
+/// Course enrollment record supporting both staff users and contacts
+/// Manages course access control and integrates with Stripe webhook payment processing
+/// Supports flexible enrollment: staff self-enrollment or contact assignment
+model Enrollment {
+  id        String           @id @default(uuid())
+  /// Payment amount in dollars (Stripe processes in cents, stored as dollars)
+  amount    Int
+  /// Payment and enrollment lifecycle state
+  status    EnrollmentStatus @default(Pending)
+  /// Enrollment creation timestamp for payment processing tracking
+  createdAt DateTime         @default(now())
+  /// Status update timestamp for webhook-driven state changes
+  updatedAt DateTime         @updatedAt
+  courseId  String
+  /// User ID for staff enrollments (agency admins, coaches)
+  userId    String?
+  /// Contact ID for end-user enrollments (IV therapy companies, employees, patients)
+  contactId String?
+  Course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  User      User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Contact   Contact?         @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@unique([contactId, courseId])
+}
+
+/// Individual lesson completion tracking for progress analytics and course advancement
+/// Supports confetti celebrations, progress bars, and learning path unlocking features
+/// Tracks progress for both staff users and contacts
+model LessonProgress {
+  id        String   @id @default(uuid())
+  /// Binary completion state - lesson watched and marked complete
+  completed Boolean  @default(false)
+  /// Initial progress record creation (lesson first accessed)
+  createdAt DateTime @default(now())
+  /// Completion timestamp for learning analytics and certificates
+  updatedAt DateTime @updatedAt
+  /// User ID for staff progress tracking
+  userId    String?
+  /// Contact ID for end-user progress tracking
+  contactId String?
+  lessonId  String
+  Lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  User      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@unique([contactId, lessonId])
+}
+
+/// GoHighLevel OAuth token storage for API integration per organization
+/// Access tokens expire after 24 hours, refresh tokens valid for 1 year
+/// Supports both location-level and agency-level OAuth connections
+/// Stores only OAuth credentials - learner data managed separately in Learner model
+model GHLToken {
+  id             String       @id @default(uuid())
+  /// Organization this token belongs to
+  organizationId String       @unique
+  /// OAuth access token for GHL API calls (expires ~24 hours)
+  accessToken    String
+  /// OAuth refresh token to get new access tokens (expires 1 year)
+  refreshToken   String
+  /// Access token expiration timestamp
+  expiresAt      DateTime
+  /// GHL location ID for location-level OAuth (null for agency-level)
+  locationId     String?
+  /// GHL company ID for agency-level OAuth (null for location-level)
+  companyId      String?
+  /// Token scopes granted during OAuth authorization
+  scopes         String[]
+  /// Token creation timestamp
+  createdAt      DateTime     @default(now())
+  /// Last token refresh timestamp
+  updatedAt      DateTime     @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("ghl_token")
+}
+
+/// Contact profiles - unified model for all people and entities in the system
+/// Supports multiple contact types: Clinics (IV therapy companies), Patients, Employees, Individuals
+/// Hierarchical structure via parentContactId enables clinic → patient relationships
+/// Integration-agnostic design supports GHL, Salesforce, Workday, direct signup, etc.
+model Contact {
+  id             String               @id @default(uuid())
+  /// Organization managing this contact (the agency)
+  organizationId String
+  /// Type of contact for business logic and filtering
+  contactType    ContactType          @default(CLINIC)
+  /// Contact display name (company name or person name)
+  name           String
+  /// Primary email for communication and enrollment notifications
+  email          String?
+  /// Contact phone number
+  phone          String?
+  /// Physical address
+  address        String?
+  /// Timezone for scheduling and notifications
+  timezone       String?
+  /// Hierarchical relationship - enables clinic → patient structure
+  parentContactId String?
+  /// CRM fields
+  tags           String[]             @default([])
+  customFields   Json?
+  /// Learning assignments and course access (LMS features)
+  enrollments    Enrollment[]
+  /// Progress tracking across all courses
+  lessonProgress LessonProgress[]
+  /// External system integrations (GHL, Salesforce, etc.)
+  integrations   ContactIntegration[]
+  /// CRM relationships
+  notes          ContactNote[]
+  appointments   Appointment[]
+  messages       Message[]
+  tasks          Task[]
+  /// Self-referential relationships for hierarchy
+  parentContact  Contact?             @relation("ContactHierarchy", fields: [parentContactId], references: [id])
+  childContacts  Contact[]            @relation("ContactHierarchy")
+  /// Staff members associated with this clinic (when contactType is CLINIC)
+  clinicStaff    User[]               @relation("ClinicStaff")
+  /// Payments made by this contact
+  payments       Payment[]
+  /// Contact creation timestamp
+  createdAt      DateTime             @default(now())
+  /// Last profile update
+  updatedAt      DateTime             @updatedAt
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
+  @@index([organizationId, contactType])
+  @@index([parentContactId])
+  @@map("contact")
+}
+
+/// Provider-agnostic integration tracking for contacts
+/// Supports multiple external systems (GHL, Salesforce, Workday, etc.)
+/// Decouples core contact data from integration-specific metadata
+model ContactIntegration {
+  id           String    @id @default(uuid())
+  /// Contact this integration belongs to
+  contactId    String
+  /// Integration provider (e.g., "ghl", "salesforce", "workday")
+  provider     String
+  /// Provider's unique identifier (GHL locationId, Salesforce contactId, etc.)
+  externalId   String
+  /// Provider-specific metadata stored as JSON
+  externalData Json?
+  /// Last successful sync timestamp
+  lastSyncAt   DateTime?
+  /// Integration status for monitoring
+  syncStatus   String    @default("active")
+  /// Integration creation timestamp
+  createdAt    DateTime  @default(now())
+  /// Last sync attempt timestamp
+  updatedAt    DateTime  @updatedAt
+  contact      Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, externalId])
+  @@index([contactId, provider])
+  @@map("contact_integration")
+}
+
+/// Notes and comments about contacts for relationship management
+model ContactNote {
+  id             String   @id @default(uuid())
+  /// Contact this note belongs to
+  contactId      String
+  /// Organization for data isolation
+  organizationId String
+  /// Note content
+  content        String
+  /// User who created the note
+  createdBy      String
+  /// Note creation timestamp
+  createdAt      DateTime @default(now())
+  /// Last update timestamp
+  updatedAt      DateTime @updatedAt
+  contact        Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, contactId])
+  @@map("contact_note")
+}
+
+/// Appointment and calendar event tracking for contacts
+model Appointment {
+  id               String            @id @default(uuid())
+  /// Contact this appointment is with
+  contactId        String
+  /// Organization for data isolation
+  organizationId   String
+  /// Calendar provider integration
+  calendarProvider String?           // "cal.com" | "calendly" | "ghl"
+  /// External calendar event ID
+  externalEventId  String?
+  /// Appointment title
+  title            String
+  /// Appointment description
+  description      String?
+  /// Start date and time
+  startTime        DateTime
+  /// End date and time
+  endTime          DateTime
+  /// Timezone for the appointment
+  timezone         String
+  /// Current appointment status
+  status           AppointmentStatus @default(SCHEDULED)
+  /// Location or meeting link
+  location         String?
+  /// Reminder sent flag
+  reminderSent     Boolean           @default(false)
+  /// Last sync with external calendar
+  syncedAt         DateTime?
+  /// Creation timestamp
+  createdAt        DateTime          @default(now())
+  /// Last update timestamp
+  updatedAt        DateTime          @updatedAt
+  contact          Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, startTime])
+  @@index([contactId])
+  @@map("appointment")
+}
+
+/// Message and communication tracking for contacts
+model Message {
+  id             String           @id @default(uuid())
+  /// Contact this message is with
+  contactId      String
+  /// Organization for data isolation
+  organizationId String
+  /// Message direction
+  direction      MessageDirection // INBOUND | OUTBOUND
+  /// Communication channel
+  channel        MessageChannel   // EMAIL | SMS | CHAT | CALL
+  /// Message content
+  content        String
+  /// Current message status
+  status         MessageStatus    @default(SENT)
+  /// When message was sent
+  sentAt         DateTime?
+  /// When message was delivered
+  deliveredAt    DateTime?
+  /// When message was read
+  readAt         DateTime?
+  /// Integration provider
+  provider       String?          // "ghl" | "twilio" | "sendgrid"
+  /// External message ID
+  externalId     String?
+  /// Creation timestamp
+  createdAt      DateTime         @default(now())
+  /// Last update timestamp
+  updatedAt      DateTime         @updatedAt
+  contact        Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, contactId])
+  @@map("message")
+}
+
+/// Task and to-do management for contacts
+model Task {
+  id             String     @id @default(uuid())
+  /// Contact this task is related to
+  contactId      String
+  /// Organization for data isolation
+  organizationId String
+  /// Task title
+  title          String
+  /// Task description
+  description    String?
+  /// Due date for the task
+  dueDate        DateTime?
+  /// Task completion status
+  status         TaskStatus @default(PENDING)
+  /// Task priority level
+  priority       TaskPriority @default(MEDIUM)
+  /// User assigned to the task
+  assignedTo     String?
+  /// Task completion date
+  completedAt    DateTime?
+  /// Creation timestamp
+  createdAt      DateTime   @default(now())
+  /// Last update timestamp
+  updatedAt      DateTime   @updatedAt
+  contact        Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, dueDate])
+  @@index([contactId])
+  @@index([assignedTo])
+  @@map("task")
+}
+
+/// Organization types for business logic and access control
+enum OrganizationType {
+  /// SideCar Platform organization
+  PLATFORM
+  /// Standard GoHighLevel agency
+  AGENCY
+  /// Large multi-location agency
+  ENTERPRISE
+}
+
+/// Subscription status for billing and access control
+enum SubscriptionStatus {
+  /// Free trial period
+  TRIAL
+  /// Active paid subscription
+  ACTIVE
+  /// Payment past due
+  PAST_DUE
+  /// Subscription cancelled
+  CANCELLED
+  /// Account suspended
+  SUSPENDED
+}
+
+/// Invitation lifecycle states
+enum InvitationStatus {
+  /// Invitation sent, awaiting response
+  PENDING
+  /// Invitation accepted by recipient
+  ACCEPTED
+  /// Invitation declined by recipient
+  DECLINED
+  /// Invitation expired or revoked
+  EXPIRED
+}
+
+/// Course difficulty progression levels for student skill matching and content filtering
+enum CourseLevel {
+  /// Essential features that must be learned first
+  Core
+  /// Entry-level courses requiring no prior experience
+  Beginner
+  /// Courses requiring basic foundational knowledge in the subject area
+  Intermediate
+  /// Expert-level courses for experienced practitioners
+  Advanced
+}
+
+/// Course publication and lifecycle management states for instructor workflow
+enum CourseStatus {
+  /// Course under development, not visible to students in catalog
+  Draft
+  /// Live course available for enrollment and purchase
+  Published
+  /// Discontinued course, existing enrollments maintained but no new sales
+  Archived
+}
+
+/// Enrollment payment and access lifecycle states for Stripe webhook processing
+enum EnrollmentStatus {
+  /// Initial state after course purchase, awaiting payment confirmation
+  Pending
+  /// Payment confirmed, student has full course access and can track progress  
+  Active
+  /// Payment failed or refunded, course access revoked but enrollment record preserved
+  Cancelled
+}
+
+/// User roles for multi-tenant access control and business logic
+enum UserRole {
+  /// SideCar platform administrators (employees)
+  platform_admin
+  /// Agency owner (primary account holder, billing admin)
+  agency_owner
+  /// Agency team member (can manage courses and users)
+  agency_admin
+  /// Clinic administrator (manages their clinic's data)
+  clinic_admin
+  /// Clinic staff member (can view and work with patients)
+  clinic_staff
+  /// End user/client of the agency (matches Better Auth's default "user")
+  user
+}
+
+/// Contact types for categorizing entities in the CRM
+enum ContactType {
+  /// IV therapy clinic or medical practice (agency's direct client)
+  CLINIC
+  /// End customer of a clinic (patient receiving services)
+  PATIENT
+  /// Staff member or employee taking training courses
+  EMPLOYEE
+  /// Individual learner not associated with a clinic
+  INDIVIDUAL
+}
+
+/// Appointment status tracking
+enum AppointmentStatus {
+  /// Appointment is scheduled
+  SCHEDULED
+  /// Appointment is confirmed
+  CONFIRMED
+  /// Appointment was completed
+  COMPLETED
+  /// Appointment was cancelled
+  CANCELLED
+  /// Contact was a no-show
+  NO_SHOW
+}
+
+/// Message direction for communication tracking
+enum MessageDirection {
+  /// Message received from contact
+  INBOUND
+  /// Message sent to contact
+  OUTBOUND
+}
+
+/// Communication channels for messages
+enum MessageChannel {
+  /// Email communication
+  EMAIL
+  /// SMS text message
+  SMS
+  /// Chat/instant message
+  CHAT
+  /// Phone call
+  CALL
+  /// Social media message
+  SOCIAL
+}
+
+/// Message delivery status
+enum MessageStatus {
+  /// Message sent
+  SENT
+  /// Message delivered
+  DELIVERED
+  /// Message read/opened
+  READ
+  /// Message failed to send
+  FAILED
+  /// Message bounced
+  BOUNCED
+}
+
+/// Task status tracking
+enum TaskStatus {
+  /// Task is pending
+  PENDING
+  /// Task in progress
+  IN_PROGRESS
+  /// Task completed
+  COMPLETED
+  /// Task cancelled
+  CANCELLED
+}
+
+/// Task priority levels
+enum TaskPriority {
+  /// Low priority
+  LOW
+  /// Medium priority
+  MEDIUM
+  /// High priority
+  HIGH
+  /// Urgent priority
+  URGENT
+}
+
+/// Service/Product entity for IV therapy treatments and offerings
+/// Used for configuring treatment catalog that syncs to GHL
+model Service {
+  id             String   @id @default(cuid())
+  /// Organization that owns this service
+  organizationId String
+  /// Service display name (e.g., "Myers Cocktail")
+  name           String
+  /// Service description for staff reference
+  description    String?
+  /// Service price in dollars
+  price          Decimal  @db.Decimal(10, 2)
+  /// Treatment duration in minutes
+  duration       Int?
+  /// GoHighLevel product ID for sync reference
+  ghlProductId   String?  @unique
+  /// Whether service is active and available
+  isActive       Boolean  @default(true)
+  /// Service creation timestamp
+  createdAt      DateTime @default(now())
+  /// Last modification date
+  updatedAt      DateTime @updatedAt
+
+  /// Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  payments     Payment[]
+
+  @@index([organizationId])
+  @@map("service")
+}
+
+/// Payment transaction entity for tracking revenue and patient payments
+/// Synced from GoHighLevel via webhooks when payments are collected
+model Payment {
+  id              String        @id @default(cuid())
+  /// Organization that received this payment
+  organizationId  String
+  /// GoHighLevel payment/invoice ID for sync reference
+  ghlPaymentId    String?       @unique
+  /// GoHighLevel contact ID for patient reference (stored for sync)
+  ghlContactId    String?
+  /// Internal contact ID (optional - linked after contact sync)
+  contactId       String?
+  /// Service/treatment that was paid for
+  serviceId       String?
+  /// Stripe payment intent ID if available
+  stripePaymentId String?
+
+  /// Patient information (denormalized for performance)
+  patientName  String?
+  patientEmail String?
+  patientPhone String?
+
+  /// Payment details
+  amount        Decimal       @db.Decimal(10, 2)
+  /// Payment status
+  status        PaymentStatus @default(PENDING)
+  /// Payment method used (card, cash, etc)
+  paymentMethod String?
+  /// Invoice/receipt number
+  invoiceNumber String?
+  /// Payment description/notes
+  description   String?
+
+  /// Timestamps
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  /// Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  contact      Contact?     @relation(fields: [contactId], references: [id])
+  service      Service?     @relation(fields: [serviceId], references: [id])
+
+  @@index([organizationId, status])
+  @@index([ghlPaymentId])
+  @@index([paidAt])
+  @@map("payment")
+}
+
+/// Payment transaction status
+enum PaymentStatus {
+  /// Payment pending/processing
+  PENDING
+  /// Payment completed successfully
+  PAID
+  /// Payment failed
+  FAILED
+  /// Payment refunded
+  REFUNDED
+  /// Payment partially refunded
+  PARTIALLY_REFUNDED
+}
