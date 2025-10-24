@@ -52,3 +52,6 @@ dev_scripts/
 public/localhost_*.png
 public/qucik_create_*.png
 public/static/localhost_*.png
+
+# staging area for files to remove
+.to-remove/

@@ -21,7 +21,6 @@ import {
   IconAddressBook,
   IconCalendarMonth,
   IconMessage,
-  IconPackage,
   IconBrain,
   IconUsers,
   IconCash,
@@ -93,11 +92,6 @@ export function AgencyNavSidebar({
           title: "Team",
           url: `/agency/${agencySlug}/admin/team`,
           icon: IconUsers,
-        },
-        {
-          title: "Inventory",
-          url: `/agency/${agencySlug}/admin/inventory`,
-          icon: IconPackage,
         },
         {
           title: "AI Insights",

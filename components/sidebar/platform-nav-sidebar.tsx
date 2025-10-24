@@ -5,8 +5,6 @@ import {
   IconCalendar,
   IconMessage,
   IconCreditCard,
-  IconPackage,
-  IconStar,
   IconHome,
   IconHelp,
   IconSearch,
@@ -55,16 +53,6 @@ const data = {
       title: "Payments",
       url: "/platform/admin/payments",
       icon: IconCreditCard,
-    },
-    {
-      title: "Inventory",
-      url: "/platform/admin/inventory",
-      icon: IconPackage,
-    },
-    {
-      title: "Reviews",
-      url: "/platform/admin/reviews",
-      icon: IconStar,
     },
   ],
   navAdmin: [
