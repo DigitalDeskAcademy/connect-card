@@ -23,7 +23,7 @@ import { useConfetti } from "@/hooks/use-confetti";
 import {
   markLessonComplete,
   markLessonIncomplete,
-} from "@/app/agency/[slug]/learning/[courseSlug]/[lessonId]/actions";
+} from "@/app/church/[slug]/learning/[courseSlug]/[lessonId]/actions";
 
 interface LessonData {
   id: string;

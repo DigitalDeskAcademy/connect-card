@@ -71,12 +71,40 @@
 
 ---
 
-## 🚀 PHASE 1: GHL Dashboard MVP (Current)
+## 🚀 PHASE 1: Church Connect Card Fork Migration (Current)
 
-> **📋 IMPORTANT: This section is now superseded by `/docs/IV-THERAPY-PHASE-PLAN.md`**
-> The detailed MVP plan with specific tasks and deliverables is in the new phase plan document.
+> **🎯 PROJECT PIVOT: Forked to Church Connect Card platform**
+> This is a complete rebrand from IV therapy clinic SaaS to church visitor engagement platform.
+> Focus: Connect card scanning, visitor follow-up, volunteer management, prayer requests.
 
-### Role Framework Consolidation (Current Priority)
+### Church Platform Migration (Current Priority)
+
+**Phase 1: Core Infrastructure** ✅ COMPLETED (This PR)
+
+- [x] Database schema migration (Contact → ChurchMember, added ConnectCard model)
+- [x] Rename /app/agency/ → /app/church/ folder structure (58 files)
+- [x] Update navigation (Dashboard, N2N, Volunteer, Prayer)
+- [x] Create placeholder pages for church features
+- [x] Update core utilities (tenant-utils, use-navigation, auth)
+
+**Phase 2: URL Migration** (Next PR) - 90+ references across 30+ files
+
+- [ ] Auth flows: login, callback, church-specific login, organization setup
+- [ ] Church navbar: AgencyNavbar.tsx (17 references)
+- [ ] Learning portal: All learning pages and sidebar (13+ references)
+- [ ] Admin courses: CRUD operations, preview routes, revalidatePath calls
+- [ ] Shared components: SharedCourseCard, SharedLessonItem, CourseListingPage
+- [ ] Other pages: subscription-expired, church homepage
+- [ ] Dev scripts: Update seed/test utilities (optional)
+
+**Phase 3: Branding & UI** (Future)
+
+- [ ] Replace IV therapy mock data with church examples
+- [ ] Update landing page for church audience
+- [ ] Rebrand from SideCar to Church Connect Card
+- [ ] Update documentation and help content
+
+### Role Framework Consolidation (Deferred)
 
 **Problem:** Building same features 3 times instead of once with role-based scoping
 

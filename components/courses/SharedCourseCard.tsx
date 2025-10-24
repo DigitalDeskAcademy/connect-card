@@ -51,7 +51,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { toggleCourseVisibility } from "@/app/agency/[slug]/admin/courses/[courseId]/edit/actions";
+import { toggleCourseVisibility } from "@/app/church/[slug]/admin/courses/[courseId]/edit/actions";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";

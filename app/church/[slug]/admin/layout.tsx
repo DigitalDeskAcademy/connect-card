@@ -50,7 +50,7 @@ export default async function AgencyAdminLayout({
 
   // Use organization name for branding
   const brandName = organization.name;
-  const homeUrl = `/agency/${slug}/admin`;
+  const homeUrl = `/church/${slug}/admin`;
 
   return (
     <OrganizationProvider organization={organization}>

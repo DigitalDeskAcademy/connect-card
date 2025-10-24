@@ -6,8 +6,8 @@
  *
  * Redirect Logic:
  * - Platform admins → /platform/admin
- * - Agency owners/admins with organization → /agency/{slug}/admin
- * - Regular users with organization → /agency/{slug}/learning
+ * - Church owners/admins with organization → /church/{slug}/admin
+ * - Regular users with organization → /church/{slug}/learning
  * - Users without organization → /setup/organization (to complete setup)
  * - Unauthenticated users → / (public homepage)
  */
@@ -49,15 +49,15 @@ export async function GET() {
     redirectTo = "/platform/admin";
   } else if (user.organizationId && user.organization?.slug) {
     // User has an organization - route based on role
-    const agencySlug = user.organization.slug;
+    const churchSlug = user.organization.slug;
 
-    if (user.role === "agency_owner" || user.role === "agency_admin") {
-      redirectTo = `/agency/${agencySlug}/admin`;
+    if (user.role === "church_owner" || user.role === "church_admin") {
+      redirectTo = `/church/${churchSlug}/admin`;
     } else if (user.role === "user") {
-      redirectTo = `/agency/${agencySlug}/learning`;
+      redirectTo = `/church/${churchSlug}/learning`;
     }
-  } else if (user.role === "agency_owner") {
-    // Agency owner without organization - needs to complete setup
+  } else if (user.role === "church_owner") {
+    // Church owner without organization - needs to complete setup
     redirectTo = "/setup/organization";
   } else {
     // Regular user without organization - send to welcome page

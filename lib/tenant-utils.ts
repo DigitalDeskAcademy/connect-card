@@ -24,7 +24,7 @@ export function isValidSlug(slug: string): boolean {
  * Validates slug format for security
  */
 export function extractOrgSlugFromPath(pathname: string): string | null {
-  const match = pathname.match(/^\/agency\/([^\/]+)/);
+  const match = pathname.match(/^\/church\/([^\/]+)/);
   const slug = match ? match[1] : null;
 
   // Validate extracted slug to prevent injection attacks
@@ -93,25 +93,25 @@ export function isPlatformAdminPath(pathname: string): boolean {
 }
 
 /**
- * Check if we're in an agency context
+ * Check if we're in a church context
  * Simple pathname check, no auth logic
  */
 export function isAgencyPath(pathname: string): boolean {
-  return pathname.startsWith("/agency/");
+  return pathname.startsWith("/church/");
 }
 
 /**
- * Check if we're in an agency admin context
+ * Check if we're in a church admin context
  * Simple pathname check, no auth logic
  */
 export function isAgencyAdminPath(pathname: string): boolean {
-  return pathname.match(/^\/agency\/[^\/]+\/admin/) !== null;
+  return pathname.match(/^\/church\/[^\/]+\/admin/) !== null;
 }
 
 /**
- * Check if we're in an agency learning context
+ * Check if we're in a church learning context
  * Simple pathname check, no auth logic
  */
 export function isAgencyLearningPath(pathname: string): boolean {
-  return pathname.match(/^\/agency\/[^\/]+\/learning/) !== null;
+  return pathname.match(/^\/church\/[^\/]+\/learning/) !== null;
 }

@@ -12,7 +12,7 @@ import { z } from "zod";
  * Appointment schema for validation
  */
 const appointmentSchema = z.object({
-  contactId: z.string().min(1),
+  churchMemberId: z.string().min(1),
   title: z.string().min(1),
   description: z.string().optional(),
   startTime: z.string().datetime(),
@@ -147,7 +147,7 @@ export async function updateAppointment(
       startTime?: Date;
       endTime?: Date;
       location?: string;
-      contactId?: string;
+      churchMemberId?: string;
     } = {};
 
     if (data.title) updateData.title = data.title;
@@ -156,7 +156,7 @@ export async function updateAppointment(
     if (data.startTime) updateData.startTime = new Date(data.startTime);
     if (data.endTime) updateData.endTime = new Date(data.endTime);
     if (data.location !== undefined) updateData.location = data.location;
-    if (data.contactId) updateData.contactId = data.contactId;
+    if (data.churchMemberId) updateData.churchMemberId = data.churchMemberId;
 
     await prisma.appointment.update({
       where: { id: appointmentId },

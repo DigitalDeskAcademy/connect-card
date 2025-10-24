@@ -44,10 +44,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { IconUserPlus, IconMail } from "@tabler/icons-react";
 import { format } from "date-fns";
-import { inviteClinicStaff } from "@/app/actions/clinic/invite-staff";
+// TODO: Implement church-specific invite functionality
+// import { inviteClinicStaff } from "@/app/actions/clinic/invite-staff";
 import { useToast } from "@/hooks/use-toast";
 import type { DataScope } from "@/app/data/dashboard/data-scope-types";
-import { isClinicScope } from "@/app/data/dashboard/data-scope-types";
 
 interface TeamMember {
   id: string;
@@ -79,91 +79,34 @@ export default function TeamManagementClient({
 }: TeamManagementClientProps) {
   const { toast } = useToast();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-  const [isInviting, setIsInviting] = useState(false);
   const [inviteForm, setInviteForm] = useState({
     email: "",
     name: "",
-    role: "clinic_staff" as "clinic_admin" | "clinic_staff",
+    role: "volunteer_leader" as "church_admin" | "volunteer_leader",
   });
 
   const canInviteUsers = dataScope.filters.canManageUsers;
 
   const handleInvite = async () => {
-    if (!inviteForm.email || !inviteForm.name) {
-      toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!userClinic && dataScope.type === "clinic") {
-      toast({
-        title: "Error",
-        description: "Clinic information not found",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsInviting(true);
-    try {
-      const result = await inviteClinicStaff({
-        email: inviteForm.email,
-        name: inviteForm.name,
-        role: inviteForm.role,
-        clinicId:
-          userClinic?.id ||
-          (isClinicScope(dataScope) ? dataScope.clinicId : ""),
-      });
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Invitation sent successfully",
-        });
-        setIsInviteOpen(false);
-        setInviteForm({ email: "", name: "", role: "clinic_staff" });
-
-        // In development, show the invitation link
-        if (result.invitationLink) {
-          console.log("Invitation link:", result.invitationLink);
-          toast({
-            title: "Development Mode",
-            description: "Check console for invitation link",
-          });
-        }
-      } else {
-        toast({
-          title: "Error",
-          description: result.error || "Failed to send invitation",
-          variant: "destructive",
-        });
-      }
-    } catch {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsInviting(false);
-    }
+    // TODO: Implement church-specific invite functionality
+    toast({
+      title: "Feature Not Available",
+      description: "Church staff invitation feature coming soon",
+      variant: "destructive",
+    });
+    setIsInviteOpen(false);
   };
 
   const getRoleBadgeColor = (role: string | null) => {
     switch (role) {
       case "platform_admin":
         return "bg-purple-100 text-purple-800";
-      case "agency_owner":
+      case "church_owner":
         return "bg-blue-100 text-blue-800";
-      case "agency_admin":
+      case "church_admin":
         return "bg-indigo-100 text-indigo-800";
-      case "clinic_admin":
+      case "volunteer_leader":
         return "bg-green-100 text-green-800";
-      case "clinic_staff":
-        return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -173,14 +116,12 @@ export default function TeamManagementClient({
     switch (role) {
       case "platform_admin":
         return "Platform Admin";
-      case "agency_owner":
-        return "Agency Owner";
-      case "agency_admin":
-        return "Agency Admin";
-      case "clinic_admin":
-        return "Clinic Admin";
-      case "clinic_staff":
-        return "Clinic Staff";
+      case "church_owner":
+        return "Church Owner";
+      case "church_admin":
+        return "Church Admin";
+      case "volunteer_leader":
+        return "Volunteer Leader";
       default:
         return "User";
     }
@@ -243,17 +184,19 @@ export default function TeamManagementClient({
                   <Label htmlFor="role">Role</Label>
                   <Select
                     value={inviteForm.role}
-                    onValueChange={(value: "clinic_admin" | "clinic_staff") =>
-                      setInviteForm({ ...inviteForm, role: value })
-                    }
+                    onValueChange={(
+                      value: "church_admin" | "volunteer_leader"
+                    ) => setInviteForm({ ...inviteForm, role: value })}
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="clinic_staff">Clinic Staff</SelectItem>
-                      <SelectItem value="clinic_admin">
-                        Clinic Administrator
+                      <SelectItem value="volunteer_leader">
+                        Volunteer Leader
+                      </SelectItem>
+                      <SelectItem value="church_admin">
+                        Church Administrator
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -263,19 +206,12 @@ export default function TeamManagementClient({
                 <Button
                   variant="outline"
                   onClick={() => setIsInviteOpen(false)}
-                  disabled={isInviting}
                 >
                   Cancel
                 </Button>
-                <Button onClick={handleInvite} disabled={isInviting}>
-                  {isInviting ? (
-                    "Sending..."
-                  ) : (
-                    <>
-                      <IconMail className="mr-2 h-4 w-4" />
-                      Send Invitation
-                    </>
-                  )}
+                <Button onClick={handleInvite}>
+                  <IconMail className="mr-2 h-4 w-4" />
+                  Send Invitation
                 </Button>
               </DialogFooter>
             </DialogContent>

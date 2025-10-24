@@ -37,7 +37,7 @@ export async function adminGetAppointments(organizationId?: string) {
       status: true,
       location: true,
       calendarProvider: true,
-      contact: {
+      churchMember: {
         select: {
           id: true,
           name: true,

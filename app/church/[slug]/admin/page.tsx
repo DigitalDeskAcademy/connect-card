@@ -1,10 +1,11 @@
 /**
- * Platform Admin Dashboard
+ * Agency Admin Dashboard
  *
- * Main dashboard for platform administrators.
+ * Main dashboard for church administrators.
  * Currently showing placeholder content during setup phase.
  */
 
+import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
 import {
   Card,
   CardContent,
@@ -13,40 +14,43 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function PlatformAdminDashboard() {
+interface AgencyAdminDashboardProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function AgencyAdminDashboard({
+  params,
+}: AgencyAdminDashboardProps) {
+  const { slug } = await params;
+  const { organization } = await requireAgencyAdmin(slug);
+
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <div className="flex flex-1 flex-col gap-6">
+      {/* Header now rendered via Named Slots pattern (@header/default.tsx) */}
+
       {/* Welcome Card */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Platform Administration</CardTitle>
+          <CardTitle className="text-2xl">
+            Welcome to {organization.name}
+          </CardTitle>
           <CardDescription>
-            Church Connect Card Management - Platform Dashboard
+            Church Connect Card Management Dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Platform administration dashboard is being configured. System
-            monitoring and multi-church management features coming soon.
+            Your church management dashboard is being configured. Connect card
+            scanning and member management features coming soon.
           </p>
         </CardContent>
       </Card>
 
-      {/* Placeholder Stats */}
+      {/* Placeholder Stats - Hidden during setup */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>Total Churches</CardDescription>
-            <CardTitle className="text-2xl text-muted-foreground">--</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xs text-muted-foreground">Coming soon</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-2">
-            <CardDescription>Active Users</CardDescription>
+            <CardDescription>Members</CardDescription>
             <CardTitle className="text-2xl text-muted-foreground">--</CardTitle>
           </CardHeader>
           <CardContent>
@@ -66,7 +70,17 @@ export default function PlatformAdminDashboard() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardDescription>System Status</CardDescription>
+            <CardDescription>Volunteers</CardDescription>
+            <CardTitle className="text-2xl text-muted-foreground">--</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-xs text-muted-foreground">Coming soon</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardDescription>This Month</CardDescription>
             <CardTitle className="text-2xl text-muted-foreground">--</CardTitle>
           </CardHeader>
           <CardContent>

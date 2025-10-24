@@ -7,7 +7,7 @@
 
 import { Suspense } from "react";
 import { CourseContent } from "@/components/courses/CourseContent";
-import { LessonSkeleton } from "@/app/agency/[slug]/learning/[courseSlug]/[lessonId]/LessonSkeleton";
+import { LessonSkeleton } from "@/app/church/[slug]/learning/[courseSlug]/[lessonId]/LessonSkeleton";
 import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";

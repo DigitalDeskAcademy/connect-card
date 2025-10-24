@@ -51,6 +51,42 @@ If you genuinely don't know: Say "I'm not certain - let me research this" then u
 
 ---
 
+## ⚠️ CRITICAL: DO NOT WASTE TIME ON BUILDS/LINTS/FORMATS
+
+**NEVER run these commands without EXPLICIT user permission:**
+
+- ❌ **NO `pnpm build`** - Takes 20-40 seconds, wastes time during iteration
+- ❌ **NO `pnpm format`** - Pre-commit hooks handle this automatically
+- ❌ **NO `pnpm lint`** - Pre-commit hooks handle this automatically
+- ❌ **NO `git commit`** - User needs to review first
+- ❌ **NO `git push`** - User controls when to push
+
+**ONLY run these when user explicitly says:**
+
+- "build this"
+- "commit this"
+- "push this"
+- "ready to commit"
+
+**Why this matters:**
+
+- Builds take 20-40 seconds each time
+- During iterative development, we make many small changes
+- Running build after every change = wasted minutes that add up quickly
+- Pre-commit hooks automatically run format/lint when committing
+- User wants to test changes first, THEN commit when ready
+
+**The workflow:**
+
+1. Make code changes
+2. Describe what was done
+3. Wait for user to test/verify
+4. ONLY when user says "commit" → then run build/commit
+
+**Exception:** If user asks you to "test the dev server" or similar, you can run `pnpm dev` to verify.
+
+---
+
 ## ⚠️ NO AUTONOMOUS COMMITS OR PUSHES
 
 **NEVER commit or push code without explicit user permission**
@@ -66,14 +102,21 @@ If you genuinely don't know: Say "I'm not certain - let me research this" then u
 
 ## 🎯 PROJECT CONTEXT
 
-**SideCar Platform** - Simplified UI wrapper over GoHighLevel for IV therapy clinics, providing easy-to-use features without complex GHL training.
+**Church Connect Card Management System** - Multi-tenant platform for churches to digitize connect cards and manage member engagement.
 
-- **Product Strategy**: Direct feature usage (not training-based) - Clinics use SideCar features, not GHL directly
-- **Current Focus**: GHL API integration - Building placeholder pages to test and connect real GHL data
-- **Business Model**: Scale Digital Desk (GHL agency) from 15 to 50+ clients by reducing support from 10+ hours to 2 hours/client/month
-- **Tech Stack**: Next.js 15, Prisma, Better Auth, GHL API, Cal.com (Phase 2: Vercel AI SDK)
-- **LMS Position**: Secondary feature for future agency/staff onboarding (not primary product)
-- **Target**: 3 pilot clinics → 25 paying clinics → $10k MRR
+- **Product Strategy**: Scan paper connect cards → Extract data via OCR → Manage members → Automate follow-up
+- **Current Focus**: Initial setup - Environment configuration, clean foundation, placeholder UI
+- **Business Model**: SaaS for churches - Replace manual connect card data entry, improve visitor follow-up
+- **Tech Stack**: Next.js 15, Prisma, Better Auth, GHL API (communications), Tigris S3, OCR service
+- **Target**: Churches wanting to eliminate manual data entry and improve member engagement
+
+**Key Features:**
+
+1. **Connect Card Scanning** - OCR to extract names, emails, phone, prayer requests
+2. **Member Management** - Track visitors, members, engagement (repurposed from Contacts)
+3. **Volunteer Scheduling** - Manage church volunteers (repurposed from Calendar)
+4. **GHL Integration** - Sub-agency setup for SMS/automations/communications
+5. **Training Courses** - Church staff training (existing LMS system)
 
 ---
 
@@ -82,7 +125,7 @@ If you genuinely don't know: Say "I'm not certain - let me research this" then u
 **Every time you start working:**
 
 1. **Check STATUS.md** - Understand what's working/broken right now
-2. **Review ROADMAP.md** - Know Phase 1 priorities (GHL integration, calendar, inbox, real data)
+2. **Review ROADMAP.md** - Know current priorities
 3. **Follow coding-patterns.md** - Use established patterns, never create new ones without discussion
 
 **First time in project?** Also read `/docs/essentials/architecture.md` for multi-tenant system design.
@@ -95,7 +138,7 @@ If you genuinely don't know: Say "I'm not certain - let me research this" then u
 /docs/
 ├── STATUS.md              # ← START HERE: Current state (working/broken)
 ├── ROADMAP.md            # ← THEN HERE: Task priorities
-├── IV-THERAPY-PHASE-PLAN.md # Detailed MVP implementation plan
+├── FORK_SETUP_GUIDE.md   # How this was forked from SideCar Platform
 │
 ├── essentials/           # Core knowledge
 │   ├── coding-patterns.md # ← MUST READ: How to write code
@@ -105,8 +148,8 @@ If you genuinely don't know: Say "I'm not certain - let me research this" then u
 │
 └── technical/            # Implementation details
     ├── architecture-decisions.md # ADR log
-    ├── security.md       # Security standards
-    └── integrations.md   # Stripe, S3, Auth
+    ├── security.md       # Security standards (if exists)
+    └── integrations.md   # Stripe, S3, Auth, GHL
 ```
 
 ---
@@ -145,7 +188,7 @@ If you genuinely don't know: Say "I'm not certain - let me research this" then u
 - Update STATUS.md when things change
 - Move completed tasks in ROADMAP.md
 - Never create new TODO files
-- Archive completed work
+- Archive completed work in `.archive/`
 
 ### 6. Shadcn Component-First Approach
 
@@ -162,7 +205,7 @@ If you genuinely don't know: Say "I'm not certain - let me research this" then u
 - **Data Tables**: ALWAYS use TanStack Table + shadcn pattern
   - Follow the pattern in `/components/dashboard/payments/` (columns.tsx, data-table.tsx, payments-table.tsx)
   - Industry-standard 2025 best practice for React data tables
-  - Reusable for appointments, contacts, inventory, reviews, etc.
+  - Reusable for members, volunteers, connect cards, etc.
 - **See `/docs/essentials/coding-patterns.md`** for complete implementation guide
 
 ### 7. NO TIMEFRAMES IN PLANNING
@@ -210,8 +253,8 @@ Focus on WHAT needs to be done and in what ORDER, not HOW LONG it will take.
 
 ### Multi-Tenant System
 
-- Organization-based data isolation
-- Role hierarchy: `platform_admin` → `agency_admin` → `user`
+- Organization-based data isolation (churches are organizations)
+- Role hierarchy: `platform_admin` → `agency_admin` (church admin) → `user`
 - Every query respects organization boundaries
 
 ### Server Components First
@@ -225,39 +268,53 @@ Focus on WHAT needs to be done and in what ORDER, not HOW LONG it will take.
 
 ## 💻 ESSENTIAL COMMANDS
 
-### Development (Claude can run these)
+### Development Commands
+
+**Commands you CAN run (when appropriate):**
 
 ```bash
-pnpm dev        # Start dev server (user monitors for OTP codes)
-pnpm build      # Production build (MUST pass before committing)
-pnpm lint       # Check code standards
-pnpm format     # Auto-format code
+pnpm dev        # Start dev server - OK to run when testing
 
-# Database
+# Database operations - OK when working on schema
 pnpm prisma generate  # Generate Prisma client
 pnpm prisma db push   # Push schema changes
 pnpm seed:all        # Seed test data
 ```
 
-**⚠️ IMPORTANT: When to Run Build**
-
-- ❌ **DO NOT** run `pnpm build` during iterative development
-- ❌ **DO NOT** build after every small change while still adjusting
-- ✅ **ONLY BUILD** when user explicitly asks to commit or says "ready to commit"
-- ✅ **ONLY BUILD** once at the end when changes are finalized
-
-**Why:** Builds take 20-40 seconds. Running builds during active development wastes time. Wait until the user is ready to commit before verifying the build passes.
-
-### Git Workflow (when user asks to commit)
+**Commands you MUST NOT run without explicit permission:**
 
 ```bash
-# Always use this workflow when user says "commit this":
-git status              # Check what changed
+pnpm build      # ❌ NEVER run during development - only before commit
+pnpm lint       # ❌ Pre-commit hook handles this
+pnpm format     # ❌ Pre-commit hook handles this
+git commit      # ❌ Only when user says "commit this"
+git push        # ❌ Only when user says "push this"
+```
+
+---
+
+### Git Workflow (ONLY when user explicitly asks to commit)
+
+**When user says "commit this" or "ready to commit":**
+
+```bash
+# Step 1: Check what changed
+git status
+
+# Step 2: Build to verify (ONLY NOW, not before)
 pnpm build             # MUST pass - verifies all imports exist
-git add .              # Stage everything (safest approach)
-git status             # Verify no red untracked files are needed
-git commit -m "..."    # Commit with message
-git push origin branch # Push when user asks
+
+# Step 3: Stage everything
+git add .              # Stage all files
+
+# Step 4: Verify staging
+git status             # Confirm no needed files are unstaged
+
+# Step 5: Commit
+git commit -m "..."    # Format/lint run automatically via pre-commit hook
+
+# Step 6: Push (only if user explicitly asks)
+git push origin branch
 ```
 
 **Golden Rule**: Always `git add .` to stage everything. Local `pnpm build` uses ALL files (committed + uncommitted), but Vercel only gets committed files. If you forget to stage a file, local build passes but Vercel fails!
@@ -266,31 +323,41 @@ git push origin branch # Push when user asks
 
 ## 🎯 CURRENT PRIORITIES
 
-**Phase 1: MVP Foundation** - See `/docs/IV-THERAPY-PHASE-PLAN.md` for detailed implementation plan
+**Phase 1: Setup & Foundation** (In Progress)
 
-**Next 4 Features:**
+- ✅ Project forked and rebranded from SideCar Platform
+- ✅ Clean git history (no secrets)
+- ✅ Removed inventory & reviews features
+- ✅ Dashboard placeholders
+- ⏳ Environment setup (Neon database, Better Auth, Tigris S3)
+- ⏳ Branding updates (sidebar labels, brand name)
+- ⏳ Test local development environment
 
-1. **GHL API Integration** - Build GHLClient class (foundation for all features)
-2. **Dashboard Real Data** - Replace mock widgets with GHL API
-3. **Unified Inbox** - Message sync from GHL (SMS, FB, IG)
-4. **Calendar Integration** - Cal.com with GHL contact sync
+**Phase 2: Connect Card MVP**
 
-**Recently Completed** - See STATUS.md for full list:
+1. **Connect Card Upload** - Image upload component (S3)
+2. **OCR Integration** - Extract data from connect card images
+3. **Member Database** - Store and manage member information
+4. **Manual Correction UI** - Edit OCR results before saving
 
-- ✅ URL-based navigation tabs (NavTabs component with query parameters) - PR #42
-- ✅ Named Slots migration (Server Component headers)
-- ✅ All admin pages created (calendar, inventory, insights, analytics, settings, appointments, payments, reviews)
-- ✅ Framework component refactoring (dashboard-layout → dashboard-content-wrapper)
-- ✅ Conversations 3-column UI
-- ✅ Mobile navigation, security headers, component duplication elimination
+**Phase 3: GHL Integration**
 
-**Phase 2: AI Intelligence** - Vercel AI SDK, predictive analytics, smart automation
+1. **Sub-Agency Setup** - Connect church as GHL sub-account
+2. **SMS/Automations** - Automated follow-up workflows
+3. **Conversations Sync** - Pull GHL messages into unified inbox
+
+**Phase 4: Additional Features** (TBD based on user feedback)
+
+- Email campaigns to first-time visitors
+- Small group management
+- Volunteer scheduling enhancements
+- Event check-in system
 
 ---
 
 ## 📚 ATTRIBUTION
 
-**Important**: Much of this codebase was built following a course. When committing:
+**Important**: Keep commits clean and professional.
 
 - ❌ Do NOT include "Generated with Claude Code" signatures
 - ❌ Do NOT add "Co-Authored-By: Claude" attribution
@@ -298,4 +365,4 @@ git push origin branch # Push when user asks
 
 ---
 
-**Remember**: You're working on a real production system. Prioritize stability, follow patterns, and always keep the user informed of changes.
+**Remember**: You're working on a real production system. Prioritize stability, follow patterns, and **DO NOT WASTE TIME** on builds/formats/lints during iterative development. Only run these when explicitly requested.

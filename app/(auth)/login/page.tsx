@@ -65,11 +65,11 @@ export default async function LoginPage() {
     if (user?.role === "platform_admin") {
       redirectTo = "/platform/admin";
     } else if (user?.organizationId && user.organization?.slug) {
-      // Agency users go to their agency learning portal
+      // Church users go to their church learning portal
       const agencySlug = user.organization.slug;
 
-      if (user.role === "agency_owner" || user.role === "agency_admin") {
-        // Agency admins can choose to go to admin or learning
+      if (user.role === "church_owner" || user.role === "church_admin") {
+        // Church admins can choose to go to admin or learning
         redirectTo = `/agency/${agencySlug}/admin`;
       } else {
         // End users go to learning portal

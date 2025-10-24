@@ -1,11 +1,11 @@
 /**
- * Agency Admin Sidebar Component
+ * Church Admin Sidebar Component
  *
- * Custom sidebar navigation for agency administrators.
+ * Custom sidebar navigation for church administrators.
  * Provides admin-focused navigation with proper multi-tenant URL routing.
  *
- * Following the established pattern from AgencyLearningSidebar,
- * this component builds navigation URLs dynamically based on the agency slug.
+ * Following the established pattern from church learning sidebar,
+ * this component builds navigation URLs dynamically based on the church slug.
  */
 
 "use client";
@@ -25,6 +25,9 @@ import {
   IconUsers,
   IconCash,
   IconDots,
+  IconUserPlus,
+  IconHandHeart,
+  IconPray,
 } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
@@ -53,33 +56,28 @@ export function AgencyNavSidebar({
   agencySlug,
   ...props
 }: AgencyNavSidebarProps) {
-  // Build agency-specific admin navigation URLs
-  // CRM features are primary, training/courses are secondary
+  // Build church-specific admin navigation URLs
+  // Connect card workflow and core ministry features are primary
   const navMain = [
     {
       title: "Dashboard",
-      url: `/agency/${agencySlug}/admin`,
+      url: `/church/${agencySlug}/admin`,
       icon: IconHome,
     },
     {
-      title: "Contacts",
-      url: `/agency/${agencySlug}/admin/contacts`,
-      icon: IconAddressBook,
+      title: "N2N",
+      url: `/church/${agencySlug}/admin/n2n`,
+      icon: IconUserPlus,
     },
     {
-      title: "Calendar",
-      url: `/agency/${agencySlug}/admin/calendar`,
-      icon: IconCalendarMonth,
+      title: "Volunteer",
+      url: `/church/${agencySlug}/admin/volunteer`,
+      icon: IconHandHeart,
     },
     {
-      title: "Conversations",
-      url: `/agency/${agencySlug}/admin/conversations`,
-      icon: IconMessage,
-    },
-    {
-      title: "Payments",
-      url: `/agency/${agencySlug}/admin/payments`,
-      icon: IconCash,
+      title: "Prayer",
+      url: `/church/${agencySlug}/admin/prayer`,
+      icon: IconPray,
     },
     // Collapsible "More" section for secondary features
     {
@@ -89,23 +87,43 @@ export function AgencyNavSidebar({
       className: "mt-4",
       items: [
         {
+          title: "Calendar",
+          url: `/church/${agencySlug}/admin/calendar`,
+          icon: IconCalendarMonth,
+        },
+        {
+          title: "Contacts",
+          url: `/church/${agencySlug}/admin/contacts`,
+          icon: IconAddressBook,
+        },
+        {
+          title: "Payments",
+          url: `/church/${agencySlug}/admin/payments`,
+          icon: IconCash,
+        },
+        {
+          title: "Conversations",
+          url: `/church/${agencySlug}/admin/conversations`,
+          icon: IconMessage,
+        },
+        {
           title: "Team",
-          url: `/agency/${agencySlug}/admin/team`,
+          url: `/church/${agencySlug}/admin/team`,
           icon: IconUsers,
         },
         {
           title: "AI Insights",
-          url: `/agency/${agencySlug}/admin/insights`,
+          url: `/church/${agencySlug}/admin/insights`,
           icon: IconBrain,
         },
         {
           title: "Analytics",
-          url: `/agency/${agencySlug}/admin/analytics`,
+          url: `/church/${agencySlug}/admin/analytics`,
           icon: IconChartBar,
         },
         {
           title: "Training Center",
-          url: `/agency/${agencySlug}/admin/courses`,
+          url: `/church/${agencySlug}/admin/courses`,
           icon: IconSchool,
         },
       ],
@@ -115,12 +133,12 @@ export function AgencyNavSidebar({
   const navSecondary = [
     {
       title: "Settings",
-      url: `/agency/${agencySlug}/admin/settings`,
+      url: `/church/${agencySlug}/admin/settings`,
       icon: IconSettings,
     },
     {
       title: "Get Help",
-      url: `/agency/${agencySlug}/support`,
+      url: `/church/${agencySlug}/support`,
       icon: IconHelp,
     },
     {
@@ -130,8 +148,8 @@ export function AgencyNavSidebar({
     },
   ];
 
-  // Use the provided homeUrl or default to agency admin dashboard
-  const effectiveHomeUrl = homeUrl || `/agency/${agencySlug}/admin`;
+  // Use the provided homeUrl or default to church admin dashboard
+  const effectiveHomeUrl = homeUrl || `/church/${agencySlug}/admin`;
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>

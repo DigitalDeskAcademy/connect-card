@@ -53,10 +53,10 @@ npx tsx prisma/seed.ts  # Seed complete production data
 
 ```typescript
 enum UserRole {
-  platform_admin  // Sidecar platform administrators
-  agency_owner    // Primary account holder, billing admin
-  agency_admin    // Agency team member with management access
-  user           // End user/client of the agency
+  platform_admin  // Church Connect Card platform administrators
+  church_owner    // Church primary account holder, billing admin
+  church_admin    // Church staff member with management access
+  user           // Church volunteer or member with limited access
 }
 ```
 
@@ -374,7 +374,7 @@ export const auth = betterAuth({
         }
         // Send email via Resend
         await resend.emails.send({
-          from: "Sidecar Platform <onboarding@resend.dev>",
+          from: "Church Connect Card <onboarding@resend.dev>",
           to: [email],
           subject: "Verify your email",
           html: `<p>Your verification code: <strong>${otp}</strong></p>`,

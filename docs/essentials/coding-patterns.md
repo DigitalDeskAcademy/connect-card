@@ -459,12 +459,12 @@ export type AgencyScope = DataScopeBase & {
   type: "agency";
 };
 
-export type ClinicScope = DataScopeBase & {
-  type: "clinic";
-  clinicId: string; // ✅ REQUIRED for clinic type
+export type ChurchScope = DataScopeBase & {
+  type: "church";
+  churchId: string; // ✅ REQUIRED for clinic type
 };
 
-export type DataScope = PlatformScope | AgencyScope | ClinicScope;
+export type DataScope = PlatformScope | AgencyScope | ChurchScope;
 
 // Type guards for narrowing
 export function isPlatformScope(scope: DataScope): scope is PlatformScope {
@@ -475,8 +475,8 @@ export function isAgencyScope(scope: DataScope): scope is AgencyScope {
   return scope.type === "agency";
 }
 
-export function isClinicScope(scope: DataScope): scope is ClinicScope {
-  return scope.type === "clinic";
+export function isChurchScope(scope: DataScope): scope is ChurchScope {
+  return scope.type === "church";
 }
 ```
 
@@ -585,7 +585,7 @@ export default async function AgencyContactsPage({ params }: PageProps) {
 
   // DataScope determines filtering automatically
   // - Agency admin: sees organizationId scoped data
-  // - Clinic user: sees organizationId + clinicId scoped data
+  // - Clinic user: sees organizationId + churchId scoped data
   const contacts = await getContactsForScope(dataScope);
 
   return <ContactsClient contacts={contacts} dataScope={dataScope} organizationId={organization.id} />;
@@ -600,7 +600,7 @@ import { prisma } from "@/lib/db";
 import {
   DataScope,
   isPlatformScope,
-  isClinicScope,
+  isChurchScope,
 } from "@/app/data/dashboard/require-dashboard-access";
 
 /**
@@ -617,11 +617,11 @@ export async function getContactsForScope(dataScope: DataScope) {
   }
 
   // Clinic: scoped to org + clinic
-  if (isClinicScope(dataScope)) {
+  if (isChurchScope(dataScope)) {
     return prisma.contact.findMany({
       where: {
         organizationId: dataScope.organizationId,
-        clinicId: dataScope.clinicId, // ✅ TypeScript knows this exists
+        churchId: dataScope.churchId, // ✅ TypeScript knows this exists
       },
       orderBy: { createdAt: "desc" },
     });
@@ -653,7 +653,7 @@ export async function getContactsForScope(dataScope: DataScope) {
 - Place shared components in `/app` routes
 - Pass individual permission flags instead of DataScope
 - Duplicate query logic across routes
-- Access `clinicId` without type guard check
+- Access `churchId` without type guard check
 
 ### Benefits
 
@@ -1251,7 +1251,7 @@ export function PaymentsTable({ payments }: PaymentsTableProps) {
       data={payments}
       title="Payment Transactions"
       searchPlaceholder="Search payments..."
-      searchColumn="patientName"
+      searchColumn="memberName"
       statusFilterColumn="status"
       statusFilterOptions={[
         { value: "ALL", label: "All Status" },
@@ -1317,7 +1317,7 @@ mv payments-table.tsx appointments-table.tsx
 // Define your appointment columns
 export const appointmentColumns: ColumnDef<AppointmentWithRelations>[] = [
   {
-    accessorKey: "patientName",
+    accessorKey: "memberName",
     header: "Patient",
     // ... column config
   },
@@ -1340,7 +1340,7 @@ export function AppointmentsTable({ appointments }: AppointmentsTableProps) {
       data={appointments}
       title="Appointments"
       searchPlaceholder="Search appointments..."
-      searchColumn="patientName"
+      searchColumn="memberName"
       statusFilterColumn="status"
       statusFilterOptions={[
         { value: "ALL", label: "All Statuses" },

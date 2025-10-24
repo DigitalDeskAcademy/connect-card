@@ -6,42 +6,43 @@ This document consolidates the business vision, multi-tenant architecture requir
 
 ### Executive Summary
 
-**Sidecar is a simplified UI wrapper over GoHighLevel for IV therapy clinics, providing easy-to-use features without complex GHL training.** Clinics use SideCar features directly instead of learning GoHighLevel's complex interface. We solve the critical problem facing GHL agencies: overwhelming client support demands that prevent agencies from scaling beyond a handful of clients.
+**Church Connect Card is a visitor engagement platform for churches, digitizing connect cards and automating member follow-up workflows.** Churches scan paper connect cards to extract visitor information, categorize engagement levels (first visit → member), and automate follow-up communications. The platform solves the critical problem of manual data entry and inconsistent visitor follow-up that prevents churches from effectively engaging new attendees.
 
-**Current Status:** Building GHL wrapper MVP with placeholder pages for testing API integration. Multi-tenant architecture complete. LMS features repositioned as secondary (future agency onboarding tool).
+**Current Status:** Migration in progress from IV therapy SaaS fork. Multi-tenant architecture complete. Database schema updated for church operations (ChurchMember, ConnectCard, MemberType enum). LMS features repositioned for church staff training.
 
-**Product Strategy:** Direct feature usage (not training-based) - Clinics interact with simple, focused interfaces that hide GHL complexity.
+**Product Strategy:** Direct feature usage - Churches scan cards, system extracts data, staff manages follow-up through simple workflows.
 
-**Target Market:** IV therapy clinics served by GoHighLevel agencies (starting with Digital Desk's 15+ clients).
+**Target Market:** Churches (100-5000 members) wanting to eliminate manual connect card data entry and improve first-time visitor retention.
 
 ### The Problem We Solve
 
-The platform emerged from real business pain at **Digital Desk** (IV therapy clinic management agency):
+The platform addresses real operational pain experienced by churches:
 
-- Clients needed constant support for GHL features causing 10+ hours per client monthly
-- Manual appointment management and calendar troubleshooting
-- Inventory tracking for medical supplies done in spreadsheets
-- Support costs preventing agency growth beyond 15 clients
-- No unified view of client operations across GHL, calendars, and inventory
+- Manual data entry from paper connect cards taking hours each week
+- Inconsistent visitor follow-up due to lost or misplaced cards
+- No centralized system for tracking first-time visitors vs. returning guests
+- Volunteer scheduling conflicts and communication gaps
+- Prayer requests scattered across paper cards, texts, and emails
 
-**The Universal Challenge**: GHL agencies can't scale because client support demands grow linearly with each new client. Agencies need intelligent automation to deliver exceptional service while reducing manual effort by 80%.
+**The Universal Challenge**: Churches want to warmly welcome visitors and follow up effectively, but manual processes lead to data entry backlogs, missed follow-ups, and lost opportunities to engage new members.
 
-### The Solution: AI-Powered Operations Hub
+### The Solution: Automated Visitor Engagement Platform
 
 **Core Value Proposition:**
 
-- **Reduce support time from 10+ hours to 2 hours per client per month**
-- Real-time GHL data integration for proactive issue detection
-- Calendar and appointment management automation
-- Inventory tracking for medical supplies
-- AI-powered insights and recommendations (coming Phase 2)
+- **Eliminate manual connect card data entry** - Scan cards, OCR extracts data automatically
+- **Automated follow-up workflows** - N2N (New to Newlife) visitor categorization and task assignments
+- **Centralized member management** - Track engagement: First visit → Second visit → Regular → Member
+- **Volunteer scheduling** - Coordinate serving teams and ministry assignments
+- **Prayer request tracking** - Capture, assign to prayer teams, track follow-up
 
 **Business Impact:**
 
-- Agencies can scale from 10 clients to 50+ clients with same team
-- Higher profit margins through reduced support overhead
-- Better client retention through proactive service
-- Revenue growth without proportional cost increases
+- Churches eliminate 5-10 hours/week of manual data entry
+- 80% improvement in first-time visitor follow-up consistency
+- Better member engagement tracking from first visit through membership
+- Volunteer coordination reduces scheduling conflicts
+- Prayer ministry becomes organized and trackable
 
 ## 🏗️ Multi-Tenant B2B SaaS Architecture
 
@@ -51,10 +52,10 @@ The platform emerged from real business pain at **Digital Desk** (IV therapy cli
 
 **Business Model**:
 
-- **Sidecar** sells CRM dashboard access to GHL agencies (Platform Customers)
-- **Agencies** get isolated environments to manage multiple end clients
-- **End Clients** (medical practices) get managed through the agency dashboard
-- Each agency has separate GHL API credentials, calendar integrations, and client data
+- **Church Connect Card** sells visitor engagement platform to churches directly
+- **Churches** get isolated environments to manage their own members and visitors
+- **Multi-location support** - Large churches can manage multiple campuses in one system
+- Each church has separate data isolation, GHL communications integration, and volunteer teams
 
 ### Technical Architecture (Implemented)
 
@@ -69,7 +70,7 @@ Organization {
 }
 
 User {
-  id, email, name, role (platform_admin | agency_owner | agency_admin | user),
+  id, email, name, role (platform_admin | church_owner | church_admin | user),
   organizationId, emailVerified, stripeCustomerId
 }
 
@@ -78,42 +79,44 @@ Member {
   createdAt, updatedAt
 }
 
-// GHL Integration (Primary Use Case)
-GHLContact {
-  id, ghlContactId, organizationId,
+// Church Member Management (Primary Use Case)
+ChurchMember {
+  id, organizationId,
   firstName, lastName, email, phone,
-  tags, customFields, locationId,
-  lastSyncedAt
+  memberType (VISITOR | RETURNING | MEMBER | VOLUNTEER | STAFF),
+  firstVisitDate, lastAttendance,
+  tags, notes, customFields
 }
 
+ConnectCard {
+  id, churchMemberId, organizationId,
+  scanDate, prayerRequest,
+  followUpStatus, assignedTo,
+  imageUrl, extractedData (JSON)
+}
+
+// Volunteer Management
+VolunteerAssignment {
+  id, churchMemberId, organizationId,
+  team, role, schedule,
+  status, startDate
+}
+
+// Prayer Request Tracking
+PrayerRequest {
+  id, churchMemberId, organizationId,
+  request, isPrivate, status,
+  assignedTo, followUpDate
+}
+
+// GHL Integration (Communications Only)
 GHLLocation {
   id, ghlLocationId, organizationId,
-  name, address, phone, timezone,
-  apiKey (encrypted), webhookId
+  name, apiKey (encrypted), webhookId
+  // Used for SMS/email automations
 }
 
-// Calendar Integration (Core Feature)
-CalendarEvent {
-  id, organizationId, contactId,
-  calendarProvider (cal.com | calendly | ghl),
-  eventType, startTime, endTime,
-  status, metadata, syncedAt
-}
-
-// Inventory Management (Medical Practices)
-InventoryItem {
-  id, organizationId, locationId,
-  name, sku, category, quantity,
-  reorderPoint, cost, supplier
-}
-
-InventoryTransaction {
-  id, itemId, organizationId,
-  type (usage | purchase | adjustment),
-  quantity, date, userId, notes
-}
-
-// Training Platform (Secondary - Future Academy)
+// Training Platform (Church Staff Training)
 Course {
   id, title, organizationId, userId,
   stripePriceId (optional), isFree,
@@ -143,29 +146,36 @@ Invitation {
 
 #### Integration Architecture
 
-**GoHighLevel Integration (Primary)**:
+**OCR Integration (Primary)**:
 
-- OAuth 2.0 authentication per agency
-- Webhook handlers for real-time contact updates
-- API polling for locations and opportunities
+- Connect card image processing
+- Text extraction (names, emails, phones, prayer requests)
+- Handwriting recognition for free-form fields
+- Data validation and error correction
+- Batch processing for multiple cards
+
+**GoHighLevel Integration (Communications)**:
+
+- OAuth 2.0 authentication per church
+- SMS and email automation workflows
+- Visitor follow-up sequences
+- Contact sync for member database
 - Rate limiting and error handling
-- Data sync every 15 minutes + webhook updates
 
-**Calendar Integration (Core Feature)**:
+**Future Integrations (Planned)**:
 
-- Cal.com API for appointment management
-- Event sync with GHL contacts
-- Availability management
-- Automated reminders and follow-ups
-- Multi-location support
+- Planning Center Online (worship planning, check-ins)
+- Church Community Builder (member management)
+- Subsplash (giving and mobile app)
+- Breeze ChMS (church management system)
 
 **AI Capabilities (Phase 2 - Planned)**:
 
 - Vercel AI SDK integration
-- GPT-4 for intelligent insights
-- Predictive analytics for client needs
-- Automated support ticket triage
-- Natural language queries for data
+- Smart follow-up recommendations
+- Prayer request categorization
+- Visitor engagement predictions
+- Natural language queries for member data
 
 ### Data Migration Strategy
 
@@ -176,62 +186,93 @@ Invitation {
 
 ## 📈 Product Roadmap
 
-### Phase 1: CRM Operations Dashboard (COMPLETE)
+### Phase 1: Core Platform Migration (IN PROGRESS)
 
-**Core Features**
+**Migration Tasks**
 
-- [x] GHL contact management with real-time sync
-- [x] Calendar integration (Cal.com)
+- [x] Database schema updated (ChurchMember, ConnectCard models)
+- [x] Folder structure renamed (/church/ routes)
+- [x] Navigation reorganized (N2N, Volunteer, Prayer)
+- [ ] Complete URL migration (~90 references)
+- [ ] Update all mock data for church context
+- [ ] Replace IV therapy branding with church branding
+
+**Foundation Features**
+
 - [x] Multi-tenant architecture
-- [x] Operations dashboard with key metrics
-- [x] Contact filtering and search
-- [x] Mobile-responsive design
 - [x] Role-based access control
+- [x] Mobile-responsive design
+- [ ] Connect card placeholder pages
+- [ ] Member management UI
+- [ ] Volunteer scheduling UI
 
-### Phase 2: AI-Powered Intelligence (NEXT - Q2 2025)
+### Phase 2: Connect Card Scanning (NEXT)
 
-**AI Capabilities with Vercel AI SDK**
+**OCR Integration**
 
-- [ ] Natural language queries for contact data
-- [ ] Predictive client support needs
-- [ ] Automated appointment scheduling recommendations
-- [ ] Intelligent inventory reorder predictions
-- [ ] Support ticket auto-categorization
-- [ ] Client health scoring and alerts
+- [ ] Connect card image upload
+- [ ] OCR service integration (Google Vision or AWS Textract)
+- [ ] Data extraction and validation
+- [ ] Manual correction interface
+- [ ] Batch processing workflow
 
-**Enhanced Operations**
+**Member Management**
 
-- [ ] Inventory management for medical supplies
-- [ ] Advanced reporting and analytics
-- [ ] Custom workflows and automations
-- [ ] Multi-location dashboard views
+- [ ] ChurchMember CRUD operations
+- [ ] N2N workflow (First visit → Second visit → Regular → Member)
+- [ ] Follow-up task assignment
+- [ ] Member engagement tracking
+- [ ] Tags and custom fields
 
-### Phase 3: Agency Growth Tools (Q3 2025)
+### Phase 3: Volunteer & Prayer Management
 
-**Scale Features**
+**Volunteer Features**
 
-- [ ] White-label options for agencies
-- [ ] Client portal for end users
-- [ ] Advanced team collaboration
-- [ ] Custom integrations marketplace
-- [ ] API access for third-party tools
+- [ ] Volunteer roster management
+- [ ] Team and ministry assignments
+- [ ] Serving schedule calendar
+- [ ] Availability tracking
+- [ ] Check-in system
 
-### Phase 4: Training Academy (Q4 2025)
+**Prayer Request Features**
 
-**Optional Training Platform**
+- [ ] Prayer request capture from connect cards
+- [ ] Privacy controls (public/private requests)
+- [ ] Prayer team assignments
+- [ ] Follow-up tracking
+- [ ] Answered prayer reporting
 
-- [ ] Agency onboarding courses
-- [ ] GHL training for end clients
-- [ ] Best practices library
-- [ ] Certification programs
-- [ ] Community knowledge base
+### Phase 4: Automation & Intelligence
+
+**GHL Communications**
+
+- [ ] SMS follow-up sequences
+- [ ] Email automation workflows
+- [ ] Contact sync with member database
+
+**AI Capabilities**
+
+- [ ] Smart follow-up recommendations
+- [ ] Visitor engagement predictions
+- [ ] Prayer request categorization
+- [ ] Natural language member queries
+
+### Phase 5: Training Platform
+
+**Church Staff Training**
+
+- [ ] Onboarding courses for new staff
+- [ ] Volunteer training modules
+- [ ] Ministry leadership development
+- [ ] Platform usage tutorials
 
 ## 🔄 Success Metrics
 
 ### Technical Metrics
 
 - [x] Multi-tenant data isolation verified
-- [x] Real-time GHL sync operational
+- [ ] OCR accuracy > 95% for typed text
+- [ ] < 30 seconds average connect card processing time
 - [ ] 99.9% uptime for production platform
 - [ ] < 2s page load times across all features
 - [ ] Zero cross-tenant data leakage incidents

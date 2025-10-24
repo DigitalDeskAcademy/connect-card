@@ -85,7 +85,7 @@ export async function testGHLConnection(
         targetLocationId = tokenRecord.locationId;
       } else {
         // Agency-level OAuth - fetch first location from database
-        const firstLearner = await prisma.contact.findFirst({
+        const firstLearner = await prisma.churchMember.findFirst({
           where: {
             organizationId: user.organizationId,
             integrations: {
@@ -289,7 +289,7 @@ export async function fetchGHLContacts(
       if (tokenRecord?.locationId) {
         targetLocationId = tokenRecord.locationId;
       } else {
-        const firstLearner = await prisma.contact.findFirst({
+        const firstLearner = await prisma.churchMember.findFirst({
           where: {
             organizationId: user.organizationId,
             integrations: {
@@ -437,20 +437,20 @@ export async function syncGHLLocations(): Promise<ApiResponse> {
 
     for (const location of locations) {
       // Check if learner already exists via integration
-      const existingIntegration = await prisma.contactIntegration.findUnique({
+      const existingIntegration = await prisma.memberIntegration.findUnique({
         where: {
           provider_externalId: {
             provider: "ghl",
             externalId: location.id,
           },
         },
-        include: { contact: true },
+        include: { churchMember: true },
       });
 
       if (existingIntegration) {
         // Update existing learner
-        const updated = await prisma.contact.update({
-          where: { id: existingIntegration.contactId },
+        const updated = await prisma.churchMember.update({
+          where: { id: existingIntegration.churchMemberId },
           data: {
             name: location.name,
             email: location.email,
@@ -462,7 +462,7 @@ export async function syncGHLLocations(): Promise<ApiResponse> {
         createdLearners.push(updated.name);
       } else {
         // Create new learner + integration
-        const learner = await prisma.contact.create({
+        const learner = await prisma.churchMember.create({
           data: {
             organizationId: user.organizationId,
             name: location.name,
@@ -527,7 +527,7 @@ export async function getLearners(): Promise<{
     return { learners: [] };
   }
 
-  const learners = await prisma.contact.findMany({
+  const learners = await prisma.churchMember.findMany({
     where: {
       organizationId: user.organizationId,
     },
@@ -583,7 +583,7 @@ export async function checkGHLConnection(): Promise<{
   }
 
   // Count learners with GHL integrations
-  const learnerCount = await prisma.contact.count({
+  const learnerCount = await prisma.churchMember.count({
     where: {
       organizationId: user.organizationId,
       integrations: {
