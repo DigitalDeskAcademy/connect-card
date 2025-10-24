@@ -15,7 +15,7 @@ interface PaymentsTableProps {
  *
  * Features:
  * - Sortable columns (click column headers)
- * - Search filtering (patient name, invoice number, description)
+ * - Search filtering (member name, invoice number, description)
  * - Status filtering (paid, pending, failed, refunded)
  * - Pagination (10 items per page)
  * - Empty state with shadcn Empty component
@@ -36,7 +36,7 @@ export function PaymentsTable({ payments }: PaymentsTableProps) {
       data={payments}
       title="Payment Transactions"
       searchPlaceholder="Search payments..."
-      searchColumn="patientName"
+      searchColumn="memberName"
       statusFilterColumn="status"
       statusFilterOptions={[
         { value: "ALL", label: "All Status" },

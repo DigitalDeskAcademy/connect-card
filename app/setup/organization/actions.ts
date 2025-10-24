@@ -156,7 +156,7 @@ export async function createOrganization(data: {
         data: {
           name: validation.data.agencyName,
           slug,
-          type: "AGENCY",
+          type: "CHURCH",
           subscriptionStatus: "TRIAL",
           trialEndsAt,
           website: validation.data.website || null,
@@ -171,7 +171,7 @@ export async function createOrganization(data: {
         where: { id: data.userId },
         data: {
           organizationId: organization.id,
-          role: "agency_owner",
+          role: "church_owner",
           name: validation.data.name, // Update the user's actual name
         },
       });

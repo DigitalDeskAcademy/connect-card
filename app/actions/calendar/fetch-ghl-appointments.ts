@@ -115,8 +115,8 @@ export async function fetchGHLAppointments(
       };
     }
 
-    // 5. Get all contacts for the organization (with GHL integration)
-    const contacts = await prisma.contact.findMany({
+    // 5. Get all church members for the organization (with GHL integration)
+    const contacts = await prisma.churchMember.findMany({
       where: {
         organizationId: user.organizationId,
         integrations: {

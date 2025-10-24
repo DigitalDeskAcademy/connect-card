@@ -8,16 +8,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-/// Organization entity for multi-tenant agency structure
-/// Represents agencies (DigitalDesk, GHL agencies) that purchase and customize courses
+/// Organization entity for multi-tenant church structure
+/// Represents churches that use the connect card system for member management
 model Organization {
   id                    String             @id @default(uuid())
-  /// Organization display name (e.g., "DigitalDesk", "Sidecar Platform")
+  /// Organization display name (e.g., "First Baptist Church", "Grace Community")
   name                  String
   /// URL-friendly identifier for organization
   slug                  String             @unique
   /// Organization type for business logic and access control
-  type                  OrganizationType   @default(AGENCY)
+  type                  OrganizationType   @default(CHURCH)
   /// Business domain for email validation and branding
   domain                String?
   /// Organization website URL for branding
@@ -42,10 +42,10 @@ model Organization {
   invitations           Invitation[]
   members               Member[]
   users                 User[]
-  contacts              Contact[]
+  churchMembers         ChurchMember[]
   ghlToken              GHLToken?
-  services              Service[]
   payments              Payment[]
+  connectCards          ConnectCard[]
 
   @@map("organization")
 }
@@ -118,14 +118,11 @@ model User {
   banReason        String?
   /// Account suspension status
   banned           Boolean?
-  /// Organization/Agency ID for multi-tenant structure
+  /// Organization/Church ID for multi-tenant structure
   /// Optional initially, set after organization creation/joining
   organizationId   String?
   /// Role-based access control for multi-tenant architecture
   role             UserRole?
-  /// Clinic ID for clinic staff association (used when user is clinic_admin or clinic_staff)
-  /// Links staff members to their specific clinic in the Contact table
-  clinicId         String?
   /// Stripe customer ID for payment processing
   stripeCustomerId String?          @unique
   courses          Course[]
@@ -135,8 +132,6 @@ model User {
   memberships      Member[]
   sessions         Session[]
   organization     Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  /// Clinic association for staff members (references Contact with type CLINIC)
-  clinic           Contact?         @relation("ClinicStaff", fields: [clinicId], references: [id], onDelete: Cascade)
 
   @@map("user")
 }
@@ -235,9 +230,9 @@ model Course {
   userId              String
   /// Organization ID for multi-tenant course management (null for platform courses)
   organizationId      String?
-  /// Agency control to hide courses from clients
+  /// Church control to hide courses from members
   isHiddenFromClients Boolean       @default(false)
-  /// Platform course flag for SideCar-provided courses
+  /// Platform course flag for system-provided courses
   isPlatformCourse    Boolean       @default(false)
   /// S3/Tigris directory prefix for all course files (enables efficient bulk deletion)
   s3Prefix            String?
@@ -297,60 +292,60 @@ model Lesson {
   @@unique([chapterId, slug])
 }
 
-/// Course enrollment record supporting both staff users and contacts
+/// Course enrollment record supporting both staff users and church members
 /// Manages course access control and integrates with Stripe webhook payment processing
-/// Supports flexible enrollment: staff self-enrollment or contact assignment
+/// Supports flexible enrollment: staff self-enrollment or member assignment
 model Enrollment {
-  id        String           @id @default(uuid())
+  id              String           @id @default(uuid())
   /// Payment amount in dollars (Stripe processes in cents, stored as dollars)
-  amount    Int
+  amount          Int
   /// Payment and enrollment lifecycle state
-  status    EnrollmentStatus @default(Pending)
+  status          EnrollmentStatus @default(Pending)
   /// Enrollment creation timestamp for payment processing tracking
-  createdAt DateTime         @default(now())
+  createdAt       DateTime         @default(now())
   /// Status update timestamp for webhook-driven state changes
-  updatedAt DateTime         @updatedAt
-  courseId  String
-  /// User ID for staff enrollments (agency admins, coaches)
-  userId    String?
-  /// Contact ID for end-user enrollments (IV therapy companies, employees, patients)
-  contactId String?
-  Course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  User      User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Contact   Contact?         @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  updatedAt       DateTime         @updatedAt
+  courseId        String
+  /// User ID for staff enrollments (church admins, volunteer leaders)
+  userId          String?
+  /// Church member ID for member enrollments (visitors, members, volunteers)
+  churchMemberId  String?
+  Course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  User            User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChurchMember    ChurchMember?    @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId])
-  @@unique([contactId, courseId])
+  @@unique([churchMemberId, courseId])
 }
 
 /// Individual lesson completion tracking for progress analytics and course advancement
 /// Supports confetti celebrations, progress bars, and learning path unlocking features
-/// Tracks progress for both staff users and contacts
+/// Tracks progress for both staff users and church members
 model LessonProgress {
-  id        String   @id @default(uuid())
+  id             String        @id @default(uuid())
   /// Binary completion state - lesson watched and marked complete
-  completed Boolean  @default(false)
+  completed      Boolean       @default(false)
   /// Initial progress record creation (lesson first accessed)
-  createdAt DateTime @default(now())
+  createdAt      DateTime      @default(now())
   /// Completion timestamp for learning analytics and certificates
-  updatedAt DateTime @updatedAt
+  updatedAt      DateTime      @updatedAt
   /// User ID for staff progress tracking
-  userId    String?
-  /// Contact ID for end-user progress tracking
-  contactId String?
-  lessonId  String
-  Lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  User      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  Contact   Contact? @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  userId         String?
+  /// Church member ID for member progress tracking
+  churchMemberId String?
+  lessonId       String
+  Lesson         Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  User           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ChurchMember   ChurchMember? @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lessonId])
-  @@unique([contactId, lessonId])
+  @@unique([churchMemberId, lessonId])
 }
 
 /// GoHighLevel OAuth token storage for API integration per organization
 /// Access tokens expire after 24 hours, refresh tokens valid for 1 year
 /// Supports both location-level and agency-level OAuth connections
-/// Stores only OAuth credentials - learner data managed separately in Learner model
+/// Used for SMS automations triggered by connect card scanning
 model GHLToken {
   id             String       @id @default(uuid())
   /// Organization this token belongs to
@@ -376,95 +371,141 @@ model GHLToken {
   @@map("ghl_token")
 }
 
-/// Contact profiles - unified model for all people and entities in the system
-/// Supports multiple contact types: Clinics (IV therapy companies), Patients, Employees, Individuals
-/// Hierarchical structure via parentContactId enables clinic → patient relationships
-/// Integration-agnostic design supports GHL, Salesforce, Workday, direct signup, etc.
-model Contact {
-  id             String               @id @default(uuid())
-  /// Organization managing this contact (the agency)
+/// Connect card scanning and OCR data management
+/// Stores scanned visitor cards with extracted information for follow-up
+model ConnectCard {
+  id               String             @id @default(uuid())
+  /// Organization that owns this connect card
+  organizationId   String
+  /// S3/Tigris storage key for scanned card image
+  imageKey         String
+  /// Raw OCR text output from scanning service
+  rawText          String?
+  /// Structured extracted data (JSON format)
+  extractedData    Json?
+  /// Extracted visitor name
+  name             String?
+  /// Extracted email address
+  email            String?
+  /// Extracted phone number
+  phone            String?
+  /// Extracted physical address
+  address          String?
+  /// Prayer request or notes from card
+  prayerRequest    String?
+  /// Type of visit (First Time, Regular Attender, etc.)
+  visitType        String?
+  /// Areas of interest or ministry preferences
+  interests        String[]           @default([])
+  /// Processing status of the card
+  status           ConnectCardStatus  @default(PENDING)
+  /// Linked church member after processing
+  churchMemberId   String?
+  /// User who scanned the card
+  scannedBy        String?
+  /// When the card was scanned
+  scannedAt        DateTime           @default(now())
+  /// Card creation timestamp
+  createdAt        DateTime           @default(now())
+  /// Last update timestamp
+  updatedAt        DateTime           @updatedAt
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  churchMember     ChurchMember?      @relation(fields: [churchMemberId], references: [id])
+
+  @@index([organizationId, status])
+  @@index([scannedAt])
+  @@map("connect_card")
+}
+
+/// Church member profiles - unified model for all people in the church system
+/// Supports multiple member types: Visitors, Members, Volunteers, Staff
+/// Integration-agnostic design supports GHL, direct signup, connect card scanning, etc.
+model ChurchMember {
+  id             String                @id @default(uuid())
+  /// Organization managing this member (the church)
   organizationId String
-  /// Type of contact for business logic and filtering
-  contactType    ContactType          @default(CLINIC)
-  /// Contact display name (company name or person name)
+  /// Type of member for business logic and filtering
+  memberType     MemberType            @default(VISITOR)
+  /// Member display name
   name           String
   /// Primary email for communication and enrollment notifications
   email          String?
-  /// Contact phone number
+  /// Member phone number
   phone          String?
   /// Physical address
   address        String?
   /// Timezone for scheduling and notifications
   timezone       String?
-  /// Hierarchical relationship - enables clinic → patient structure
-  parentContactId String?
+  /// Date of first visit to the church
+  visitDate      DateTime?
+  /// Date they became an official member
+  memberSince    DateTime?
+  /// Small group or community group ID
+  smallGroupId   String?
+  /// Serving team or volunteer team ID
+  servingTeamId  String?
   /// CRM fields
-  tags           String[]             @default([])
+  tags           String[]              @default([])
   customFields   Json?
   /// Learning assignments and course access (LMS features)
   enrollments    Enrollment[]
   /// Progress tracking across all courses
   lessonProgress LessonProgress[]
-  /// External system integrations (GHL, Salesforce, etc.)
-  integrations   ContactIntegration[]
+  /// External system integrations (GHL, etc.)
+  integrations   MemberIntegration[]
   /// CRM relationships
-  notes          ContactNote[]
+  notes          MemberNote[]
   appointments   Appointment[]
   messages       Message[]
   tasks          Task[]
-  /// Self-referential relationships for hierarchy
-  parentContact  Contact?             @relation("ContactHierarchy", fields: [parentContactId], references: [id])
-  childContacts  Contact[]            @relation("ContactHierarchy")
-  /// Staff members associated with this clinic (when contactType is CLINIC)
-  clinicStaff    User[]               @relation("ClinicStaff")
-  /// Payments made by this contact
+  connectCards   ConnectCard[]
+  /// Payments made by this member
   payments       Payment[]
-  /// Contact creation timestamp
-  createdAt      DateTime             @default(now())
+  /// Member creation timestamp
+  createdAt      DateTime              @default(now())
   /// Last profile update
-  updatedAt      DateTime             @updatedAt
-  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime              @updatedAt
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, email])
   @@index([organizationId])
-  @@index([organizationId, contactType])
-  @@index([parentContactId])
-  @@map("contact")
+  @@index([organizationId, memberType])
+  @@map("church_member")
 }
 
-/// Provider-agnostic integration tracking for contacts
-/// Supports multiple external systems (GHL, Salesforce, Workday, etc.)
-/// Decouples core contact data from integration-specific metadata
-model ContactIntegration {
-  id           String    @id @default(uuid())
-  /// Contact this integration belongs to
-  contactId    String
-  /// Integration provider (e.g., "ghl", "salesforce", "workday")
-  provider     String
-  /// Provider's unique identifier (GHL locationId, Salesforce contactId, etc.)
-  externalId   String
+/// Provider-agnostic integration tracking for church members
+/// Supports multiple external systems (GHL, etc.)
+/// Decouples core member data from integration-specific metadata
+model MemberIntegration {
+  id             String        @id @default(uuid())
+  /// Member this integration belongs to
+  churchMemberId String
+  /// Integration provider (e.g., "ghl")
+  provider       String
+  /// Provider's unique identifier (GHL contactId, etc.)
+  externalId     String
   /// Provider-specific metadata stored as JSON
-  externalData Json?
+  externalData   Json?
   /// Last successful sync timestamp
-  lastSyncAt   DateTime?
+  lastSyncAt     DateTime?
   /// Integration status for monitoring
-  syncStatus   String    @default("active")
+  syncStatus     String        @default("active")
   /// Integration creation timestamp
-  createdAt    DateTime  @default(now())
+  createdAt      DateTime      @default(now())
   /// Last sync attempt timestamp
-  updatedAt    DateTime  @updatedAt
-  contact      Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime      @updatedAt
+  churchMember   ChurchMember  @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
 
   @@unique([provider, externalId])
-  @@index([contactId, provider])
-  @@map("contact_integration")
+  @@index([churchMemberId, provider])
+  @@map("member_integration")
 }
 
-/// Notes and comments about contacts for relationship management
-model ContactNote {
-  id             String   @id @default(uuid())
-  /// Contact this note belongs to
-  contactId      String
+/// Notes and comments about church members for relationship management
+model MemberNote {
+  id             String       @id @default(uuid())
+  /// Member this note belongs to
+  churchMemberId String
   /// Organization for data isolation
   organizationId String
   /// Note content
@@ -472,20 +513,20 @@ model ContactNote {
   /// User who created the note
   createdBy      String
   /// Note creation timestamp
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
   /// Last update timestamp
-  updatedAt      DateTime @updatedAt
-  contact        Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime     @updatedAt
+  churchMember   ChurchMember @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
 
-  @@index([organizationId, contactId])
-  @@map("contact_note")
+  @@index([organizationId, churchMemberId])
+  @@map("member_note")
 }
 
-/// Appointment and calendar event tracking for contacts
+/// Appointment and calendar event tracking for church members
 model Appointment {
   id               String            @id @default(uuid())
-  /// Contact this appointment is with
-  contactId        String
+  /// Member this appointment is with
+  churchMemberId   String
   /// Organization for data isolation
   organizationId   String
   /// Calendar provider integration
@@ -514,18 +555,18 @@ model Appointment {
   createdAt        DateTime          @default(now())
   /// Last update timestamp
   updatedAt        DateTime          @updatedAt
-  contact          Contact           @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  churchMember     ChurchMember      @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, startTime])
-  @@index([contactId])
+  @@index([churchMemberId])
   @@map("appointment")
 }
 
-/// Message and communication tracking for contacts
+/// Message and communication tracking for church members
 model Message {
   id             String           @id @default(uuid())
-  /// Contact this message is with
-  contactId      String
+  /// Member this message is with
+  churchMemberId String
   /// Organization for data isolation
   organizationId String
   /// Message direction
@@ -550,17 +591,17 @@ model Message {
   createdAt      DateTime         @default(now())
   /// Last update timestamp
   updatedAt      DateTime         @updatedAt
-  contact        Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  churchMember   ChurchMember     @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
 
-  @@index([organizationId, contactId])
+  @@index([organizationId, churchMemberId])
   @@map("message")
 }
 
-/// Task and to-do management for contacts
+/// Task and to-do management for church members
 model Task {
-  id             String     @id @default(uuid())
-  /// Contact this task is related to
-  contactId      String
+  id             String       @id @default(uuid())
+  /// Member this task is related to
+  churchMemberId String
   /// Organization for data isolation
   organizationId String
   /// Task title
@@ -570,7 +611,7 @@ model Task {
   /// Due date for the task
   dueDate        DateTime?
   /// Task completion status
-  status         TaskStatus @default(PENDING)
+  status         TaskStatus   @default(PENDING)
   /// Task priority level
   priority       TaskPriority @default(MEDIUM)
   /// User assigned to the task
@@ -578,25 +619,25 @@ model Task {
   /// Task completion date
   completedAt    DateTime?
   /// Creation timestamp
-  createdAt      DateTime   @default(now())
+  createdAt      DateTime     @default(now())
   /// Last update timestamp
-  updatedAt      DateTime   @updatedAt
-  contact        Contact    @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  updatedAt      DateTime     @updatedAt
+  churchMember   ChurchMember @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, dueDate])
-  @@index([contactId])
+  @@index([churchMemberId])
   @@index([assignedTo])
   @@map("task")
 }
 
 /// Organization types for business logic and access control
 enum OrganizationType {
-  /// SideCar Platform organization
+  /// Platform organization
   PLATFORM
-  /// Standard GoHighLevel agency
-  AGENCY
-  /// Large multi-location agency
-  ENTERPRISE
+  /// Individual church organization
+  CHURCH
+  /// Multi-church network or denomination
+  NETWORK
 }
 
 /// Subscription status for billing and access control
@@ -651,7 +692,7 @@ enum CourseStatus {
 enum EnrollmentStatus {
   /// Initial state after course purchase, awaiting payment confirmation
   Pending
-  /// Payment confirmed, student has full course access and can track progress  
+  /// Payment confirmed, student has full course access and can track progress
   Active
   /// Payment failed or refunded, course access revoked but enrollment record preserved
   Cancelled
@@ -659,30 +700,44 @@ enum EnrollmentStatus {
 
 /// User roles for multi-tenant access control and business logic
 enum UserRole {
-  /// SideCar platform administrators (employees)
+  /// Platform administrators (employees)
   platform_admin
-  /// Agency owner (primary account holder, billing admin)
-  agency_owner
-  /// Agency team member (can manage courses and users)
-  agency_admin
-  /// Clinic administrator (manages their clinic's data)
-  clinic_admin
-  /// Clinic staff member (can view and work with patients)
-  clinic_staff
-  /// End user/client of the agency (matches Better Auth's default "user")
+  /// Church owner (primary account holder, billing admin)
+  church_owner
+  /// Church team member (can manage content and members)
+  church_admin
+  /// Volunteer leader (can view and manage their team)
+  volunteer_leader
+  /// End user/client (matches Better Auth's default "user")
   user
 }
 
-/// Contact types for categorizing entities in the CRM
-enum ContactType {
-  /// IV therapy clinic or medical practice (agency's direct client)
-  CLINIC
-  /// End customer of a clinic (patient receiving services)
-  PATIENT
-  /// Staff member or employee taking training courses
-  EMPLOYEE
-  /// Individual learner not associated with a clinic
-  INDIVIDUAL
+/// Member types for categorizing people in the church system
+enum MemberType {
+  /// First-time visitor to the church
+  VISITOR
+  /// Returning visitor (not yet a member)
+  RETURNING
+  /// Committed church member
+  MEMBER
+  /// Active volunteer serving in ministry
+  VOLUNTEER
+  /// Paid church staff member
+  STAFF
+}
+
+/// Connect card processing status
+enum ConnectCardStatus {
+  /// Card scanned, awaiting OCR processing
+  PENDING
+  /// OCR completed, data extracted
+  EXTRACTED
+  /// Staff reviewed and verified data
+  REVIEWED
+  /// Member created/updated from card data
+  PROCESSED
+  /// Card rejected (duplicate, illegible, etc.)
+  REJECTED
 }
 
 /// Appointment status tracking
@@ -695,15 +750,15 @@ enum AppointmentStatus {
   COMPLETED
   /// Appointment was cancelled
   CANCELLED
-  /// Contact was a no-show
+  /// Member was a no-show
   NO_SHOW
 }
 
 /// Message direction for communication tracking
 enum MessageDirection {
-  /// Message received from contact
+  /// Message received from member
   INBOUND
-  /// Message sent to contact
+  /// Message sent to member
   OUTBOUND
 }
 
@@ -759,38 +814,7 @@ enum TaskPriority {
   URGENT
 }
 
-/// Service/Product entity for IV therapy treatments and offerings
-/// Used for configuring treatment catalog that syncs to GHL
-model Service {
-  id             String   @id @default(cuid())
-  /// Organization that owns this service
-  organizationId String
-  /// Service display name (e.g., "Myers Cocktail")
-  name           String
-  /// Service description for staff reference
-  description    String?
-  /// Service price in dollars
-  price          Decimal  @db.Decimal(10, 2)
-  /// Treatment duration in minutes
-  duration       Int?
-  /// GoHighLevel product ID for sync reference
-  ghlProductId   String?  @unique
-  /// Whether service is active and available
-  isActive       Boolean  @default(true)
-  /// Service creation timestamp
-  createdAt      DateTime @default(now())
-  /// Last modification date
-  updatedAt      DateTime @updatedAt
-
-  /// Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  payments     Payment[]
-
-  @@index([organizationId])
-  @@map("service")
-}
-
-/// Payment transaction entity for tracking revenue and patient payments
+/// Payment transaction entity for tracking donations and member payments
 /// Synced from GoHighLevel via webhooks when payments are collected
 model Payment {
   id              String        @id @default(cuid())
@@ -798,19 +822,17 @@ model Payment {
   organizationId  String
   /// GoHighLevel payment/invoice ID for sync reference
   ghlPaymentId    String?       @unique
-  /// GoHighLevel contact ID for patient reference (stored for sync)
+  /// GoHighLevel contact ID for member reference (stored for sync)
   ghlContactId    String?
-  /// Internal contact ID (optional - linked after contact sync)
-  contactId       String?
-  /// Service/treatment that was paid for
-  serviceId       String?
+  /// Internal member ID (optional - linked after member sync)
+  churchMemberId  String?
   /// Stripe payment intent ID if available
   stripePaymentId String?
 
-  /// Patient information (denormalized for performance)
-  patientName  String?
-  patientEmail String?
-  patientPhone String?
+  /// Member information (denormalized for performance)
+  memberName  String?
+  memberEmail String?
+  memberPhone String?
 
   /// Payment details
   amount        Decimal       @db.Decimal(10, 2)
@@ -829,9 +851,8 @@ model Payment {
   updatedAt DateTime  @updatedAt
 
   /// Relations
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  contact      Contact?     @relation(fields: [contactId], references: [id])
-  service      Service?     @relation(fields: [serviceId], references: [id])
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  churchMember ChurchMember? @relation(fields: [churchMemberId], references: [id])
 
   @@index([organizationId, status])
   @@index([ghlPaymentId])

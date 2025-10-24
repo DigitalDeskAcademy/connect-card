@@ -135,10 +135,10 @@ export async function GET(req: NextRequest) {
           });
 
           if (ghlToken) {
-            // Store each location as a Contact with GHL integration
+            // Store each location as a ChurchMember with GHL integration
             for (const location of locations) {
-              // Upsert Contact (GHL Location)
-              const contact = await prisma.contact.upsert({
+              // Upsert ChurchMember (GHL Location)
+              const churchMember = await prisma.churchMember.upsert({
                 where: {
                   organizationId_email: {
                     organizationId: user.organizationId,
@@ -151,7 +151,7 @@ export async function GET(req: NextRequest) {
                   email: location.email || `${location.id}@ghl.temp`,
                   phone: location.phone,
                   address: location.address,
-                  contactType: "CLINIC", // GHL locations are clinics (agency's clients)
+                  memberType: "VISITOR", // GHL locations synced as visitors by default
                 },
                 update: {
                   name: location.name,
@@ -160,8 +160,8 @@ export async function GET(req: NextRequest) {
                 },
               });
 
-              // Upsert ContactIntegration for GHL
-              await prisma.contactIntegration.upsert({
+              // Upsert MemberIntegration for GHL
+              await prisma.memberIntegration.upsert({
                 where: {
                   provider_externalId: {
                     provider: "ghl",
@@ -169,7 +169,7 @@ export async function GET(req: NextRequest) {
                   },
                 },
                 create: {
-                  contactId: contact.id,
+                  churchMemberId: churchMember.id,
                   provider: "ghl",
                   externalId: location.id,
                   externalData: {

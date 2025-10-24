@@ -1,5 +1,5 @@
 /**
- * Agency Admin Authentication & Authorization Guard
+ * Church Admin Authentication & Authorization Guard
  *
  * Provides enterprise-grade multi-tenant security using Better Auth's organization plugin:
  * 1. Organization validation (exists and active)
@@ -25,7 +25,7 @@ import { getOrganizationBySlug } from "@/app/data/organization/get-organization-
 import { prisma } from "@/lib/db";
 
 /**
- * Cached agency admin authentication and authorization guard
+ * Cached church admin authentication and authorization guard
  *
  * Uses Better Auth's organization plugin for proper multi-tenant isolation.
  * Results are cached per request to avoid redundant lookups.
@@ -46,9 +46,9 @@ export const requireAgencyAdmin = cache(async (slug: string) => {
     headers: await headers(),
   });
 
-  // Redirect to agency-specific login if not authenticated
+  // Redirect to church-specific login if not authenticated
   if (!session) {
-    return redirect(`/agency/${slug}/login`);
+    return redirect(`/church/${slug}/login`);
   }
 
   // Layer 3: Check if user has an active organization set
@@ -106,7 +106,7 @@ export const requireAgencyAdmin = cache(async (slug: string) => {
   const allowedRoles = ["owner", "admin"];
   if (!allowedRoles.includes(member.role)) {
     // Redirect non-admin users to their learning portal
-    return redirect(`/agency/${slug}/learning`);
+    return redirect(`/church/${slug}/learning`);
   }
 
   // Layer 5: Check subscription status
@@ -115,7 +115,7 @@ export const requireAgencyAdmin = cache(async (slug: string) => {
     !organization.subscriptionStatus ||
     !activeStatuses.includes(organization.subscriptionStatus)
   ) {
-    return redirect(`/agency/${slug}/subscription-expired`);
+    return redirect(`/church/${slug}/subscription-expired`);
   }
 
   // Return session, organization, and member data for use in components
@@ -127,14 +127,14 @@ export const requireAgencyAdmin = cache(async (slug: string) => {
 });
 
 /**
- * Check if user is agency owner specifically
+ * Check if user is church owner specifically
  * Used for sensitive operations like billing management
  */
 export const requireAgencyOwner = cache(async (slug: string) => {
   const { session, organization, member } = await requireAgencyAdmin(slug);
 
   if (member.role !== "owner") {
-    return redirect(`/agency/${slug}/admin`);
+    return redirect(`/church/${slug}/admin`);
   }
 
   return { session, organization, member };

@@ -5,11 +5,11 @@
  * This ensures that navigation links always point to the correct admin area without
  * hardcoding URLs in components.
  *
- * Uses the existing OrganizationContext to determine if user is in agency context,
+ * Uses the existing OrganizationContext to determine if user is in church context,
  * and auth session to determine user role for platform admins.
  *
  * Pattern followed:
- * - Agency admins: /agency/[slug]/admin/*
+ * - Church admins: /church/[slug]/admin/*
  * - Platform admins: /platform/admin/*
  * - Regular users: Public routes
  * - All users: /home for smart routing
@@ -30,38 +30,38 @@ export function useNavigation() {
   const homeUrl = "/home";
 
   // Context-aware dashboard URL
-  // Priority: Agency context > Platform admin > Default dashboard
+  // Priority: Church context > Platform admin > Default dashboard
   const dashboardUrl = organization
-    ? `/agency/${organization.slug}/admin`
+    ? `/church/${organization.slug}/admin`
     : session?.user?.role === "platform_admin"
       ? "/platform/admin"
       : "/dashboard";
 
   // Context-aware courses URL
-  // Agency admins see their courses, platform admins see all courses
+  // Church admins see their courses, platform admins see all courses
   const coursesUrl = organization
-    ? `/agency/${organization.slug}/admin/courses`
+    ? `/church/${organization.slug}/admin/courses`
     : session?.user?.role === "platform_admin"
       ? "/platform/admin/courses"
       : "/courses";
 
   // Context-aware analytics URL
   const analyticsUrl = organization
-    ? `/agency/${organization.slug}/admin/analytics`
+    ? `/church/${organization.slug}/admin/analytics`
     : session?.user?.role === "platform_admin"
       ? "/platform/admin/analytics"
       : null;
 
   // Context-aware users URL
   const usersUrl = organization
-    ? `/agency/${organization.slug}/admin/users`
+    ? `/church/${organization.slug}/admin/users`
     : session?.user?.role === "platform_admin"
       ? "/platform/admin/users"
       : null;
 
   // Context-aware profile URL
   const profileUrl = organization
-    ? `/agency/${organization.slug}/admin/profile`
+    ? `/church/${organization.slug}/admin/profile`
     : session?.user?.role === "platform_admin"
       ? "/platform/admin/profile"
       : "/profile";

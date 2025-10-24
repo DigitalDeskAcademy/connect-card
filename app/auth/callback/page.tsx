@@ -99,11 +99,11 @@ export default async function AuthCallbackPage() {
     // Organization users - check their role within the organization
     const agencySlug = user.organization.slug;
 
-    if (user.role === "agency_owner" || user.role === "agency_admin") {
-      // Agency administrators go to agency admin dashboard
+    if (user.role === "church_owner" || user.role === "church_admin") {
+      // Church administrators go to church admin dashboard
       redirectTo = `/agency/${agencySlug}/admin`;
     } else if (user.role === "user") {
-      // End users go to agency learning dashboard
+      // End users go to church learning dashboard
       redirectTo = `/agency/${agencySlug}/learning`;
     }
   }

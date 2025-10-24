@@ -4,8 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IconCash, IconTrendingUp, IconAlertCircle } from "@tabler/icons-react";
 import type {
   Payment,
-  Contact,
-  Service,
+  ChurchMember,
   Organization,
 } from "@/lib/generated/prisma";
 import { PaymentsTable } from "./payments-table";
@@ -14,8 +13,7 @@ import { PaymentsTable } from "./payments-table";
  * Payment with optional relations for display
  */
 export type PaymentWithRelations = Payment & {
-  contact: Contact | null;
-  service: Service | null;
+  churchMember: ChurchMember | null;
   organization: Organization | null;
 };
 

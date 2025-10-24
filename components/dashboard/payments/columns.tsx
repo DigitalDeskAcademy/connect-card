@@ -80,7 +80,7 @@ export const paymentColumns: ColumnDef<PaymentWithRelations>[] = [
     },
   },
   {
-    accessorKey: "patientName",
+    accessorKey: "memberName",
     header: ({ column }) => {
       return (
         <Button
@@ -89,7 +89,7 @@ export const paymentColumns: ColumnDef<PaymentWithRelations>[] = [
           className="-ml-3 h-8"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Patient
+          Member
           {column.getIsSorted() === "asc" ? (
             <IconSortAscending className="ml-2 h-4 w-4" />
           ) : column.getIsSorted() === "desc" ? (
@@ -104,12 +104,10 @@ export const paymentColumns: ColumnDef<PaymentWithRelations>[] = [
       const payment = row.original;
       return (
         <div className="flex flex-col">
-          <span className="font-medium">
-            {payment.patientName || "Unknown"}
-          </span>
-          {payment.patientEmail && (
+          <span className="font-medium">{payment.memberName || "Unknown"}</span>
+          {payment.memberEmail && (
             <span className="text-xs text-muted-foreground">
-              {payment.patientEmail}
+              {payment.memberEmail}
             </span>
           )}
         </div>

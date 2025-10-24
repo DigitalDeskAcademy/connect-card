@@ -183,7 +183,7 @@ export const auth = betterAuth({
           select: { role: true },
         });
         return (
-          dbUser?.role === "agency_owner" || dbUser?.role === "platform_admin"
+          dbUser?.role === "church_owner" || dbUser?.role === "platform_admin"
         );
       },
       // Automatically set active organization on session creation

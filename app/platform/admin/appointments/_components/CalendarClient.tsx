@@ -50,7 +50,9 @@ export function CalendarClient({ appointments = [] }: CalendarClientProps) {
 
     return {
       id: apt.id,
-      title: apt.contact ? `${apt.title} - ${apt.contact.name}` : apt.title,
+      title: apt.churchMember
+        ? `${apt.title} - ${apt.churchMember.name}`
+        : apt.title,
       start: apt.startTime,
       end: apt.endTime,
       backgroundColor,
@@ -59,7 +61,7 @@ export function CalendarClient({ appointments = [] }: CalendarClientProps) {
         status: apt.status,
         location: apt.location,
         calendarProvider: apt.calendarProvider,
-        contact: apt.contact,
+        contact: apt.churchMember,
       },
     };
   });

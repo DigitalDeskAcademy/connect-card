@@ -1,16 +1,17 @@
 # Project Status
 
-**Current Phase**: IV Therapy Clinic Vertical SaaS (Phase 1: MVP Foundation)
-**Production Ready**: YES ✅ - All critical issues resolved!
-**Product Strategy**: Simplified UI wrapper over GoHighLevel - Direct feature usage (not training-based)
+**Current Phase**: Church Connect Card - Fork Migration (Phase 1: Infrastructure)
+**Production Ready**: NO ⚠️ - Migration in progress
+**Product Focus**: Church visitor engagement platform with connect card scanning, volunteer management, and prayer request tracking
 
-> 📋 **MAJOR PIVOT**: SideCar is now a GHL wrapper providing easy-to-use features directly.
-> **LMS Position**: Training platform (courses) repositioned as **secondary** feature for future agency/staff onboarding.
-> **Primary Focus**: GHL API integration with placeholder pages for testing real data connections.
+> 🎯 **PROJECT FORK**: Forked from IV therapy clinic SaaS to church operations platform
+> **New Product**: Church Connect Card - Visitor engagement and follow-up automation
+> **Core Features**: Connect card OCR, N2N workflow (first visit → member), volunteer scheduling, prayer requests
+> **LMS Position**: Training platform repositioned for church staff onboarding and volunteer training
 
-> 📋 **See `/docs/IV-THERAPY-PHASE-PLAN.md` for the complete implementation roadmap**
+> 📋 **Migration Status**: Phase 1 complete (folder rename + core utilities), Phase 2 pending (URL references)
 
-**Target**: 3 pilot clinics → 25 paying clinics → $10k MRR
+**Target**: 1 pilot church (6 locations) → Expand to additional churches
 
 ---
 
@@ -135,7 +136,33 @@
 
 ## 🔄 IN PROGRESS
 
-### Role Framework Consolidation (Current Priority)
+### Church Platform Migration (Current Priority)
+
+**Phase 1: Core Infrastructure** ✅ COMPLETED
+
+- [x] Database schema migration (Contact → ChurchMember, ConnectCard model, MemberType enum)
+- [x] Created fresh Neon database for church platform
+- [x] Fixed 12+ TypeScript errors from schema changes
+- [x] Production build passes
+- [x] Renamed /app/agency/ → /app/church/ (58 files)
+- [x] Updated core utilities (lib/tenant-utils.ts, hooks/use-navigation.ts, app/home/route.ts)
+- [x] Updated auth guards (require-agency-admin.ts, require-dashboard-access.ts)
+- [x] Reorganized navigation (Dashboard, N2N, Volunteer, Prayer main; Calendar/Contacts/Payments in "More")
+- [x] Created placeholder pages: N2N, Volunteer, Prayer (pages + headers)
+
+**Phase 2: URL Migration** (Next - 90+ references)
+
+- [ ] Auth flows (4 files): login, callback, church login, org setup
+- [ ] Church navbar (AgencyNavbar.tsx - 17 references)
+- [ ] Learning portal (8 files - 13+ references in sidebar)
+- [ ] Admin courses (12+ files with revalidatePath)
+- [ ] Shared components (3 files - 16+ references)
+- [ ] Other pages: subscription-expired, homepage
+- [ ] Dev scripts: seed/test utilities
+
+**Branch**: `feat/church-schema-and-folder-migration`
+
+### Role Framework Consolidation (Deferred)
 
 **Goal:** Eliminate duplicate infrastructure for 3 roles (platform_admin → agency_admin → clinic_user)
 
