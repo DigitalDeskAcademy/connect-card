@@ -13,11 +13,7 @@
     "lint:fix": "next lint --fix",
     "prepare": "husky",
     "postinstall": "prisma generate",
-    "seed:organizations": "npx tsx prisma/seed-organizations.ts",
-    "seed:users": "npx tsx prisma/seed-users.ts",
-    "seed:courses": "npx tsx prisma/seed-courses.ts",
-    "seed:platform": "npx tsx prisma/seed-platform-courses.ts",
-    "seed:all": "npm run seed:organizations && npm run seed:users && npm run seed:courses && npm run seed:platform"
+    "seed": "npx tsx prisma/seed.ts"
   },
   "dependencies": {
     "@arcjet/inspect": "1.0.0-beta.8",

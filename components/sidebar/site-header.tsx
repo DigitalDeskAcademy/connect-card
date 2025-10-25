@@ -11,19 +11,24 @@ import {
   IconLayoutSidebarRight,
 } from "@tabler/icons-react";
 import { authClient } from "@/lib/auth-client";
+import { usePathname } from "next/navigation";
+import {
+  getPageTitle,
+  getChurchNavigation,
+  getPlatformNavigation,
+} from "@/lib/navigation";
 
 /**
  * Top Bar - Global utility navigation
  *
- * Contains only utility icon buttons that should always be accessible:
+ * Contains utility icon buttons and page title:
  * - Sidebar toggle (left)
+ * - Page title
  * - Trial badge (if applicable)
  * - Search
  * - Notifications
  * - Info sidebar toggle (right)
  * - Theme toggle
- *
- * Page-specific navigation (titles, tabs) lives in sub-nav bar below this.
  */
 interface Organization {
   id: string;
@@ -46,6 +51,27 @@ export function SiteHeader({
 }: iAppProps) {
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const { data: session } = authClient.useSession();
+  const pathname = usePathname();
+
+  // Determine navigation config based on current path
+  const getNavigationConfig = () => {
+    if (pathname.startsWith("/platform/admin")) {
+      return getPlatformNavigation();
+    }
+    // Extract church slug from pathname: /church/[slug]/...
+    const churchMatch = pathname.match(/^\/church\/([^/]+)\//);
+    if (churchMatch) {
+      const slug = churchMatch[1];
+      return getChurchNavigation(slug);
+    }
+    // Fallback for other routes
+    return null;
+  };
+
+  const navigationConfig = getNavigationConfig();
+  const pageTitle = navigationConfig
+    ? getPageTitle(pathname, navigationConfig)
+    : "Dashboard";
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -55,6 +81,9 @@ export function SiteHeader({
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"
         />
+
+        {/* Page title */}
+        <h1 className="text-2xl font-bold">{pageTitle}</h1>
 
         {/* Utility buttons - right aligned */}
         <div className="ml-auto flex items-center gap-2">

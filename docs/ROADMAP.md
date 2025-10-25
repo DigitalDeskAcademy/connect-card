@@ -282,6 +282,13 @@
 - [x] Add production security headers ✅
 - [x] Enable CSRF protection in production ✅ (via Better Auth)
 - [x] Video content protection ✅ (Level 1 - 95% effective)
+- [ ] **⚠️ CRITICAL: Implement proper database migrations**
+  - Switch from `prisma db push` to `prisma migrate dev`
+  - Create initial production migration: `npx prisma migrate dev --name init_production`
+  - Document migration strategy in `/docs/essentials/deployment.md`
+  - Set up CI/CD pipeline for production migrations
+  - **Risk**: Current `db push` workflow has no rollback capability
+  - **Reference**: See STATUS.md "Database Migration Strategy" section
 - [ ] Verify all environment variables configured
 - [ ] Test full user flow (signup → enrollment → learning)
 - [ ] Add Content-Security-Policy (CSP) - deferred to Phase 4 (post-$1k MRR)

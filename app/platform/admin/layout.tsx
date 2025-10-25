@@ -42,14 +42,11 @@ import { ReactNode } from "react";
  * Security: Enforces admin-only access for entire admin area.
  *
  * @param children - Admin page content to render within layout
- * @param header - Page header slot (Named Slots pattern)
  */
 export default async function AdminLayout({
   children,
-  header,
 }: {
   children: ReactNode;
-  header: ReactNode;
 }) {
   // Enforce admin authentication for all admin routes
   await requireAdmin();
@@ -73,11 +70,7 @@ export default async function AdminLayout({
         homeUrl="/platform/admin"
       />
       <SidebarInset>
-        <DashboardContentWrapper
-          brandName={brandName}
-          pageHeader={header}
-          showInfoSidebar={true}
-        >
+        <DashboardContentWrapper brandName={brandName} showInfoSidebar={true}>
           {children}
         </DashboardContentWrapper>
       </SidebarInset>

@@ -11,28 +11,12 @@
 "use client";
 
 import * as React from "react";
-import {
-  IconHome,
-  IconChartBar,
-  IconSettings,
-  IconHelp,
-  IconSearch,
-  IconSchool,
-  IconAddressBook,
-  IconCalendarMonth,
-  IconMessage,
-  IconBrain,
-  IconUsers,
-  IconCash,
-  IconDots,
-  IconUserPlus,
-  IconHandHeart,
-  IconPray,
-} from "@tabler/icons-react";
+import { type Icon } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavSecondary } from "@/components/sidebar/nav-secondary";
 import { NavUser } from "@/components/sidebar/nav-user";
+import { getChurchNavigation } from "@/lib/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -51,102 +35,13 @@ interface AgencyNavSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AgencyNavSidebar({
-  brandName = "SideCar.",
+  brandName = "Newlife",
   homeUrl,
   agencySlug,
   ...props
 }: AgencyNavSidebarProps) {
-  // Build church-specific admin navigation URLs
-  // Connect card workflow and core ministry features are primary
-  const navMain = [
-    {
-      title: "Dashboard",
-      url: `/church/${agencySlug}/admin`,
-      icon: IconHome,
-    },
-    {
-      title: "N2N",
-      url: `/church/${agencySlug}/admin/n2n`,
-      icon: IconUserPlus,
-    },
-    {
-      title: "Volunteer",
-      url: `/church/${agencySlug}/admin/volunteer`,
-      icon: IconHandHeart,
-    },
-    {
-      title: "Prayer",
-      url: `/church/${agencySlug}/admin/prayer`,
-      icon: IconPray,
-    },
-    // Collapsible "More" section for secondary features
-    {
-      title: "More",
-      url: "#",
-      icon: IconDots,
-      className: "mt-4",
-      items: [
-        {
-          title: "Calendar",
-          url: `/church/${agencySlug}/admin/calendar`,
-          icon: IconCalendarMonth,
-        },
-        {
-          title: "Contacts",
-          url: `/church/${agencySlug}/admin/contacts`,
-          icon: IconAddressBook,
-        },
-        {
-          title: "Payments",
-          url: `/church/${agencySlug}/admin/payments`,
-          icon: IconCash,
-        },
-        {
-          title: "Conversations",
-          url: `/church/${agencySlug}/admin/conversations`,
-          icon: IconMessage,
-        },
-        {
-          title: "Team",
-          url: `/church/${agencySlug}/admin/team`,
-          icon: IconUsers,
-        },
-        {
-          title: "AI Insights",
-          url: `/church/${agencySlug}/admin/insights`,
-          icon: IconBrain,
-        },
-        {
-          title: "Analytics",
-          url: `/church/${agencySlug}/admin/analytics`,
-          icon: IconChartBar,
-        },
-        {
-          title: "Training Center",
-          url: `/church/${agencySlug}/admin/courses`,
-          icon: IconSchool,
-        },
-      ],
-    },
-  ];
-
-  const navSecondary = [
-    {
-      title: "Settings",
-      url: `/church/${agencySlug}/admin/settings`,
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: `/church/${agencySlug}/support`,
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ];
+  // Get navigation structure from shared config (single source of truth)
+  const navigation = getChurchNavigation(agencySlug);
 
   // Use the provided homeUrl or default to church admin dashboard
   const effectiveHomeUrl = homeUrl || `/church/${agencySlug}/admin`;
@@ -175,8 +70,17 @@ export function AgencyNavSidebar({
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={navMain} />
-        <NavSecondary items={navSecondary} className="mt-auto" />
+        <NavMain items={navigation.navMain} />
+        <NavSecondary
+          items={
+            navigation.navSecondary as Array<{
+              title: string;
+              url: string;
+              icon: Icon;
+            }>
+          }
+          className="mt-auto"
+        />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />

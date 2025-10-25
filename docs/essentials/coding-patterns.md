@@ -672,221 +672,223 @@ export async function getContactsForScope(dataScope: DataScope) {
 
 ---
 
-## 🎨 Page Header Pattern (Named Slots)
+## 🧭 Navigation Configuration Pattern (Single Source of Truth)
 
 ### Overview
 
-**Use Named Slots (Parallel Routes) for page-level headers** across all dashboard pages. This is our standard pattern for rendering page titles, tabs, and action buttons.
+**All navigation structure is defined in `/lib/navigation.ts`** - this is the **single source of truth** for:
 
-**Why Named Slots?**
+- Sidebar menu items
+- Page titles in navbar
+- Navigation URLs
+- Menu hierarchy
 
-- True Server Components (0 client JS overhead)
-- Zero layout shift (CLS = 0)
-- Scales to 100 agencies × 1000s of users
-- Next.js native pattern (follows framework conventions)
-- See ADR-005 for full architectural decision
+**Why Centralized Navigation?**
+
+- ✅ Single source of truth (sidebar defines titles, header uses them)
+- ✅ Update once, reflects everywhere (sidebar + header automatically sync)
+- ✅ Type-safe with TypeScript
+- ✅ Easy to maintain and test
+- ✅ Industry standard pattern (used by Vercel, Linear, GitHub)
+
+**Key Rule:** When changing navigation structure, **ONLY update `/lib/navigation.ts`** - both sidebars and headers automatically update.
 
 ### File Structure
 
 ```
-app/agency/[slug]/admin/
-├── conversations/
-│   ├── @header/
-│   │   └── default.tsx          # Server Component for header
-│   └── page.tsx                 # Server Component for content
-├── contacts/
-│   ├── @header/
-│   │   └── default.tsx
-│   └── page.tsx
-└── layout.tsx                   # Accepts header slot parameter
+lib/
+└── navigation.ts                    # Single source of truth for all navigation
+
+components/sidebar/
+├── agency-nav-sidebar.tsx          # Imports getChurchNavigation()
+├── platform-nav-sidebar.tsx        # Imports getPlatformNavigation()
+└── site-header.tsx                 # Imports getPageTitle() to show current page title
+```
+
+### Navigation Config Structure
+
+```typescript
+// lib/navigation.ts
+export interface NavigationItem {
+  title: string;
+  url: string;
+  icon?: any;
+  className?: string;
+  isActive?: boolean;
+  items?: Omit<NavigationItem, "items">[]; // One level of nesting
+}
+
+export interface NavigationConfig {
+  navMain: NavigationItem[];
+  navAdmin?: NavigationItem[];
+  navSecondary: NavigationItem[];
+}
 ```
 
 ### Implementation Pattern
 
-#### 1. Layout Configuration
-
-Update the layout to accept the `header` slot parameter:
+#### 1. Define Navigation in Config
 
 ```typescript
-// app/agency/[slug]/admin/layout.tsx
-import { ReactNode } from "react";
-import { DashboardLayout } from "@/components/layout/dashboard-layout";
-
-export default async function AgencyAdminLayout({
-  children,
-  header, // ← Add header slot parameter
-  params,
-}: {
-  children: ReactNode;
-  header?: ReactNode; // ← Add type
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const organization = await getOrganization(slug);
-
-  return (
-    <OrganizationProvider organization={organization}>
-      <SidebarProvider>
-        <AgencyNavSidebar />
-        <SidebarInset>
-          <DashboardLayout
-            brandName={organization.name}
-            organizationHeader={<OrganizationHeader />}
-          >
-            {header} {/* ← Render header slot before children */}
-            {children}
-          </DashboardLayout>
-        </SidebarInset>
-      </SidebarProvider>
-    </OrganizationProvider>
-  );
+// lib/navigation.ts
+export function getChurchNavigation(slug: string): NavigationConfig {
+  return {
+    navMain: [
+      {
+        title: "Dashboard",
+        url: `/church/${slug}/admin`,
+      },
+      {
+        title: "Connect Cards",
+        url: `/church/${slug}/admin/n2n`,
+      },
+      {
+        title: "More",
+        url: "#",
+        items: [
+          {
+            title: "Calendar",
+            url: `/church/${slug}/admin/calendar`,
+          },
+          {
+            title: "Contacts",
+            url: `/church/${slug}/admin/contacts`,
+          },
+        ],
+      },
+    ],
+    navSecondary: [
+      {
+        title: "Settings",
+        url: `/church/${slug}/admin/settings`,
+      },
+    ],
+  };
 }
 ```
 
-#### 2. Create Header Files
-
-Create a `@header/default.tsx` file for each route that needs a header:
+#### 2. Sidebars Import and Use Config
 
 ```typescript
-// app/agency/[slug]/admin/conversations/@header/default.tsx
-import { PageHeader } from "@/components/layout/page-header";
-import { Button } from "@/components/ui/button";
-import { IconPlus } from "@tabler/icons-react";
+// components/sidebar/agency-nav-sidebar.tsx
+import { getChurchNavigation } from "@/lib/navigation";
 
-export default function ConversationsHeader() {
-  return (
-    <PageHeader
-      title="Conversations"
-      subtitle="Unified inbox for all customer communications"
-      tabs={[
-        { label: "All", href: "?view=all", active: true },
-        { label: "Unread", href: "?view=unread", active: false },
-        { label: "Starred", href: "?view=starred", active: false },
-      ]}
-      actions={
-        <Button size="sm">
-          <IconPlus className="h-4 w-4 mr-2" />
-          New Message
-        </Button>
-      }
-    />
-  );
+export function AgencyNavSidebar({ agencySlug }) {
+  // Get navigation structure from shared config
+  const navigation = getChurchNavigation(agencySlug);
+
+  // Add icons (config is icon-agnostic for flexibility)
+  const navMain = navigation.navMain.map((item, index) => ({
+    ...item,
+    icon: [IconHome, IconUserPlus, IconDots][index],
+  }));
+
+  return <NavMain items={navMain} />;
 }
 ```
 
-#### 3. Optional Headers
-
-Some pages (like Settings) may not need headers. Simply don't create a `@header/` directory:
+#### 3. Header Automatically Shows Correct Title
 
 ```typescript
-// app/agency/[slug]/admin/settings/
-// No @header/ directory = no header rendered
-```
+// components/sidebar/site-header.tsx
+import { getPageTitle, getChurchNavigation } from "@/lib/navigation";
 
-#### 4. Client-Side Interactivity
+export function SiteHeader() {
+  const pathname = usePathname();
 
-For tabs or actions that need client-side behavior, create a client component:
+  // Determine navigation config based on current path
+  const getNavigationConfig = () => {
+    if (pathname.startsWith("/platform/admin")) {
+      return getPlatformNavigation();
+    }
+    const churchMatch = pathname.match(/^\/church\/([^/]+)\//);
+    if (churchMatch) {
+      return getChurchNavigation(churchMatch[1]);
+    }
+    return null;
+  };
 
-```typescript
-// app/agency/[slug]/admin/analytics/@header/default.tsx
-import { AnalyticsHeaderClient } from "./_components/AnalyticsHeaderClient";
+  const navigationConfig = getNavigationConfig();
+  const pageTitle = navigationConfig
+    ? getPageTitle(pathname, navigationConfig)
+    : "Dashboard";
 
-export default function AnalyticsHeader() {
-  return <AnalyticsHeaderClient />;
-}
-
-// _components/AnalyticsHeaderClient.tsx
-"use client";
-
-import { PageHeader } from "@/components/layout/page-header";
-import { useState } from "react";
-
-export function AnalyticsHeaderClient() {
-  const [timeRange, setTimeRange] = useState("7d");
-
-  return (
-    <PageHeader
-      title="Analytics"
-      tabs={[
-        { label: "Overview", href: "/analytics", active: true },
-        { label: "Revenue", href: "/analytics/revenue", active: false },
-      ]}
-      actions={
-        <select value={timeRange} onChange={(e) => setTimeRange(e.target.value)}>
-          <option value="7d">Last 7 days</option>
-          <option value="30d">Last 30 days</option>
-        </select>
-      }
-    />
-  );
+  return <h1>{pageTitle}</h1>;
 }
 ```
 
-### PageHeader Component API
+### Adding New Navigation Items
 
-The `PageHeader` component accepts these props:
+**To add a new page:**
+
+1. **ONLY update `/lib/navigation.ts`**:
 
 ```typescript
-interface PageHeaderProps {
-  title: string;
-  subtitle?: string;
-  tabs?: Array<{
-    label: string;
-    href: string;
-    active: boolean;
-  }>;
-  actions?: ReactNode;
-}
+navMain: [
+  {
+    title: "Dashboard",
+    url: `/church/${slug}/admin`,
+  },
+  // ✅ Add new item here
+  {
+    title: "Events", // ← This will automatically appear in sidebar AND header
+    url: `/church/${slug}/admin/events`,
+  },
+];
 ```
+
+2. **That's it!** Both sidebar and header update automatically.
 
 ### Rules and Best Practices
 
 ✅ **DO:**
 
-- Use Server Components for headers by default
-- Create `@header/default.tsx` for every route that needs a header
-- Keep headers simple (title, tabs, actions only)
-- Use `PageHeader` component for consistency
-- Use client components only when needed (dropdowns, search, filters)
+- Update navigation structure **ONLY** in `/lib/navigation.ts`
+- Trust that sidebars and headers will automatically sync
+- Keep URLs and titles consistent
+- Use nested `items` for collapsible menu sections
 
 ❌ **DON'T:**
 
-- Use React Context for page headers (deprecated pattern)
-- Hardcode headers inside page content components
-- Pass header props through multiple component layers
-- Create custom header layouts (use PageHeader component)
-- Forget to add `header` slot parameter to layout
+- Hardcode navigation items directly in sidebar components
+- Duplicate navigation structure in multiple files
+- Create custom title logic in page components
+- Pass navigation as props (use the config instead)
 
-### Migration from Context Pattern
+### Example: Renaming a Page
 
-If you encounter old Context-based headers (`usePageHeader` hook), migrate them:
+**Old Way (BAD - required 3 changes):**
+
+1. Update sidebar component
+2. Update header component
+3. Update page title logic
+
+**New Way (GOOD - requires 1 change):**
 
 ```typescript
-// ❌ OLD: Context pattern (deprecated)
-"use client";
-import { usePageHeader } from "@/app/providers/page-header-context";
-
-export default function MyPage() {
-  const { setConfig } = usePageHeader();
-  useEffect(() => {
-    setConfig({ title: "My Page" });
-  }, [setConfig]);
+// lib/navigation.ts
+{
+  title: "Connect Cards",  // ← Change title here only
+  url: `/church/${slug}/admin/n2n`,
 }
-
-// ✅ NEW: Named Slots pattern
-// Create: @header/default.tsx
-import { PageHeader } from "@/components/layout/page-header";
-
-export default function MyPageHeader() {
-  return <PageHeader title="My Page" />;
-}
+// Sidebar and header automatically update ✅
 ```
 
-### References
+### Page Title Lookup Logic
 
-- Implementation Plan: `/docs/technical/NAMED-SLOTS-MIGRATION.md`
-- Architectural Decision: ADR-005 in `/docs/technical/architecture-decisions.md`
-- [Next.js Parallel Routes Docs](https://nextjs.org/docs/app/building-your-application/routing/parallel-routes)
+The `getPageTitle()` function searches through navigation config:
+
+1. Checks all top-level items
+2. Checks all nested items (one level deep)
+3. Falls back to URL-based title generation
+
+This means **the page title shown in the header always matches the sidebar title**.
+
+### Migration Notes
+
+**Previous Pattern (Deprecated):** Used Named Slots (`@header/` directories) for page titles.
+
+**Current Pattern:** Navigation config in `/lib/navigation.ts` with dynamic title lookup in header.
 
 ---
 
