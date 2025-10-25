@@ -78,7 +78,7 @@ async function main() {
 
   // Define test users
   const testEmails = [
-    "platformadmin@sidecar.com",
+    "digitaldeskacademy@outlook.com",
     "owner@newlife.com",
     "admin@newlife.com",
     "staff@newlife.com",
@@ -130,7 +130,7 @@ async function main() {
   // Define users with roles
   const users: TestUser[] = [
     {
-      email: "platformadmin@sidecar.com",
+      email: "digitaldeskacademy@outlook.com",
       name: "Platform Administrator",
       role: "platform_admin",
       organizationId: platformOrg.id,
@@ -223,10 +223,10 @@ async function main() {
   console.log(`   👥 Staff Members: 1\n`);
 
   console.log("🔐 Test Credentials (use email for OTP login):");
-  console.log(`   platformadmin@sidecar.com    (platform_admin)`);
-  console.log(`   owner@newlife.com            (church_owner)`);
-  console.log(`   admin@newlife.com            (church_admin)`);
-  console.log(`   staff@newlife.com            (user/staff)\n`);
+  console.log(`   digitaldeskacademy@outlook.com  (platform_admin)`);
+  console.log(`   owner@newlife.com               (church_owner)`);
+  console.log(`   admin@newlife.com               (church_admin)`);
+  console.log(`   staff@newlife.com               (user/staff)\n`);
 
   console.log("🌐 Login URLs:");
   console.log(`   Platform Admin: http://localhost:3000/login`);
