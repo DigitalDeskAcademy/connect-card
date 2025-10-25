@@ -1,21 +1,12 @@
 "use client";
 
 import * as React from "react";
-import {
-  IconCalendar,
-  IconMessage,
-  IconCreditCard,
-  IconHome,
-  IconHelp,
-  IconSearch,
-  IconSettings,
-  IconCode,
-  IconUsers,
-} from "@tabler/icons-react";
+import { type Icon } from "@tabler/icons-react";
 
 import { NavMain } from "@/components/sidebar/nav-main";
 import { NavSecondary } from "@/components/sidebar/nav-secondary";
 import { NavUser } from "@/components/sidebar/nav-user";
+import { getPlatformNavigation } from "@/lib/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -27,82 +18,8 @@ import {
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
-const data = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/platform/admin",
-      icon: IconHome,
-    },
-    {
-      title: "Contacts",
-      url: "/platform/admin/contacts",
-      icon: IconUsers,
-    },
-    {
-      title: "Calendar",
-      url: "/platform/admin/appointments",
-      icon: IconCalendar,
-    },
-    {
-      title: "Conversations",
-      url: "/platform/admin/conversations",
-      icon: IconMessage,
-    },
-    {
-      title: "Payments",
-      url: "/platform/admin/payments",
-      icon: IconCreditCard,
-    },
-  ],
-  navAdmin: [
-    {
-      title: "Dev",
-      isActive: false,
-      url: "#",
-      icon: IconCode,
-      items: [
-        {
-          title: "Courses",
-          url: "/platform/admin/courses",
-        },
-        {
-          title: "Analytics",
-          url: "/platform/admin/analytics",
-        },
-        {
-          title: "API",
-          url: "/platform/admin/api",
-        },
-        {
-          title: "Projects",
-          url: "/platform/admin/projects",
-        },
-        {
-          title: "Team",
-          url: "/platform/admin/team",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "/platform/admin/settings",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "/platform/admin/help",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "/platform/admin/search",
-      icon: IconSearch,
-    },
-  ],
-};
+// Get navigation structure from shared config (single source of truth)
+const navigation = getPlatformNavigation();
 
 // Following existing pattern with iAppProps
 interface iAppProps extends React.ComponentProps<typeof Sidebar> {
@@ -140,15 +57,23 @@ export function PlatformNavSidebar({
       </SidebarHeader>
       <SidebarContent>
         {/* Core operational features */}
-        <NavMain items={data.navMain} />
+        <NavMain items={navigation.navMain} />
 
         {/* Push Admin and secondary nav to bottom */}
         <div className="mt-auto space-y-1">
           {/* Admin dropdown (Courses, Analytics, API, etc.) */}
-          <NavMain items={data.navAdmin} />
+          <NavMain items={navigation.navAdmin || []} />
 
           {/* Bottom nav (Get Help, Search) */}
-          <NavSecondary items={data.navSecondary} />
+          <NavSecondary
+            items={
+              navigation.navSecondary as Array<{
+                title: string;
+                url: string;
+                icon: Icon;
+              }>
+            }
+          />
         </div>
       </SidebarContent>
       <SidebarFooter>

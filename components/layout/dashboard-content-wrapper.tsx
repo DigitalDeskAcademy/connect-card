@@ -16,7 +16,6 @@ interface DashboardContentWrapperProps {
   children: ReactNode;
   brandName: string;
   organization?: Organization;
-  pageHeader: ReactNode;
   showInfoSidebar?: boolean;
 }
 
@@ -35,7 +34,6 @@ export function DashboardContentWrapper({
   children,
   brandName,
   organization,
-  pageHeader,
   showInfoSidebar = false,
 }: DashboardContentWrapperProps) {
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
@@ -70,7 +68,6 @@ export function DashboardContentWrapper({
           showInfoSidebar={showInfoSidebar}
           onInfoSidebarToggle={handleAiSidebarToggle}
         />
-        {pageHeader}
       </div>
 
       {/* Main content + AI sidebar flex container */}

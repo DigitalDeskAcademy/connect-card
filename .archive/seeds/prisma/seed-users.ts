@@ -9,14 +9,14 @@ const prisma = new PrismaClient();
  *
  * Creates 3 test users matching production authentication flow:
  * - Platform Admin: digitaldeskacademy@outlook.com
- * - Agency Owner: agency@sidecaronboarding.com
+ * - Church Owner: agency@sidecaronboarding.com
  * - End User: enduser@sidecaronboarding.com
  */
 
 interface TestUser {
   email: string;
   name: string;
-  role: "platform_admin" | "agency_owner" | "user";
+  role: "platform_admin" | "church_owner" | "user";
   organizationId?: string;
 }
 
@@ -29,8 +29,8 @@ const testUsers: TestUser[] = [
   },
   {
     email: "agency@sidecaronboarding.com",
-    name: "Agency Owner",
-    role: "agency_owner",
+    name: "Church Owner",
+    role: "church_owner",
     organizationId: "digitaldesk-org-id",
   },
   {

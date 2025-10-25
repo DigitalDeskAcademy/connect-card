@@ -130,7 +130,19 @@
 
 - **Analytics** - Using mock data instead of real database queries (cosmetic issue, not blocking)
 
-**Note**: All above issues are non-critical and do not block customer usage. Manual workarounds acceptable for MVP launch.
+### Database Migration Strategy (Pre-Production Required)
+
+- **⚠️ Using `prisma db push` for development** - Current workflow syncs schema directly without migration history
+- **Action Required Before Production**:
+  - Switch to `prisma migrate dev` for proper migration tracking
+  - Create initial migration: `npx prisma migrate dev --name init_production`
+  - Document migration strategy in `/docs/essentials/deployment.md`
+  - Set up migration CI/CD pipeline for production deployments
+- **Location**: `prisma/migrations/` contains legacy migrations from forked project
+- **Risk**: Without proper migrations, production schema changes will be difficult to track and rollback
+- **Reference**: See PROJECT_OVERVIEW.md "Database Operations" section
+
+**Note**: All above issues are non-critical and do not block customer usage. Manual workarounds acceptable for MVP launch. Migration strategy must be addressed before production launch.
 
 ---
 

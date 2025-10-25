@@ -29,16 +29,13 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
  * Validates organization access before rendering any admin content.
  *
  * @param children - Page content to render within layout
- * @param header - Page header slot (Named Slots pattern)
  * @param params - Route parameters including organization slug
  */
 export default async function AgencyAdminLayout({
   children,
-  header,
   params,
 }: {
   children: ReactNode;
-  header: ReactNode;
   params: Promise<{ slug: string }>;
 }) {
   // Await params (Next.js 15 pattern)
@@ -73,7 +70,6 @@ export default async function AgencyAdminLayout({
           <DashboardContentWrapper
             brandName={brandName}
             organization={organization}
-            pageHeader={header}
             showInfoSidebar={true}
           >
             {children}
