@@ -34,6 +34,8 @@ interface iAppProps {
   fileType?: "thumbnail" | "banner" | "asset";
   organizationSlug?: string; // New optional prop
   courseName?: string; // New optional prop
+  showSuccessToast?: boolean; // Control whether to show upload success toast (default: true)
+  successMessage?: string; // Customize upload success message (default: "File ready to save...")
 }
 
 export function Uploader({
@@ -44,6 +46,8 @@ export function Uploader({
   fileType = "asset",
   organizationSlug,
   courseName,
+  showSuccessToast = true,
+  successMessage = "File ready to save - Click 'Save' to persist changes",
 }: iAppProps) {
   const fileUrl = useConstructUrl(value || "");
   const [fileState, setFileState] = useState<UploaderState>({
@@ -124,9 +128,10 @@ export function Uploader({
               // This updates the parent form field
               onChange?.(key);
 
-              toast.success(
-                "File ready to save - Click 'Save' to persist changes"
-              );
+              // Show success toast if enabled
+              if (showSuccessToast) {
+                toast.success(successMessage);
+              }
 
               resolve();
             } else {
@@ -160,6 +165,8 @@ export function Uploader({
       fileType,
       organizationSlug,
       courseName,
+      showSuccessToast,
+      successMessage,
     ]
   );
 
@@ -202,65 +209,6 @@ export function Uploader({
     });
   }
 
-  async function handleRemoveFile() {
-    if (fileState.isDeleting || !fileState.objectUrl) return;
-
-    try {
-      setFileState(prev => ({
-        ...prev,
-        isDeleting: true,
-      }));
-
-      const response = await fetch("/api/s3/delete", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          key: fileState.key,
-        }),
-      });
-
-      if (!response.ok) {
-        toast.error("Failed to remove file from storage");
-
-        setFileState(prev => ({
-          ...prev,
-          isDeleting: false,
-          error: true,
-        }));
-
-        return;
-      }
-
-      if (fileState.objectUrl && !fileState.objectUrl.startsWith("http")) {
-        URL.revokeObjectURL(fileState.objectUrl);
-      }
-
-      onChange?.("");
-
-      setFileState(() => ({
-        file: null,
-        uploading: false,
-        progress: 0,
-        objectUrl: undefined,
-        error: false,
-        fileType: fileTypeAccepted,
-        id: null,
-        isDeleting: false,
-        key: undefined,
-      }));
-
-      toast.success("File removed successfully");
-    } catch {
-      toast.error("Error removing file. Please try again");
-
-      setFileState(prev => ({
-        ...prev,
-        isDeleting: false,
-        error: true,
-      }));
-    }
-  }
-
   function rejectedFiles(fileRejection: FileRejection[]) {
     if (fileRejection.length) {
       const tooManyFiles = fileRejection.find(
@@ -298,9 +246,7 @@ export function Uploader({
     if (fileState.objectUrl) {
       return (
         <RenderUploadedState
-          handleRemoveFile={handleRemoveFile}
           previewUrl={fileState.objectUrl}
-          isDeleting={fileState.isDeleting}
           fileType={fileState.fileType}
         />
       );

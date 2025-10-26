@@ -6,7 +6,7 @@
 
 > 🎯 **PROJECT FORK**: Forked from IV therapy clinic SaaS to church operations platform
 > **New Product**: Church Connect Card - Visitor engagement and follow-up automation
-> **Core Features**: Connect card OCR, N2N workflow (first visit → member), volunteer scheduling, prayer requests
+> **Core Features**: Connect card AI Vision extraction, N2N workflow (first visit → member), volunteer scheduling, prayer requests
 > **LMS Position**: Training platform repositioned for church staff onboarding and volunteer training
 
 > 📋 **Migration Status**: Phase 1 complete (folder rename + core utilities), Phase 2 pending (URL references)

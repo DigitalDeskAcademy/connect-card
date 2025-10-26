@@ -2,7 +2,7 @@
 
 **Multi-tenant platform for churches to digitize connect cards and manage member engagement**
 
-Transform paper connect cards into actionable member data with automated OCR scanning, intelligent data extraction, and comprehensive church management tools.
+Transform paper connect cards into actionable member data with AI Vision extraction, intelligent contextual data processing, and comprehensive church management tools.
 
 ---
 
@@ -11,13 +11,13 @@ Transform paper connect cards into actionable member data with automated OCR sca
 Church Connect Card System helps churches eliminate manual data entry and improve visitor follow-up by:
 
 - **Digitize Connect Cards** - Scan or upload photos of paper connect cards
-- **Automated Data Extraction** - OCR technology extracts names, emails, phone numbers, prayer requests
+- **AI Vision Extraction** - Claude Vision API extracts structured data (names, emails, phone numbers, prayer requests) with contextual understanding
 - **Member Management** - Track visitors, members, and engagement
 - **Church Training** - Built-in course system for staff and volunteer training
 
-### Current Status: MVP Development
+### Current Status: Phase 2 MVP - AI Vision Integration Complete
 
-We're building the foundation with multi-tenant authentication, database setup, and core infrastructure. Connect card scanning with OCR integration is next.
+Multi-tenant authentication, database, and AI Vision extraction are complete. Member management and automation workflows are next.
 
 ---
 
@@ -56,7 +56,7 @@ We're building the foundation with multi-tenant authentication, database setup, 
 - PostgreSQL database (Neon recommended)
 - Tigris S3 storage
 - Resend account (for emails)
-- OCR service (Google Cloud Vision or AWS Textract)
+- Anthropic API key (Claude Vision API)
 
 ### Development Setup
 
@@ -117,10 +117,10 @@ church-connect-card/
 
 **Phase 2: Connect Card Processing**
 
-- Image upload component
-- OCR integration
-- Data extraction and parsing
-- Manual correction UI
+- [x] Image upload component
+- [x] Claude Vision API integration
+- [x] AI-powered structured data extraction
+- [ ] Manual correction UI
 
 **Phase 3: Member Management**
 

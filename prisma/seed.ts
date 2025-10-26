@@ -78,7 +78,7 @@ async function main() {
 
   // Define test users
   const testEmails = [
-    "platformadmin@sidecar.com",
+    "digitaldeskacademy@outlook.com",
     "owner@newlife.com",
     "admin@newlife.com",
     "staff@newlife.com",
@@ -130,7 +130,7 @@ async function main() {
   // Define users with roles
   const users: TestUser[] = [
     {
-      email: "platformadmin@sidecar.com",
+      email: "digitaldeskacademy@outlook.com",
       name: "Platform Administrator",
       role: "platform_admin",
       organizationId: platformOrg.id,
@@ -193,6 +193,16 @@ async function main() {
     console.log(`   ✅ User created with ID: ${user.id}`);
     console.log(`   📧 Login via OTP: User will authenticate on first sign-in`);
 
+    // Map user role to member role for organization membership
+    // User.role is for platform-level permissions
+    // Member.role is for organization-level permissions
+    const memberRole =
+      userData.role === "church_owner"
+        ? "owner"
+        : userData.role === "church_admin"
+          ? "admin"
+          : "member";
+
     // Create organization membership
     await prisma.member.upsert({
       where: {
@@ -201,16 +211,18 @@ async function main() {
           organizationId: userData.organizationId!,
         },
       },
-      update: {},
+      update: {
+        role: memberRole, // Update role if re-seeding
+      },
       create: {
         organizationId: userData.organizationId!,
         userId: user.id,
-        role: "member",
+        role: memberRole,
         createdAt: new Date(),
       },
     });
 
-    console.log(`   ✅ Organization membership created (member)\n`);
+    console.log(`   ✅ Organization membership created (${memberRole})\n`);
   }
 
   console.log("🎉 Church Connect Card seed completed successfully!\n");
@@ -223,10 +235,10 @@ async function main() {
   console.log(`   👥 Staff Members: 1\n`);
 
   console.log("🔐 Test Credentials (use email for OTP login):");
-  console.log(`   platformadmin@sidecar.com    (platform_admin)`);
-  console.log(`   owner@newlife.com            (church_owner)`);
-  console.log(`   admin@newlife.com            (church_admin)`);
-  console.log(`   staff@newlife.com            (user/staff)\n`);
+  console.log(`   digitaldeskacademy@outlook.com  (platform_admin)`);
+  console.log(`   owner@newlife.com               (church_owner)`);
+  console.log(`   admin@newlife.com               (church_admin)`);
+  console.log(`   staff@newlife.com               (user/staff)\n`);
 
   console.log("🌐 Login URLs:");
   console.log(`   Platform Admin: http://localhost:3000/login`);

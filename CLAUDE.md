@@ -198,15 +198,15 @@ This project was forked from SideCar Platform with proven, working patterns. Whe
 
 **Church Connect Card Management System** - Multi-tenant platform for churches to digitize connect cards and manage member engagement.
 
-- **Product Strategy**: Scan paper connect cards → Extract data via OCR → Manage members → Automate follow-up
+- **Product Strategy**: Scan paper connect cards → Extract data via AI Vision → Manage members → Automate follow-up
 - **Current Focus**: Initial setup - Environment configuration, clean foundation, placeholder UI
 - **Business Model**: SaaS for churches - Replace manual connect card data entry, improve visitor follow-up
-- **Tech Stack**: Next.js 15, Prisma, Better Auth, GHL API (communications), Tigris S3, OCR service
+- **Tech Stack**: Next.js 15, Prisma, Better Auth, GHL API (communications), Tigris S3, Claude Vision API (Anthropic)
 - **Target**: Churches wanting to eliminate manual data entry and improve member engagement
 
 **Key Features:**
 
-1. **Connect Card Scanning** - OCR to extract names, emails, phone, prayer requests
+1. **Connect Card Scanning** - AI Vision (Claude) to extract structured data from handwritten connect cards with contextual understanding
 2. **Member Management** - Track visitors, members, engagement (repurposed from Contacts)
 3. **Volunteer Scheduling** - Manage church volunteers (repurposed from Calendar)
 4. **GHL Integration** - Sub-agency setup for SMS/automations/communications
@@ -430,9 +430,9 @@ git push origin branch
 **Phase 2: Connect Card MVP**
 
 1. **Connect Card Upload** - Image upload component (S3)
-2. **OCR Integration** - Extract data from connect card images
+2. **AI Vision Integration** - Extract structured data from connect card images using Claude Vision API
 3. **Member Database** - Store and manage member information
-4. **Manual Correction UI** - Edit OCR results before saving
+4. **Manual Correction UI** - Edit AI-extracted results before saving
 
 **Phase 3: GHL Integration**
 

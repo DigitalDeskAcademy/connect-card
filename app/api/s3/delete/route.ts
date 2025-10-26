@@ -170,8 +170,14 @@ export async function DELETE(request: Request) {
     );
   }
 
-  // Allow platform admins and agency admins/owners to delete files
-  const allowedRoles = ["platform_admin", "agency_owner", "agency_admin"];
+  // Allow platform admins, church admins/owners, and church staff to delete files
+  // Church staff need delete access to remove incorrect/duplicate connect card uploads
+  const allowedRoles = [
+    "platform_admin",
+    "church_owner",
+    "church_admin",
+    "user",
+  ];
   if (!session.user.role || !allowedRoles.includes(session.user.role)) {
     return NextResponse.json(
       { error: "Insufficient permissions" },
