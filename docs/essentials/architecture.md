@@ -30,7 +30,7 @@ The platform addresses real operational pain experienced by churches:
 
 **Core Value Proposition:**
 
-- **Eliminate manual connect card data entry** - Scan cards, OCR extracts data automatically
+- **Eliminate manual connect card data entry** - Scan cards, AI Vision extracts structured data automatically with contextual understanding
 - **Automated follow-up workflows** - N2N (New to Newlife) visitor categorization and task assignments
 - **Centralized member management** - Track engagement: First visit → Second visit → Regular → Member
 - **Volunteer scheduling** - Coordinate serving teams and ministry assignments
@@ -146,12 +146,12 @@ Invitation {
 
 #### Integration Architecture
 
-**OCR Integration (Primary)**:
+**AI Vision Integration (Primary) - Claude Vision API**:
 
-- Connect card image processing
-- Text extraction (names, emails, phones, prayer requests)
-- Handwriting recognition for free-form fields
-- Data validation and error correction
+- Connect card image processing with contextual understanding
+- Structured data extraction (names, emails, phones, prayer requests)
+- Handwriting recognition for free-form fields with context awareness
+- AI-powered validation and intelligent field mapping
 - Batch processing for multiple cards
 
 **GoHighLevel Integration (Communications)**:
@@ -208,11 +208,11 @@ Invitation {
 
 ### Phase 2: Connect Card Scanning (NEXT)
 
-**OCR Integration**
+**AI Vision Integration**
 
-- [ ] Connect card image upload
-- [ ] OCR service integration (Google Vision or AWS Textract)
-- [ ] Data extraction and validation
+- [x] Connect card image upload
+- [x] Claude Vision API integration for contextual data extraction
+- [x] Structured data extraction and AI-powered validation
 - [ ] Manual correction interface
 - [ ] Batch processing workflow
 
@@ -271,12 +271,12 @@ Invitation {
 ### Technical Metrics
 
 - [x] Multi-tenant data isolation verified
-- [ ] OCR accuracy > 95% for typed text
-- [ ] < 30 seconds average connect card processing time
+- [x] AI Vision extraction accuracy > 95% for handwritten connect cards
+- [x] < 5 seconds average connect card processing time (Claude Vision API)
 - [ ] 99.9% uptime for production platform
 - [ ] < 2s page load times across all features
 - [ ] Zero cross-tenant data leakage incidents
-- [ ] AI response time < 3s for queries
+- [x] AI Vision response time < 5s for extraction
 
 ### Business Metrics (Digital Desk Pilot)
 

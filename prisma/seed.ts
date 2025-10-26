@@ -193,6 +193,16 @@ async function main() {
     console.log(`   ✅ User created with ID: ${user.id}`);
     console.log(`   📧 Login via OTP: User will authenticate on first sign-in`);
 
+    // Map user role to member role for organization membership
+    // User.role is for platform-level permissions
+    // Member.role is for organization-level permissions
+    const memberRole =
+      userData.role === "church_owner"
+        ? "owner"
+        : userData.role === "church_admin"
+          ? "admin"
+          : "member";
+
     // Create organization membership
     await prisma.member.upsert({
       where: {
@@ -201,16 +211,18 @@ async function main() {
           organizationId: userData.organizationId!,
         },
       },
-      update: {},
+      update: {
+        role: memberRole, // Update role if re-seeding
+      },
       create: {
         organizationId: userData.organizationId!,
         userId: user.id,
-        role: "member",
+        role: memberRole,
         createdAt: new Date(),
       },
     });
 
-    console.log(`   ✅ Organization membership created (member)\n`);
+    console.log(`   ✅ Organization membership created (${memberRole})\n`);
   }
 
   console.log("🎉 Church Connect Card seed completed successfully!\n");

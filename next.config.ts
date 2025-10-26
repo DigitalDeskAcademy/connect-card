@@ -70,6 +70,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
       },
       {
+        hostname: "connect-card-testing.t3.storage.dev",
+        port: "",
+        protocol: "https",
+      },
+      {
         hostname: "digital-desk-sidecar.t3.storage.dev",
         port: "",
         protocol: "https",

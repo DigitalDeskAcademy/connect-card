@@ -289,9 +289,14 @@ export async function POST(request: Request) {
     );
   }
 
-  // Allow platform admins and agency admins/owners to upload files
-  // This supports multi-tenant file management
-  const allowedRoles = ["platform_admin", "agency_owner", "agency_admin"];
+  // Allow platform admins, church admins/owners, and church staff to upload files
+  // Church staff need upload access for core connect card processing workflow
+  const allowedRoles = [
+    "platform_admin",
+    "church_owner",
+    "church_admin",
+    "user",
+  ];
   if (!session.user.role || !allowedRoles.includes(session.user.role)) {
     return NextResponse.json(
       { error: "Insufficient permissions" },

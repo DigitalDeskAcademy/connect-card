@@ -33,7 +33,7 @@ envFile.split("\n").forEach(line => {
 console.log("✅ Environment loaded from .env\n");
 
 // Run the CORS update script
-execSync("npx tsx scripts/update-tigris-cors.ts", {
+execSync("npx tsx scripts/setup/update-tigris-cors.ts", {
   stdio: "inherit",
   env: process.env,
 });

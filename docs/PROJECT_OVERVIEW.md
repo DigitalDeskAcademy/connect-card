@@ -2,11 +2,11 @@
 
 ## Executive Summary
 
-**Church Connect Card** is a multi-tenant SaaS platform that digitizes and automates church connect card processing. Churches scan physical connect cards, extract data via OCR, and automatically follow up with visitors through SMS/email campaigns.
+**Church Connect Card** is a multi-tenant SaaS platform that digitizes and automates church connect card processing. Churches scan physical connect cards, extract data via AI Vision, and automatically follow up with visitors through SMS/email campaigns.
 
 **Business Problem**: Churches manually enter connect card data (visitor info, prayer requests) which is slow, error-prone, and leads to poor visitor follow-up.
 
-**Solution**: Scan → Extract → Automate. Churches photograph connect cards, our OCR extracts the data, and automated workflows handle visitor engagement.
+**Solution**: Scan → Extract → Automate. Churches photograph connect cards, our Claude Vision AI extracts structured data with contextual understanding, and automated workflows handle visitor engagement.
 
 ---
 
@@ -49,7 +49,7 @@ This project was **forked from SideCar Platform** - a proven multi-tenant SaaS b
 
 - **Stripe** - Payment processing
 - **Tigris S3** - File storage for connect card images
-- **OCR Service** - (TBD) Text extraction from images
+- **Claude Vision API (Anthropic)** - AI-powered structured data extraction from handwritten connect cards
 - **GoHighLevel (GHL)** - CRM integration for SMS/automations
 
 ### Dev Tools
@@ -122,8 +122,8 @@ Each slice contains:
 ### Phase 2: Connect Card MVP
 
 1. **Image Upload** - S3 storage for card photos
-2. **OCR Processing** - Extract names, emails, phone, prayer requests
-3. **Manual Correction** - UI to fix OCR errors
+2. **AI Vision Processing** - Extract structured data (names, emails, phone, prayer requests) using Claude Vision API
+3. **Manual Correction** - UI to review and edit AI-extracted data
 4. **Member Database** - Store visitor information
 
 ### Phase 3: Automation
@@ -266,7 +266,7 @@ model User {
 model ConnectCard {
   id             String   @id @default(uuid())
   imageUrl       String   // S3 URL to scanned image
-  extractedData  Json     // OCR results
+  extractedData  Json     // AI Vision extraction results
   status         String   // pending, verified, processed
   organizationId String
 }
@@ -438,7 +438,7 @@ GHL_CLIENT_SECRET=""
 
 **Differentiation**:
 
-- OCR automation (no manual entry)
+- AI Vision automation (no manual entry - contextual data extraction)
 - Modern UI/UX
 - Integrated follow-up workflows
 - Affordable pricing
@@ -508,8 +508,8 @@ gh pr create                # Create pull request
 
 ### Current State (Phase 1)
 
-- No OCR integration yet
-- GHL integration not implemented
+- AI Vision integration complete (Claude Vision API)
+- GHL integration not implemented yet
 - Payment flow exists but not church-customized
 - Some placeholder pages need real implementation
 
@@ -547,7 +547,7 @@ gh pr create                # Create pull request
 ### MVP Launch Goals
 
 - 10 beta churches onboarded
-- 95%+ OCR accuracy on connect cards
+- 95%+ AI extraction accuracy on connect cards
 - <5 second average processing time
 - 80%+ visitor follow-up rate
 

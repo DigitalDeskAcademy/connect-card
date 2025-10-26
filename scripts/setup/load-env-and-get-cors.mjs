@@ -33,7 +33,7 @@ envFile.split("\n").forEach(line => {
 console.log("✅ Environment loaded from .env\n");
 
 // Run the CORS retrieval script
-execSync("npx tsx scripts/get-tigris-cors.ts", {
+execSync("npx tsx scripts/setup/get-tigris-cors.ts", {
   stdio: "inherit",
   env: process.env,
 });

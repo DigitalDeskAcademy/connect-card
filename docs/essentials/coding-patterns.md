@@ -855,6 +855,53 @@ navMain: [
 - Create custom title logic in page components
 - Pass navigation as props (use the config instead)
 
+### Page Content Pattern
+
+**CRITICAL: Pages should NOT include their own headers**
+
+The SiteHeader component (rendered in the layout) automatically displays page titles from `lib/navigation.ts`. Adding duplicate headers in page content creates visual inconsistency.
+
+❌ **DON'T add h1 tags in page content:**
+
+```tsx
+export default function MyPage() {
+  return (
+    <div>
+      <h1>My Page Title</h1> {/* ← WRONG! Duplicate header */}
+      <p>Description text</p>
+      {/* page content */}
+    </div>
+  );
+}
+```
+
+✅ **DO start directly with content:**
+
+```tsx
+export default function MyPage() {
+  return (
+    <div className="container mx-auto p-6">
+      {/* Start directly with content - SiteHeader shows title */}
+      <div className="grid grid-cols-2 gap-6">{/* page content */}</div>
+    </div>
+  );
+}
+```
+
+**Why this matters:**
+
+- SiteHeader automatically renders page title from navigation config
+- Adding h1 in page creates duplicate headers (one from layout, one from page)
+- Centralized navigation keeps titles consistent across sidebar and header
+- Industry standard pattern (Next.js App Router best practices)
+
+**To create a new page:**
+
+1. Create page file at route path (e.g., `app/church/[slug]/admin/events/page.tsx`)
+2. Add navigation entry to `lib/navigation.ts` with title and URL
+3. Page content starts with layout wrapper (NO h1 tag needed)
+4. SiteHeader automatically displays the title from navigation config
+
 ### Example: Renaming a Page
 
 **Old Way (BAD - required 3 changes):**

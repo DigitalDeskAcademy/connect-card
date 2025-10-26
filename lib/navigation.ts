@@ -128,6 +128,11 @@ export function getChurchNavigation(slug: string): NavigationConfig {
             url: `/church/${slug}/admin/courses`,
             icon: IconSchool,
           },
+          {
+            title: "Connect Cards (Test)",
+            url: `/church/${slug}/admin/connect-cards/test`,
+            icon: IconCode,
+          },
         ],
       },
     ],
