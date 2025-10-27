@@ -110,80 +110,81 @@ export default function ConnectCardTestPage() {
         </CardHeader>
         <CardContent className="relative p-0 flex-1 min-h-0">
           {imageKey ? (
-            <>
-              <div className="grid grid-cols-4 gap-4 h-full p-4">
-                {/* Image preview on left - 75% width - FULL HEIGHT */}
-                <div className="col-span-3 h-full">
-                  <Uploader
-                    value={imageKey || ""}
-                    onChange={key => {
-                      setImageKey(key);
-                      setExtractedData(null);
-                      setError(null);
-                      if (key) {
-                        toast.success("Image uploaded successfully!");
-                      }
-                    }}
-                    fileTypeAccepted="image"
-                    fileType="asset"
-                    organizationSlug={slug}
-                    showSuccessToast={false}
-                    className="h-full"
-                  />
-                </div>
-
-                {/* Buttons on right - 25% width */}
-                <div className="col-span-1 flex flex-col gap-3 justify-center">
-                  <Button
-                    onClick={handleExtract}
-                    disabled={extracting}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {extracting ? (
-                      <>
-                        <Spinner className="mr-2" />
-                        Analyzing with Claude...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="mr-2 w-5 h-5" />
-                        Extract Data
-                      </>
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setImageKey(null);
-                      setExtractedData(null);
-                      setError(null);
-                    }}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <ImageIcon className="mr-2 w-5 h-5" />
-                    Change Image
-                  </Button>
-                </div>
+            <div className="grid grid-cols-4 gap-4 h-full p-4">
+              {/* Image preview on left - 75% width - FULL HEIGHT */}
+              <div className="col-span-3 h-full">
+                <Uploader
+                  value={imageKey || ""}
+                  onChange={key => {
+                    setImageKey(key);
+                    setExtractedData(null);
+                    setError(null);
+                    if (key) {
+                      toast.success("Image uploaded successfully!");
+                    }
+                  }}
+                  fileTypeAccepted="image"
+                  fileType="asset"
+                  organizationSlug={slug}
+                  showSuccessToast={false}
+                  className="h-full"
+                />
               </div>
-            </>
+
+              {/* Buttons on right - 25% width */}
+              <div className="col-span-1 flex flex-col gap-3 justify-center">
+                <Button
+                  onClick={handleExtract}
+                  disabled={extracting}
+                  className="w-full"
+                  size="lg"
+                >
+                  {extracting ? (
+                    <>
+                      <Spinner className="mr-2" />
+                      Analyzing with Claude...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 w-5 h-5" />
+                      Extract Data
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setImageKey(null);
+                    setExtractedData(null);
+                    setError(null);
+                  }}
+                  className="w-full"
+                  size="lg"
+                >
+                  <ImageIcon className="mr-2 w-5 h-5" />
+                  Change Image
+                </Button>
+              </div>
+            </div>
           ) : (
-            <Uploader
-              value={imageKey || ""}
-              onChange={key => {
-                setImageKey(key);
-                setExtractedData(null);
-                setError(null);
-                if (key) {
-                  toast.success("Image uploaded successfully!");
-                }
-              }}
-              fileTypeAccepted="image"
-              fileType="asset"
-              organizationSlug={slug}
-              showSuccessToast={false}
-            />
+            <div className="h-full p-4">
+              <Uploader
+                value={imageKey || ""}
+                onChange={key => {
+                  setImageKey(key);
+                  setExtractedData(null);
+                  setError(null);
+                  if (key) {
+                    toast.success("Image uploaded successfully!");
+                  }
+                }}
+                fileTypeAccepted="image"
+                fileType="asset"
+                organizationSlug={slug}
+                showSuccessToast={false}
+                className="h-full"
+              />
+            </div>
           )}
         </CardContent>
       </Card>
