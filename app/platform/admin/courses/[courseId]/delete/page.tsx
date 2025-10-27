@@ -7,6 +7,7 @@
  */
 
 import { adminGetCourse } from "@/app/data/admin/admin-get-course";
+import { PageContainer } from "@/components/layout/page-container";
 import { DeleteCourseConfirmation } from "@/components/courses/DeleteCourseConfirmation";
 
 interface DeleteCourseRouteProps {
@@ -20,13 +21,15 @@ export default async function DeleteCourseRoute({
   const course = await adminGetCourse(courseId);
 
   return (
-    <DeleteCourseConfirmation
-      courseId={courseId}
-      courseTitle={course.title}
-      courseSlug={course.slug}
-      organizationContext={{ type: "platform" }}
-      cancelHref="/platform/admin/courses"
-      redirectPath="/platform/admin/courses"
-    />
+    <PageContainer variant="none">
+      <DeleteCourseConfirmation
+        courseId={courseId}
+        courseTitle={course.title}
+        courseSlug={course.slug}
+        organizationContext={{ type: "platform" }}
+        cancelHref="/platform/admin/courses"
+        redirectPath="/platform/admin/courses"
+      />
+    </PageContainer>
   );
 }

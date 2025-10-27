@@ -6,6 +6,7 @@
  */
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
+import { PageContainer } from "@/components/layout/page-container";
 import TeamManagementClient from "./client";
 import { prisma } from "@/lib/db";
 
@@ -56,11 +57,13 @@ export default async function TeamPage({ params }: PageProps) {
   }));
 
   return (
-    <TeamManagementClient
-      teamMembers={teamMembers}
-      dataScope={dataScope}
-      userClinic={null}
-      currentUserId={session.user.id}
-    />
+    <PageContainer variant="none">
+      <TeamManagementClient
+        teamMembers={teamMembers}
+        dataScope={dataScope}
+        userClinic={null}
+        currentUserId={session.user.id}
+      />
+    </PageContainer>
   );
 }

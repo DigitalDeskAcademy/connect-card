@@ -10,6 +10,7 @@
  * - Standard navigation and redirects
  */
 
+import { PageContainer } from "@/components/layout/page-container";
 import { CourseCreateClient } from "./_components/CourseCreateClient";
 
 /**
@@ -18,5 +19,9 @@ import { CourseCreateClient } from "./_components/CourseCreateClient";
  * Provides platform administrators with course creation capabilities.
  */
 export default function CourseCreationPage() {
-  return <CourseCreateClient />;
+  return (
+    <PageContainer variant="none">
+      <CourseCreateClient />
+    </PageContainer>
+  );
 }

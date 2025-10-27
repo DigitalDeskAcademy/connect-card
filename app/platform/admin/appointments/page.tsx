@@ -1,6 +1,7 @@
 import { adminGetAppointments } from "@/app/data/admin/admin-get-appointments";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/components/layout/page-container";
 import { CalendarClient } from "./_components/CalendarClient";
 
 /**
@@ -19,9 +20,11 @@ import { CalendarClient } from "./_components/CalendarClient";
  */
 export default function AppointmentsPage() {
   return (
-    <Suspense fallback={<CalendarLoadingSkeleton />}>
-      <RenderCalendar />
-    </Suspense>
+    <PageContainer variant="none">
+      <Suspense fallback={<CalendarLoadingSkeleton />}>
+        <RenderCalendar />
+      </Suspense>
+    </PageContainer>
   );
 }
 

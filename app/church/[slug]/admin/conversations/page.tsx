@@ -6,6 +6,7 @@
  */
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
+import { PageContainer } from "@/components/layout/page-container";
 import { ConversationsClient } from "@/components/conversations/conversations-client";
 import type { Conversation } from "@/components/conversations/conversation-list";
 import type { Message } from "@/components/conversations/conversation-thread";
@@ -197,9 +198,11 @@ export default async function AgencyConversationsPage({ params }: PageProps) {
   // Platform admins see all, agency admins see their org, clinic users see their clinic
 
   return (
-    <ConversationsClient
-      conversations={mockConversations}
-      messagesByConversation={mockMessagesByConversation}
-    />
+    <PageContainer variant="none">
+      <ConversationsClient
+        conversations={mockConversations}
+        messagesByConversation={mockMessagesByConversation}
+      />
+    </PageContainer>
   );
 }

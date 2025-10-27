@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/app/data/admin/require-admin";
+import { PageContainer } from "@/components/layout/page-container";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import { PlatformLessonForm } from "./_components/PlatformLessonForm";
@@ -48,13 +49,13 @@ export default async function LessonIdPage({ params }: Props) {
   }
 
   return (
-    <div>
+    <PageContainer as="main">
       <h1 className="text-2xl font-bold mb-6">Edit Lesson</h1>
       <PlatformLessonForm
         lesson={lesson}
         chapterId={chapterId}
         courseId={courseId}
       />
-    </div>
+    </PageContainer>
   );
 }

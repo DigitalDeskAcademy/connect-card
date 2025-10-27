@@ -190,6 +190,243 @@ export function ComponentName() {
 }
 ```
 
+### Page Layout Components
+
+#### PageContainer (Standard Spacing Wrapper)
+
+**Location:** `/components/layout/page-container.tsx`
+
+**Purpose:** Enforces consistent page spacing across all admin pages with full coverage for all layout patterns. Eliminates manual decisions about `p-6`, `gap-6`, and `flex-1`.
+
+**All 6 Variants:**
+
+```typescript
+import { PageContainer } from "@/components/layout/page-container";
+
+// 1. DEFAULT - Standard pages (dashboard, settings, forms)
+export default async function DashboardPage() {
+  return (
+    <PageContainer as="main">
+      <h1>Dashboard</h1>
+      <StatsCards />
+      <RecentActivity />
+    </PageContainer>
+  );
+}
+
+// 2. PADDED - Data tables with full-height scrollable content
+export default async function MembersPage() {
+  return (
+    <PageContainer variant="padded" as="main">
+      <SummaryCards />
+      <MembersTable />
+    </PageContainer>
+  );
+}
+
+// 3. FILL - Custom layouts with internal spacing
+export default async function CustomPage() {
+  return (
+    <PageContainer variant="fill">
+      <CustomLayoutWithOwnSpacing />
+    </PageContainer>
+  );
+}
+
+// 4. TIGHT - Tighter gap spacing (contacts-style pages)
+export default async function ContactsPage() {
+  return (
+    <PageContainer variant="tight" as="main">
+      <ContactsHeader />
+      <ContactsList />
+    </PageContainer>
+  );
+}
+
+// 5. TABS - NavTabs integration (prevents double-spacing)
+export default async function TabsPage() {
+  return (
+    <PageContainer variant="tabs">
+      <NavTabs items={tabs} />
+      <TabContent />
+    </PageContainer>
+  );
+}
+
+// 6. NONE - Split-pane layouts (no wrapper at all)
+export default async function ConversationsPage() {
+  return (
+    <PageContainer variant="none">
+      <SplitPaneLayout /> {/* Renders directly with no wrapper */}
+    </PageContainer>
+  );
+}
+```
+
+**Variant Reference:**
+
+| Variant | Classes | Use Case | Example Pages |
+|---------|---------|----------|---------------|
+| `default` | `p-4 md:p-6 gap-4 md:gap-6` | Standard pages | Dashboard, Settings, Profile |
+| `padded` | `flex-1 p-4 md:p-6 gap-4 md:gap-6` | Data tables | Payments, Members |
+| `fill` | `flex-1` | Custom layouts | Calendar, Custom views |
+| `tight` | `p-4 md:p-6 gap-3 md:gap-4` | Tighter spacing | Contacts-style |
+| `tabs` | `p-4 md:p-6 gap-0` | NavTabs pages | Contact tabs, Settings tabs |
+| `none` | No wrapper | Split layouts | Conversations, Multi-pane |
+
+**Variant Selection Guide:**
+
+Use this decision tree to choose the correct variant:
+
+```
+Need PageContainer?
+  ↓
+What type of page?
+  ├─ Data table (sortable, filterable, scrollable)
+  │   → variant="padded"
+  │   Examples: PaymentsTable, Members, Appointments, Analytics
+  │   Why: flex-1 makes table fill available height for scrolling
+  │
+  ├─ Standard page (dashboard, settings, forms)
+  │   → variant="default" or omit variant prop (uses default)
+  │   Examples: Dashboard with cards, Settings pages, Profile forms
+  │   Why: Standard padding and gap spacing for regular content
+  │
+  ├─ NavTabs integration (tabs at top of page)
+  │   → variant="tabs"
+  │   Examples: Contacts with tabs, Settings with tabs
+  │   Why: gap-0 prevents double spacing (NavTabs has built-in spacing)
+  │
+  ├─ Custom layout (component manages own spacing)
+  │   → variant="none"
+  │   Examples: Conversations split-pane, Team management, Course editor
+  │   Why: Complex UIs need full control over their own layout
+  │
+  ├─ Custom full-height canvas (no padding at all)
+  │   → variant="fill"
+  │   Examples: Calendar UI, Preview pages, Empty states
+  │   Why: flex-1 for full height, but no padding for custom layouts
+  │
+  └─ Tighter spacing needed (12px/16px gaps)
+      → variant="tight"
+      Examples: Reserved for future use
+      Why: When default gaps feel too spacious
+```
+
+**Common Mistakes:**
+
+❌ **DON'T** use `variant="padded"` for placeholder cards or dashboards
+```typescript
+// WRONG - Dashboard with stat cards
+<PageContainer variant="padded" as="main">
+  <Card>Welcome</Card>
+  <div className="grid grid-cols-4 gap-4">
+    <StatCard />
+    <StatCard />
+  </div>
+</PageContainer>
+```
+
+✅ **DO** use default variant (or omit) for standard content
+```typescript
+// CORRECT - Dashboard with stat cards
+<PageContainer as="main">
+  <Card>Welcome</Card>
+  <div className="grid grid-cols-4 gap-4">
+    <StatCard />
+    <StatCard />
+  </div>
+</PageContainer>
+```
+
+❌ **DON'T** manually create spacing wrappers
+```typescript
+// WRONG - Manual div wrapper
+<div className="flex flex-1 flex-col gap-0">
+  <NavTabs tabs={[...]} />
+  <Content />
+</div>
+```
+
+✅ **DO** use tabs variant with NavTabs
+```typescript
+// CORRECT - Use tabs variant
+<PageContainer variant="tabs">
+  <NavTabs tabs={[...]} />
+  <Content />
+</PageContainer>
+```
+
+**Responsive Spacing:**
+- **Mobile:** `p-4` (16px), `gap-4` (16px) or `gap-3` (12px)
+- **Desktop:** `p-6` (24px), `gap-6` (24px) or `gap-4` (16px)
+
+**Semantic HTML:**
+
+```typescript
+// Use <main> for top-level page content (accessibility best practice)
+<PageContainer as="main">
+
+// Use <section> for sub-sections
+<PageContainer as="section">
+
+// Use <div> (default) for generic containers
+<PageContainer> {/* defaults to div */}
+```
+
+**Key Rules:**
+
+✅ **DO:**
+- Use `<PageContainer>` for all admin pages (28+ pages)
+- Choose the variant that matches your page type (see table above)
+- Use `as="main"` for top-level page content (SEO + accessibility)
+- Let the component handle spacing - don't add extra wrapper divs
+
+❌ **DON'T:**
+- Manually add `p-6`, `gap-6`, or `flex-1` to page content
+- Wrap `<PageContainer>` in additional layout divs
+- Mix variants across similar page types
+- Override spacing with `className` unless absolutely necessary
+
+**Why This Exists:**
+
+Before PageContainer, every page manually chose spacing classes, causing inconsistencies across 28+ admin pages. This component makes "correct spacing" the default and eliminates future spacing conversations.
+
+**Industry References:**
+- **Vercel Dashboard:** Consistent page padding with responsive variants
+- **Stripe Dashboard:** Standard spacing for all admin pages
+- **Supabase Studio:** Unified page container with semantic HTML
+
+**Migration Guide:**
+
+```typescript
+// BEFORE: Manual spacing
+export default async function Page() {
+  return (
+    <div className="flex flex-col p-6 gap-6">
+      <PageHeader />
+      <Content />
+    </div>
+  );
+}
+
+// AFTER: PageContainer
+export default async function Page() {
+  return (
+    <PageContainer as="main">
+      <PageHeader />
+      <Content />
+    </PageContainer>
+  );
+}
+```
+
+**Coverage:** 100% of admin page patterns (all 28+ pages can migrate)
+
+**See Also:**
+- Component implementation: `/components/layout/page-container.tsx`
+- Architecture decision: `/docs/technical/architecture-decisions.md` (ADR-008)
+
 ## 📝 Zod Schemas
 
 ### Location

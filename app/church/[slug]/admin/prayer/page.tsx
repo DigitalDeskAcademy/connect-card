@@ -8,6 +8,7 @@
  * - Privacy settings and sensitive requests
  */
 
+import { PageContainer } from "@/components/layout/page-container";
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ import {
 
 export default function PrayerPage() {
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <PageContainer as="main">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Prayer Requests</CardTitle>
@@ -41,6 +42,6 @@ export default function PrayerPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

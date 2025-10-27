@@ -13,6 +13,7 @@
 
 import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
 import { createAgencyDataScope } from "@/lib/agency-data-scope";
+import { PageContainer } from "@/components/layout/page-container";
 import { CourseListingPage } from "@/components/courses/CourseListingPage";
 
 interface AgencyCoursesPageProps {
@@ -32,15 +33,17 @@ export default async function AgencyCoursesPage({
   // Use the shared CourseListingPage component
   // Header is rendered via Named Slots pattern (@header/default.tsx)
   return (
-    <CourseListingPage
-      courses={courses}
-      userRole="agency_admin"
-      orgSlug={slug}
-      organizationId={organization.id}
-      showTabs={true} // Agency admins see tabs for platform vs custom
-      showCreateButton={true} // Agency admins can create courses
-      pageTitle=""
-      pageDescription=""
-    />
+    <PageContainer variant="none">
+      <CourseListingPage
+        courses={courses}
+        userRole="agency_admin"
+        orgSlug={slug}
+        organizationId={organization.id}
+        showTabs={true} // Agency admins see tabs for platform vs custom
+        showCreateButton={true} // Agency admins can create courses
+        pageTitle=""
+        pageDescription=""
+      />
+    </PageContainer>
   );
 }

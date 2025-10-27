@@ -6,6 +6,7 @@
  */
 
 import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   Card,
   CardContent,
@@ -25,7 +26,7 @@ export default async function AgencyAdminDashboard({
   const { organization } = await requireAgencyAdmin(slug);
 
   return (
-    <div className="flex flex-1 flex-col gap-6">
+    <PageContainer as="main">
       {/* Header now rendered via Named Slots pattern (@header/default.tsx) */}
 
       {/* Welcome Card */}
@@ -88,6 +89,6 @@ export default async function AgencyAdminDashboard({
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

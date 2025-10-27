@@ -6,6 +6,7 @@
  */
 
 import { redirect } from "next/navigation";
+import { PageContainer } from "@/components/layout/page-container";
 import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
 import { prisma } from "@/lib/db";
 
@@ -59,8 +60,10 @@ export default async function AgencyAdminPreviewPage({
   }
 
   return (
-    <div className="flex items-center justify-center h-full">
-      <p className="text-muted-foreground">This course has no lessons yet.</p>
-    </div>
+    <PageContainer variant="fill">
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted-foreground">This course has no lessons yet.</p>
+      </div>
+    </PageContainer>
   );
 }

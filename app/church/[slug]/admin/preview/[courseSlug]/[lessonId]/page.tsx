@@ -6,6 +6,7 @@
  */
 
 import { Suspense } from "react";
+import { PageContainer } from "@/components/layout/page-container";
 import { CourseContent } from "@/components/courses/CourseContent";
 import { LessonSkeleton } from "@/app/church/[slug]/learning/[courseSlug]/[lessonId]/LessonSkeleton";
 import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
@@ -29,14 +30,16 @@ export default async function AgencyAdminPreviewLessonPage({
   const { organization } = await requireAgencyAdmin(slug);
 
   return (
-    <Suspense fallback={<LessonSkeleton />}>
-      <AdminPreviewLessonContentLoader
-        lessonId={lessonId}
-        orgSlug={slug}
-        courseSlug={courseSlug}
-        organizationId={organization.id}
-      />
-    </Suspense>
+    <PageContainer variant="none">
+      <Suspense fallback={<LessonSkeleton />}>
+        <AdminPreviewLessonContentLoader
+          lessonId={lessonId}
+          orgSlug={slug}
+          courseSlug={courseSlug}
+          organizationId={organization.id}
+        />
+      </Suspense>
+    </PageContainer>
   );
 }
 

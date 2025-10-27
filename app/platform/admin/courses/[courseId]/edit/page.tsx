@@ -32,6 +32,7 @@
  */
 
 import { adminGetCourse } from "@/app/data/admin/admin-get-course";
+import { PageContainer } from "@/components/layout/page-container";
 import { CourseEditClient } from "./_components/CourseEditClient";
 
 type Params = Promise<{ courseId: string }>;
@@ -48,5 +49,9 @@ export default async function EditRoute({ params }: { params: Params }) {
   const { courseId } = await params;
   const data = await adminGetCourse(courseId);
 
-  return <CourseEditClient course={data} />;
+  return (
+    <PageContainer variant="none">
+      <CourseEditClient course={data} />
+    </PageContainer>
+  );
 }

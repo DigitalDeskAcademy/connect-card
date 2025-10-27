@@ -12,6 +12,7 @@
  */
 
 import { use } from "react";
+import { PageContainer } from "@/components/layout/page-container";
 import { AgencyCourseCreateClient } from "./_components/AgencyCourseCreateClient";
 
 interface AgencyCourseCreationPageProps {
@@ -29,5 +30,9 @@ export default function AgencyCourseCreationPage({
 }: AgencyCourseCreationPageProps) {
   const { slug } = use(params);
 
-  return <AgencyCourseCreateClient slug={slug} />;
+  return (
+    <PageContainer variant="none">
+      <AgencyCourseCreateClient slug={slug} />
+    </PageContainer>
+  );
 }

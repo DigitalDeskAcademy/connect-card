@@ -6,6 +6,7 @@
  */
 
 import { Suspense } from "react";
+import { PageContainer } from "@/components/layout/page-container";
 import { CourseContent } from "@/components/courses/CourseContent";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
@@ -23,9 +24,11 @@ export default async function PlatformPreviewLessonPage({
   const { courseSlug, lessonId } = await params;
 
   return (
-    <Suspense fallback={<LessonSkeleton />}>
-      <LessonContentLoader lessonId={lessonId} courseSlug={courseSlug} />
-    </Suspense>
+    <PageContainer variant="none">
+      <Suspense fallback={<LessonSkeleton />}>
+        <LessonContentLoader lessonId={lessonId} courseSlug={courseSlug} />
+      </Suspense>
+    </PageContainer>
   );
 }
 

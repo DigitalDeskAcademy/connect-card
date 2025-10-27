@@ -5,6 +5,7 @@
  * Currently showing placeholder content during setup phase.
  */
 
+import { PageContainer } from "@/components/layout/page-container";
 import {
   Card,
   CardContent,
@@ -15,7 +16,7 @@ import {
 
 export default function PlatformAdminDashboard() {
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <PageContainer as="main">
       {/* Welcome Card */}
       <Card>
         <CardHeader>
@@ -74,6 +75,6 @@ export default function PlatformAdminDashboard() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

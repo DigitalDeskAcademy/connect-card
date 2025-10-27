@@ -17,6 +17,7 @@
  */
 
 import { useState, useEffect } from "react";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   Card,
   CardContent,
@@ -285,7 +286,7 @@ export default function APIDashboard() {
   ];
 
   return (
-    <div className="flex flex-1 flex-col gap-6">
+    <PageContainer variant="padded" as="main">
       <div className="flex items-end justify-end">
         <div className="flex gap-3">
           {!isConnected ? (
@@ -535,6 +536,6 @@ export default function APIDashboard() {
           </Card>
         ))}
       </div>
-    </div>
+    </PageContainer>
   );
 }

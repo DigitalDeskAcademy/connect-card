@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/app/data/admin/require-admin";
+import { PageContainer } from "@/components/layout/page-container";
 
 /**
  * Platform Settings Page
@@ -10,7 +11,7 @@ export default async function SettingsPage() {
   await requireAdmin();
 
   return (
-    <div className="flex flex-col gap-6">
+    <PageContainer as="main">
       {/* Placeholder content - to be implemented */}
       <div className="text-center py-12 border-2 border-dashed rounded-lg">
         <p className="text-muted-foreground text-lg mb-2">
@@ -20,6 +21,6 @@ export default async function SettingsPage() {
           Configure platform settings, integrations, billing, and preferences
         </p>
       </div>
-    </div>
+    </PageContainer>
   );
 }

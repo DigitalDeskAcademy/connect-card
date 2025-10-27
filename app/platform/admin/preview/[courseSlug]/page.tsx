@@ -5,6 +5,7 @@
  */
 
 import { notFound, redirect } from "next/navigation";
+import { PageContainer } from "@/components/layout/page-container";
 import { prisma } from "@/lib/db";
 
 interface PlatformPreviewPageProps {
@@ -47,13 +48,15 @@ export default async function PlatformPreviewPage({
 
   // If no lessons, show empty state
   return (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <h2 className="text-lg font-semibold">No lessons available</h2>
-        <p className="text-sm text-muted-foreground mt-2">
-          This course doesn&apos;t have any lessons yet.
-        </p>
+    <PageContainer variant="fill">
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">No lessons available</h2>
+          <p className="text-sm text-muted-foreground mt-2">
+            This course doesn&apos;t have any lessons yet.
+          </p>
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }
