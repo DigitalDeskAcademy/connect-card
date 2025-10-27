@@ -7,6 +7,7 @@
  * - Everything else stays the same
  */
 import { Suspense } from "react";
+import { PageContainer } from "@/components/layout/page-container";
 import { CourseContent } from "@/components/courses/CourseContent";
 import { LessonSkeleton } from "./LessonSkeleton";
 import { getLessonContentForAgency } from "@/app/data/course/get-lesson-content-agency";
@@ -22,14 +23,15 @@ export default async function AgencyLessonPage({ params }: { params: Params }) {
   const { slug, courseSlug, lessonId } = await params;
 
   return (
-    /* Same Suspense pattern as original */
-    <Suspense fallback={<LessonSkeleton />}>
-      <LessonContentLoader
-        lessonId={lessonId}
-        orgSlug={slug}
-        courseSlug={courseSlug}
-      />
-    </Suspense>
+    <PageContainer variant="none">
+      <Suspense fallback={<LessonSkeleton />}>
+        <LessonContentLoader
+          lessonId={lessonId}
+          orgSlug={slug}
+          courseSlug={courseSlug}
+        />
+      </Suspense>
+    </PageContainer>
   );
 }
 

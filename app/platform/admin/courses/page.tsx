@@ -33,6 +33,7 @@
 import { adminGetCourses } from "@/app/data/admin/admin-get-courses";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageContainer } from "@/components/layout/page-container";
 import { CourseListingPage } from "@/components/courses/CourseListingPage";
 
 /**
@@ -45,9 +46,11 @@ import { CourseListingPage } from "@/components/courses/CourseListingPage";
  */
 export default function CoursesPage() {
   return (
-    <Suspense fallback={<CourseLoadingSkeleton />}>
-      <RenderCourses />
-    </Suspense>
+    <PageContainer variant="none">
+      <Suspense fallback={<CourseLoadingSkeleton />}>
+        <RenderCourses />
+      </Suspense>
+    </PageContainer>
   );
 }
 

@@ -18,6 +18,7 @@
 
 "use client";
 
+import { PageContainer } from "@/components/layout/page-container";
 import { ChartAreaInteractive } from "@/components/sidebar/chart-area-interactive";
 import { DataTable } from "@/components/sidebar/data-table";
 import { SectionCards } from "@/components/sidebar/section-cards";
@@ -26,12 +27,12 @@ import data from "../data.json";
 
 export default function AnalyticsPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <PageContainer as="main">
       <SectionCards />
 
       <ChartAreaInteractive />
 
       <DataTable data={data} />
-    </div>
+    </PageContainer>
   );
 }

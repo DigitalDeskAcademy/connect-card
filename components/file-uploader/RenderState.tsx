@@ -63,8 +63,8 @@ export function RenderUploadedState({
           src={previewUrl}
           alt="Uploaded File"
           fill
-          sizes="(max-width: 768px) 100vw, 400px"
-          className="object-contain p-2"
+          sizes="(max-width: 768px) 100vw, 800px"
+          className="object-contain"
         />
       )}
     </div>

@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import { PaymentsClient } from "@/components/dashboard/payments/payments-client";
 import type { PaymentWithRelations } from "@/components/dashboard/payments/payments-client";
+import { PageContainer } from "@/components/layout/page-container";
 
 /**
  * Platform Payments Page
@@ -377,5 +378,9 @@ export default async function PaymentsPage() {
     },
   ] as unknown as PaymentWithRelations[];
 
-  return <PaymentsClient payments={mockPayments} />;
+  return (
+    <PageContainer variant="none">
+      <PaymentsClient payments={mockPayments} />
+    </PageContainer>
+  );
 }

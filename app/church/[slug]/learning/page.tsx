@@ -13,6 +13,7 @@
 
 import { getOrganizationBySlug } from "@/app/data/organization/get-organization-by-slug";
 import { createAgencyDataScope } from "@/lib/agency-data-scope";
+import { PageContainer } from "@/components/layout/page-container";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
@@ -133,7 +134,7 @@ export default async function AgencyLearningPage({
   });
 
   return (
-    <div className="space-y-8">
+    <PageContainer variant="default">
       {/* Welcome Section */}
       <div>
         <h1 className="text-3xl font-bold">Welcome back!</h1>
@@ -303,6 +304,6 @@ export default async function AgencyLearningPage({
           </CardContent>
         </Card>
       )}
-    </div>
+    </PageContainer>
   );
 }

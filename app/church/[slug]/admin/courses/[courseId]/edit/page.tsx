@@ -24,6 +24,7 @@
  */
 
 import { agencyGetCourse } from "@/app/data/agency/agency-get-course";
+import { PageContainer } from "@/components/layout/page-container";
 import { AgencyCourseEditClient } from "./_components/AgencyCourseEditClient";
 
 type Params = Promise<{ slug: string; courseId: string }>;
@@ -47,6 +48,8 @@ export default async function AgencyEditCoursePage({
   const data = await agencyGetCourse(slug, courseId);
 
   return (
-    <AgencyCourseEditClient course={data} courseId={courseId} slug={slug} />
+    <PageContainer variant="none">
+      <AgencyCourseEditClient course={data} courseId={courseId} slug={slug} />
+    </PageContainer>
   );
 }

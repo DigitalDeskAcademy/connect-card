@@ -12,6 +12,7 @@
  */
 
 import { agencyGetCourse } from "@/app/data/agency/agency-get-course";
+import { PageContainer } from "@/components/layout/page-container";
 import { DeleteCourseConfirmation } from "@/components/courses/DeleteCourseConfirmation";
 
 interface AgencyDeleteCourseRouteProps {
@@ -25,13 +26,15 @@ export default async function AgencyDeleteCourseRoute({
   const course = await agencyGetCourse(slug, courseId);
 
   return (
-    <DeleteCourseConfirmation
-      courseId={courseId}
-      courseTitle={course.title}
-      courseSlug={course.slug}
-      organizationContext={{ type: "agency", slug }}
-      cancelHref={`/agency/${slug}/admin/courses`}
-      redirectPath={`/agency/${slug}/admin/courses`}
-    />
+    <PageContainer variant="none">
+      <DeleteCourseConfirmation
+        courseId={courseId}
+        courseTitle={course.title}
+        courseSlug={course.slug}
+        organizationContext={{ type: "agency", slug }}
+        cancelHref={`/agency/${slug}/admin/courses`}
+        redirectPath={`/agency/${slug}/admin/courses`}
+      />
+    </PageContainer>
   );
 }

@@ -8,6 +8,7 @@
  * - Member type management (VISITOR, RETURNING, MEMBER, VOLUNTEER, STAFF)
  */
 
+import { PageContainer } from "@/components/layout/page-container";
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ import {
 
 export default function N2NPage() {
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <PageContainer as="main">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">N2N - New to Newlife</CardTitle>
@@ -43,6 +44,6 @@ export default function N2NPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

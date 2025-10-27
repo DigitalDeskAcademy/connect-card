@@ -18,6 +18,7 @@
 
 import { getOrganizationBySlug } from "@/app/data/organization/get-organization-by-slug";
 import { createAgencyDataScope } from "@/lib/agency-data-scope";
+import { PageContainer } from "@/components/layout/page-container";
 import { CourseListingPage } from "@/components/courses/CourseListingPage";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -75,15 +76,17 @@ export default async function AgencyCoursesPage({
 
   // Render the course listing page with user role
   return (
-    <CourseListingPage
-      courses={courses}
-      userRole="user"
-      orgSlug={slug}
-      organizationId={organization.id}
-      showTabs={false} // No tabs for end users
-      showCreateButton={false} // No create button for end users
-      pageTitle="Available Courses"
-      pageDescription="Start learning with our comprehensive course library"
-    />
+    <PageContainer variant="none">
+      <CourseListingPage
+        courses={courses}
+        userRole="user"
+        orgSlug={slug}
+        organizationId={organization.id}
+        showTabs={false} // No tabs for end users
+        showCreateButton={false} // No create button for end users
+        pageTitle="Available Courses"
+        pageDescription="Start learning with our comprehensive course library"
+      />
+    </PageContainer>
   );
 }

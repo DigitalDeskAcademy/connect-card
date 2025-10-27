@@ -14,6 +14,7 @@
 
 import { getCourseSidebarDataForAgency } from "@/app/data/course/get-course-sidebar-data-agency";
 import { getOrganizationBySlug } from "@/app/data/organization/get-organization-by-slug";
+import { PageContainer } from "@/components/layout/page-container";
 import { redirect, notFound } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -77,16 +78,18 @@ export default async function AgencyCourseOverviewPage({
 
   // No lessons available - show message
   return (
-    <div className="flex items-center justify-center h-full text-center">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">No lessons available</h2>
-        <p className="text-muted-foreground">
-          This course does not have any lessons yet!
-        </p>
-        <p className="text-sm text-muted-foreground mt-4">
-          Please check back later or contact your administrator.
-        </p>
+    <PageContainer variant="fill">
+      <div className="flex items-center justify-center h-full text-center">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">No lessons available</h2>
+          <p className="text-muted-foreground">
+            This course does not have any lessons yet!
+          </p>
+          <p className="text-sm text-muted-foreground mt-4">
+            Please check back later or contact your administrator.
+          </p>
+        </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

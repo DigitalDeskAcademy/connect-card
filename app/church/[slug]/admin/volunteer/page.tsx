@@ -8,6 +8,7 @@
  * - Volunteer hours and check-in
  */
 
+import { PageContainer } from "@/components/layout/page-container";
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ import {
 
 export default function VolunteerPage() {
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <PageContainer as="main">
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl">Volunteer Management</CardTitle>
@@ -39,6 +40,6 @@ export default function VolunteerPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

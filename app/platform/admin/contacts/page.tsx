@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PageContainer } from "@/components/layout/page-container";
 import { NavTabs } from "@/components/layout/nav-tabs";
 import { ContactsPageClient } from "./_components/ContactsPageClient";
 import { type Contact } from "@/components/contacts/ContactsTable";
@@ -143,7 +144,7 @@ export default async function ContactsPage({
   const activeTab = tab || "all";
 
   return (
-    <div className="flex flex-1 flex-col gap-0">
+    <PageContainer variant="tabs">
       {/* Header now rendered via Named Slots pattern (@header/contacts/page.tsx) */}
 
       {/* Navigation Tabs - URL-based for bookmarkable views */}
@@ -194,6 +195,6 @@ export default async function ContactsPage({
           </Card>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

@@ -13,6 +13,7 @@
  */
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
+import { PageContainer } from "@/components/layout/page-container";
 import { PaymentsClient } from "@/components/dashboard/payments/payments-client";
 import type { PaymentWithRelations } from "@/components/dashboard/payments/payments-client";
 
@@ -232,5 +233,9 @@ export default async function AgencyPaymentsPage({ params }: PageProps) {
   // Note: In production, these would be filtered based on dataScope
   // Platform admins see all, agency admins see their org, clinic users see their clinic
 
-  return <PaymentsClient payments={mockPayments} />;
+  return (
+    <PageContainer variant="none">
+      <PaymentsClient payments={mockPayments} />
+    </PageContainer>
+  );
 }

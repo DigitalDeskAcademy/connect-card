@@ -84,36 +84,36 @@ export default function ConnectCardTestPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6 h-full">
-      {/* Upload Section - Full Width */}
-      <Card className="relative flex-shrink-0">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <FileText className="w-5 h-5" />
+    <div className="flex flex-1 flex-col gap-4 p-4 h-full overflow-hidden">
+      {/* Upload Section - 75% height */}
+      <Card className="relative flex-[3] min-h-0 flex flex-col">
+        <CardHeader className="pb-2 flex-shrink-0 flex flex-row items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="w-4 h-4" />
             Upload Connect Card
           </CardTitle>
+          {imageKey && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                setImageKey(null);
+                setExtractedData(null);
+                setError(null);
+              }}
+              title="Close upload session"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </CardHeader>
-        <CardContent className="relative">
+        <CardContent className="relative p-0 flex-1 min-h-0">
           {imageKey ? (
             <>
-              {/* Close button - top right of card */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute -top-2 -right-2 z-20 h-8 w-8 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                onClick={() => {
-                  setImageKey(null);
-                  setExtractedData(null);
-                  setError(null);
-                }}
-                title="Close upload session"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-
-              <div className="grid grid-cols-2 gap-6">
-                {/* Image preview on left */}
-                <div className="col-span-1">
+              <div className="grid grid-cols-4 gap-4 h-full p-4">
+                {/* Image preview on left - 75% width - FULL HEIGHT */}
+                <div className="col-span-3 h-full">
                   <Uploader
                     value={imageKey || ""}
                     onChange={key => {
@@ -128,10 +128,11 @@ export default function ConnectCardTestPage() {
                     fileType="asset"
                     organizationSlug={slug}
                     showSuccessToast={false}
+                    className="h-full"
                   />
                 </div>
 
-                {/* Buttons on right - inside the border */}
+                {/* Buttons on right - 25% width */}
                 <div className="col-span-1 flex flex-col gap-3 justify-center">
                   <Button
                     onClick={handleExtract}
@@ -187,10 +188,10 @@ export default function ConnectCardTestPage() {
         </CardContent>
       </Card>
 
-      {/* Results Section - Fills Remaining Space */}
-      <Card className="flex-1 flex flex-col min-h-0">
-        <CardHeader className="flex-shrink-0">
-          <CardTitle>Extracted Data</CardTitle>
+      {/* Results Section - 25% height */}
+      <Card className="flex-[1] flex flex-col min-h-0">
+        <CardHeader className="flex-shrink-0 pb-2">
+          <CardTitle className="text-base">Extracted Data</CardTitle>
         </CardHeader>
         <CardContent className="flex-1 overflow-auto">
           {!extractedData && !error && !extracting && (
