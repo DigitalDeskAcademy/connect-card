@@ -1195,8 +1195,11 @@ enum SyncStatusType {
 ## ADR-005: Named Slots Pattern for Page Headers
 
 **Date:** 2025-01-17
-**Status:** Approved
+**Status:** Superseded (Replaced by config-based header pattern)
+**Superseded Date:** 2025-01-27
 **Decision Makers:** Development team, architecture review
+
+**Note:** This pattern was implemented but later replaced with a simpler config-based approach using `/lib/navigation.ts` and `SiteHeader` component. The config-based pattern provides a single source of truth for both sidebar navigation and page headers, reducing complexity and maintenance burden for the MVP phase. See "Navigation Pattern" in `/docs/PROJECT_OVERVIEW.md` for current implementation.
 
 ### Context
 
@@ -2113,12 +2116,12 @@ The platform has 28+ admin pages with inconsistent spacing patterns. Before Page
 
 **Current Patterns Found:**
 
-| Pattern | Pages | Issues |
-|---------|-------|--------|
-| `flex flex-col p-6 gap-6` | ~12 | Standard pages |
-| `flex-1 flex-col p-6 gap-6` | ~8 | Data tables |
-| `flex flex-col gap-4` | ~4 | Tighter spacing |
-| `flex flex-col gap-0` | ~4 | NavTabs integration |
+| Pattern                     | Pages | Issues              |
+| --------------------------- | ----- | ------------------- |
+| `flex flex-col p-6 gap-6`   | ~12   | Standard pages      |
+| `flex-1 flex-col p-6 gap-6` | ~8    | Data tables         |
+| `flex flex-col gap-4`       | ~4    | Tighter spacing     |
+| `flex flex-col gap-0`       | ~4    | NavTabs integration |
 
 **Requirements:**
 
@@ -2202,6 +2205,7 @@ export default async function MembersPage() {
 ### Benefits
 
 1. **Full Coverage**: All 28+ pages can migrate (100% coverage)
+
    - `default` → 12 standard pages
    - `padded` → 8 data table pages
    - `tight` → 4 contacts-style pages
@@ -2210,19 +2214,23 @@ export default async function MembersPage() {
    - `none` → Split-pane layouts (conversations)
 
 2. **Type Safety**: Exhaustiveness checking prevents missed variants
+
    - `Record<PageContainerVariant, string>` enforces all variants defined
    - TypeScript errors if variant added but not implemented
 
 3. **Responsive Design**: Mobile-first spacing
+
    - `p-4` (16px) on mobile → `p-6` (24px) on desktop
    - Industry standard pattern (Vercel, Stripe, Supabase)
 
 4. **Semantic HTML**: Accessibility best practices
+
    - `as="main"` for top-level page content
    - `as="section"` for sub-sections
    - Improves SEO and screen reader support
 
 5. **Developer Experience**: Makes correct spacing the default
+
    - No more manual spacing decisions
    - Consistent across all pages
    - Clear variant names describe intent
@@ -2244,7 +2252,9 @@ export default async function MembersPage() {
 
 ```css
 @layer utilities {
-  .page-default { @apply flex flex-col p-6 gap-6; }
+  .page-default {
+    @apply flex flex-col p-6 gap-6;
+  }
 }
 ```
 
@@ -2278,12 +2288,14 @@ app/platform/admin/dashboard/
 **TypeScript Expert Rating: 9.5/10**
 
 ✅ Strengths:
+
 - Proper type safety with discriminated union variant type
 - Semantic HTML support (`as` prop)
 - Data attributes for testing
 - Comprehensive JSDoc documentation
 
 ⚠️ Recommendations Applied:
+
 - Added `Record<PageContainerVariant, string>` for exhaustiveness
 - Added `as` prop for semantic HTML (`main`, `section`, `div`)
 - Added responsive spacing (`p-4 md:p-6`)
@@ -2292,12 +2304,14 @@ app/platform/admin/dashboard/
 **Code Reviewer Rating: Conditional Approval**
 
 ✅ Strengths:
+
 - Solves real problem (28+ inconsistent pages)
 - Follows industry patterns (Vercel, Stripe, Supabase)
 - Clean, minimal implementation
 - Excellent documentation
 
 ⚠️ Concerns Addressed:
+
 - Missing variants added (tight, tabs, none)
 - Renamed "canvas" → "fill" (more descriptive)
 - Added responsive spacing
@@ -2317,19 +2331,23 @@ app/platform/admin/dashboard/
 #### Migration Strategy
 
 **Phase 1: Pilot Migration (3 pages)**
+
 - `/platform/admin/dashboard/page.tsx` → `variant="default"`
 - `/platform/admin/payments/page.tsx` → `variant="padded"`
 - `/platform/admin/profile/page.tsx` → `variant="default"`
 
 **Phase 2: Category Migration**
+
 - Standard pages (12 pages) → `variant="default"`
 - Data tables (8 pages) → `variant="padded"`
 
 **Phase 3: Complex Layouts**
+
 - NavTabs pages (4 pages) → `variant="tabs"`
 - Custom layouts (4 pages) → `variant="fill"` or `variant="none"`
 
 **Phase 4: Validation**
+
 - Visual regression testing
 - Build verification
 - Documentation updates

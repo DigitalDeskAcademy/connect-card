@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Uploader } from "@/components/file-uploader/Uploader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,12 @@ import {
   AlertCircle,
   ImageIcon,
   X,
+  Save,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
+import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
+import { PageContainer } from "@/components/layout/page-container";
 
 interface ExtractedData {
   name: string | null;
@@ -39,6 +42,8 @@ export default function ConnectCardTestPage() {
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
+  const [isSaving, startSaving] = useTransition();
 
   async function handleExtract() {
     if (!imageKey) {
@@ -83,8 +88,32 @@ export default function ConnectCardTestPage() {
     }
   }
 
+  function handleSaveToDatabase() {
+    if (!imageKey || !extractedData) {
+      toast.error("No data to save");
+      return;
+    }
+
+    startSaving(async () => {
+      const result = await saveConnectCard(slug, {
+        imageKey,
+        extractedData,
+      });
+
+      if (result.status === "success") {
+        toast.success("Connect card saved to database!");
+        setSavedCardId(result.data?.id || null);
+      } else {
+        toast.error(result.message);
+      }
+    });
+  }
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 h-full overflow-hidden">
+    <PageContainer
+      variant="none"
+      className="flex-1 gap-4 p-4 h-full overflow-hidden"
+    >
       {/* Upload Section - 75% height */}
       <Card className="relative flex-[3] min-h-0 flex flex-col">
         <CardHeader className="pb-2 flex-shrink-0 flex flex-row items-center justify-between">
@@ -110,80 +139,115 @@ export default function ConnectCardTestPage() {
         </CardHeader>
         <CardContent className="relative p-0 flex-1 min-h-0">
           {imageKey ? (
-            <>
-              <div className="grid grid-cols-4 gap-4 h-full p-4">
-                {/* Image preview on left - 75% width - FULL HEIGHT */}
-                <div className="col-span-3 h-full">
-                  <Uploader
-                    value={imageKey || ""}
-                    onChange={key => {
-                      setImageKey(key);
-                      setExtractedData(null);
-                      setError(null);
-                      if (key) {
-                        toast.success("Image uploaded successfully!");
-                      }
-                    }}
-                    fileTypeAccepted="image"
-                    fileType="asset"
-                    organizationSlug={slug}
-                    showSuccessToast={false}
-                    className="h-full"
-                  />
-                </div>
+            <div className="grid grid-cols-4 gap-4 h-full p-4">
+              {/* Image preview on left - 75% width - FULL HEIGHT */}
+              <div className="col-span-3 h-full">
+                <Uploader
+                  value={imageKey || ""}
+                  onChange={key => {
+                    setImageKey(key);
+                    setExtractedData(null);
+                    setError(null);
+                    if (key) {
+                      toast.success("Image uploaded successfully!");
+                    }
+                  }}
+                  fileTypeAccepted="image"
+                  fileType="asset"
+                  organizationSlug={slug}
+                  showSuccessToast={false}
+                  className="h-full"
+                />
+              </div>
 
-                {/* Buttons on right - 25% width */}
-                <div className="col-span-1 flex flex-col gap-3 justify-center">
+              {/* Buttons on right - 25% width */}
+              <div className="col-span-1 flex flex-col gap-3 justify-center">
+                <Button
+                  onClick={handleExtract}
+                  disabled={extracting || isSaving}
+                  className="w-full"
+                  size="lg"
+                >
+                  {extracting ? (
+                    <>
+                      <Spinner className="mr-2" />
+                      Analyzing with Claude...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="mr-2 w-5 h-5" />
+                      Extract Data
+                    </>
+                  )}
+                </Button>
+
+                {extractedData && !savedCardId && (
                   <Button
-                    onClick={handleExtract}
-                    disabled={extracting}
+                    onClick={handleSaveToDatabase}
+                    disabled={isSaving}
                     className="w-full"
                     size="lg"
+                    variant="default"
                   >
-                    {extracting ? (
+                    {isSaving ? (
                       <>
                         <Spinner className="mr-2" />
-                        Analyzing with Claude...
+                        Saving...
                       </>
                     ) : (
                       <>
-                        <CheckCircle2 className="mr-2 w-5 h-5" />
-                        Extract Data
+                        <Save className="mr-2 w-5 h-5" />
+                        Save to Database
                       </>
                     )}
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setImageKey(null);
-                      setExtractedData(null);
-                      setError(null);
-                    }}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <ImageIcon className="mr-2 w-5 h-5" />
-                    Change Image
-                  </Button>
-                </div>
+                )}
+
+                {savedCardId && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800 text-sm">
+                      Saved! ID: {savedCardId.slice(0, 8)}...
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setImageKey(null);
+                    setExtractedData(null);
+                    setError(null);
+                    setSavedCardId(null);
+                  }}
+                  className="w-full"
+                  size="lg"
+                  disabled={extracting || isSaving}
+                >
+                  <ImageIcon className="mr-2 w-5 h-5" />
+                  Change Image
+                </Button>
               </div>
-            </>
+            </div>
           ) : (
-            <Uploader
-              value={imageKey || ""}
-              onChange={key => {
-                setImageKey(key);
-                setExtractedData(null);
-                setError(null);
-                if (key) {
-                  toast.success("Image uploaded successfully!");
-                }
-              }}
-              fileTypeAccepted="image"
-              fileType="asset"
-              organizationSlug={slug}
-              showSuccessToast={false}
-            />
+            <div className="h-full p-4">
+              <Uploader
+                value={imageKey || ""}
+                onChange={key => {
+                  setImageKey(key);
+                  setExtractedData(null);
+                  setError(null);
+                  if (key) {
+                    toast.success("Image uploaded successfully!");
+                  }
+                }}
+                fileTypeAccepted="image"
+                fileType="asset"
+                organizationSlug={slug}
+                showSuccessToast={false}
+                className="h-full"
+              />
+            </div>
           )}
         </CardContent>
       </Card>
@@ -274,6 +338,6 @@ export default function ConnectCardTestPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

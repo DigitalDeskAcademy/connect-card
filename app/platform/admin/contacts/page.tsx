@@ -145,8 +145,6 @@ export default async function ContactsPage({
 
   return (
     <PageContainer variant="tabs">
-      {/* Header now rendered via Named Slots pattern (@header/contacts/page.tsx) */}
-
       {/* Navigation Tabs - URL-based for bookmarkable views */}
       <NavTabs
         baseUrl="/platform/admin/contacts"

@@ -265,14 +265,14 @@ export default async function ConversationsPage() {
 
 **Variant Reference:**
 
-| Variant | Classes | Use Case | Example Pages |
-|---------|---------|----------|---------------|
-| `default` | `p-4 md:p-6 gap-4 md:gap-6` | Standard pages | Dashboard, Settings, Profile |
-| `padded` | `flex-1 p-4 md:p-6 gap-4 md:gap-6` | Data tables | Payments, Members |
-| `fill` | `flex-1` | Custom layouts | Calendar, Custom views |
-| `tight` | `p-4 md:p-6 gap-3 md:gap-4` | Tighter spacing | Contacts-style |
-| `tabs` | `p-4 md:p-6 gap-0` | NavTabs pages | Contact tabs, Settings tabs |
-| `none` | No wrapper | Split layouts | Conversations, Multi-pane |
+| Variant   | Classes                            | Use Case        | Example Pages                |
+| --------- | ---------------------------------- | --------------- | ---------------------------- |
+| `default` | `p-4 md:p-6 gap-4 md:gap-6`        | Standard pages  | Dashboard, Settings, Profile |
+| `padded`  | `flex-1 p-4 md:p-6 gap-4 md:gap-6` | Data tables     | Payments, Members            |
+| `fill`    | `flex-1`                           | Custom layouts  | Calendar, Custom views       |
+| `tight`   | `p-4 md:p-6 gap-3 md:gap-4`        | Tighter spacing | Contacts-style               |
+| `tabs`    | `p-4 md:p-6 gap-0`                 | NavTabs pages   | Contact tabs, Settings tabs  |
+| `none`    | No wrapper                         | Split layouts   | Conversations, Multi-pane    |
 
 **Variant Selection Guide:**
 
@@ -316,6 +316,7 @@ What type of page?
 **Common Mistakes:**
 
 ❌ **DON'T** use `variant="padded"` for placeholder cards or dashboards
+
 ```typescript
 // WRONG - Dashboard with stat cards
 <PageContainer variant="padded" as="main">
@@ -328,6 +329,7 @@ What type of page?
 ```
 
 ✅ **DO** use default variant (or omit) for standard content
+
 ```typescript
 // CORRECT - Dashboard with stat cards
 <PageContainer as="main">
@@ -340,6 +342,7 @@ What type of page?
 ```
 
 ❌ **DON'T** manually create spacing wrappers
+
 ```typescript
 // WRONG - Manual div wrapper
 <div className="flex flex-1 flex-col gap-0">
@@ -349,6 +352,7 @@ What type of page?
 ```
 
 ✅ **DO** use tabs variant with NavTabs
+
 ```typescript
 // CORRECT - Use tabs variant
 <PageContainer variant="tabs">
@@ -358,6 +362,7 @@ What type of page?
 ```
 
 **Responsive Spacing:**
+
 - **Mobile:** `p-4` (16px), `gap-4` (16px) or `gap-3` (12px)
 - **Desktop:** `p-6` (24px), `gap-6` (24px) or `gap-4` (16px)
 
@@ -377,12 +382,14 @@ What type of page?
 **Key Rules:**
 
 ✅ **DO:**
+
 - Use `<PageContainer>` for all admin pages (28+ pages)
 - Choose the variant that matches your page type (see table above)
 - Use `as="main"` for top-level page content (SEO + accessibility)
 - Let the component handle spacing - don't add extra wrapper divs
 
 ❌ **DON'T:**
+
 - Manually add `p-6`, `gap-6`, or `flex-1` to page content
 - Wrap `<PageContainer>` in additional layout divs
 - Mix variants across similar page types
@@ -393,6 +400,7 @@ What type of page?
 Before PageContainer, every page manually chose spacing classes, causing inconsistencies across 28+ admin pages. This component makes "correct spacing" the default and eliminates future spacing conversations.
 
 **Industry References:**
+
 - **Vercel Dashboard:** Consistent page padding with responsive variants
 - **Stripe Dashboard:** Standard spacing for all admin pages
 - **Supabase Studio:** Unified page container with semantic HTML
@@ -424,6 +432,7 @@ export default async function Page() {
 **Coverage:** 100% of admin page patterns (all 28+ pages can migrate)
 
 **See Also:**
+
 - Component implementation: `/components/layout/page-container.tsx`
 - Architecture decision: `/docs/technical/architecture-decisions.md` (ADR-008)
 

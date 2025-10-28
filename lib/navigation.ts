@@ -68,7 +68,7 @@ export function getChurchNavigation(slug: string): NavigationConfig {
       },
       {
         title: "Connect Cards",
-        url: `/church/${slug}/admin/n2n`,
+        url: `/church/${slug}/admin/connect-cards/upload`,
         icon: IconUserPlus,
       },
       {
