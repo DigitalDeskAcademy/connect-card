@@ -16,12 +16,14 @@ The `PageContainer` component was created to standardize page layout and spacing
 Located at: `/components/layout/page-container.tsx`
 
 **Purpose:**
+
 - Consistent page spacing/padding
 - Responsive layout behavior
 - Semantic HTML wrapper (can be `<main>`, `<section>`, etc.)
 - Single source of truth for page layout
 
 **Usage:**
+
 ```tsx
 import { PageContainer } from "@/components/layout/page-container";
 
@@ -41,6 +43,7 @@ export default function MyPage() {
 ### Admin Pages (22 total)
 
 **✅ Pages WITH PageContainer (20/22):**
+
 - `/admin/page.tsx` - Main dashboard
 - `/admin/connect-cards/upload/page.tsx`
 - `/admin/connect-cards/test/page.tsx`
@@ -63,7 +66,9 @@ export default function MyPage() {
 - `/admin/volunteer/page.tsx`
 
 **❌ Pages MISSING PageContainer (2/22):**
+
 1. `/admin/connect-cards/review/page.tsx`
+
    - **Note:** Server component passes to client component wrapper
    - PageContainer IS present in `review-queue-client.tsx`
    - **Action:** Verify client component has proper wrapper
@@ -77,6 +82,7 @@ export default function MyPage() {
 ### Public/Support Pages
 
 **❌ Pages MISSING PageContainer:**
+
 1. `/church/[slug]/support/page.tsx`
    - **Action:** Add PageContainer wrapper
 
@@ -87,9 +93,11 @@ export default function MyPage() {
 From `/lib/navigation.ts` - `navSecondary`:
 
 1. **Settings** - `/admin/settings`
+
    - ✅ Has PageContainer
 
 2. **Get Help** - `/support`
+
    - ❌ Missing PageContainer
 
 3. **Search** - `#` (not implemented yet)
@@ -100,15 +108,18 @@ From `/lib/navigation.ts` - `navSecondary`:
 ## Refactor Checklist
 
 ### High Priority (User-Facing Pages)
+
 - [ ] `/church/[slug]/support/page.tsx` - Add PageContainer
 - [ ] `/church/[slug]/admin/contacts/page.tsx` - Verify client component wrapper
 
 ### Medium Priority (Edge Cases)
+
 - [ ] Verify `/admin/connect-cards/review/page.tsx` client component has proper spacing
 - [ ] Audit learning/course pages (not in admin area)
 - [ ] Check platform admin pages for consistency
 
 ### Documentation Tasks
+
 - [ ] Update coding-patterns.md with PageContainer requirement
 - [ ] Add PageContainer to component architecture docs
 - [ ] Create migration guide for adding PageContainer to existing pages
@@ -120,12 +131,14 @@ From `/lib/navigation.ts` - `navSecondary`:
 ### When to Use PageContainer
 
 **Always use PageContainer for:**
+
 - Admin dashboard pages
 - Public pages (support, login, etc.)
 - Full-page layouts
 - Pages with navigation/sidebar
 
 **Do NOT use PageContainer for:**
+
 - Modal/Dialog content
 - Client components that are nested inside pages already using PageContainer
 - Embedded components (cards, tables, etc.)
@@ -155,11 +168,7 @@ export default async function MyPage() {
 import { PageContainer } from "@/components/layout/page-container";
 
 export default function MyClientPage() {
-  return (
-    <PageContainer>
-      {/* Content */}
-    </PageContainer>
-  );
+  return <PageContainer>{/* Content */}</PageContainer>;
 }
 ```
 
@@ -168,6 +177,7 @@ export default function MyClientPage() {
 If server component passes to client component:
 
 **Server Component (page.tsx):**
+
 ```tsx
 export default async function MyPage() {
   const data = await fetchData();
@@ -176,17 +186,14 @@ export default async function MyPage() {
 ```
 
 **Client Component (my-client-wrapper.tsx):**
+
 ```tsx
 "use client";
 
 import { PageContainer } from "@/components/layout/page-container";
 
 export function MyClientWrapper({ data }) {
-  return (
-    <PageContainer>
-      {/* Content using data */}
-    </PageContainer>
-  );
+  return <PageContainer>{/* Content using data */}</PageContainer>;
 }
 ```
 

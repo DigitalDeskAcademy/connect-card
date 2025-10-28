@@ -147,14 +147,16 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <ClipboardCheck className="w-16 h-16 text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">
-              All caught up!
-            </h2>
+            <h2 className="text-2xl font-semibold mb-2">All caught up!</h2>
             <p className="text-muted-foreground text-center max-w-md mb-6">
-              There are no connect cards awaiting review at this time.
-              Upload new cards to get started.
+              There are no connect cards awaiting review at this time. Upload
+              new cards to get started.
             </p>
-            <Button onClick={() => router.push(`/church/${slug}/admin/connect-cards/upload`)}>
+            <Button
+              onClick={() =>
+                router.push(`/church/${slug}/admin/connect-cards/upload`)
+              }
+            >
               Upload Connect Cards
             </Button>
           </CardContent>
@@ -219,7 +221,8 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
                   </div>
                 </Zoom>
                 <p className="text-xs text-muted-foreground mt-3 text-center">
-                  Scanned {new Date(currentCard.scannedAt).toLocaleDateString()} • Click image to zoom
+                  Scanned {new Date(currentCard.scannedAt).toLocaleDateString()}{" "}
+                  • Click image to zoom
                 </p>
               </>
             ) : (

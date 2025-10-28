@@ -34,7 +34,9 @@ export interface ConnectCardRow {
  */
 function VisitTypeBadge({ visitType }: { visitType: string | null }) {
   if (!visitType) {
-    return <span className="text-muted-foreground italic text-sm">Unknown</span>;
+    return (
+      <span className="text-muted-foreground italic text-sm">Unknown</span>
+    );
   }
 
   const isFirstTime = visitType.toLowerCase().includes("first");
@@ -76,7 +78,9 @@ export const connectCardColumns: ColumnDef<ConnectCardRow>[] = [
       const name = row.getValue("name") as string | null;
       return (
         <div className="font-medium">
-          {name || <span className="text-muted-foreground italic">No name</span>}
+          {name || (
+            <span className="text-muted-foreground italic">No name</span>
+          )}
         </div>
       );
     },
