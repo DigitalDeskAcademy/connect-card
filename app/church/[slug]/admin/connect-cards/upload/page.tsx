@@ -15,12 +15,14 @@ import {
   AlertCircle,
   Loader2,
   ArrowRight,
+  ArrowLeft,
   Camera,
   Trash2,
   X,
   FileText,
   Save,
   TestTube,
+  ClipboardCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
@@ -513,8 +515,26 @@ export default function ConnectCardUploadPage() {
   const savedCount = images.filter(img => img.saved).length;
   const errorCount = images.filter(img => img.error).length;
 
+  // Reset to start new upload session
+  function handleNewUploadSession() {
+    setImages([]);
+    setAllComplete(false);
+    toast.info("Ready for new upload session");
+  }
+
   return (
     <PageContainer>
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => router.push(`/church/${slug}/admin`)}
+        className="mb-4"
+      >
+        <ArrowLeft className="mr-2 h-4 w-4" />
+        Back to Dashboard
+      </Button>
+
       {/* Upload Tabs */}
       {images.length === 0 && (
         <Tabs
@@ -733,8 +753,90 @@ export default function ConnectCardUploadPage() {
         </Tabs>
       )}
 
+      {/* Completion Summary - Show when all processing is done */}
+      {allComplete && (
+        <Card className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">Processing Complete!</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  All connect cards have been processed and are ready for review
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="flex flex-col items-center p-4 bg-background rounded-lg border">
+                <div className="text-3xl font-bold text-green-600">
+                  {savedCount}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Cards Processed
+                </div>
+              </div>
+              <div className="flex flex-col items-center p-4 bg-background rounded-lg border">
+                <div className="text-3xl font-bold text-blue-600">
+                  {savedCount}
+                </div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Sent to Review
+                </div>
+              </div>
+              {errorCount > 0 && (
+                <div className="flex flex-col items-center p-4 bg-background rounded-lg border">
+                  <div className="text-3xl font-bold text-destructive">
+                    {errorCount}
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    Failed
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleNewUploadSession}
+                className="flex-1"
+              >
+                <Upload className="mr-2 w-5 h-5" />
+                New Upload Session
+              </Button>
+              <Button
+                size="lg"
+                onClick={() =>
+                  router.push(`/church/${slug}/admin/connect-cards/review`)
+                }
+                className="flex-1"
+              >
+                <ClipboardCheck className="mr-2 w-5 h-5" />
+                Review Queue ({savedCount})
+              </Button>
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={() => router.push(`/church/${slug}/admin`)}
+                className="flex-1"
+              >
+                <ArrowRight className="mr-2 w-5 h-5" />
+                Go to Dashboard
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Image Grid + Actions */}
-      {images.length > 0 && (
+      {images.length > 0 && !allComplete && (
         <>
           <div className="flex items-center justify-between">
             <div className="flex gap-4 text-sm">
@@ -746,7 +848,7 @@ export default function ConnectCardUploadPage() {
             </div>
 
             <div className="flex gap-3">
-              {!allComplete && !isProcessing && (
+              {!isProcessing && (
                 <>
                   {uploadMode === "files" ? (
                     <div {...getRootProps()}>
@@ -769,36 +871,23 @@ export default function ConnectCardUploadPage() {
                 </>
               )}
 
-              {!allComplete && (
-                <Button
-                  onClick={handleProcessAll}
-                  disabled={isProcessing || images.length === 0}
-                  size="lg"
-                >
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                      Processing {savedCount + 1} of {images.length}...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="mr-2 w-5 h-5" />
-                      Process All Cards
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {allComplete && (
-                <Button
-                  onClick={() =>
-                    router.push(`/church/${slug}/admin/connect-cards/dashboard`)
-                  }
-                >
-                  View Dashboard
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              )}
+              <Button
+                onClick={handleProcessAll}
+                disabled={isProcessing || images.length === 0}
+                size="lg"
+              >
+                {isProcessing ? (
+                  <>
+                    <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                    Processing {savedCount + 1} of {images.length}...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-2 w-5 h-5" />
+                    Process All Cards
+                  </>
+                )}
+              </Button>
             </div>
           </div>
 

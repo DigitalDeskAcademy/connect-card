@@ -72,6 +72,8 @@ interface DataTableProps<TData, TValue> {
   statusFilterColumn?: string;
   statusFilterOptions?: Array<{ value: string; label: string }>;
   pageSize?: number;
+  defaultSortColumn?: string;
+  defaultSortDesc?: boolean;
 }
 
 /**
@@ -98,9 +100,11 @@ export function DataTable<TData, TValue>({
   statusFilterColumn,
   statusFilterOptions,
   pageSize = 10,
+  defaultSortColumn = "date",
+  defaultSortDesc = true,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "date", desc: true }, // Default: sort by date (most recent first)
+    { id: defaultSortColumn, desc: defaultSortDesc }, // Configurable default sorting
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
