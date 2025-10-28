@@ -32,6 +32,7 @@ import {
   IconSearch,
   IconCreditCard,
   IconCode,
+  IconClipboardCheck,
 } from "@tabler/icons-react";
 
 export interface NavigationItem {
@@ -70,6 +71,18 @@ export function getChurchNavigation(slug: string): NavigationConfig {
         title: "Connect Cards",
         url: `/church/${slug}/admin/connect-cards/upload`,
         icon: IconUserPlus,
+        items: [
+          {
+            title: "Upload Cards",
+            url: `/church/${slug}/admin/connect-cards/upload`,
+            icon: IconUserPlus,
+          },
+          {
+            title: "Review Queue",
+            url: `/church/${slug}/admin/connect-cards/review`,
+            icon: IconClipboardCheck,
+          },
+        ],
       },
       {
         title: "Volunteer",
@@ -144,7 +157,7 @@ export function getChurchNavigation(slug: string): NavigationConfig {
       },
       {
         title: "Get Help",
-        url: `/church/${slug}/support`,
+        url: `/church/${slug}/admin/support`,
         icon: IconHelp,
       },
       {

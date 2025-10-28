@@ -161,6 +161,24 @@ export const connectCardSchema = z.object({
   }),
 });
 
+// Connect card update schema for review queue corrections
+export const connectCardUpdateSchema = z.object({
+  id: z.string().uuid({ message: "Invalid card ID" }),
+  name: z.string().min(1, { message: "Name is required" }),
+  email: z
+    .string()
+    .email({ message: "Invalid email address" })
+    .nullable()
+    .optional(),
+  phone: z.string().nullable().optional(),
+  visitType: z
+    .enum(["First Visit", "Second Visit", "Regular attendee", "Other"])
+    .nullable()
+    .optional(),
+  interests: z.array(z.string()).default([]),
+  prayerRequest: z.string().nullable().optional(),
+});
+
 export type CourseSchemaType = z.infer<typeof courseSchema>;
 export type ChapterSchemaType = z.infer<typeof chapterSchema>;
 export type LessonSchemaType = z.infer<typeof lessonSchema>;
@@ -168,3 +186,6 @@ export type OrganizationSetupSchemaType = z.infer<
   typeof organizationSetupSchema
 >;
 export type ConnectCardSchemaType = z.infer<typeof connectCardSchema>;
+export type ConnectCardUpdateSchemaType = z.infer<
+  typeof connectCardUpdateSchema
+>;

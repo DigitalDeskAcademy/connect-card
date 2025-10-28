@@ -20,6 +20,7 @@ import ContactsTable, {
   type Contact,
 } from "@/components/contacts/ContactsTable";
 import { type DataScope } from "@/app/data/dashboard/require-dashboard-access";
+import { PageContainer } from "@/components/layout/page-container";
 
 interface AgencyContactsClientProps {
   contacts: Contact[];
@@ -77,9 +78,7 @@ export default function AgencyContactsClient({
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4">
-      {/* Header now rendered via Named Slots pattern (@header/default.tsx) */}
-
+    <PageContainer>
       {/* Tabs */}
       <Tabs defaultValue="all" className="w-full">
         <TabsList className="grid w-full max-w-[600px] grid-cols-6">
@@ -201,6 +200,6 @@ export default function AgencyContactsClient({
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </PageContainer>
   );
 }
