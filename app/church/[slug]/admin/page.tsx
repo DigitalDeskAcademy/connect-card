@@ -27,8 +27,6 @@ export default async function AgencyAdminDashboard({
 
   return (
     <PageContainer as="main">
-      {/* Header now rendered via Named Slots pattern (@header/default.tsx) */}
-
       {/* Welcome Card */}
       <Card>
         <CardHeader>

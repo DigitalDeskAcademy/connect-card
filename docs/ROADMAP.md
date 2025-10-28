@@ -1,511 +1,328 @@
-# Project Roadmap
+# Church Connect Card - Product Roadmap
 
-> 📋 **NEW: See `/docs/IV-THERAPY-PHASE-PLAN.md` for the detailed 14-week implementation plan**
-
-**Current Focus**: IV Therapy Clinic Vertical SaaS - Simplified GHL Interface
-**Primary Product**: Clean, focused operations dashboard for IV therapy clinics
-**Core Vision**: Take the complexity of GoHighLevel and distill it to exactly what clinics need daily
-**Target Market**: IV therapy clinics (pilot) → Medical practices (expansion)
-
-## 🛠️ Technology Stack
-
-### Core Infrastructure
-
-- **Framework**: Next.js 15 with App Router
-- **Database**: PostgreSQL with Prisma ORM
-- **Authentication**: Better Auth (OTP + OAuth)
-- **File Storage**: Tigris S3
-- **Payments**: Stripe
-
-### AI & Intelligence (Phase 2)
-
-- **AI Framework**: Vercel AI SDK
-- **Models**: OpenAI GPT-4, Claude 3.5, local models
-- **Vector DB**: Pinecone/Supabase (for semantic search)
-- **Analytics**: Custom predictive models
-
-### Integrations
-
-- **Calendar**: Cal.com (embed → platform → self-hosted)
-- **CRM**: GoHighLevel API (OAuth + Webhooks)
-- **Communications**: Twilio/SendGrid for notifications
-- **Monitoring**: Sentry, Vercel Analytics
+**Current Phase**: Phase 2 Complete (Connect Card MVP) → Moving to Phase 3 (Production Launch)
+**Product Focus**: Church visitor engagement platform with AI-powered connect card scanning
+**Target Market**: Churches (100-2000 members) seeking to improve visitor follow-up
 
 ---
 
-## 🚀 PHASE 0: Critical Fixes ✅ COMPLETED
+## 🎯 PRODUCT VISION
 
-### Launch Blockers - ALL FIXED
+### The Problem
 
-- [x] **Fix Mobile Navigation** - Add hamburger menu ✅
-- [x] **Fix Lesson Save Button** - UUID validation issue ✅
-- [x] **Sub-Navigation Framework** - Universal page header system ✅
-- [x] **Console.log Cleanup** - Production security ✅
-- [x] **Record First Course Content** - Platform needs actual content ✅
-- [x] **Add Security Headers** - Production security configuration ✅
-- [x] **Fix Video Content Protection** - Prevent downloads ✅
-- [x] **Fix CreateCourseForm Alignment** - Generate Slug button ✅
-- [x] **Fix Double Header Issue** - Create Course pages ✅
-- [x] **Consolidate CourseForm** - Eliminate CreateCourseForm/EditCourseForm duplication ✅
-- [x] **Fix Video Replacement** - Clean up old videos when replaced ✅ (S3 cleanup working)
-- [x] **S3 Cleanup Architecture** - Production-ready batch deletion utilities ✅
-- [x] **Enhanced Delete Safety** - Type-to-confirm deletion with course details ✅
+Churches manually enter connect card data (visitor info, prayer requests), which is:
 
-### Video Management ✅ COMPLETED
+- **Slow**: 3-5 minutes per card
+- **Error-prone**: Typos in emails/phones prevent follow-up
+- **Inconsistent**: Cards get lost, data entry delayed weeks
+- **Poor visitor experience**: Visitors feel forgotten when follow-up is slow
 
-- [x] **Test Upload Workflow** - S3 integration working ✅
-- [x] **Fix CORS for Preview Deployments** - Vercel preview uploads now working ✅
-- [x] **Test Video Replacement** - Old files are cleaned up ✅ TESTED & VERIFIED!
-- [ ] **Add Client Validation** - Size/format checks before upload (non-critical)
-- [ ] **Implement Storage Tracking** - Monitor usage per organization (future)
-- [ ] **Create Cleanup Job** - Scheduled cleanup for orphaned files (future)
+### The Solution
 
-### Documentation Cleanup
+**Scan → Extract → Automate**
 
-- [x] Review and consolidate documentation ✅
-- [x] Archive outdated review documents ✅
-- [x] Move course planning to archive ✅
-- [x] Update STATUS.md with Phase 0 completion ✅
-- [x] Update ROADMAP.md with Phase 1 tasks ✅
-- [ ] Archive GHL_PRODUCTION_SCOPES.md (no longer needed)
+1. **Scan**: Church staff photograph connect cards with phone camera
+2. **Extract**: Claude Vision AI extracts structured data from handwriting
+3. **Automate**: SMS/email campaigns automatically follow up with visitors
+
+### Success Metrics
+
+- **90% time savings** on data entry (5 min/card → 30 sec/card)
+- **95% follow-up rate** with first-time visitors (up from ~30%)
+- **Response within 24 hours** to prayer requests
+- **50% conversion** from first-time visitor → returning visitor
 
 ---
 
-## 🚀 PHASE 1: Church Connect Card Fork Migration (Current)
+## ✅ PHASE 1: FOUNDATION (COMPLETE - Oct 25, 2025)
 
-> **🎯 PROJECT PIVOT: Forked to Church Connect Card platform**
-> This is a complete rebrand from IV therapy clinic SaaS to church visitor engagement platform.
-> Focus: Connect card scanning, visitor follow-up, volunteer management, prayer requests.
+**Goal**: Fork SideCar Platform and rebrand to Church Connect Card
 
-### Church Platform Migration (Current Priority)
+### Completed
 
-**Phase 1: Core Infrastructure** ✅ COMPLETED (This PR)
+- [x] Forked multi-tenant SaaS boilerplate
+- [x] Renamed `/app/agency/` → `/app/church/`
+- [x] Updated database schema (Contact → ChurchMember, added ConnectCard)
+- [x] Created church-specific navigation (Dashboard, Connect Cards, Volunteer, Prayer)
+- [x] Config-based headers (eliminated Named Slots complexity)
+- [x] Standardized PageContainer pattern
+- [x] Created church seed data with realistic test users
 
-- [x] Database schema migration (Contact → ChurchMember, added ConnectCard model)
-- [x] Rename /app/agency/ → /app/church/ folder structure (58 files)
-- [x] Update navigation (Dashboard, N2N, Volunteer, Prayer)
-- [x] Create placeholder pages for church features
-- [x] Update core utilities (tenant-utils, use-navigation, auth)
-
-**Phase 2: URL Migration** (Next PR) - 90+ references across 30+ files
-
-- [ ] Auth flows: login, callback, church-specific login, organization setup
-- [ ] Church navbar: AgencyNavbar.tsx (17 references)
-- [ ] Learning portal: All learning pages and sidebar (13+ references)
-- [ ] Admin courses: CRUD operations, preview routes, revalidatePath calls
-- [ ] Shared components: SharedCourseCard, SharedLessonItem, CourseListingPage
-- [ ] Other pages: subscription-expired, church homepage
-- [ ] Dev scripts: Update seed/test utilities (optional)
-
-**Phase 3: Branding & UI** (Future)
-
-- [ ] Replace IV therapy mock data with church examples
-- [ ] Update landing page for church audience
-- [ ] Rebrand from SideCar to Church Connect Card
-- [ ] Update documentation and help content
-
-### Role Framework Consolidation (Deferred)
-
-**Problem:** Building same features 3 times instead of once with role-based scoping
-
-**Solution:** Unified component architecture with DataScope
-
-- [x] Research industry best practices (validated ✅ - matches 2025 multi-tenant SaaS standards)
-- [x] Consult expert agents (fullstack, nextjs, typescript-pro - unanimous recommendations)
-- [x] Create feature branch: `feat/role-framework-consolidation`
-- [ ] Update DataScope type to discriminated union with type guards
-- [ ] Create `/components/dashboard/` shared folder structure
-- [ ] Move Payments component to shared location (proof of concept)
-- [ ] Consolidate Contacts component with DataScope pattern
-- [ ] Rename calendar → appointments and consolidate component
-- [ ] Create scoped data access helpers in `/lib/data/`
-- [ ] Write integration tests for data isolation
-- [ ] Manual testing with all 3 roles (platform, agency, clinic)
-- [ ] Update documentation with patterns (ADR-007)
-
-**Architecture:**
-
-- Discriminated union DataScope (`platform | agency | clinic`)
-- Shared components in `/components/dashboard/`
-- Separate routes maintained (`/platform/admin/*` and `/agency/[slug]/admin/*`)
-- Scoped data helpers enforce `organizationId` filtering
-
-**Impact:**
-
-- 60% code reduction (2 duplicate components → 1 shared)
-- Type-safe with compile-time guarantees
-- Faster feature development (build once, works for all roles)
+**Outcome**: Clean foundation aligned with church domain, ready for feature development
 
 ---
 
-### Operations Dashboard Core
+## ✅ PHASE 2: CONNECT CARD MVP (COMPLETE - Oct 26, 2025)
 
-- [x] **Sidebar Redesign** - 24px icons with icon-only collapse ✅ COMPLETED!
-- [x] **Operations Dashboard Layout** - Widget-based dashboard ✅ COMPLETED!
-- [x] **Monochrome Design System** - Brutalist aesthetic ✅ COMPLETED!
-- [x] **Framework Component Refactoring** - Clear naming conventions ✅ COMPLETED!
-  - DashboardContentWrapper (minimal client component for sidebar state)
-  - SideCarAISidebar (renamed from info-sidebar) with 4-tab interface
-  - PlatformNavSidebar / AgencyNavSidebar (renamed from app-sidebar/agency-admin-sidebar)
-  - PageHeader - Server Component with title/tabs/actions
-  - Mutually exclusive sidebar toggles (left nav OR AI assistant)
-- [x] **Conversations Page** - 3-column unified inbox interface ✅ COMPLETED!
-  - 20% conversation list with search/filters
-  - 50% message thread with SMS/WhatsApp tabs
-  - 30% contact details panel
-  - Mock data for IV therapy demo
-- [x] **Named Slots Page Header Migration** - Standardize page header pattern ✅ COMPLETED! (PR #40)
-  - [x] Phase 1: Update layouts to accept header slot parameter
-  - [x] Phase 2: Create `@header/` parallel routes for all pages
-  - [x] Phase 3: Clean up DashboardLayout → DashboardContentWrapper (Server Components)
-  - [x] All admin pages created with placeholders (calendar, inventory, insights, analytics, settings, appointments, payments, reviews)
-  - [x] See `/docs/technical/NAMED-SLOTS-MIGRATION.md` for implementation details
-  - [x] Architectural decision documented in ADR-005
-- [ ] **Cal.com Calendar Integration** - Core scheduling infrastructure
-  - [ ] Create calendar page structure at `/agency/[slug]/admin/calendar`
-  - [ ] Implement Cal.com embed (quick start approach)
-  - [ ] Design multi-tenant calendar architecture
-  - [ ] Evaluate Cal.com platform vs self-hosting
-  - [ ] Build calendar provider abstraction layer
-- [ ] **Connect GHL Appointments API** - Real-time appointments from calendar
-- [ ] **Connect GHL Conversations API** - Unread messages (SMS, FB, IG)
-- [ ] **Connect GHL Payments API** - Outstanding invoices/payments
-- [ ] **Build Inventory System** - Custom database for stock tracking
+**Goal**: Build AI-powered connect card scanning and data extraction
 
-### Payment Management ✅ COMPLETED (PR #44)
+### Completed
 
-- [x] **Payment Tracking Infrastructure** - Database models for payments and services ✅
-- [x] **Revenue Dashboard UI** - Summary cards and transactions table ✅
-- [x] **GHL Webhook Architecture** - Ready for payment.created/updated events ✅
-- [x] **Multi-Tenant Payment Views** - Platform admin (all orgs) + Agency admin (scoped) ✅
-- [x] **Flexbox Layout Fixes** - Canvas Pattern established for full-height components ✅
-- [ ] **GHL Webhook Handler** - `/api/webhook/ghl-payments` endpoint (NEXT)
-- [ ] **Service Configuration UI** - Admin page to manage IV therapy catalog
-- [ ] **GHL Products API Sync** - One-time sync of services to GHL
+- [x] Claude Vision API integration (Anthropic)
+- [x] Multi-file upload with drag-and-drop
+- [x] Mobile camera capture for phone-based scanning
+- [x] Base64 image processing (avoids S3 access issues)
+- [x] Structured data extraction (name, email, phone, prayer request, interests)
+- [x] Client-side validation (phone number digit count, email format)
+- [x] Test interface for debugging extractions
+- [x] Database storage (ConnectCard model with JSONB extractedData)
 
-### Agency-Specific Features
+### Key Learnings
 
-- [ ] **IV Therapy Dashboard** - Specialized widgets for IV clinics
-- [ ] **Med Spa Dashboard** - Treatment-focused operations view
-- [ ] **Dental Dashboard** - Appointment and insurance tracking
-- [ ] **Chiropractic Dashboard** - Patient flow and treatment plans
-- [ ] **White-Label Customization** - Agency branding and colors
+- AI achieves 60-85% accuracy on handwritten cards (industry standard for OCR)
+- Phone validation catches common OCR errors (9-digit vs 10-digit numbers)
+- Hybrid approach works best: AI extracts 80%, human reviews flagged 20% = 90% time savings
+- Base64 encoding required (Anthropic API can't access private S3 buckets)
+
+**Outcome**: Functional connect card scanning system, tested with handwritten samples
 
 ---
 
-## 🚀 PHASE 1B: GHL Wrapper MVP Launch
+## 🚀 PHASE 3: PRODUCTION LAUNCH (CURRENT - Target: Nov 2025)
 
-**Goal**: Launch GHL wrapper features to first pilot clinics
+**Goal**: Launch to first pilot church with 6 locations
 
-> **PIVOT NOTE**: Removed training video strategy. Focus is now on building GHL wrapper features that clinics use directly (no training needed).
+### Environment Setup
 
-### GHL API Integration (Priority)
+- [ ] **Production Database** - Configure Neon production Postgres
+- [ ] **Environment Variables** - Set all production secrets (Anthropic, Stripe, S3, Auth)
+- [ ] **Domain & SSL** - Custom domain with HTTPS
+- [ ] **Monitoring** - Error tracking (Sentry), analytics (Vercel)
+- [ ] **Backups** - Automated database backups
 
-- [ ] **Complete Placeholder Pages** - All sidebar pages ready for API integration testing
-- [ ] **Connect Real GHL Data** - Wire up appointments, contacts, conversations APIs
-- [ ] **Test with Pilot Clinic** - Verify features work with real clinic data
+### Connect Card Enhancements
 
-### Customer Flow Setup
+- [ ] **Review Queue UI** - Show flagged cards with validation warnings
+- [ ] **Manual Edit Interface** - Allow correction of extracted data before saving
+- [ ] **Bulk Processing Progress** - Better visual feedback for multi-card uploads
+- [ ] **Search & Filter** - Find cards by name, date, status, first-time visitor
 
-- [ ] **Write Email Template** - Welcome email with product demo link
-- [ ] **Manual Process Documented** - Simple onboarding process for first 3 pilot clinics
+### Testing & Validation
 
-### Launch Digital Desk Website
+- [ ] **Pilot Church Testing** - Process 100+ real connect cards
+- [ ] **Mobile Testing** - Verify iOS/Android camera capture
+- [ ] **Load Testing** - Handle 500+ cards uploaded in one Sunday
+- [ ] **AI Accuracy Measurement** - Track extraction success rate on real data
 
-- [ ] **Upload Remaining Photos** - Or use stock photos
-- [ ] **Test Booking Flow** - End-to-end verification
-- [ ] **Hit Publish Button** - Site goes live
+### Onboarding & Documentation
 
-### Lead Generation
+- [ ] **Church Admin Guide** - How to scan and process connect cards
+- [ ] **Video Tutorial** - 5-minute walkthrough of full workflow
+- [ ] **Support System** - Help desk for pilot church questions
 
-- [ ] **Google Maps Search** - 10 cities, IV therapy clinics
-- [ ] **Email Collection** - Hunter.io for contact info
-- [ ] **Spreadsheet Database** - Name, clinic, city, email, website
-
-### Outreach Setup
-
-- [ ] **Email Template Written** - Simple pain-point focused outreach
-- [ ] **Load Leads into Email Tool** - Mailshake, Lemlist, or manual Gmail
-- [ ] **Schedule Emails** - Regular cadence
-- [ ] **Set Up Calendly** - Demo booking calendar
-
-### Planning & Organization
-
-- [ ] **Block Calendar** - Sales activities and customer support
-- [ ] **Confirm Clare Availability** - For demo backup
-- [ ] **Set Daily Priorities** - Task management system
-- [ ] **Update Upwork Ad** - Backup demo person if needed
+**Success Criteria**: Pilot church processes 100+ connect cards with 90% time savings
 
 ---
 
-## 📦 PHASE 2: AI-Powered Intelligence (Next Phase)
+## 🎯 PHASE 4: MEMBER MANAGEMENT (Target: Dec 2025)
 
-### Vercel AI SDK Integration
+**Goal**: Build member directory and N2N (Newcomer to Next-Step) workflow
 
-- [ ] **AI Infrastructure Setup** - Configure Vercel AI SDK with OpenAI/Claude
-- [ ] **Natural Language Queries** - "Show me all clients who missed appointments this week"
-- [ ] **Predictive Analytics Dashboard**
-  - [ ] No-show prediction model (based on history, weather, time of day)
-  - [ ] Churn risk scoring (engagement metrics)
-  - [ ] Revenue forecasting (appointment trends)
-- [ ] **Smart Auto-Responders** - Context-aware message generation
-- [ ] **Scheduling Optimization** - AI-suggested appointment times
-- [ ] **Proactive Alerts** - AI detects patterns and issues
-- [ ] **Conversation Summaries** - Auto-summarize long message threads
+### Member Directory
 
-### Advanced GHL Integration
+- [ ] **Member List** - Searchable, filterable list of all church members
+- [ ] **Member Profiles** - View individual history, notes, connect cards, attendance
+- [ ] **Member Import** - Bulk upload existing member database (CSV)
+- [ ] **Duplicate Detection** - Warn when connect card matches existing member
 
-- [ ] **Webhook Listeners** - Receive GHL events in real-time
-- [ ] **Data Caching** - Redis for performance optimization
-- [ ] **Multi-Location Support** - Handle agency sub-accounts
-- [ ] **Custom Fields Mapping** - Agency-specific data structures
-- [ ] **Bulk Operations** - Mass updates across GHL
+### N2N Workflow
 
-### Agency Management Portal
+- [ ] **Visitor Pipeline** - First-time → returning → regular attender → member
+- [ ] **Status Tracking** - Mark members with tags (visitor, new member, volunteer, etc.)
+- [ ] **Follow-up Dashboard** - See who needs outreach this week
+- [ ] **Notes & History** - Track all interactions with each visitor/member
 
-- [ ] **Agency Onboarding Flow** - Connect GHL, configure dashboard
-- [ ] **Widget Marketplace** - Pre-built components for verticals
-- [ ] **Custom Widget Builder** - Drag-drop dashboard customization
-- [ ] **Role-Based Dashboards** - Different views per user role
-- [ ] **Mobile-Responsive Views** - Operations on the go
+### Data Management
+
+- [ ] **Merge Duplicates** - Combine multiple records for same person
+- [ ] **Bulk Actions** - Tag multiple members, export lists
+- [ ] **Custom Fields** - Church-specific data (small group, serving team, etc.)
+
+**Success Criteria**: Church transitions 50% of first-time visitors to returning visitors
+
+---
+
+## 🎯 PHASE 5: AUTOMATED COMMUNICATION (Target: Jan 2026)
+
+**Goal**: Automated SMS/email follow-up campaigns
+
+### GHL Integration
+
+- [ ] **OAuth Connection** - Connect church's GoHighLevel account
+- [ ] **Contact Sync** - Push connect card data to GHL
+- [ ] **SMS Campaigns** - Automated welcome messages to first-time visitors
+- [ ] **Email Campaigns** - Follow-up series, event invitations
+
+### Campaign Templates
+
+- [ ] **First-Time Visitor Welcome** - Thank you + what to expect next Sunday
+- [ ] **Prayer Request Follow-up** - Check-in on prayer needs after 1 week
+- [ ] **Returning Visitor** - Invite to coffee with pastor
+- [ ] **New Member Onboarding** - Next steps to get connected
 
 ### Analytics & Reporting
 
-- [ ] **Performance Metrics** - Response times, conversion rates
-- [ ] **Revenue Analytics** - Payment tracking and forecasting
-- [ ] **Staff Productivity** - Message response times, task completion
-- [ ] **Inventory Forecasting** - Predictive stock management
-- [ ] **Export & Scheduling** - Automated reports to stakeholders
+- [ ] **Campaign Performance** - Open rates, click rates, response rates
+- [ ] **Follow-up Effectiveness** - Track visitor retention by campaign type
+- [ ] **Response Tracking** - See who replied, needs manual outreach
 
-### Security & Production
-
-- [x] Add production security headers ✅
-- [x] Enable CSRF protection in production ✅ (via Better Auth)
-- [x] Video content protection ✅ (Level 1 - 95% effective)
-- [ ] **⚠️ CRITICAL: Implement proper database migrations**
-  - Switch from `prisma db push` to `prisma migrate dev`
-  - Create initial production migration: `npx prisma migrate dev --name init_production`
-  - Document migration strategy in `/docs/essentials/deployment.md`
-  - Set up CI/CD pipeline for production migrations
-  - **Risk**: Current `db push` workflow has no rollback capability
-  - **Reference**: See STATUS.md "Database Migration Strategy" section
-- [ ] Verify all environment variables configured
-- [ ] Test full user flow (signup → enrollment → learning)
-- [ ] Add Content-Security-Policy (CSP) - deferred to Phase 4 (post-$1k MRR)
-
-### User Experience Improvements
-
-- [ ] Update Homepage Features Section (remove old template copy)
-- [ ] Create dedicated /signup page for agencies
-- [ ] Add loading states for lesson navigation
-- [ ] Improve error messages and user feedback
-
-### Payment System & Monetization
-
-- [ ] **Implement Subscription Webhooks** - Handle agency $297/month subscriptions
-  - Add `customer.subscription.created` handler
-  - Add `customer.subscription.deleted` handler
-  - Add `invoice.payment_failed` handler
-  - Keep enrollment logic for future agency course sales
-- [ ] Configure production Stripe webhook endpoint
-- [ ] Test subscription lifecycle events
+**Success Criteria**: 95% of first-time visitors receive follow-up within 24 hours
 
 ---
 
-## 🚀 PHASE 3: Scale & Enterprise Features
+## 🎯 PHASE 6: VOLUNTEER & PRAYER MANAGEMENT (Target: Feb 2026)
 
-### Component Refactoring ✅ COMPLETED
+### Volunteer System
 
-- [x] ✅ Extract EditCourseForm.tsx to shared component (331 lines eliminated)
-- [x] ✅ Extract LessonForm.tsx to shared component (160 lines eliminated)
-- [x] ✅ Complete duplication analysis (1,783 lines identified)
-- [x] ✅ Create comprehensive refactoring plan
-- [x] ✅ **Execute Phase 1**: Extract high-impact components (1,360 lines)
-  - CourseStructure.tsx (627 lines extracted)
-  - CreateCourseForm (513 lines extracted)
-  - NewLessonModal (203 lines extracted)
-  - NewChapterModal (165 lines extracted)
-- [x] ✅ **Execute Phase 2**: Extract medium components (391 lines)
-  - DeleteLesson (139 lines extracted)
-  - DeleteChapter (134 lines extracted)
-  - DeleteCourseConfirmation (132 lines extracted)
-  - LessonEditDialog (255 lines extracted)
-- [x] ✅ **Execute Phase 3**: Consolidate CourseForm (750+ lines eliminated)
-  - CourseForm.tsx (600 lines) - Unified create/edit component
-  - Eliminated CreateCourseForm/EditCourseForm duplication
-  - Fixed double header issue on Create pages
-  - Fixed Generate Slug button alignment
-- [x] ✅ **Complete**: 17 shared components, 4,670 lines, 85%+ duplication eliminated
+- [ ] **Volunteer Database** - Skills, availability, preferences
+- [ ] **Serving Opportunities** - List of volunteer roles (greeters, ushers, kids ministry, etc.)
+- [ ] **Scheduling** - Assign volunteers to weekly serving schedule
+- [ ] **Check-in System** - Track volunteer attendance
+- [ ] **Reminders** - SMS reminders before serving shifts
 
-**Refactoring complete! See `/docs/technical/REFACTORING-PLAN-2025.md` for implementation details**
+### Prayer Request System
 
-### Code Quality
+- [ ] **Prayer Wall** - Public prayer request board (opt-in)
+- [ ] **Prayer Teams** - Assign requests to specific prayer groups
+- [ ] **Follow-up Workflow** - Check in after 1 week, 1 month
+- [ ] **Answered Prayers** - Track and celebrate answered requests
+- [ ] **Privacy Controls** - Public vs confidential prayer requests
 
-- [x] ✅ Remove code duplication (85%+ eliminated - industry standard achieved)
-- [ ] Add integration tests for critical paths
-- [ ] Add E2E tests for user workflows
-- [ ] Implement structured logging system
+**Success Criteria**: 80% of prayer requests receive follow-up within 1 week
 
 ---
 
-## 🎯 PHASE 4: Enterprise Features / Growth Features
+## 🎯 PHASE 7: ANALYTICS & INSIGHTS (Target: Mar 2026)
 
-### White-Label Infrastructure
+### Visitor Analytics
 
-- [ ] **Custom Domains** - agency.theirurl.com support
-- [ ] **Theme Engine** - Complete visual customization
-- [ ] **API Access** - Let agencies integrate their tools
-- [ ] **SSO Integration** - Enterprise authentication
-- [ ] **Audit Logging** - Compliance and tracking
+- [ ] **First-Time Visitor Trends** - Weekly/monthly counts, seasonal patterns
+- [ ] **Retention Metrics** - How many visitors return for 2nd, 3rd, 4th visit
+- [ ] **N2N Pipeline Dashboard** - Visual funnel from visitor → member
+- [ ] **Source Tracking** - How visitors heard about the church
 
-### AI & Automation
+### Engagement Metrics
 
-- [ ] **Smart Scheduling** - AI-optimized appointment booking
-- [ ] **Auto-Responders** - Context-aware message replies
-- [ ] **Predictive Analytics** - Churn and revenue forecasting
-- [ ] **Workflow Automation** - If-this-then-that rules engine
-- [ ] **Voice Assistant** - Phone call handling integration
+- [ ] **Member Activity** - Attendance trends, serving frequency
+- [ ] **Communication Effectiveness** - SMS/email open rates, response rates
+- [ ] **Prayer Request Analytics** - Response times, follow-up completion
+- [ ] **Volunteer Health** - Burnout indicators, serving frequency
 
-### Analytics & Monitoring
+### Predictive Insights
 
-- [ ] Replace mock analytics with real database queries
-- [ ] Implement error tracking (Sentry)
-- [ ] Add performance monitoring
-- [ ] Create admin debugging dashboard
+- [ ] **At-Risk Members** - Identify members with declining attendance
+- [ ] **High-Potential Volunteers** - Find engaged members ready to serve
+- [ ] **Growth Forecasting** - Predict membership growth based on trends
 
-### Team Features
-
-- [ ] Build UI for team invitation system
-- [ ] Implement role management interface
-- [ ] Add organization settings page
-- [ ] Create billing management portal
-
-### Content Management
-
-- [ ] S3 file organization restructure (human-readable paths)
-- [ ] Video progress tracking
-- [ ] Bulk content upload tools
-- [ ] Course duplication features
-
-### Marketplace & Ecosystem
-
-- [ ] **Template Store** - Sell/buy dashboard templates
-- [ ] **Integration Hub** - Connect to 100+ tools
-- [ ] **Developer SDK** - Let others build on platform
-- [ ] **Training Academy** - Course content (using existing LMS code!)
-- [ ] **Community Forum** - Agency knowledge sharing
+**Success Criteria**: Church leadership makes data-driven decisions on outreach strategy
 
 ---
 
-## 💡 BACKLOG: Future Enhancements
+## 🎯 PHASE 8: MULTI-LOCATION & SCALING (Target: Apr 2026)
 
-### High Value
+### Multi-Location Support
 
-- [ ] Mobile-first redesign
-- [ ] White-label custom domains
-- [ ] Advanced analytics dashboard (LTV, churn, cohorts)
-- [ ] API for external integrations
-- [ ] Webhook system for automation
+- [ ] **Location Management** - Manage 6+ church campuses in one system
+- [ ] **Location-Specific Data** - Filter by campus, track per-location metrics
+- [ ] **Cross-Location Reporting** - Roll-up metrics across all campuses
+- [ ] **Location Branding** - Custom branding per campus (if needed)
 
-### Medium Value
+### White-Label Features
 
-- [ ] Course completion certificates
-- [ ] Email notification system
-- [ ] In-app messaging
-- [ ] Course reviews and ratings
-- [ ] Search functionality
+- [ ] **Custom Domain** - church.theirurl.com
+- [ ] **Church Branding** - Logo, colors, custom styling
+- [ ] **Custom Fields** - Church-specific data fields
+- [ ] **API Access** - Integrate with other church management systems
 
-### Nice to Have
+### Scaling Infrastructure
 
-- [ ] AI-powered course builder
-- [ ] Conditional learning paths
-- [ ] Gamification features
-- [ ] Community forums
-- [ ] Live training sessions
+- [ ] **Performance Optimization** - Handle 1000+ cards/week
+- [ ] **Mobile App** - Native iOS/Android apps for on-the-go scanning
+- [ ] **Offline Mode** - Scan cards without internet, sync later
+- [ ] **Batch Processing** - Process 100+ cards simultaneously
 
----
-
-## ✅ DEFINITION OF DONE
-
-### For MVP Launch
-
-- ✅ Mobile navigation working on all devices
-- ✅ At least one complete course with real content
-- ✅ Payment processing functional
-- ✅ No console.log statements in code
-- ✅ Security headers configured
-- ✅ Video content protection implemented
-- ✅ UI bugs fixed (alignment, double headers)
-- ✅ Code duplication eliminated (CourseForm consolidation)
-- [ ] Core user flow tested and working
-
-### For Each Feature
-
-- Code reviewed and tested
-- Documentation updated
-- No regression in existing features
-- Accessible on mobile and desktop
-- Error handling implemented
+**Success Criteria**: Support 10+ churches with 50,000+ members total
 
 ---
 
-## 📊 SUCCESS INDICATORS
+## 📊 SUCCESS METRICS
 
-### Technical Health
+### Phase 3 (Production Launch)
 
-- ✅ Code duplication ~5% (industry standard achieved)
-- ✅ Zero build errors
-- ✅ Page load under 3 seconds
-- ✅ No critical security vulnerabilities (security headers configured)
+- 1 pilot church using system
+- 100+ connect cards processed
+- 90% time savings on data entry
+- 95% extraction accuracy (with review queue)
 
-### Business Goals
+### Phase 4 (Member Management)
 
-- Platform supports 10+ agencies
-- 80% of users complete onboarding
-- Less than 5% monthly churn
-- Support tickets reduced by 70%
+- 50% first-time visitor → returning visitor conversion
+- 500+ members in directory
+- 10+ follow-ups completed per week
+
+### Phase 5 (Communication)
+
+- 95% follow-up rate within 24 hours
+- 40%+ SMS open rate
+- 20%+ email open rate
+- 80% visitor satisfaction with follow-up
+
+### Phase 6 (Volunteer & Prayer)
+
+- 50+ active volunteers tracked
+- 80% prayer requests followed up within 1 week
+- 90% volunteer attendance rate
+
+### Long-Term (12 Months)
+
+- 10+ churches using platform
+- 50,000+ connect cards processed
+- 100,000+ church members in system
+- $10K+ MRR
 
 ---
 
-## ⚠️ CURRENT BLOCKERS
+## 🚫 OUT OF SCOPE (Not Planning)
 
-1. **GHL API Authentication** - Need production API keys and OAuth setup
-2. **Real-Time Data** - Mock data needs replacement with live GHL connections
+These features are explicitly NOT planned for MVP:
 
-Phase 0 complete. All critical fixes done including S3 cleanup. Ready for GHL dashboard MVP and customer acquisition.
+- **Event Management** - Use external tools (Planning Center, Eventbrite)
+- **Giving/Donations** - Use Stripe directly or church giving platforms
+- **Livestream Integration** - Use YouTube, Vimeo, or church streaming services
+- **Website Builder** - Focus on CRM/engagement, not website hosting
+- **Accounting/Finances** - Use QuickBooks, FreshBooks, or church accounting software
 
 ---
 
 ## 📝 NOTES
 
-- ✅ Mobile navigation fixed and working
-- ✅ Component refactoring completed (85%+ duplication eliminated)
-- ✅ First course content uploaded and live
-- ✅ Security headers configured (X-Frame-Options, HSTS, etc.)
-- ✅ Video content protection implemented (95% effective)
-- ✅ UI bugs fixed (alignment, double headers)
-- ✅ CourseForm consolidation complete (CreateCourseForm + EditCourseForm merged)
-- ✅ S3 cleanup architecture implemented and tested
-- ✅ Enhanced delete safety with type-to-confirm (GitHub-style)
-- ✅ Video replacement working correctly - old files deleted automatically
-- ✅ Operations dashboard UI complete with widget system
-- ✅ Sidebar redesigned for CRM use case (24px icons, icon-only mode)
-- ✅ Monochrome design system implemented
-- ✅ Framework component naming conventions established (Jan 2025)
-- ✅ Conversations page 3-column layout complete (Jan 2025)
-- ✅ SideCar AI sidebar with 4-tab interface (Chat, Contact, Tasks, Insights)
-- ✅ Mutually exclusive sidebar toggles working correctly
-- ✅ URL-based navigation tabs with NavTabs component (PR #42 - Jan 2025)
-- ✅ Edge-to-edge data table layouts with removed global padding
-- ✅ Payment management system with GHL webhook architecture (PR #44 - Jan 2025)
-- ✅ Canvas Pattern for full-height components (flex-1 instead of h-full)
-- ✅ CalendarClient and PaymentsClient properly fill viewport
-- ✅ Platform architecture supports multi-tenant agencies
-- **Primary Focus**: AI-powered CRM with calendar integration and intelligent automation
-- **Secondary Feature**: Training academy (LMS) for client onboarding and education
-- **Next Priorities**:
-  1. Cal.com calendar integration (core feature)
-  2. Connect real GHL data APIs
-  3. Launch to first IV therapy clinics
-  4. Implement Vercel AI SDK for Phase 2
-- Keep STATUS.md updated as tasks complete
+- **AI Limitations**: 60-85% accuracy is industry standard for handwriting OCR. Hybrid approach (AI + human review) is the right model.
+- **GHL Dependency**: Communication features require GoHighLevel. Alternative: direct Twilio/SendGrid integration if churches don't have GHL.
+- **Mobile-First**: Many church staff use phones, not computers. Mobile camera scanning is critical feature.
+- **Privacy**: Churches handle sensitive data (prayer requests, personal info). Security and compliance are non-negotiable.
+- **LMS Position**: Training system is secondary feature for church staff onboarding, not core product.
+
+---
+
+## 🔄 NEXT STEPS
+
+**Immediate** (This Week):
+
+1. Set up production environment (Neon, Vercel, domain)
+2. Configure all environment variables
+3. Build review queue UI for flagged connect cards
+4. Test end-to-end flow with pilot church
+
+**Short-Term** (This Month):
+
+1. Launch to pilot church (6 locations)
+2. Process 100+ real connect cards
+3. Measure accuracy, time savings, user satisfaction
+4. Iterate based on feedback
+
+**Medium-Term** (Next 3 Months):
+
+1. Build member management MVP
+2. Implement N2N workflow
+3. Connect GHL for automated follow-up
+4. Expand to 2-3 additional pilot churches

@@ -199,18 +199,18 @@ This project was forked from SideCar Platform with proven, working patterns. Whe
 **Church Connect Card Management System** - Multi-tenant platform for churches to digitize connect cards and manage member engagement.
 
 - **Product Strategy**: Scan paper connect cards → Extract data via AI Vision → Manage members → Automate follow-up
-- **Current Focus**: Initial setup - Environment configuration, clean foundation, placeholder UI
+- **Current Phase**: Phase 2 Complete (Connect Card MVP) → Moving to Phase 3 (Production Launch)
 - **Business Model**: SaaS for churches - Replace manual connect card data entry, improve visitor follow-up
 - **Tech Stack**: Next.js 15, Prisma, Better Auth, GHL API (communications), Tigris S3, Claude Vision API (Anthropic)
 - **Target**: Churches wanting to eliminate manual data entry and improve member engagement
 
 **Key Features:**
 
-1. **Connect Card Scanning** - AI Vision (Claude) to extract structured data from handwritten connect cards with contextual understanding
-2. **Member Management** - Track visitors, members, engagement (repurposed from Contacts)
-3. **Volunteer Scheduling** - Manage church volunteers (repurposed from Calendar)
-4. **GHL Integration** - Sub-agency setup for SMS/automations/communications
-5. **Training Courses** - Church staff training (existing LMS system)
+1. **Connect Card Scanning** ✅ COMPLETE - AI Vision (Claude) extracts structured data from handwritten connect cards
+2. **Member Management** - Track visitors, members, engagement (database ready, UI in progress)
+3. **Volunteer Scheduling** - Manage church volunteers (database ready, UI planned)
+4. **GHL Integration** - Sub-agency setup for SMS/automations/communications (planned Phase 5)
+5. **Training Courses** - Church staff training (existing LMS system, fully functional)
 
 ---
 
@@ -343,7 +343,7 @@ Focus on WHAT needs to be done and in what ORDER, not HOW LONG it will take.
 
 - Features organized by business capability
 - Each slice contains all layers (UI, logic, data)
-- Example: `/app/agency/[slug]/admin/courses/` contains everything for course management
+- Example: `/app/church/[slug]/admin/courses/` contains everything for course management
 
 ### Multi-Tenant System
 
@@ -355,8 +355,8 @@ Focus on WHAT needs to be done and in what ORDER, not HOW LONG it will take.
 
 - Use Server Components by default
 - Client components only for interactivity
-- Headers via Named Slots (Parallel Routes)
-- See `/docs/technical/NAMED-SLOTS-MIGRATION.md`
+- Headers via config-based pattern (`SiteHeader` + `/lib/navigation.ts`)
+- Page titles automatically derived from navigation config
 
 ---
 
@@ -417,35 +417,40 @@ git push origin branch
 
 ## 🎯 CURRENT PRIORITIES
 
-**Phase 1: Setup & Foundation** (In Progress)
+**Phase 2: Connect Card MVP** ✅ COMPLETE (Oct 26, 2025)
 
 - ✅ Project forked and rebranded from SideCar Platform
-- ✅ Clean git history (no secrets)
-- ✅ Removed inventory & reviews features
-- ✅ Dashboard placeholders
-- ⏳ Environment setup (Neon database, Better Auth, Tigris S3)
-- ⏳ Branding updates (sidebar labels, brand name)
-- ⏳ Test local development environment
+- ✅ Renamed `/app/agency/` → `/app/church/`
+- ✅ Config-based headers (eliminated Named Slots)
+- ✅ PageContainer pattern standardized
+- ✅ Connect Card Upload - Multi-file drag-and-drop + mobile camera
+- ✅ Claude Vision AI Integration - Extracts structured data from handwriting
+- ✅ Base64 image processing (avoids S3 access issues)
+- ✅ Client-side validation (phone, email quality checks)
+- ✅ Database storage (ConnectCard model with JSONB)
+- ✅ Test interface for debugging extractions
 
-**Phase 2: Connect Card MVP**
+**Phase 3: Production Launch** (CURRENT - Target: Nov 2025)
 
-1. **Connect Card Upload** - Image upload component (S3)
-2. **AI Vision Integration** - Extract structured data from connect card images using Claude Vision API
-3. **Member Database** - Store and manage member information
-4. **Manual Correction UI** - Edit AI-extracted results before saving
+1. **Environment Setup** - Production database, domain, SSL, monitoring
+2. **Review Queue UI** - Manual correction interface for flagged cards
+3. **Connect Card Enhancements** - Search, filter, bulk processing improvements
+4. **Pilot Church Testing** - Process 100+ real connect cards
+5. **Documentation** - Admin guide, video tutorial, support system
 
-**Phase 3: GHL Integration**
+**Phase 4: Member Management** (Planned - Dec 2025)
 
-1. **Sub-Agency Setup** - Connect church as GHL sub-account
-2. **SMS/Automations** - Automated follow-up workflows
-3. **Conversations Sync** - Pull GHL messages into unified inbox
+1. **Member Directory** - List, search, filter church members
+2. **N2N Workflow** - First-time visitor → returning → regular → member pipeline
+3. **Member Profiles** - Individual history, notes, connect cards
+4. **Duplicate Detection** - Warn when connect card matches existing member
 
-**Phase 4: Additional Features** (TBD based on user feedback)
+**Phase 5: Automated Communication** (Planned - Jan 2026)
 
-- Email campaigns to first-time visitors
-- Small group management
-- Volunteer scheduling enhancements
-- Event check-in system
+1. **GHL Integration** - Connect church's GoHighLevel account
+2. **SMS/Email Campaigns** - Automated visitor follow-up
+3. **Campaign Templates** - Welcome series, prayer follow-up, event invites
+4. **Analytics** - Track follow-up effectiveness, response rates
 
 ---
 

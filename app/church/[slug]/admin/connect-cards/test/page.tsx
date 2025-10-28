@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Uploader } from "@/components/file-uploader/Uploader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,12 @@ import {
   AlertCircle,
   ImageIcon,
   X,
+  Save,
 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
+import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
+import { PageContainer } from "@/components/layout/page-container";
 
 interface ExtractedData {
   name: string | null;
@@ -39,6 +42,8 @@ export default function ConnectCardTestPage() {
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [savedCardId, setSavedCardId] = useState<string | null>(null);
+  const [isSaving, startSaving] = useTransition();
 
   async function handleExtract() {
     if (!imageKey) {
@@ -83,8 +88,32 @@ export default function ConnectCardTestPage() {
     }
   }
 
+  function handleSaveToDatabase() {
+    if (!imageKey || !extractedData) {
+      toast.error("No data to save");
+      return;
+    }
+
+    startSaving(async () => {
+      const result = await saveConnectCard(slug, {
+        imageKey,
+        extractedData,
+      });
+
+      if (result.status === "success") {
+        toast.success("Connect card saved to database!");
+        setSavedCardId(result.data?.id || null);
+      } else {
+        toast.error(result.message);
+      }
+    });
+  }
+
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 h-full overflow-hidden">
+    <PageContainer
+      variant="none"
+      className="flex-1 gap-4 p-4 h-full overflow-hidden"
+    >
       {/* Upload Section - 75% height */}
       <Card className="relative flex-[3] min-h-0 flex flex-col">
         <CardHeader className="pb-2 flex-shrink-0 flex flex-row items-center justify-between">
@@ -135,7 +164,7 @@ export default function ConnectCardTestPage() {
               <div className="col-span-1 flex flex-col gap-3 justify-center">
                 <Button
                   onClick={handleExtract}
-                  disabled={extracting}
+                  disabled={extracting || isSaving}
                   className="w-full"
                   size="lg"
                 >
@@ -151,15 +180,49 @@ export default function ConnectCardTestPage() {
                     </>
                   )}
                 </Button>
+
+                {extractedData && !savedCardId && (
+                  <Button
+                    onClick={handleSaveToDatabase}
+                    disabled={isSaving}
+                    className="w-full"
+                    size="lg"
+                    variant="default"
+                  >
+                    {isSaving ? (
+                      <>
+                        <Spinner className="mr-2" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="mr-2 w-5 h-5" />
+                        Save to Database
+                      </>
+                    )}
+                  </Button>
+                )}
+
+                {savedCardId && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800 text-sm">
+                      Saved! ID: {savedCardId.slice(0, 8)}...
+                    </AlertDescription>
+                  </Alert>
+                )}
+
                 <Button
                   variant="outline"
                   onClick={() => {
                     setImageKey(null);
                     setExtractedData(null);
                     setError(null);
+                    setSavedCardId(null);
                   }}
                   className="w-full"
                   size="lg"
+                  disabled={extracting || isSaving}
                 >
                   <ImageIcon className="mr-2 w-5 h-5" />
                   Change Image
@@ -275,6 +338,6 @@ export default function ConnectCardTestPage() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

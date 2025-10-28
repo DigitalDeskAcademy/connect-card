@@ -9,18 +9,18 @@ const anthropic = new Anthropic({
 
 export async function POST(request: NextRequest) {
   try {
-    const { imageUrl } = await request.json();
+    const { imageData, mediaType } = await request.json();
 
-    if (!imageUrl) {
+    if (!imageData || !mediaType) {
       return NextResponse.json(
-        { error: "Image URL is required" },
+        { error: "Image data and media type are required" },
         { status: 400 }
       );
     }
 
-    console.log("📷 Processing connect card image:", imageUrl);
+    console.log("📷 Processing connect card image (base64)");
 
-    // Call Claude Vision API
+    // Call Claude Vision API with base64 data
     const response = await anthropic.messages.create({
       model: "claude-3-5-sonnet-20241022",
       max_tokens: 1024,
@@ -31,26 +31,35 @@ export async function POST(request: NextRequest) {
             {
               type: "image",
               source: {
-                type: "url",
-                url: imageUrl,
+                type: "base64",
+                media_type: mediaType,
+                data: imageData,
               },
             },
             {
               type: "text",
-              text: `You are analyzing a church connect card. Please extract ALL information you can find from this image and return it as a JSON object.
+              text: `You are analyzing a church connect card to extract VISITOR INFORMATION ONLY.
 
-Look for these common fields (but include any other information you find):
-- Full name
-- Email address
-- Phone number
-- Prayer request or prayer needs
-- Whether this is a first-time visitor
-- Interests or ministries they're interested in
-- Address (if present)
-- Age or age group (if present)
-- Family information (spouse, children, if mentioned)
-- Any checkboxes that are marked
-- Any other written information
+IMPORTANT: Only extract information written or checked BY THE VISITOR. Ignore all pre-printed form content, church branding, logos, social media icons, website URLs, and form titles.
+
+Extract these visitor-specific fields:
+- Full name (handwritten or typed by visitor)
+- Email address (visitor's email)
+- Phone number (visitor's phone)
+- Prayer request or prayer needs (visitor's written request)
+- Whether this is a first-time visitor (checkbox marked by visitor)
+- Interests or ministries they checked or wrote
+- Address (if visitor filled it in)
+- Age or age group (if visitor indicated)
+- Family information (spouse, children - only if visitor wrote this)
+
+DO NOT INCLUDE:
+- Church name, branding, or logos
+- Social media icons or handles
+- Website URLs on the form
+- Form titles or headers
+- Pre-printed text or instructions
+- Any decoration or design elements
 
 Return ONLY a JSON object with this structure:
 {
@@ -63,11 +72,11 @@ Return ONLY a JSON object with this structure:
   "address": "extracted address or null",
   "age_group": "extracted age group or null",
   "family_info": "extracted family info or null",
-  "additional_notes": "any other information found or null"
+  "additional_notes": "any other visitor-specific information or null"
 }
 
 If a field is not present or cannot be read, set it to null.
-Be thorough and extract everything you can see, even if the handwriting is messy.`,
+Be thorough with handwritten content, even if messy, but strict about ignoring pre-printed form content.`,
             },
           ],
         },

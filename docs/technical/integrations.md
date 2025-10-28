@@ -744,10 +744,10 @@ export async function queryDashboard(params: {
 
   const { textStream } = await streamText({
     model: aiModels.chat,
-    system: `You are an AI assistant for a medical practice operations dashboard.
+    system: `You are an AI assistant for a church operations dashboard.
 You have access to the following data:
-- ${contacts.length} recent contacts
-- ${appointments.length} appointments today
+- ${contacts.length} recent members/visitors
+- ${appointments.length} events/meetings today
 
 Answer questions clearly and provide actionable insights.`,
     messages: [{ role: "user", content: params.query }],

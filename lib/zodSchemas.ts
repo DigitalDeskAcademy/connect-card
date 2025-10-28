@@ -144,9 +144,27 @@ export const organizationSetupSchema = z.object({
   }),
 });
 
+// Connect card extracted data schema
+export const connectCardSchema = z.object({
+  imageKey: z.string().min(1, { message: "Image is required" }),
+  extractedData: z.object({
+    name: z.string().nullable(),
+    email: z.string().nullable(),
+    phone: z.string().nullable(),
+    prayer_request: z.string().nullable(),
+    first_time_visitor: z.boolean().nullable(),
+    interests: z.array(z.string()).nullable(),
+    address: z.string().nullable(),
+    age_group: z.string().nullable(),
+    family_info: z.string().nullable(),
+    additional_notes: z.any().nullable(), // Allow any JSON structure
+  }),
+});
+
 export type CourseSchemaType = z.infer<typeof courseSchema>;
 export type ChapterSchemaType = z.infer<typeof chapterSchema>;
 export type LessonSchemaType = z.infer<typeof lessonSchema>;
 export type OrganizationSetupSchemaType = z.infer<
   typeof organizationSetupSchema
 >;
+export type ConnectCardSchemaType = z.infer<typeof connectCardSchema>;
