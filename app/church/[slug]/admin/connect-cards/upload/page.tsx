@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  ArrowRight,
   ArrowLeft,
   Camera,
   Trash2,
@@ -526,13 +525,12 @@ export default function ConnectCardUploadPage() {
     <PageContainer>
       {/* Back Button */}
       <Button
-        variant="ghost"
-        size="sm"
+        variant="outline"
         onClick={() => router.push(`/church/${slug}/admin`)}
-        className="mb-4"
+        className="mb-4 h-11"
       >
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Dashboard
+        Back
       </Button>
 
       {/* Upload Tabs */}
@@ -543,16 +541,25 @@ export default function ConnectCardUploadPage() {
           onValueChange={value => setUploadMode(value as UploadMode)}
           className="w-full"
         >
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-2">
-            <TabsTrigger value="files">
+          <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs rtl:space-x-reverse">
+            <TabsTrigger
+              value="files"
+              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
+            >
               <FileImage className="mr-2 w-4 h-4" />
               Upload Files
             </TabsTrigger>
-            <TabsTrigger value="camera" className="md:hidden">
+            <TabsTrigger
+              value="camera"
+              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary md:hidden"
+            >
               <Camera className="mr-2 w-4 h-4" />
               Scan with Camera
             </TabsTrigger>
-            <TabsTrigger value="test">
+            <TabsTrigger
+              value="test"
+              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
+            >
               <TestTube className="mr-2 w-4 h-4" />
               Test Single
             </TabsTrigger>
@@ -643,6 +650,7 @@ export default function ConnectCardUploadPage() {
                   ) : (
                     <div className="space-y-4">
                       <div className="aspect-video relative rounded-lg overflow-hidden border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={testPreview}
                           alt="Test connect card"
@@ -821,15 +829,6 @@ export default function ConnectCardUploadPage() {
                 <ClipboardCheck className="mr-2 w-5 h-5" />
                 Review Queue ({savedCount})
               </Button>
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={() => router.push(`/church/${slug}/admin`)}
-                className="flex-1"
-              >
-                <ArrowRight className="mr-2 w-5 h-5" />
-                Go to Dashboard
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -928,6 +927,7 @@ export default function ConnectCardUploadPage() {
                 )}
 
                 <div className="aspect-square relative">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={image.preview}
                     alt="Connect card"

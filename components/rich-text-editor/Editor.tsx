@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -6,7 +5,23 @@ import StarterKit from "@tiptap/starter-kit";
 import { Menubar } from "./Menubar";
 import TextAlign from "@tiptap/extension-text-align";
 
-export function RichTextEditor({ field }: { field: any }) {
+/**
+ * Rich Text Editor Component
+ *
+ * Tiptap-based WYSIWYG editor for form fields (react-hook-form Controller).
+ * Stores content as JSON string for structured data persistence.
+ *
+ * @param field - React Hook Form Controller field with string value
+ */
+
+interface RichTextEditorProps {
+  field: {
+    onChange: (value: string) => void;
+    value?: string;
+  };
+}
+
+export function RichTextEditor({ field }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
       StarterKit,

@@ -1,10 +1,23 @@
 "use client";
 
-import { CourseSidebarDataType } from "@/app/data/course/get-course-sidebar-data";
 import { useMemo } from "react";
 
+// Structural type - accepts any course data with this minimal shape
+// This allows the hook to work with different query types (enrolled courses, sidebar data, etc.)
+interface MinimalCourseData {
+  chapter: Array<{
+    lessons: Array<{
+      id: string;
+      lessonProgress: Array<{
+        lessonId: string;
+        completed: boolean;
+      }>;
+    }>;
+  }>;
+}
+
 interface iAppProps {
-  courseData: CourseSidebarDataType["course"];
+  courseData: MinimalCourseData;
 }
 
 interface CourseProgressResult {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState, useEffect, useRef } from "react";
+import { ReactNode, useState } from "react";
 import { SiteHeader } from "@/components/sidebar/site-header";
 import { SideCarAISidebar } from "@/components/sidebar/sidecar-ai-sidebar";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -38,7 +38,22 @@ export function DashboardContentWrapper({
 }: DashboardContentWrapperProps) {
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
   const { setOpen: setLeftSidebarOpen, open: isLeftSidebarOpen } = useSidebar();
-  const prevLeftSidebarOpen = useRef(isLeftSidebarOpen);
+
+  // Track previous left sidebar state for transition detection (React 18+ pattern)
+  const [prevLeftSidebarOpen, setPrevLeftSidebarOpen] =
+    useState(isLeftSidebarOpen);
+
+  // Adjust state during render when left sidebar state changes (not in an effect)
+  // This follows React's guidance: https://react.dev/learn/you-might-not-need-an-effect
+  // When left sidebar opens, close AI sidebar (mutual exclusivity)
+  if (isLeftSidebarOpen !== prevLeftSidebarOpen) {
+    setPrevLeftSidebarOpen(isLeftSidebarOpen);
+
+    // Only close AI sidebar when left sidebar transitions from closed to open
+    if (!prevLeftSidebarOpen && isLeftSidebarOpen && isAiSidebarOpen) {
+      setIsAiSidebarOpen(false);
+    }
+  }
 
   // Handle AI sidebar toggle - close left nav when opening
   const handleAiSidebarToggle = () => {
@@ -47,16 +62,6 @@ export function DashboardContentWrapper({
     }
     setIsAiSidebarOpen(!isAiSidebarOpen);
   };
-
-  // Monitor left sidebar opening to close AI sidebar (mutual exclusivity)
-  // Only close AI sidebar when left sidebar transitions from closed to open
-  useEffect(() => {
-    if (!prevLeftSidebarOpen.current && isLeftSidebarOpen && isAiSidebarOpen) {
-      setIsAiSidebarOpen(false);
-    }
-    prevLeftSidebarOpen.current = isLeftSidebarOpen;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLeftSidebarOpen]);
 
   return (
     <div className="flex flex-col h-screen">

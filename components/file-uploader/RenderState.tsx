@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
 import { CloudUploadIcon, ImageIcon } from "lucide-react";
 import { Button } from "../ui/button";
-import Image from "next/image";
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
 
 export function RenderEmptyState({ isDragActive }: { isDragActive: boolean }) {
   return (
@@ -59,13 +60,14 @@ export function RenderUploadedState({
           className="rounded-md max-w-full max-h-full"
         />
       ) : (
-        <Image
-          src={previewUrl}
-          alt="Uploaded File"
-          fill
-          sizes="(max-width: 768px) 100vw, 800px"
-          className="object-contain"
-        />
+        <Zoom>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl}
+            alt="Uploaded File - Click to zoom"
+            className="max-w-full max-h-full object-contain rounded-md cursor-zoom-in"
+          />
+        </Zoom>
       )}
     </div>
   );

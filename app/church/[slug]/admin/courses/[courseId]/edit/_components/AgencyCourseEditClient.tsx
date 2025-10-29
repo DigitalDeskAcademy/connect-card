@@ -90,16 +90,16 @@ export function AgencyCourseEditClient({
             defaultValue={defaultTab}
             suppressHydrationWarning
           >
-            <TabsList className="grid grid-cols-2 w-full h-12 bg-muted/20 border mb-6">
+            <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs rtl:space-x-reverse mb-6">
               <TabsTrigger
                 value="basic-info"
-                className="bg-muted border border-border data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary h-full font-medium text-sm transition-all hover:bg-muted/70"
+                className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
               >
                 Basic Information
               </TabsTrigger>
               <TabsTrigger
                 value="course-structure"
-                className="bg-muted border border-border data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary h-full font-medium text-sm transition-all hover:bg-muted/70"
+                className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
               >
                 Course Structure
               </TabsTrigger>
