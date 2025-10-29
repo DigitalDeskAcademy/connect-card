@@ -1,6 +1,6 @@
 # Church Connect Card - Product Roadmap
 
-**Current Phase**: Phase 2 Complete (Connect Card MVP) → Moving to Phase 3 (Production Launch)
+**Current Phase**: Phase 3 In Progress (Production Launch) - Review Queue Complete
 **Product Focus**: Church visitor engagement platform with AI-powered connect card scanning
 **Target Market**: Churches (100-2000 members) seeking to improve visitor follow-up
 
@@ -82,6 +82,14 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 **Goal**: Launch to first pilot church with 6 locations
 
+### Connect Card Enhancements ✅ COMPLETE
+
+- [x] **Review Queue UI** - Manual correction interface with zoomable images
+- [x] **Manual Edit Interface** - Pre-populated forms with AI-extracted data, Save/Skip navigation
+- [x] **Upload Completion Summary** - Stats dashboard with success/warning/error counts
+- [x] **Dashboard Analytics** - TanStack Table with sorting, search, filtering, pagination
+- [x] **Status Workflow** - EXTRACTED → REVIEWED status transitions
+
 ### Environment Setup
 
 - [ ] **Production Database** - Configure Neon production Postgres
@@ -89,13 +97,6 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 - [ ] **Domain & SSL** - Custom domain with HTTPS
 - [ ] **Monitoring** - Error tracking (Sentry), analytics (Vercel)
 - [ ] **Backups** - Automated database backups
-
-### Connect Card Enhancements
-
-- [ ] **Review Queue UI** - Show flagged cards with validation warnings
-- [ ] **Manual Edit Interface** - Allow correction of extracted data before saving
-- [ ] **Bulk Processing Progress** - Better visual feedback for multi-card uploads
-- [ ] **Search & Filter** - Find cards by name, date, status, first-time visitor
 
 ### Testing & Validation
 
@@ -110,11 +111,15 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 - [ ] **Video Tutorial** - 5-minute walkthrough of full workflow
 - [ ] **Support System** - Help desk for pilot church questions
 
-**Success Criteria**: Pilot church processes 100+ connect cards with 90% time savings
+**Success Criteria**:
+
+- [x] Review queue UI complete with manual correction capability
+- [ ] Pilot church processes 100+ connect cards with 90% time savings
+- [ ] Production environment configured and live
 
 ---
 
-## 🎯 PHASE 4: MEMBER MANAGEMENT (Target: Dec 2025)
+## 🎯 PHASE 4: MEMBER MANAGEMENT (Target: Dec 2025 - Jan 2026)
 
 **Goal**: Build member directory and N2N (Newcomer to Next-Step) workflow
 
@@ -142,7 +147,7 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 ---
 
-## 🎯 PHASE 5: AUTOMATED COMMUNICATION (Target: Jan 2026)
+## 🎯 PHASE 5: AUTOMATED COMMUNICATION (Target: Feb 2026)
 
 **Goal**: Automated SMS/email follow-up campaigns
 
@@ -170,7 +175,7 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 ---
 
-## 🎯 PHASE 6: VOLUNTEER & PRAYER MANAGEMENT (Target: Feb 2026)
+## 🎯 PHASE 6: VOLUNTEER & PRAYER MANAGEMENT (Target: Mar 2026)
 
 ### Volunteer System
 
@@ -192,7 +197,7 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 ---
 
-## 🎯 PHASE 7: ANALYTICS & INSIGHTS (Target: Mar 2026)
+## 🎯 PHASE 7: ANALYTICS & INSIGHTS (Target: Apr 2026)
 
 ### Visitor Analytics
 
@@ -218,7 +223,7 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 ---
 
-## 🎯 PHASE 8: MULTI-LOCATION & SCALING (Target: Apr 2026)
+## 🎯 PHASE 8: MULTI-LOCATION & SCALING (Target: May 2026)
 
 ### Multi-Location Support
 
@@ -310,19 +315,20 @@ These features are explicitly NOT planned for MVP:
 
 1. Set up production environment (Neon, Vercel, domain)
 2. Configure all environment variables
-3. Build review queue UI for flagged connect cards
-4. Test end-to-end flow with pilot church
+3. Test review queue with real handwritten connect cards
+4. Deploy to production and verify end-to-end flow
 
-**Short-Term** (This Month):
+**Short-Term** (Next 2 Weeks):
 
 1. Launch to pilot church (6 locations)
-2. Process 100+ real connect cards
+2. Process 100+ real connect cards with review queue
 3. Measure accuracy, time savings, user satisfaction
-4. Iterate based on feedback
+4. Collect feedback on review queue UX
 
 **Medium-Term** (Next 3 Months):
 
-1. Build member management MVP
-2. Implement N2N workflow
-3. Connect GHL for automated follow-up
-4. Expand to 2-3 additional pilot churches
+1. Refine review queue based on pilot church feedback
+2. Build member management MVP
+3. Implement N2N workflow
+4. Connect GHL for automated follow-up
+5. Expand to 2-3 additional pilot churches
