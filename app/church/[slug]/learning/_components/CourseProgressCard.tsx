@@ -39,7 +39,6 @@
  *   }}
  * />
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { EnrolledCourseType } from "@/app/data/user/get-enrolled-courses";
@@ -65,7 +64,7 @@ export function CourseProgressCard({ data, agencySlug }: iAppProps) {
 
   // Calculate real-time course progress using existing hook
   const { totalLessons, completedLessons, progressPercentage } =
-    useCourseProgress({ courseData: data.Course as any });
+    useCourseProgress({ courseData: data.Course });
 
   return (
     <Card className="group relative py-0 gap-0 hover:shadow-lg hover:shadow-primary/5 transition-all duration-200 hover:scale-[1.02] transform">

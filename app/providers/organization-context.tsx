@@ -12,9 +12,6 @@
  */
 
 import { createContext, useContext, ReactNode } from "react";
-// TODO: Verify this is a false positive - Organization type is used in the type definition below
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { Organization } from "@/lib/generated/prisma";
 
 // Define the shape of organization data we expose
 type OrganizationContextType = {

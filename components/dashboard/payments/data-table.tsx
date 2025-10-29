@@ -142,6 +142,7 @@ export function DataTable<TData, TValue>({
       colSizes[`--col-${header.column.id}-size`] = header.column.getSize();
     }
     return colSizes;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, tableState.columnSizingInfo, tableState.columnSizing]);
 
   // Handle search input change

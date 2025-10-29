@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
@@ -19,6 +19,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageContainer } from "@/components/layout/page-container";
+import { useSidebar } from "@/components/ui/sidebar";
 import {
   CheckCircle2,
   AlertCircle,
@@ -28,6 +29,7 @@ import {
   Image as ImageIcon,
   ClipboardCheck,
   ArrowLeft,
+  ZoomIn,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
@@ -44,6 +46,7 @@ interface ReviewQueueClientProps {
 
 export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
   const router = useRouter();
+  const { setOpen, isMobile } = useSidebar();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
 
@@ -61,6 +64,28 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
         }
       : null
   );
+
+  // Close sidebar on mount for better image viewing, restore on unmount
+  useEffect(() => {
+    if (isMobile) return; // Don't modify mobile sidebar behavior
+
+    // Get current sidebar state from cookie
+    const getSidebarState = () => {
+      const cookies = document.cookie.split("; ");
+      const sidebarCookie = cookies.find(c => c.startsWith("sidebar:state="));
+      return sidebarCookie?.split("=")[1] === "true";
+    };
+
+    const previousState = getSidebarState();
+
+    // Close sidebar for review queue
+    setOpen(false);
+
+    // Restore previous state on unmount
+    return () => {
+      setOpen(previousState);
+    };
+  }, [isMobile, setOpen]);
 
   // Update form data when card changes
   const resetFormForCard = (card: ConnectCardForReview) => {
@@ -180,39 +205,44 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
 
   return (
     <PageContainer>
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => router.push(`/church/${slug}/admin`)}
-        className="mb-4"
+      <div className="flex items-center gap-4 mb-4">
+        {/* Back Button */}
+        <Button
+          variant="outline"
+          onClick={() => router.push(`/church/${slug}/admin`)}
+          className="h-11"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+
+        {/* Progress indicator */}
+        <Alert className="flex-1 py-2 h-11">
+          <ClipboardCheck className="h-4 w-4" />
+          <AlertDescription>
+            Reviewing card {currentIndex + 1} of {cards.length}
+          </AlertDescription>
+        </Alert>
+      </div>
+
+      <div
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+        style={{ height: "calc(100vh - 200px)" }}
       >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back to Dashboard
-      </Button>
-
-      {/* Progress indicator */}
-      <Alert className="mb-6">
-        <ClipboardCheck className="h-4 w-4" />
-        <AlertDescription>
-          Reviewing card {currentIndex + 1} of {cards.length}
-        </AlertDescription>
-      </Alert>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left side - Image display */}
-        <Card>
+        <Card className="flex flex-col h-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ImageIcon className="w-5 h-5" />
               Scanned Connect Card
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            {currentCard.imageUrl ? (
+          <CardContent className="flex-1 flex flex-col">
+            {currentCard.imageUrl && currentCard.imageUrl.trim() !== "" ? (
               <>
                 <Zoom>
-                  <div className="relative w-full aspect-[3/4] bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
+                  <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={currentCard.imageUrl}
                       alt="Connect card scan"
@@ -220,10 +250,16 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
                     />
                   </div>
                 </Zoom>
-                <p className="text-xs text-muted-foreground mt-3 text-center">
-                  Scanned {new Date(currentCard.scannedAt).toLocaleDateString()}{" "}
-                  • Click image to zoom
-                </p>
+                <div className="mt-3 space-y-1">
+                  <p className="text-xs text-muted-foreground text-center">
+                    Scanned{" "}
+                    {new Date(currentCard.scannedAt).toLocaleDateString()}
+                  </p>
+                  <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
+                    <ZoomIn className="w-4 h-4" />
+                    <span>Click image to zoom</span>
+                  </div>
+                </div>
               </>
             ) : (
               <div className="relative w-full aspect-[3/4] bg-muted rounded-lg overflow-hidden border flex items-center justify-center">
@@ -237,14 +273,14 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
         </Card>
 
         {/* Right side - Correction form */}
-        <Card>
+        <Card className="flex flex-col h-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
               Review & Correct Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="flex-1 overflow-y-auto space-y-4">
             {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="name">
