@@ -711,7 +711,7 @@ import { openai } from "@ai-sdk/openai";
 
 export const aiModels = {
   // Primary models
-  chat: anthropic("claude-3-5-sonnet-20241022"),
+  chat: anthropic("claude-sonnet-4-5-20250929"),
   analysis: openai("gpt-4-turbo"),
   fast: anthropic("claude-3-5-haiku-20241022"),
 
@@ -1051,7 +1051,7 @@ CALCOM_WEBHOOK_SECRET=
 # Vercel AI SDK (Phase 2)
 ANTHROPIC_API_KEY=
 OPENAI_API_KEY=
-AI_DEFAULT_MODEL=claude-3-5-sonnet-20241022
+AI_DEFAULT_MODEL=claude-sonnet-4-5-20250929
 
 # Stripe
 STRIPE_SECRET_KEY=

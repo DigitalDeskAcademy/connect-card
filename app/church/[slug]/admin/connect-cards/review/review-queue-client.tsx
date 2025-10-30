@@ -19,7 +19,6 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { PageContainer } from "@/components/layout/page-container";
-import { useSidebar } from "@/components/ui/sidebar";
 import {
   CheckCircle2,
   AlertCircle,
@@ -30,9 +29,14 @@ import {
   ClipboardCheck,
   ArrowLeft,
   ZoomIn,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
+import { approveAllCards } from "@/actions/connect-card/approve-all-cards";
+import { checkDuplicate } from "@/actions/connect-card/check-duplicate";
+import { markDuplicate } from "@/actions/connect-card/mark-duplicate";
 import type { ConnectCardForReview } from "@/lib/data/connect-card-review";
 import {
   VISIT_STATUS_OPTIONS,
@@ -46,7 +50,6 @@ interface ReviewQueueClientProps {
 
 export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
   const router = useRouter();
-  const { setOpen, isMobile } = useSidebar();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
 
@@ -65,27 +68,53 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
       : null
   );
 
-  // Close sidebar on mount for better image viewing, restore on unmount
+  // Duplicate detection state
+  const [duplicateInfo, setDuplicateInfo] = useState<{
+    isDuplicate: boolean;
+    existingCard?: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      phone: string | null;
+      scannedAt: Date;
+    };
+  } | null>(null);
+  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+
+  // Check for duplicates when card changes
   useEffect(() => {
-    if (isMobile) return; // Don't modify mobile sidebar behavior
+    if (!currentCard || !formData) return;
 
-    // Get current sidebar state from cookie
-    const getSidebarState = () => {
-      const cookies = document.cookie.split("; ");
-      const sidebarCookie = cookies.find(c => c.startsWith("sidebar:state="));
-      return sidebarCookie?.split("=")[1] === "true";
+    const checkForDuplicate = async () => {
+      setCheckingDuplicate(true);
+      try {
+        const result = await checkDuplicate(slug, {
+          name: formData.name,
+          email: formData.email || null,
+          phone: formData.phone || null,
+          currentCardId: currentCard.id,
+        });
+
+        if (result.status === "success" && result.isDuplicate) {
+          setDuplicateInfo({
+            isDuplicate: true,
+            existingCard: result.existingCard,
+          });
+        } else {
+          setDuplicateInfo(null);
+        }
+      } catch (error) {
+        console.error("Duplicate check failed:", error);
+        setDuplicateInfo(null);
+      } finally {
+        setCheckingDuplicate(false);
+      }
     };
 
-    const previousState = getSidebarState();
+    checkForDuplicate();
+  }, [currentCard?.id, formData?.name, formData?.email, formData?.phone, slug]);
 
-    // Close sidebar for review queue
-    setOpen(false);
-
-    // Restore previous state on unmount
-    return () => {
-      setOpen(previousState);
-    };
-  }, [isMobile, setOpen]);
+  // Note: Sidebar auto-close removed - user can toggle sidebar manually as needed
 
   // Update form data when card changes
   const resetFormForCard = (card: ConnectCardForReview) => {
@@ -165,10 +194,73 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
     });
   }
 
+  // Handle batch approval of all cards
+  async function handleApproveAll() {
+    if (!confirm(`Approve all ${cards.length} cards without review?`)) {
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await approveAllCards(slug);
+
+        if (result.status === "success") {
+          toast.success(result.message);
+          router.refresh();
+        } else {
+          toast.error(result.message);
+        }
+      } catch (error) {
+        console.error("Approve all error:", error);
+        toast.error("Failed to approve cards");
+      }
+    });
+  }
+
+  // Handle marking card as duplicate
+  async function handleMarkDuplicate() {
+    if (!currentCard) return;
+
+    startTransition(async () => {
+      try {
+        const result = await markDuplicate(slug, currentCard.id);
+
+        if (result.status === "success") {
+          toast.success(result.message);
+          // Move to next card or refresh if this was the last one
+          if (currentIndex < cards.length - 1) {
+            const nextCard = cards[currentIndex + 1];
+            setCurrentIndex(currentIndex + 1);
+            resetFormForCard(nextCard);
+          } else {
+            router.refresh();
+          }
+        } else {
+          toast.error(result.message);
+        }
+      } catch (error) {
+        console.error("Mark duplicate error:", error);
+        toast.error("Failed to mark as duplicate");
+      }
+    });
+  }
+
   // Empty state
   if (cards.length === 0) {
     return (
       <PageContainer>
+        <div className="mb-6">
+          {/* Back Button */}
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/church/${slug}/admin`)}
+            className="h-11"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </div>
+
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16">
             <ClipboardCheck className="w-16 h-16 text-muted-foreground mb-4" />
@@ -193,6 +285,18 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
   if (!currentCard || !formData) {
     return (
       <PageContainer>
+        <div className="mb-6">
+          {/* Back Button */}
+          <Button
+            variant="outline"
+            onClick={() => router.push(`/church/${slug}/admin`)}
+            className="h-11"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+        </div>
+
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -205,8 +309,9 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
 
   return (
     <PageContainer>
-      <div className="flex items-center gap-4 mb-4">
-        {/* Back Button */}
+      {/* Action Bar */}
+      <div className="flex items-center justify-between mb-1">
+        {/* Left: Back Button */}
         <Button
           variant="outline"
           onClick={() => router.push(`/church/${slug}/admin`)}
@@ -216,18 +321,82 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
           Back
         </Button>
 
-        {/* Progress indicator */}
-        <Alert className="flex-1 py-2 h-11">
-          <ClipboardCheck className="h-4 w-4" />
-          <AlertDescription>
-            Reviewing card {currentIndex + 1} of {cards.length}
-          </AlertDescription>
-        </Alert>
+        {/* Right: Accept All Button */}
+        <Button onClick={handleApproveAll} disabled={isPending} size="lg">
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+              Approving...
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="mr-2 w-5 h-5" />
+              Accept All ({cards.length})
+            </>
+          )}
+        </Button>
       </div>
 
+      {/* Progress indicator */}
+      <Alert className="mb-1 py-2 h-11">
+        <ClipboardCheck className="h-4 w-4" />
+        <AlertDescription>
+          Reviewing card {currentIndex + 1} of {cards.length}
+        </AlertDescription>
+      </Alert>
+
+      {/* Duplicate Warning */}
+      {duplicateInfo?.isDuplicate && duplicateInfo.existingCard && (
+        <Alert variant="destructive" className="mb-1">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <p className="font-semibold mb-1">
+                  Possible Duplicate Detected
+                </p>
+                <p className="text-sm">
+                  Similar card found:{" "}
+                  <strong>{duplicateInfo.existingCard.name}</strong>
+                  {duplicateInfo.existingCard.phone && (
+                    <> • {duplicateInfo.existingCard.phone}</>
+                  )}
+                  {duplicateInfo.existingCard.email && (
+                    <> • {duplicateInfo.existingCard.email}</>
+                  )}
+                </p>
+                <p className="text-xs mt-1 opacity-90">
+                  Last scanned{" "}
+                  {new Date(
+                    duplicateInfo.existingCard.scannedAt
+                  ).toLocaleDateString()}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleMarkDuplicate}
+                disabled={isPending}
+              >
+                <X className="mr-1 h-3 w-3" />
+                Mark as Duplicate
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Checking for duplicates indicator */}
+      {checkingDuplicate && (
+        <Alert className="mb-1">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <AlertDescription>Checking for duplicates...</AlertDescription>
+        </Alert>
+      )}
+
       <div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-6"
-        style={{ height: "calc(100vh - 200px)" }}
+        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        style={{ height: "calc(100vh - 180px)" }}
       >
         {/* Left side - Image display */}
         <Card className="flex flex-col h-full">

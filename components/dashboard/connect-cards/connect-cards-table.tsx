@@ -37,6 +37,8 @@ export function ConnectCardsTable({ data }: ConnectCardsTableProps) {
       pageSize={10}
       defaultSortColumn="scannedAt"
       defaultSortDesc={true}
+      emptyStateTitle="No connect cards found"
+      emptyStateDescription="Upload connect cards to see them here"
     />
   );
 }

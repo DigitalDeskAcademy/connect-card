@@ -576,7 +576,7 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { openai } from '@ai-sdk/openai';
 
 export const aiModels = {
-  chat: anthropic('claude-3-5-sonnet-20241022'),     // Primary chat
+  chat: anthropic('claude-sonnet-4-5-20250929'),     // Primary chat
   analysis: openai('gpt-4-turbo'),                   // Data analysis
   fast: anthropic('claude-3-5-haiku-20241022'),      // Quick responses
   vision: openai('gpt-4-vision-preview'),            // Image analysis
@@ -777,7 +777,7 @@ OPENAI_API_KEY=sk-...
 GOOGLE_AI_API_KEY=...
 
 # AI Configuration
-AI_DEFAULT_MODEL=claude-3-5-sonnet-20241022
+AI_DEFAULT_MODEL=claude-sonnet-4-5-20250929
 AI_MAX_TOKENS=4096
 AI_TEMPERATURE=0.7
 

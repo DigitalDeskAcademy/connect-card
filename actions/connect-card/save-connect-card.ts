@@ -6,6 +6,8 @@ import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
 import { connectCardSchema, ConnectCardSchemaType } from "@/lib/zodSchemas";
 import { request } from "@arcjet/next";
+import { validateConnectCardData } from "@/lib/validation/connect-card-quality";
+import { formatPhoneNumber } from "@/lib/utils";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -66,8 +68,37 @@ export async function saveConnectCard(
     };
   }
 
+  // 4. Data Quality Validation
+  const validationResult = validateConnectCardData(
+    validation.data.extractedData
+  );
+
+  // Log validation results for monitoring
+  if (validationResult.needsReview) {
+    console.log("[Connect Card Validation] Issues detected:", {
+      issues: validationResult.issues,
+      extractedData: validation.data.extractedData,
+    });
+  }
+
+  /**
+   * Get user's default location for auto-assignment
+   *
+   * Location Assignment Logic:
+   * - Auto-assigns to the staff member's default campus location
+   * - Based on WHO scanned the card, not WHERE the card was filled out
+   * - Falls back to null if user has no default location set
+   *
+   * Future Enhancement: Add location dropdown override in upload UI
+   * to handle edge cases (e.g., staff scanning cards from different campus)
+   */
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { defaultLocationId: true },
+  });
+
   try {
-    // 4. Save to database
+    // 5. Save to database
     const connectCard = await prisma.connectCard.create({
       data: {
         organizationId: organization.id,
@@ -76,16 +107,22 @@ export async function saveConnectCard(
         // Map extracted fields to database columns
         name: validation.data.extractedData.name,
         email: validation.data.extractedData.email,
-        phone: validation.data.extractedData.phone,
+        phone: formatPhoneNumber(validation.data.extractedData.phone),
         address: validation.data.extractedData.address,
         prayerRequest: validation.data.extractedData.prayer_request,
         visitType: validation.data.extractedData.first_time_visitor
           ? "First Time Visitor"
           : null,
         interests: validation.data.extractedData.interests || [],
+        // Status: All cards go to review queue initially (EXTRACTED)
+        // Staff can batch approve or review individually
         status: "EXTRACTED",
+        // Store validation issues for review UI (cast to JSON for Prisma)
+        validationIssues: validationResult.issues as never,
         scannedBy: session.user.id,
         scannedAt: new Date(),
+        // Auto-assign to staff member's default campus
+        locationId: user?.defaultLocationId || null,
       },
       select: {
         id: true,
@@ -94,10 +131,11 @@ export async function saveConnectCard(
 
     return {
       status: "success",
-      message: "Connect card saved successfully",
+      message: "Connect card saved - added to review queue",
       data: { id: connectCard.id },
     };
-  } catch {
+  } catch (error) {
+    console.error("Failed to save connect card:", error);
     return {
       status: "error",
       message: "Failed to save connect card",

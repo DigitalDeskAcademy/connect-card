@@ -9,6 +9,7 @@ import {
   ConnectCardUpdateSchemaType,
 } from "@/lib/zodSchemas";
 import { request } from "@arcjet/next";
+import { formatPhoneNumber } from "@/lib/utils";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -94,7 +95,7 @@ export async function updateConnectCard(
       data: {
         name: validation.data.name,
         email: validation.data.email,
-        phone: validation.data.phone,
+        phone: formatPhoneNumber(validation.data.phone),
         visitType: validation.data.visitType,
         interests: validation.data.interests,
         prayerRequest: validation.data.prayerRequest,
