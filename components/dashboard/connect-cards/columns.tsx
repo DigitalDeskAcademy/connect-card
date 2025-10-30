@@ -9,6 +9,7 @@ import {
   IconSortDescending,
 } from "@tabler/icons-react";
 import { formatDistanceToNow } from "date-fns";
+import { formatPhoneNumber } from "@/lib/utils";
 
 /**
  * Connect Card Data Type
@@ -140,9 +141,10 @@ export const connectCardColumns: ColumnDef<ConnectCardRow>[] = [
     },
     cell: ({ row }) => {
       const phone = row.getValue("phone") as string | null;
+      const formattedPhone = formatPhoneNumber(phone);
       return (
         <div className="text-sm">
-          {phone || (
+          {formattedPhone || (
             <span className="text-muted-foreground italic">No phone</span>
           )}
         </div>
