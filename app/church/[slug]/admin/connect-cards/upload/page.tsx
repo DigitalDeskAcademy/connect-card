@@ -66,7 +66,6 @@ export default function ConnectCardUploadPage() {
   const [uploadMode, setUploadMode] = useState<UploadMode>("files");
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [isProcessing, startProcessing] = useTransition();
-  const [allComplete, setAllComplete] = useState(false);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Test mode state
@@ -296,7 +295,11 @@ export default function ConnectCardUploadPage() {
             setImages(prev =>
               prev.map(img =>
                 img.id === image.id
-                  ? { ...img, saved: true, savedId: saveResult.data?.id }
+                  ? {
+                      ...img,
+                      saved: true,
+                      savedId: saveResult.data?.id,
+                    }
                   : img
               )
             );
@@ -322,7 +325,6 @@ export default function ConnectCardUploadPage() {
       // Check if all are complete
       const allSaved = images.every(img => img.saved || img.error);
       if (allSaved) {
-        setAllComplete(true);
         toast.success("All cards processed!");
       }
     });
@@ -517,21 +519,145 @@ export default function ConnectCardUploadPage() {
   // Reset to start new upload session
   function handleNewUploadSession() {
     setImages([]);
-    setAllComplete(false);
     toast.info("Ready for new upload session");
   }
 
   return (
     <PageContainer>
-      {/* Back Button */}
-      <Button
-        variant="outline"
-        onClick={() => router.push(`/church/${slug}/admin`)}
-        className="mb-4 h-11"
-      >
-        <ArrowLeft className="mr-2 h-4 w-4" />
-        Back
-      </Button>
+      {/* Action Bar - Persistent across all page states */}
+      <div className="flex items-center justify-between mb-6">
+        {/* Left: Back Button */}
+        <Button
+          variant="outline"
+          onClick={() => router.push(`/church/${slug}/admin`)}
+          className="h-11"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+
+        {/* Right: Page Actions - Adaptive based on state */}
+        <div className="flex gap-3">
+          {/* State 1: Images added, not all processed yet */}
+          {images.length > 0 && savedCount < images.length && !isProcessing && (
+            <>
+              {/* Add More Images - Only before processing */}
+              {uploadMode === "files" ? (
+                <div {...getRootProps()}>
+                  <input {...getInputProps()} />
+                  <Button variant="outline" size="lg">
+                    <FileImage className="mr-2 w-4 h-4" />
+                    Add More Images
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => cameraInputRef.current?.click()}
+                >
+                  <Camera className="mr-2 w-4 h-4" />
+                  Take More Photos
+                </Button>
+              )}
+
+              {/* Process All Cards */}
+              <Button onClick={handleProcessAll} size="lg">
+                <CheckCircle2 className="mr-2 w-5 h-5" />
+                Process All Cards
+              </Button>
+            </>
+          )}
+
+          {/* State 2: Processing in progress */}
+          {isProcessing && (
+            <Button disabled size="lg">
+              <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+              Processing {savedCount} of {images.length}...
+            </Button>
+          )}
+
+          {/* State 3: Processing complete - Navigate to review */}
+          {savedCount > 0 && savedCount === images.length && !isProcessing && (
+            <>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleNewUploadSession}
+              >
+                <Upload className="mr-2 w-4 h-4" />
+                Start New Batch
+              </Button>
+              <Button
+                size="lg"
+                onClick={() =>
+                  router.push(`/church/${slug}/admin/connect-cards/review`)
+                }
+              >
+                <ClipboardCheck className="mr-2 w-5 h-5" />
+                Review Cards ({savedCount})
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Stats Cards - Always visible, populate after processing */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {/* Successfully Processed */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Scanned & Saved
+              </CardTitle>
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{savedCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Cards saved to database
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Awaiting Review */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Awaiting Review
+              </CardTitle>
+              <ClipboardCheck className="h-4 w-4 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{savedCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Ready for review queue
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Failed */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Failed
+              </CardTitle>
+              <AlertCircle className="h-4 w-4 text-primary" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{errorCount}</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Processing errors
+            </p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Upload Tabs */}
       {images.length === 0 && (
@@ -761,135 +887,9 @@ export default function ConnectCardUploadPage() {
         </Tabs>
       )}
 
-      {/* Completion Summary - Show when all processing is done */}
-      {allComplete && (
-        <Card className="border-green-200 bg-green-50 dark:bg-green-950 dark:border-green-800">
-          <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <CardTitle className="text-xl">Processing Complete!</CardTitle>
-                <p className="text-sm text-muted-foreground mt-1">
-                  All connect cards have been processed and are ready for review
-                </p>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="flex flex-col items-center p-4 bg-background rounded-lg border">
-                <div className="text-3xl font-bold text-green-600">
-                  {savedCount}
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  Cards Processed
-                </div>
-              </div>
-              <div className="flex flex-col items-center p-4 bg-background rounded-lg border">
-                <div className="text-3xl font-bold text-blue-600">
-                  {savedCount}
-                </div>
-                <div className="text-sm text-muted-foreground mt-1">
-                  Sent to Review
-                </div>
-              </div>
-              {errorCount > 0 && (
-                <div className="flex flex-col items-center p-4 bg-background rounded-lg border">
-                  <div className="text-3xl font-bold text-destructive">
-                    {errorCount}
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    Failed
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleNewUploadSession}
-                className="flex-1"
-              >
-                <Upload className="mr-2 w-5 h-5" />
-                New Upload Session
-              </Button>
-              <Button
-                size="lg"
-                onClick={() =>
-                  router.push(`/church/${slug}/admin/connect-cards/review`)
-                }
-                className="flex-1"
-              >
-                <ClipboardCheck className="mr-2 w-5 h-5" />
-                Review Queue ({savedCount})
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Image Grid + Actions */}
-      {images.length > 0 && !allComplete && (
+      {/* Image Grid */}
+      {images.length > 0 && (
         <>
-          <div className="flex items-center justify-between">
-            <div className="flex gap-4 text-sm">
-              <span>Total: {images.length}</span>
-              <span className="text-green-600">Saved: {savedCount}</span>
-              {errorCount > 0 && (
-                <span className="text-destructive">Errors: {errorCount}</span>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              {!isProcessing && (
-                <>
-                  {uploadMode === "files" ? (
-                    <div {...getRootProps()}>
-                      <input {...getInputProps()} />
-                      <Button variant="outline" size="lg">
-                        <FileImage className="mr-2 w-4 h-4" />
-                        Add More Images
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="lg"
-                      onClick={() => cameraInputRef.current?.click()}
-                    >
-                      <Camera className="mr-2 w-4 h-4" />
-                      Take More Photos
-                    </Button>
-                  )}
-                </>
-              )}
-
-              <Button
-                onClick={handleProcessAll}
-                disabled={isProcessing || images.length === 0}
-                size="lg"
-              >
-                {isProcessing ? (
-                  <>
-                    <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                    Processing {savedCount + 1} of {images.length}...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="mr-2 w-5 h-5" />
-                    Process All Cards
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
           {/* Progress */}
           {isProcessing && (
             <Alert>
@@ -942,23 +942,28 @@ export default function ConnectCardUploadPage() {
                       <Loader2 className="w-8 h-8 text-white animate-spin" />
                     )}
                     {image.saved && (
-                      <CheckCircle2 className="w-8 h-8 text-green-500" />
+                      <CheckCircle2 className="w-8 h-8 text-primary" />
                     )}
                     {image.error && (
                       <AlertCircle className="w-8 h-8 text-destructive" />
                     )}
                   </div>
                 </div>
-                <CardContent className="p-3">
-                  <p className="text-xs text-muted-foreground truncate">
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground truncate mb-2">
                     {image.file.name}
                   </p>
-                  <p className="text-xs font-medium mt-1">
+                  <p className="text-xs font-medium flex items-center gap-1.5">
                     {image.uploading && "Uploading..."}
                     {image.uploaded && !image.extracting && "Uploaded"}
                     {image.extracting && "Analyzing..."}
                     {image.extracted && !image.saved && "Saving..."}
-                    {image.saved && "✓ Saved"}
+                    {image.saved && (
+                      <>
+                        <CheckCircle2 className="w-3 h-3 text-primary" />
+                        <span>Saved</span>
+                      </>
+                    )}
                     {image.error && "❌ Failed"}
                   </p>
                 </CardContent>

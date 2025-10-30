@@ -74,6 +74,8 @@ interface DataTableProps<TData, TValue> {
   pageSize?: number;
   defaultSortColumn?: string;
   defaultSortDesc?: boolean;
+  emptyStateTitle?: string;
+  emptyStateDescription?: string;
 }
 
 /**
@@ -102,6 +104,8 @@ export function DataTable<TData, TValue>({
   pageSize = 10,
   defaultSortColumn = "date",
   defaultSortDesc = true,
+  emptyStateTitle,
+  emptyStateDescription,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: defaultSortColumn, desc: defaultSortDesc }, // Configurable default sorting
@@ -189,7 +193,7 @@ export function DataTable<TData, TValue>({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Filter payments</p>
+                <p>Filter results</p>
               </TooltipContent>
             </Tooltip>
 
@@ -201,7 +205,7 @@ export function DataTable<TData, TValue>({
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Export payments</p>
+                <p>Export data</p>
               </TooltipContent>
             </Tooltip>
 
@@ -322,9 +326,12 @@ export function DataTable<TData, TValue>({
                         <EmptyMedia variant="icon">
                           <IconInbox className="h-6 w-6" />
                         </EmptyMedia>
-                        <EmptyTitle>No payments found</EmptyTitle>
+                        <EmptyTitle>
+                          {emptyStateTitle || "No items found"}
+                        </EmptyTitle>
                         <EmptyDescription>
-                          Try adjusting your search or filter criteria
+                          {emptyStateDescription ||
+                            "Try adjusting your search or filter criteria"}
                         </EmptyDescription>
                       </EmptyHeader>
                     </Empty>

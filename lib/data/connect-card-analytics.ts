@@ -17,21 +17,25 @@ export interface ConnectCardAnalytics {
  * Fetches aggregated statistics for connect cards
  *
  * @param organizationId - Organization ID for multi-tenant filtering
+ * @param locationId - Optional location ID to filter by campus (undefined = all locations)
  * @returns Analytics data
  */
 export async function getConnectCardAnalytics(
-  organizationId: string
+  organizationId: string,
+  locationId?: string
 ): Promise<ConnectCardAnalytics> {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const weekStart = new Date(now);
   weekStart.setDate(weekStart.getDate() - 7);
 
-  // Get all cards for this organization
+  // Get all cards for this organization (optionally filtered by location)
   const allCards = await prisma.connectCard.findMany({
     where: {
       organizationId,
       status: "EXTRACTED",
+      // Only filter by locationId if provided (undefined means all locations)
+      ...(locationId && { locationId }),
     },
     select: {
       scannedAt: true,
@@ -100,16 +104,20 @@ export async function getConnectCardAnalytics(
  *
  * @param organizationId - Organization ID for multi-tenant filtering
  * @param limit - Number of cards to return (default: 50)
+ * @param locationId - Optional location ID to filter by campus (undefined = all locations)
  * @returns Array of connect cards
  */
 export async function getRecentConnectCards(
   organizationId: string,
-  limit: number = 50
+  limit: number = 50,
+  locationId?: string
 ) {
   return await prisma.connectCard.findMany({
     where: {
       organizationId,
       status: "EXTRACTED",
+      // Only filter by locationId if provided (undefined means all locations)
+      ...(locationId && { locationId }),
     },
     select: {
       id: true,

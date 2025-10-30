@@ -127,6 +127,43 @@ async function main() {
     `✅ Created organization: ${platformOrg.name} (${platformOrg.slug})\n`
   );
 
+  // Delete existing connect cards (test data cleanup)
+  console.log("🗑️  Deleting existing connect cards...");
+  const deleteResult = await prisma.connectCard.deleteMany({});
+  console.log(`✅ Deleted ${deleteResult.count} connect cards\n`);
+
+  // Create 5 campus locations for Newlife Church
+  console.log("📍 Creating campus locations for Newlife Church...");
+
+  const locations = [
+    { name: "Bainbridge", slug: "bainbridge" },
+    { name: "Bremerton", slug: "bremerton" },
+    { name: "Silverdale", slug: "silverdale" },
+    { name: "Port Orchard", slug: "port-orchard" },
+    { name: "Poulsbo", slug: "poulsbo" },
+  ];
+
+  for (const location of locations) {
+    await prisma.location.upsert({
+      where: {
+        organizationId_slug: {
+          organizationId: newlifeOrg.id,
+          slug: location.slug,
+        },
+      },
+      update: {},
+      create: {
+        organizationId: newlifeOrg.id,
+        name: location.name,
+        slug: location.slug,
+        isActive: true,
+      },
+    });
+    console.log(`   ✅ Created location: ${location.name}`);
+  }
+
+  console.log(`✅ All 5 campus locations created\n`);
+
   // Define users with roles
   const users: TestUser[] = [
     {
@@ -229,6 +266,9 @@ async function main() {
 
   console.log("📊 Summary:");
   console.log(`   🏢 Organizations: 2 (Newlife Church, Connect Card Platform)`);
+  console.log(
+    `   📍 Campus Locations: 5 (Bainbridge, Bremerton, Silverdale, Port Orchard, Poulsbo)`
+  );
   console.log(`   👤 Platform Admins: 1`);
   console.log(`   🏛️  Church Owners: 1`);
   console.log(`   👨‍💼 Church Admins: 1`);
