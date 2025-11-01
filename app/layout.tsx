@@ -85,7 +85,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           {children}
-          <Toaster closeButton position="bottom-center" />
+          <Toaster
+            closeButton
+            position="bottom-center"
+            richColors
+            theme="system"
+          />
         </ThemeProvider>
       </body>
     </html>

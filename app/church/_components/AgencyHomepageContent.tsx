@@ -1,8 +1,8 @@
 /**
- * Agency Homepage Content - White-label version for IV Clinic Owners
+ * Church Homepage Content - Welcome page for church administrators
  *
- * Complete homepage content tailored specifically for IV therapy clinic owners
- * using Digital Desk. Focuses on onboarding and getting started.
+ * Complete homepage content tailored specifically for church administrators
+ * using ChurchSyncAI. Focuses on onboarding and getting started.
  */
 
 "use client";
@@ -13,7 +13,7 @@ import { CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 /**
- * Module Interface for IV Clinic Training System
+ * Module Interface for Church Training System
  */
 interface ModuleProps {
   title: string;
@@ -21,82 +21,82 @@ interface ModuleProps {
 }
 
 /**
- * 8-Module IV Clinic Training System
- * Complete onboarding curriculum for IV therapy clinic owners
- * using Digital Desk platform.
+ * 8-Module Church Training System
+ * Complete onboarding curriculum for church administrators
+ * using ChurchSyncAI platform.
  */
 const modules: ModuleProps[] = [
   {
-    title: "Book Your First IV Patient",
+    title: "Process Your First Connect Cards",
     items: [
-      "Set up vitamin drip bookings in 20 minutes",
-      "Configure NAD+, Myers, and custom IV packages",
-      "Payment holds for no-shows (save $300/week)",
+      "Upload connect cards in minutes using AI Vision",
+      "Automatic data extraction from handwritten cards",
+      "Review and correct flagged entries",
     ],
   },
   {
-    title: "One Inbox for Everything",
+    title: "Manage Your Members",
     items: [
-      "Stop checking 5 apps for patient messages",
-      "Auto-reply while you're with patients",
-      "Understanding HIPAA: Know what you actually need",
+      "Track first-time visitors through membership",
+      "View complete engagement history",
+      "Add notes and follow-up reminders",
     ],
   },
   {
-    title: "Get Paid Instantly",
+    title: "Organize Your Team",
     items: [
-      "Accept cards, HSA, and memberships seamlessly",
-      "IV therapy packages that sell themselves",
-      "Monthly memberships on autopilot",
+      "Invite staff and volunteers",
+      "Assign location-based permissions",
+      "Track who's processing connect cards",
     ],
   },
   {
-    title: "Fill Empty IV Chairs",
+    title: "Automate Follow-Up",
     items: [
-      "'Hangover Sunday' campaigns that book out",
-      "Pre-appointment hydration reminders",
-      "Win-back campaigns for dormant patients",
+      "Welcome messages for first-time visitors",
+      "Prayer request follow-up reminders",
+      "Re-engagement campaigns for inactive members",
     ],
   },
   {
-    title: "Run Your Clinic From Bed",
+    title: "Manage Multiple Locations",
     items: [
-      "Check tomorrow's schedule at 10pm",
-      "Update inventory between appointments",
-      "Message your nurse about room 3",
+      "View data across all campuses",
+      "Location-specific staff access",
+      "Compare engagement by location",
     ],
   },
   {
-    title: "5-Star Reviews on Autopilot",
+    title: "Train Your Volunteers",
     items: [
-      "Happy patients get review requests",
-      "Unhappy ones get a personal call first",
-      "Watch your Google ranking climb",
+      "Access built-in training courses",
+      "Volunteer scheduling and management",
+      "Track volunteer engagement",
     ],
   },
   {
-    title: "Know Your Real Numbers",
+    title: "Know Your Numbers",
     items: [
-      "Which IV drips actually make money",
-      "Your true cost per patient acquisition",
-      "Staff productivity without micromanaging",
+      "First-time visitor conversion rates",
+      "Engagement trends over time",
+      "Location performance insights",
     ],
   },
   {
     title: "Go Live With Confidence",
     items: [
-      "Test booking with your mom first",
-      "Staff training that takes 30 minutes",
-      "What to do when something breaks",
+      "Test with your team first",
+      "Staff training resources",
+      "Support when you need it",
     ],
   },
 ];
 
 /**
- * Agency Homepage Content Component
+ * Church Homepage Content Component
  *
- * IV clinic-focused onboarding page that gets users excited to start
- * their Digital Desk academy training.
+ * Church-focused onboarding page that gets administrators excited to start
+ * their ChurchSyncAI academy training.
  */
 export function AgencyHomepageContent() {
   return (
@@ -105,22 +105,22 @@ export function AgencyHomepageContent() {
       <section className="relative py-20">
         <div className="flex flex-col items-center text-center space-y-8">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            Welcome to Your Digital Desk Academy
+            Welcome to Your ChurchSyncAI Dashboard
           </h1>
 
           <h2 className="text-2xl md:text-3xl font-semibold text-muted-foreground">
-            Get Your IV Clinic Running on Digital Desk in 7 Days
+            Get Your Church Running on ChurchSyncAI in 7 Days
           </h2>
 
           <p className="max-w-[700px] text-muted-foreground md:text-xl">
-            Follow our proven setup process and start accepting online bookings,
-            automating follow-ups, and growing your clinic.
+            Follow our proven setup process and start digitizing connect cards,
+            automating follow-ups, and growing your church.
           </p>
 
           <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
-            <span>Built by Digital Desk</span>
+            <span>Built for Churches</span>
             <span>•</span>
-            <span>Currently onboarding new clients</span>
+            <span>Currently onboarding new churches</span>
             <span>•</span>
             <span>No fluff, just what works</span>
           </div>
@@ -143,8 +143,9 @@ export function AgencyHomepageContent() {
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">Your 7-Day Setup Path</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Complete Digital Desk setup that transforms your clinic from chaotic
-            to organized, without you learning everything the hard way.
+            Complete ChurchSyncAI setup that transforms your church operations
+            from chaotic to organized, without you learning everything the hard
+            way.
           </p>
         </div>
 
@@ -152,25 +153,25 @@ export function AgencyHomepageContent() {
           <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
             <CheckCircle className="size-6 text-green-600 flex-shrink-0" />
             <span className="text-lg">
-              <strong>Day 1-2:</strong> Get bookings flowing
+              <strong>Day 1-2:</strong> Start processing connect cards
             </span>
           </div>
           <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
             <CheckCircle className="size-6 text-green-600 flex-shrink-0" />
             <span className="text-lg">
-              <strong>Day 3:</strong> Connect payments and messaging
+              <strong>Day 3:</strong> Invite your team and set permissions
             </span>
           </div>
           <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
             <CheckCircle className="size-6 text-green-600 flex-shrink-0" />
             <span className="text-lg">
-              <strong>Day 4:</strong> Activate text marketing
+              <strong>Day 4:</strong> Set up member management
             </span>
           </div>
           <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
             <CheckCircle className="size-6 text-green-600 flex-shrink-0" />
             <span className="text-lg">
-              <strong>Day 5-6:</strong> Mobile app and reviews
+              <strong>Day 5-6:</strong> Configure follow-up workflows
             </span>
           </div>
           <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg">
@@ -186,7 +187,7 @@ export function AgencyHomepageContent() {
       <section className="mb-20" id="modules">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4">
-            8 Modules to Transform Your Clinic
+            8 Modules to Transform Your Church Operations
           </h2>
         </div>
 
@@ -237,49 +238,49 @@ export function AgencyHomepageContent() {
           <div className="flex items-center gap-4 p-4 bg-primary rounded-lg">
             <CheckCircle className="size-6 text-white flex-shrink-0" />
             <span className="text-lg text-white">
-              Online bookings working on autopilot
+              Connect card processing on autopilot
             </span>
           </div>
           <div className="flex items-center gap-4 p-4 bg-primary rounded-lg">
             <CheckCircle className="size-6 text-white flex-shrink-0" />
             <span className="text-lg text-white">
-              All messages in one inbox
+              All member data in one place
             </span>
           </div>
           <div className="flex items-center gap-4 p-4 bg-primary rounded-lg">
             <CheckCircle className="size-6 text-white flex-shrink-0" />
             <span className="text-lg text-white">
-              Automated review requests after visits
+              Automated follow-up for first-time visitors
             </span>
           </div>
           <div className="flex items-center gap-4 p-4 bg-primary rounded-lg">
             <CheckCircle className="size-6 text-white flex-shrink-0" />
             <span className="text-lg text-white">
-              SMS reminders reducing no-shows
+              SMS and email engagement working
             </span>
           </div>
           <div className="flex items-center gap-4 p-4 bg-primary rounded-lg">
             <CheckCircle className="size-6 text-white flex-shrink-0" />
             <span className="text-lg text-white">
-              Mobile app for managing anywhere
+              Team trained and ready to use the system
             </span>
           </div>
         </div>
 
         <div className="bg-primary/5 rounded-lg p-6 border-l-4 border-primary max-w-3xl mx-auto">
-          <h3 className="font-semibold mb-4">The Math:</h3>
+          <h3 className="font-semibold mb-4">The Impact:</h3>
           <div className="space-y-2 text-sm">
             <div>
               10 hours saved per week = <strong>40 hours/month</strong>
             </div>
             <div>
-              30% fewer no-shows = <strong>$3,000+/month recovered</strong>
+              Better visitor follow-up = <strong>Higher retention rates</strong>
             </div>
             <div>
-              2x more online reviews = <strong>More new patients</strong>
+              Digital connect cards = <strong>Zero data entry errors</strong>
             </div>
             <div className="text-lg font-semibold text-primary mt-4">
-              ROI = Your time back to focus on patients
+              ROI = Your time back to focus on ministry
             </div>
           </div>
         </div>
@@ -289,11 +290,11 @@ export function AgencyHomepageContent() {
       <section className="mb-20" id="signup">
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-4">
-            Ready to Transform Your Clinic?
+            Ready to Transform Your Church Operations?
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Join the growing community of IV therapy clinics already using
-            Digital Desk to run their business better.
+            Join the growing community of churches already using ChurchSyncAI to
+            streamline their member engagement.
           </p>
 
           <div className="flex justify-center mb-8">

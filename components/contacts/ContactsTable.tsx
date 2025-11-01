@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { formatPhoneNumber } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -466,7 +467,7 @@ export default function ContactsTable({
                 <TableCell>
                   <div className="flex items-center gap-2">
                     <IconPhone className="h-4 w-4 text-muted-foreground" />
-                    {contact.phone}
+                    {formatPhoneNumber(contact.phone) || contact.phone}
                   </div>
                 </TableCell>
                 <TableCell>{contact.email || "-"}</TableCell>

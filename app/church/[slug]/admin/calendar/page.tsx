@@ -8,7 +8,7 @@ interface PageProps {
 /**
  * Calendar Page
  *
- * Appointment scheduling and calendar management for IV therapy clinic.
+ * Appointment scheduling and calendar management for church.
  * Integrates with Cal.com for appointment booking and syncs with GHL contacts.
  *
  * Phase 1 Priority: Cal.com integration with GHL contact sync

@@ -17,20 +17,11 @@ import { redirect, notFound } from "next/navigation";
 import { cache } from "react";
 import { getOrganizationBySlug } from "@/app/data/organization/get-organization-by-slug";
 import { prisma } from "@/lib/db";
-import type {
-  DataScope,
-  PlatformScope,
-  AgencyScope,
-  ClinicScope,
-} from "./data-scope-types";
+import type { DataScope, PlatformScope, AgencyScope } from "./data-scope-types";
 
 // Re-export types and type guards for convenience
-export type { DataScope, PlatformScope, AgencyScope, ClinicScope };
-export {
-  isPlatformScope,
-  isAgencyScope,
-  isClinicScope,
-} from "./data-scope-types";
+export type { DataScope, PlatformScope, AgencyScope };
+export { isPlatformScope, isAgencyScope } from "./data-scope-types";
 
 /**
  * Universal dashboard access control

@@ -38,6 +38,7 @@ import { approveAllCards } from "@/actions/connect-card/approve-all-cards";
 import { checkDuplicate } from "@/actions/connect-card/check-duplicate";
 import { markDuplicate } from "@/actions/connect-card/mark-duplicate";
 import type { ConnectCardForReview } from "@/lib/data/connect-card-review";
+import { formatPhoneNumber } from "@/lib/utils";
 import {
   VISIT_STATUS_OPTIONS,
   INTEREST_OPTIONS,
@@ -359,7 +360,10 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
                   Similar card found:{" "}
                   <strong>{duplicateInfo.existingCard.name}</strong>
                   {duplicateInfo.existingCard.phone && (
-                    <> • {duplicateInfo.existingCard.phone}</>
+                    <>
+                      {" "}
+                      • {formatPhoneNumber(duplicateInfo.existingCard.phone)}
+                    </>
                   )}
                   {duplicateInfo.existingCard.email && (
                     <> • {duplicateInfo.existingCard.email}</>
@@ -413,7 +417,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
                   <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={currentCard.imageUrl}
+                      src={currentCard.imageUrl || undefined}
                       alt="Connect card scan"
                       className="w-full h-full object-contain"
                     />

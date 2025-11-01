@@ -28,24 +28,17 @@ export interface PlatformScope extends DataScopeBase {
 }
 
 /**
- * Agency scope - scoped to single organization
+ * Agency scope - scoped to single organization (church)
+ * Location filtering handled via user.defaultLocationId, not scope
  */
 export interface AgencyScope extends DataScopeBase {
   type: "agency";
 }
 
 /**
- * Clinic scope - scoped to single organization and clinic
- */
-export interface ClinicScope extends DataScopeBase {
-  type: "clinic";
-  clinicId: string;
-}
-
-/**
  * Discriminated union of all scope types
  */
-export type DataScope = PlatformScope | AgencyScope | ClinicScope;
+export type DataScope = PlatformScope | AgencyScope;
 
 /**
  * Type guard for platform scope
@@ -59,11 +52,4 @@ export function isPlatformScope(scope: DataScope): scope is PlatformScope {
  */
 export function isAgencyScope(scope: DataScope): scope is AgencyScope {
   return scope.type === "agency";
-}
-
-/**
- * Type guard for clinic scope
- */
-export function isClinicScope(scope: DataScope): scope is ClinicScope {
-  return scope.type === "clinic";
 }

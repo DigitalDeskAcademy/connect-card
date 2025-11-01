@@ -3,7 +3,7 @@
  *
  * Displays payment transactions and revenue analytics for the agency's organization.
  * Data is synced from GoHighLevel via webhooks when payments are collected.
- * Data is automatically scoped based on user role (agency admin, clinic admin, etc.)
+ * Data is automatically scoped based on user role (agency admin, church staff, etc.)
  *
  * Architecture:
  * - Staff collect payments via Lead Connector mobile app (tap-to-pay)
@@ -42,7 +42,7 @@ export default async function AgencyPaymentsPage({ params }: PageProps) {
   // const dataScope = createAgencyDataScope(organization.id);
   // const payments = await dataScope.getPayments();
 
-  // Mock payments data for demo (IV therapy clinic services)
+  // Mock payments data for demo (church services)
   const mockPayments = [
     {
       id: "pay_1",
@@ -231,7 +231,7 @@ export default async function AgencyPaymentsPage({ params }: PageProps) {
   ] as unknown as PaymentWithRelations[];
 
   // Note: In production, these would be filtered based on dataScope
-  // Platform admins see all, agency admins see their org, clinic users see their clinic
+  // Platform admins see all, agency admins see their org, church staff see their location
 
   return (
     <PageContainer variant="none">

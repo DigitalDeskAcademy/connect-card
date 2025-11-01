@@ -6,7 +6,7 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * Format phone number to consistent US format: (XXX) XXX-XXXX
+ * Format phone number to consistent US format: (XXX)XXX-XXXX
  * Strips all non-digit characters and formats 10-digit numbers
  * @param phone - Raw phone number string
  * @returns Formatted phone number or null if invalid
@@ -21,12 +21,12 @@ export function formatPhoneNumber(
 
   // Handle 10-digit US numbers
   if (digits.length === 10) {
-    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0, 3)})${digits.slice(3, 6)}-${digits.slice(6)}`;
   }
 
   // Handle 11-digit numbers starting with 1 (US country code)
   if (digits.length === 11 && digits.startsWith("1")) {
-    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+    return `(${digits.slice(1, 4)})${digits.slice(4, 7)}-${digits.slice(7)}`;
   }
 
   // If not a valid US phone number, return original

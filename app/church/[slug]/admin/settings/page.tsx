@@ -8,7 +8,7 @@ interface PageProps {
 /**
  * Settings Page
  *
- * Organization settings and configuration for clinic operations.
+ * Organization settings and configuration for church operations.
  * Manages integrations, billing, team permissions, and system preferences.
  */
 export default async function SettingsPage({ params }: PageProps) {

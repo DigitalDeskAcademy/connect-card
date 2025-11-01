@@ -8,7 +8,7 @@ interface PageProps {
 /**
  * Analytics Dashboard Page
  *
- * Business analytics and performance metrics for IV therapy clinic.
+ * Business analytics and performance metrics for church.
  * Track revenue, appointment trends, patient retention, and operational KPIs.
  *
  * Phase 1 Priority: Basic analytics from GHL data
