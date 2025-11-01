@@ -4,7 +4,7 @@
  * Used by all three tiers with different data scoping:
  * - Platform admins: See all contacts across all organizations
  * - Agency admins: See all contacts in their organization
- * - End users (clinics): See only their clinic's contacts
+ * - End users (staff): See only their location's contacts
  *
  * All users see the same UI, data is filtered based on role.
  */
@@ -20,7 +20,7 @@ const mockContacts: Contact[] = [
     name: "John Smith",
     initials: "JS",
     phone: "(555) 123-4567",
-    email: "john.smith@clinic.com",
+    email: "john.smith@church.org",
     created: "Oct 15 2025",
     lastActivity: "2 hours ago",
     tags: ["IV Therapy Client", "VIP"],
@@ -81,9 +81,8 @@ export default async function AgencyContactsPage({ params }: PageProps) {
   const { organization, dataScope } = await requireDashboardAccess(slug);
 
   // TODO: Fetch contacts based on data scope
-  // Platform admin: all contacts
-  // Agency admin: organizationId filtered
-  // End user (clinic): clinic-specific contacts
+  // Platform admin: all contacts across all organizations
+  // Church admin/staff: organizationId filtered contacts only
 
   // For now, use mock data that represents the scoped view
   const contacts = mockContacts;
@@ -91,17 +90,9 @@ export default async function AgencyContactsPage({ params }: PageProps) {
   // In production, this would be:
   // if (dataScope.type === 'platform') {
   //   contacts = await db.contact.findMany({ orderBy: { createdAt: 'desc' } });
-  // } else if (dataScope.type === 'agency') {
+  // } else {
   //   contacts = await db.contact.findMany({
   //     where: { organizationId: dataScope.organizationId },
-  //     orderBy: { createdAt: 'desc' }
-  //   });
-  // } else if (dataScope.type === 'clinic') {
-  //   contacts = await db.contact.findMany({
-  //     where: {
-  //       organizationId: dataScope.organizationId,
-  //       clinicId: dataScope.clinicId
-  //     },
   //     orderBy: { createdAt: 'desc' }
   //   });
   // }

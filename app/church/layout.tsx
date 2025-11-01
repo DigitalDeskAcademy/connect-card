@@ -6,7 +6,6 @@
  */
 
 import type { Metadata } from "next";
-import { Toaster } from "@/components/ui/sonner";
 import { ReactNode } from "react";
 
 export const metadata: Metadata = {
@@ -23,7 +22,7 @@ export default function AgencyLayout({
     <>
       {/* Agency pages handle their own layout structure */}
       {children}
-      <Toaster />
+      {/* Toaster is in root layout.tsx - no need to duplicate here */}
     </>
   );
 }

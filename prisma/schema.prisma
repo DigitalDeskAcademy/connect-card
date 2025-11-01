@@ -103,6 +103,8 @@ model Invitation {
   email          String
   /// Invited user role in organization
   role           String
+  /// Assigned location for staff member (null for Account Owner/Admin with all-location access)
+  locationId     String?
   /// Invitation token for secure acceptance
   token          String           @unique
   /// Invitation status

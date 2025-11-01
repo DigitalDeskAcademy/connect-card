@@ -127,20 +127,43 @@ export async function getConnectCardForReview(
  * URLs expire after 1 hour for security.
  *
  * @param imageKey - S3 object key for the connect card image
- * @returns Signed URL for direct image access
+ * @returns Signed URL for direct image access, or empty string if generation fails
  */
 async function generateSignedImageUrl(imageKey: string): Promise<string> {
-  const command = new GetObjectCommand({
-    Bucket: env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES,
-    Key: imageKey,
-  });
+  try {
+    // Validate imageKey is not empty
+    if (!imageKey || imageKey.trim() === "") {
+      console.error("[S3 URL Generation] Empty imageKey provided");
+      return "";
+    }
 
-  // Generate signed URL with 1-hour expiration
-  const signedUrl = await getSignedUrl(S3, command, {
-    expiresIn: 3600, // 1 hour
-  });
+    const command = new GetObjectCommand({
+      Bucket: env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES,
+      Key: imageKey,
+    });
 
-  return signedUrl;
+    // Generate signed URL with 1-hour expiration
+    const signedUrl = await getSignedUrl(S3, command, {
+      expiresIn: 3600, // 1 hour
+    });
+
+    // Ensure we never return an empty string
+    if (!signedUrl || signedUrl.trim() === "") {
+      console.error(
+        "[S3 URL Generation] Empty URL generated for key:",
+        imageKey
+      );
+      return "";
+    }
+
+    return signedUrl;
+  } catch (error) {
+    console.error("[S3 URL Generation] Failed to generate signed URL:", {
+      imageKey,
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+    return ""; // Return empty string on error, UI will show fallback
+  }
 }
 
 /**

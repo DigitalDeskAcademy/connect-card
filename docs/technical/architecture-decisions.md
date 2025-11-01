@@ -1,6 +1,8 @@
 # Architecture Decision Records
 
-This document tracks significant architectural decisions made during the development of the Sidecar LMS platform.
+This document tracks significant architectural decisions made during the development of ChurchSyncAI.
+
+**Historical Context:** This project was forked from SideCar Platform (IV clinic management system) in October 2025 and rebranded for church connect card management. Some ADRs contain historical "clinic" references from the original project. These references are preserved for historical context but do not reflect current implementation.
 
 ---
 
@@ -1671,8 +1673,11 @@ This pattern aligns with:
 ## ADR-007: Role Framework Consolidation with Discriminated Union DataScope
 
 **Date:** 2025-01-21
-**Status:** Approved
+**Status:** Superseded (Simplified from 3-tier to 2-tier for church use case)
+**Superseded Date:** 2025-10-26
 **Decision Makers:** Development team, expert agent consultation (fullstack-developer, nextjs-developer, typescript-pro)
+
+**Note:** This ADR was written for the original SideCar Platform (IV clinic system) with 3 tiers: platform → agency → clinic. ChurchSyncAI simplified this to 2 tiers: platform → church. Location filtering is now handled via `user.defaultLocationId` rather than a separate DataScope tier. The `ClinicScope` type has been removed.
 
 ### Context
 

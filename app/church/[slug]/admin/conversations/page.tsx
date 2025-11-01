@@ -2,7 +2,7 @@
  * Agency Admin - Conversations Page
  *
  * Displays conversations for the agency's organization.
- * Data is automatically scoped based on user role (agency admin, clinic admin, etc.)
+ * Data is automatically scoped based on user role (agency admin, church staff, etc.)
  */
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
@@ -55,7 +55,7 @@ export default async function AgencyConversationsPage({ params }: PageProps) {
     },
     {
       id: "2",
-      contactName: "Wellness Clinic NYC",
+      contactName: "First Baptist Church",
       lastMessage: "Can we schedule a demo for next week?",
       timestamp: timestamps.twoHoursAgo,
       unreadCount: 0,
@@ -195,7 +195,7 @@ export default async function AgencyConversationsPage({ params }: PageProps) {
   };
 
   // Note: In production, these would be filtered based on dataScope
-  // Platform admins see all, agency admins see their org, clinic users see their clinic
+  // Platform admins see all, agency admins see their org, church staff see their location
 
   return (
     <PageContainer variant="none">

@@ -8,7 +8,7 @@ interface PageProps {
 /**
  * AI Insights Page
  *
- * AI-powered predictive analytics and automated insights for clinic operations.
+ * AI-powered predictive analytics and automated insights for church operations.
  * Identifies patterns, predicts no-shows, detects churn risk, and suggests actions.
  *
  * Phase 2 Priority: Vercel AI SDK integration with GPT-4

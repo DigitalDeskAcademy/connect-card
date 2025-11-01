@@ -417,7 +417,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
                   <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={currentCard.imageUrl}
+                      src={currentCard.imageUrl || undefined}
                       alt="Connect card scan"
                       className="w-full h-full object-contain"
                     />

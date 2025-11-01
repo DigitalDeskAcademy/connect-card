@@ -1,10 +1,10 @@
 /**
  * Universal Dashboard Layout
  *
- * Shared layout for all three user tiers:
- * - Platform admins (see all data)
- * - Agency admins (see organization data)
- * - End users/clinics (see their clinic data)
+ * Shared layout for all user tiers:
+ * - Platform admins (see all data across all churches)
+ * - Church admins (see organization data, all locations)
+ * - Church staff (see organization data, assigned location)
  *
  * All users see the same UI components, with data scoped by role.
  *

@@ -29,6 +29,7 @@ export function ConnectCardsTable({ data }: ConnectCardsTableProps) {
       searchColumn="name"
       statusFilterColumn="visitType"
       statusFilterOptions={[
+        { value: "ALL", label: "All Visit Types" },
         { value: "First Visit", label: "First Visit" },
         { value: "Second Visit", label: "Second Visit" },
         { value: "Regular attendee", label: "Regular Attendee" },

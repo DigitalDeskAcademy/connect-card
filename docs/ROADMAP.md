@@ -187,11 +187,19 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 ### Prayer Request System
 
-- [ ] **Prayer Wall** - Public prayer request board (opt-in)
+- [ ] **Prayer Wall (Public Display)** - Anonymous prayer board for congregation (no personal info)
+  - Real-time feed of recent prayer requests (names removed)
+  - Display on lobby screens, church website
+  - Encourages congregation-wide prayer participation
+- [ ] **Prayer Team Dashboard** - Daily/weekly prayer list export for dedicated team
+  - Filter by date range (today, this week, last 7 days)
+  - Export to PDF/Email for team meetings
+  - Sort by location (multi-campus support)
+  - Timestamp tracking (scannedAt already implemented ✅)
 - [ ] **Prayer Teams** - Assign requests to specific prayer groups
 - [ ] **Follow-up Workflow** - Check in after 1 week, 1 month
 - [ ] **Answered Prayers** - Track and celebrate answered requests
-- [ ] **Privacy Controls** - Public vs confidential prayer requests
+- [ ] **Privacy Controls** - Public vs confidential prayer requests (opt-in for wall display)
 
 **Success Criteria**: 80% of prayer requests receive follow-up within 1 week
 

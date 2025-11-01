@@ -29,11 +29,13 @@ const aj = arcjet.withRule(
  *
  * @param slug - Organization slug for multi-tenant context
  * @param data - Connect card image key and extracted data
+ * @param locationId - Optional location ID to override user's default location
  * @returns ApiResponse with success/error status and saved record ID
  */
 export async function saveConnectCard(
   slug: string,
-  data: ConnectCardSchemaType
+  data: ConnectCardSchemaType,
+  locationId?: string | null
 ): Promise<ApiResponse<{ id: string }>> {
   // 1. Authentication and authorization
   const { session, organization } = await requireDashboardAccess(slug);
@@ -62,6 +64,12 @@ export async function saveConnectCard(
   const validation = connectCardSchema.safeParse(data);
 
   if (!validation.success) {
+    // Log validation errors for debugging
+    console.error("[Connect Card Validation Failed]", {
+      errors: validation.error.errors,
+      data: JSON.stringify(data, null, 2),
+    });
+
     return {
       status: "error",
       message: "Invalid Form Data",
@@ -82,20 +90,45 @@ export async function saveConnectCard(
   }
 
   /**
-   * Get user's default location for auto-assignment
+   * Location Assignment & Validation
    *
-   * Location Assignment Logic:
-   * - Auto-assigns to the staff member's default campus location
-   * - Based on WHO scanned the card, not WHERE the card was filled out
-   * - Falls back to null if user has no default location set
-   *
-   * Future Enhancement: Add location dropdown override in upload UI
-   * to handle edge cases (e.g., staff scanning cards from different campus)
+   * Priority:
+   * 1. If locationId provided → use it (manual override from UI)
+   * 2. Otherwise → fetch user's default campus location
+   * 3. Validate locationId belongs to organization (multi-tenant security)
    */
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { defaultLocationId: true },
-  });
+  let finalLocationId: string | null = null;
+
+  if (locationId) {
+    // User explicitly selected a location
+    finalLocationId = locationId;
+  } else {
+    // Fallback to user's default location
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { defaultLocationId: true },
+    });
+    finalLocationId = user?.defaultLocationId || null;
+  }
+
+  // Multi-tenant security: Validate locationId belongs to organization
+  if (finalLocationId) {
+    const locationExists = await prisma.location.findFirst({
+      where: {
+        id: finalLocationId,
+        organizationId: organization.id, // Multi-tenant isolation
+        isActive: true, // Only accept active locations
+      },
+      select: { id: true },
+    });
+
+    if (!locationExists) {
+      return {
+        status: "error",
+        message: "Invalid location - location not found or inactive",
+      };
+    }
+  }
 
   try {
     // 5. Save to database
@@ -121,8 +154,8 @@ export async function saveConnectCard(
         validationIssues: validationResult.issues as never,
         scannedBy: session.user.id,
         scannedAt: new Date(),
-        // Auto-assign to staff member's default campus
-        locationId: user?.defaultLocationId || null,
+        // Use provided locationId or staff member's default campus
+        locationId: finalLocationId,
       },
       select: {
         id: true,

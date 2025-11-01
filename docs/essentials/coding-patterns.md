@@ -198,6 +198,8 @@ export function ComponentName() {
 
 **Purpose:** Enforces consistent page spacing across all admin pages with full coverage for all layout patterns. Eliminates manual decisions about `p-6`, `gap-6`, and `flex-1`.
 
+⚠️ **CRITICAL:** ALL admin pages in `/app/church/[slug]/admin/**/page.tsx` MUST use `<PageContainer>`. Default: `<PageContainer as="main">`. Only use `variant="none"` for split-pane layouts.
+
 **All 6 Variants:**
 
 ```typescript
@@ -673,7 +675,7 @@ This hybrid pattern ensures data isolation while maintaining code clarity and fo
 
 ### Overview
 
-**DO NOT** build separate components for platform/agency/clinic roles. Instead, build ONE component that accepts `DataScope` and adapts behavior based on user role.
+**DO NOT** build separate components for platform/church roles. Instead, build ONE component that accepts `DataScope` and adapts behavior based on user role.
 
 **Why This Pattern:**
 
@@ -705,12 +707,7 @@ export type AgencyScope = DataScopeBase & {
   type: "agency";
 };
 
-export type ChurchScope = DataScopeBase & {
-  type: "church";
-  churchId: string; // ✅ REQUIRED for clinic type
-};
-
-export type DataScope = PlatformScope | AgencyScope | ChurchScope;
+export type DataScope = PlatformScope | AgencyScope;
 
 // Type guards for narrowing
 export function isPlatformScope(scope: DataScope): scope is PlatformScope {
@@ -719,10 +716,6 @@ export function isPlatformScope(scope: DataScope): scope is PlatformScope {
 
 export function isAgencyScope(scope: DataScope): scope is AgencyScope {
   return scope.type === "agency";
-}
-
-export function isChurchScope(scope: DataScope): scope is ChurchScope {
-  return scope.type === "church";
 }
 ```
 
@@ -744,7 +737,7 @@ export function isChurchScope(scope: DataScope): scope is ChurchScope {
 
 ```
 /app/platform/admin/contacts/page.tsx      # Platform admin route
-/app/agency/[slug]/admin/contacts/page.tsx # Agency/clinic route
+/app/church/[slug]/admin/contacts/page.tsx # Church route
 
 Both import from: @/components/dashboard/contacts/contacts-client
 ```
@@ -813,10 +806,10 @@ export default async function PlatformContactsPage() {
 }
 ```
 
-#### 3. Agency/Clinic Page (Server Component)
+#### 3. Church Page (Server Component)
 
 ```typescript
-// app/agency/[slug]/admin/contacts/page.tsx
+// app/church/[slug]/admin/contacts/page.tsx
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
 import { getContactsForScope } from "@/lib/data/contacts";
 import { ContactsClient } from "@/components/dashboard/contacts/contacts-client";
@@ -830,8 +823,8 @@ export default async function AgencyContactsPage({ params }: PageProps) {
   const { dataScope, organization } = await requireDashboardAccess(slug);
 
   // DataScope determines filtering automatically
-  // - Agency admin: sees organizationId scoped data
-  // - Clinic user: sees organizationId + churchId scoped data
+  // - Church owner/admin: sees organizationId scoped data (all locations)
+  // - Church staff: sees organizationId scoped data (filtered by user.defaultLocationId in queries)
   const contacts = await getContactsForScope(dataScope);
 
   return <ContactsClient contacts={contacts} dataScope={dataScope} organizationId={organization.id} />;
@@ -846,7 +839,6 @@ import { prisma } from "@/lib/db";
 import {
   DataScope,
   isPlatformScope,
-  isChurchScope,
 } from "@/app/data/dashboard/require-dashboard-access";
 
 /**
@@ -862,18 +854,8 @@ export async function getContactsForScope(dataScope: DataScope) {
     });
   }
 
-  // Clinic: scoped to org + clinic
-  if (isChurchScope(dataScope)) {
-    return prisma.contact.findMany({
-      where: {
-        organizationId: dataScope.organizationId,
-        churchId: dataScope.churchId, // ✅ TypeScript knows this exists
-      },
-      orderBy: { createdAt: "desc" },
-    });
-  }
-
-  // Agency: scoped to organization only
+  // Church (Agency): scoped to organization
+  // Location filtering happens via user.defaultLocationId, not DataScope
   return prisma.contact.findMany({
     where: {
       organizationId: dataScope.organizationId,
@@ -899,7 +881,7 @@ export async function getContactsForScope(dataScope: DataScope) {
 - Place shared components in `/app` routes
 - Pass individual permission flags instead of DataScope
 - Duplicate query logic across routes
-- Access `churchId` without type guard check
+- Filter by location in DataScope (use user.defaultLocationId instead)
 
 ### Benefits
 

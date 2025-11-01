@@ -8,7 +8,7 @@ interface PageProps {
 /**
  * Support Page
  *
- * Help center and support resources for clinic staff.
+ * Help center and support resources for church staff.
  * Provides documentation, FAQs, and contact options for technical support.
  */
 export default async function SupportPage({ params }: PageProps) {
