@@ -1,0 +1,27 @@
+Pattern Compliance
+
+7. /check-patterns - Verify code follows
+all patterns
+- Multi-tenant isolation check
+- Server action security
+- PageContainer usage
+- Navigation config
+- Generates compliance report
+8. /check-security - Security audit
+- Rate limiting present
+- Authentication checks
+- Input validation
+- No secrets in code
+- OWASP top 10
+9. /check-multi-tenant - Multi-tenant
+safety audit
+- All queries filter organizationId
+- No cross-tenant leakage
+- Fingerprinting correct
+- Data scoping verified
+
+17. /clean - Clean unused code
+- Finds unused imports
+- Detects dead code
+- Removes old files
+- Updates dependencies
