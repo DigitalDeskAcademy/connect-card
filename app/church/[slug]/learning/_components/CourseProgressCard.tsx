@@ -86,7 +86,7 @@ export function CourseProgressCard({ data, agencySlug }: iAppProps) {
         {/* Course title with hover effect and navigation */}
         <Link
           className="font-medium text-lg line-clamp-2 hover:underline group-hover:text-primary transition-colors"
-          href={`/agency/${agencySlug}/learning/${data.Course.slug}`}
+          href={`/church/${agencySlug}/learning/${data.Course.slug}`}
         >
           {data.Course.title}
         </Link>
@@ -115,7 +115,7 @@ export function CourseProgressCard({ data, agencySlug }: iAppProps) {
 
         {/* Navigation button to course lesson interface */}
         <Link
-          href={`/agency/${agencySlug}/learning/${data.Course.slug}`}
+          href={`/church/${agencySlug}/learning/${data.Course.slug}`}
           className={buttonVariants({ className: "w-full mt-4" })}
         >
           Continue Learning

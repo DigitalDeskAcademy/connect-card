@@ -669,6 +669,74 @@ const courses = await scope.getCourses();
 
 This hybrid pattern ensures data isolation while maintaining code clarity and follows industry best practices for B2B SaaS multi-tenancy.
 
+### Location-Based Filtering (Multi-Campus Support)
+
+**Overview**: Churches can have multiple campuses (locations). Data access is role-based:
+
+**Permission Model:**
+
+- **Account Owner** (`church_owner`) → Always sees ALL locations (non-negotiable)
+- **Multi-Campus Admin** (`church_admin` + `canSeeAllLocations = true`) → Sees ALL locations
+- **Campus Admin** (`church_admin` + `canSeeAllLocations = false`) → Sees ONLY their assigned location
+- **Staff** (`user`) → Sees ONLY their assigned location
+
+Churches can selectively grant multi-campus access to specific admins (typically 1-2 people) via the `canSeeAllLocations` flag, while keeping most admins campus-specific.
+
+**Implementation Pattern:**
+
+```typescript
+import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
+import { getLocationFilter } from "@/lib/data/location-filter";
+
+export async function getConnectCards(slug: string) {
+  const { dataScope } = await requireDashboardAccess(slug);
+
+  const cards = await prisma.connectCard.findMany({
+    where: {
+      organizationId: dataScope.organizationId, // Multi-tenant isolation
+      ...getLocationFilter(dataScope), // Location-based filtering
+    },
+  });
+
+  return cards;
+}
+```
+
+**How it works:**
+
+```typescript
+// Account Owner or Multi-Campus Admin (canSeeAllLocations = true)
+getLocationFilter(dataScope); // Returns {} (no filter)
+
+// Campus Admin or Staff (canSeeAllLocations = false, locationId = "xyz")
+getLocationFilter(dataScope); // Returns { locationId: "xyz" }
+```
+
+**Helper Functions:**
+
+```typescript
+// Check if user can access a location
+if (!canAccessLocation(dataScope, card.locationId)) {
+  return { status: "error", message: "Access denied" };
+}
+
+// Get default location for new records
+const defaultLocationId = getDefaultLocationForNewRecords(dataScope);
+// Staff: returns their locationId
+// Admin/Owner: returns null (must choose location)
+```
+
+**Critical Rules:**
+
+1. **ALWAYS** use `getLocationFilter(dataScope)` when querying location-based data
+2. **NEVER** assume a user can see all locations - check `dataScope.filters.canSeeAllLocations`
+3. **Staff** must have a `defaultLocationId` assigned
+4. **Account Owners** always see all locations (via logic, not the flag)
+5. **Admins** may be multi-campus or campus-specific based on `user.canSeeAllLocations` flag
+6. **Default behavior**: New admins are campus-specific (`canSeeAllLocations = false`)
+
+**See**: `/lib/data/location-filter.ts` for implementation details
+
 ---
 
 ## 🎯 Universal Component Pattern with DataScope
@@ -1302,6 +1370,79 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
   <AlertDescription>An error occurred</AlertDescription>
 </Alert>;
 ```
+
+#### Tabs (Controlled Pattern with Custom Styling)
+
+**Pattern**: Use controlled Tabs with state management for consistent behavior across the app.
+
+**Standard Implementation** (Dashboard pattern):
+
+```tsx
+"use client";
+
+import { useState } from "react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, Clock } from "lucide-react";
+
+export function MyTabsComponent() {
+  const [selectedTab, setSelectedTab] = useState("tab1");
+
+  return (
+    <Tabs
+      defaultValue="tab1"
+      value={selectedTab}
+      onValueChange={setSelectedTab}
+      className="w-full"
+    >
+      <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
+        <TabsTrigger
+          value="tab1"
+          className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+        >
+          <Users className="mr-2 w-4 h-4" />
+          Tab 1 Label
+        </TabsTrigger>
+        <TabsTrigger
+          value="tab2"
+          className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+        >
+          <Clock className="mr-2 w-4 h-4" />
+          Tab 2 Label
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="tab1" className="mt-6">
+        {/* Tab 1 content */}
+      </TabsContent>
+
+      <TabsContent value="tab2" className="mt-6">
+        {/* Tab 2 content */}
+      </TabsContent>
+    </Tabs>
+  );
+}
+```
+
+**Key Features:**
+
+1. **Controlled state**: Uses `value={selectedTab}` and `onValueChange={setSelectedTab}` for programmatic control
+2. **Custom TabsList styling**: Border-based design with `h-auto -space-x-px bg-background p-0 shadow-xs`
+3. **Custom TabsTrigger styling**: Bottom border indicator using `after:` pseudo-element
+   - Active state: `data-[state=active]:after:bg-primary` creates colored bottom border
+   - No rounded corners: `rounded-none border`
+4. **Icons**: Include lucide-react icons with `className="mr-2 w-4 h-4"`
+5. **Consistent spacing**: `TabsContent` uses `className="mt-6"` for spacing from TabsList
+
+**When to use:**
+
+- Multi-view layouts (Active Members / Pending Invitations)
+- Location-based filtering (All Locations / Campus 1 / Campus 2)
+- Category switching (Dashboard analytics by location)
+
+**Reference implementations:**
+
+- `/app/church/[slug]/admin/_components/DashboardClient.tsx` (location tabs)
+- `/app/church/[slug]/admin/team/client.tsx` (active/pending tabs)
 
 ### Installation Command
 

@@ -204,7 +204,7 @@ export async function createOrganization(data: {
 
     // Revalidate paths for immediate UI updates
     revalidatePath("/");
-    revalidatePath(`/agency/${slug}/admin`);
+    revalidatePath(`/church/${slug}/admin`);
 
     return {
       status: "success",

@@ -17,6 +17,8 @@ interface DataScopeBase {
     canDeleteData: boolean;
     canExportData: boolean;
     canManageUsers: boolean;
+    canSeeAllLocations: boolean; // Can see data from all locations in the org
+    locationId: string | null; // Restricted to specific location (null = all locations)
   };
 }
 
@@ -29,7 +31,15 @@ export interface PlatformScope extends DataScopeBase {
 
 /**
  * Agency scope - scoped to single organization (church)
- * Location filtering handled via user.defaultLocationId, not scope
+ *
+ * Location Access Model:
+ * - Account Owner (church_owner): canSeeAllLocations = true, locationId = null (always)
+ * - Multi-Campus Admin (church_admin + user.canSeeAllLocations): canSeeAllLocations = true, locationId = null
+ * - Campus Admin (church_admin): canSeeAllLocations = false, locationId = user.defaultLocationId
+ * - Staff (user): canSeeAllLocations = false, locationId = user.defaultLocationId
+ *
+ * The user.canSeeAllLocations flag allows churches to selectively grant multi-campus
+ * access to specific admins (typically 1-2 people) while keeping most admins campus-specific.
  */
 export interface AgencyScope extends DataScopeBase {
   type: "agency";

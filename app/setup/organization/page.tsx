@@ -52,7 +52,7 @@ export default async function OrganizationSetupPage() {
 
   if (user?.organizationId && user.organization?.slug) {
     // User already has an organization, redirect to appropriate dashboard
-    redirect(`/agency/${user.organization.slug}/admin`);
+    redirect(`/church/${user.organization.slug}/admin`);
   }
 
   return (

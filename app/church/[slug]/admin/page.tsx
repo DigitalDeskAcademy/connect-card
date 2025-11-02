@@ -6,7 +6,7 @@
  * Features location-based tabs for multi-campus churches.
  */
 
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import {
   getConnectCardAnalytics,
   getRecentConnectCards,
@@ -23,7 +23,7 @@ export default async function ChurchAdminDashboard({
   params,
 }: ChurchAdminDashboardProps) {
   const { slug } = await params;
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   // Fetch locations, cumulative analytics, and recent cards
   const [locations, cumulativeAnalytics, cumulativeCards] = await Promise.all([

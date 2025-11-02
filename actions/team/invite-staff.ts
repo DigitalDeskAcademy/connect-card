@@ -48,7 +48,7 @@ type InviteStaffInput = z.infer<typeof inviteStaffSchema>;
  * - 7-day expiration for invitation links
  *
  * Role Requirements:
- * - owner (Primary Admin): Can invite admins and staff for any location
+ * - owner (Account Owner): Can invite admins and staff for any location
  * - admin: Can invite staff for any location
  * - member (Staff): Cannot invite (blocked by canManageUsers permission)
  *

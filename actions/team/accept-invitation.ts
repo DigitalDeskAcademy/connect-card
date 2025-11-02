@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
 import { headers } from "next/headers";
+import { mapUIRoleToUserRole, type UIRole } from "@/lib/role-mapping";
 
 /**
  * Accept Staff Invitation
@@ -143,23 +144,28 @@ export async function acceptInvitation(
       };
     }
 
-    // 8. Create membership and update user in transaction
+    // 8. Map invitation role to Prisma UserRole enum
+    // invitation.role is a string like "admin" or "member"
+    // User.role needs Prisma enum like "church_admin" or "user"
+    const userRole = mapUIRoleToUserRole(invitation.role as UIRole);
+
+    // 9. Create membership and update user in transaction
     await prisma.$transaction(async tx => {
-      // Create membership
+      // Create Member record (organization-specific role)
       await tx.member.create({
         data: {
           userId: session.user.id,
           organizationId: invitation.organizationId,
-          role: invitation.role,
+          role: invitation.role, // String: "admin" or "member"
         },
       });
 
-      // Update user's organization and default location
+      // Update User record (global platform role)
       await tx.user.update({
         where: { id: session.user.id },
         data: {
           organizationId: invitation.organizationId,
-          role: invitation.role as any, // Cast to UserRole enum
+          role: userRole, // Prisma enum: "church_admin" or "user"
           defaultLocationId: invitation.locationId, // Set default location for staff
         },
       });

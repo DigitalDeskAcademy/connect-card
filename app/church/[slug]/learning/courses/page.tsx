@@ -54,7 +54,7 @@ export default async function AgencyCoursesPage({
 
   if (!session) {
     // Redirect to agency-specific login page
-    redirect(`/agency/${slug}/login`);
+    redirect(`/church/${slug}/login`);
   }
 
   // Verify user belongs to this organization by fetching full user data

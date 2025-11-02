@@ -22,7 +22,7 @@ export function AgencyLessonForm({
   courseId,
   agencySlug,
 }: AgencyLessonFormProps) {
-  const backUrl = `/agency/${agencySlug}/admin/courses/${courseId}/edit?tab=structure`;
+  const backUrl = `/church/${agencySlug}/admin/courses/${courseId}/edit?tab=structure`;
 
   return (
     <LessonForm

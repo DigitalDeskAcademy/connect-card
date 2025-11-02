@@ -11,7 +11,7 @@
  * - Rate limited delete operation
  */
 
-import { agencyGetCourse } from "@/app/data/agency/agency-get-course";
+import { churchGetCourse } from "@/app/data/church/church-get-course";
 import { PageContainer } from "@/components/layout/page-container";
 import { DeleteCourseConfirmation } from "@/components/courses/DeleteCourseConfirmation";
 
@@ -23,7 +23,7 @@ export default async function AgencyDeleteCourseRoute({
   params,
 }: AgencyDeleteCourseRouteProps) {
   const { slug, courseId } = await params;
-  const course = await agencyGetCourse(slug, courseId);
+  const course = await churchGetCourse(slug, courseId);
 
   return (
     <PageContainer variant="none">
@@ -32,8 +32,8 @@ export default async function AgencyDeleteCourseRoute({
         courseTitle={course.title}
         courseSlug={course.slug}
         organizationContext={{ type: "agency", slug }}
-        cancelHref={`/agency/${slug}/admin/courses`}
-        redirectPath={`/agency/${slug}/admin/courses`}
+        cancelHref={`/church/${slug}/admin/courses`}
+        redirectPath={`/church/${slug}/admin/courses`}
       />
     </PageContainer>
   );

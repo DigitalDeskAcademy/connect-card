@@ -9,7 +9,7 @@ import { Suspense } from "react";
 import { PageContainer } from "@/components/layout/page-container";
 import { CourseContent } from "@/components/courses/CourseContent";
 import { LessonSkeleton } from "@/app/church/[slug]/learning/[courseSlug]/[lessonId]/LessonSkeleton";
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 
@@ -27,7 +27,7 @@ export default async function AgencyAdminPreviewLessonPage({
   const { slug, courseSlug, lessonId } = await params;
 
   // Verify agency admin access
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   return (
     <PageContainer variant="none">

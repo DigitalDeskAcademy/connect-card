@@ -5,7 +5,7 @@
  *
  * Users Created:
  * - Platform Admin (platform_admin)
- * - Church Owner (church_owner) - Newlife Church
+ * - Account Owner (church_owner) - Newlife Church
  * - Church Admin (church_admin) - Newlife Church
  * - Staff Member (user) - Newlife Church
  */
@@ -21,6 +21,8 @@ interface TestUser {
   name: string;
   role: "platform_admin" | "church_owner" | "church_admin" | "user";
   organizationId?: string;
+  defaultLocationId?: string;
+  canSeeAllLocations?: boolean;
 }
 
 /**
@@ -92,7 +94,11 @@ async function main() {
   // Create Newlife Church organization
   const newlifeOrg = await prisma.organization.upsert({
     where: { slug: "newlife" },
-    update: {},
+    update: {
+      name: "Newlife Church",
+      type: "CHURCH",
+      subscriptionStatus: "ACTIVE",
+    },
     create: {
       id: "newlife-church-org-id",
       name: "Newlife Church",
@@ -111,7 +117,11 @@ async function main() {
   // Create platform organization for platform admin
   const platformOrg = await prisma.organization.upsert({
     where: { slug: "connect-card-platform" },
-    update: {},
+    update: {
+      name: "Connect Card Platform",
+      type: "CHURCH",
+      subscriptionStatus: "ACTIVE",
+    },
     create: {
       id: "connect-card-platform-org-id",
       name: "Connect Card Platform",
@@ -164,31 +174,50 @@ async function main() {
 
   console.log(`✅ All 5 campus locations created\n`);
 
-  // Define users with roles
+  // Get created locations for assignment
+  const bainbridge = await prisma.location.findFirst({
+    where: { organizationId: newlifeOrg.id, slug: "bainbridge" },
+  });
+  const bremerton = await prisma.location.findFirst({
+    where: { organizationId: newlifeOrg.id, slug: "bremerton" },
+  });
+
+  if (!bainbridge || !bremerton) {
+    throw new Error("Failed to create locations");
+  }
+
+  // Define users with roles and location assignments
   const users: TestUser[] = [
     {
       email: "digitaldeskacademy@outlook.com",
-      name: "Platform Administrator",
+      name: "Sarah Mitchell",
       role: "platform_admin",
       organizationId: platformOrg.id,
+      // Platform admin doesn't need a location
     },
     {
       email: "owner@newlife.com",
-      name: "Senior Pastor",
+      name: "Pastor David Johnson",
       role: "church_owner",
       organizationId: newlifeOrg.id,
+      defaultLocationId: bainbridge.id, // Owner primary location: Bainbridge
+      // Owners always see all locations (via logic, not flag)
     },
     {
       email: "admin@newlife.com",
-      name: "Youth Pastor",
+      name: "Emily Rodriguez",
       role: "church_admin",
       organizationId: newlifeOrg.id,
+      defaultLocationId: bainbridge.id, // Admin primary location: Bainbridge
+      canSeeAllLocations: true, // Multi-campus admin - can see all locations
     },
     {
       email: "staff@newlife.com",
-      name: "Volunteer Coordinator",
+      name: "Michael Chen",
       role: "user",
       organizationId: newlifeOrg.id,
+      defaultLocationId: bremerton.id, // Staff assigned to: Bremerton
+      canSeeAllLocations: false, // Staff restricted to their location (default)
     },
   ];
 
@@ -210,6 +239,8 @@ async function main() {
       update: {
         role: userData.role,
         organizationId: userData.organizationId,
+        defaultLocationId: userData.defaultLocationId,
+        canSeeAllLocations: userData.canSeeAllLocations ?? false,
         stripeCustomerId,
         emailVerified: true,
       },
@@ -221,6 +252,8 @@ async function main() {
         role: userData.role,
         stripeCustomerId,
         organizationId: userData.organizationId,
+        defaultLocationId: userData.defaultLocationId,
+        canSeeAllLocations: userData.canSeeAllLocations ?? false,
         createdAt: new Date(),
         updatedAt: new Date(),
         banned: false,
@@ -229,6 +262,18 @@ async function main() {
 
     console.log(`   ✅ User created with ID: ${user.id}`);
     console.log(`   📧 Login via OTP: User will authenticate on first sign-in`);
+
+    // Show location assignment and permissions
+    if (userData.defaultLocationId) {
+      const location = await prisma.location.findUnique({
+        where: { id: userData.defaultLocationId },
+      });
+      console.log(`   📍 Primary Location: ${location?.name || "Unknown"}`);
+    }
+
+    if (userData.canSeeAllLocations) {
+      console.log(`   🌐 Multi-Campus Access: Enabled`);
+    }
 
     // Map user role to member role for organization membership
     // User.role is for platform-level permissions
@@ -270,7 +315,7 @@ async function main() {
     `   📍 Campus Locations: 5 (Bainbridge, Bremerton, Silverdale, Port Orchard, Poulsbo)`
   );
   console.log(`   👤 Platform Admins: 1`);
-  console.log(`   🏛️  Church Owners: 1`);
+  console.log(`   🏛️  Account Owners: 1`);
   console.log(`   👨‍💼 Church Admins: 1`);
   console.log(`   👥 Staff Members: 1\n`);
 

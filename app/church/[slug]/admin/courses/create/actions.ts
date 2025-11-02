@@ -1,6 +1,6 @@
 "use server";
 
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import arcjet, { fixedWindow } from "@/lib/arcjet";
 import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
@@ -25,7 +25,7 @@ const aj = arcjet.withRule(
  * Server action to create a new course for an agency
  *
  * Key differences from platform course creation:
- * - Uses requireAgencyAdmin for organization-scoped authentication
+ * - Uses requireChurchAdmin for organization-scoped authentication
  * - Automatically sets organizationId for multi-tenant data isolation
  * - No Stripe product creation (agencies use subscription model)
  * - Rate limiting uses combined fingerprint for per-organization limits
@@ -39,7 +39,7 @@ export async function createAgencyCourse(
   values: CourseSchemaType
 ): Promise<ApiResponse> {
   // Ensure only authenticated agency admins can create courses
-  const { session, organization } = await requireAgencyAdmin(slug);
+  const { session, organization } = await requireChurchAdmin(slug);
 
   try {
     // Set up rate limiting protection with multi-tenant fingerprint

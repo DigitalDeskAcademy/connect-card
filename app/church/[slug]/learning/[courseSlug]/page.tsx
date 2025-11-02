@@ -44,7 +44,7 @@ export default async function AgencyCourseOverviewPage({
   });
 
   if (!session) {
-    redirect(`/agency/${slug}/login`);
+    redirect(`/church/${slug}/login`);
   }
 
   const user = await prisma.user.findUnique({
@@ -73,7 +73,7 @@ export default async function AgencyCourseOverviewPage({
 
   // Redirect to first lesson if available
   if (firstLesson) {
-    redirect(`/agency/${slug}/learning/${courseSlug}/${firstLesson.id}`);
+    redirect(`/church/${slug}/learning/${courseSlug}/${firstLesson.id}`);
   }
 
   // No lessons available - show message

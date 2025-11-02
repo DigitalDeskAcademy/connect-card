@@ -54,7 +54,7 @@ export function LessonItem({
 }: iAppProps) {
   return (
     <Link
-      href={`/agency/${orgSlug}/learning/${courseSlug}/${lesson.id}`}
+      href={`/church/${orgSlug}/learning/${courseSlug}/${lesson.id}`}
       className={buttonVariants({
         variant: "outline",
         className: cn(

@@ -2421,3 +2421,349 @@ What are the trade-offs?
 
 What other options did we evaluate?
 ```
+
+## ADR-009: Dual Role System for Multi-Tenant Access Control
+
+**Date:** 2025-11-01  
+**Status:** Approved  
+**Decision Makers:** Development team, code-reviewer agent
+
+### Context
+
+Multi-tenant SaaS platforms require **two levels of role management**:
+
+1. **Platform-level permissions** - What can a user do globally across the platform?
+2. **Organization-level permissions** - What can a user do within a specific church?
+
+This dual role system is the industry-standard pattern used by Slack (workspaces), GitHub (organizations), Discord (servers), and other enterprise multi-tenant platforms.
+
+**Initial Implementation Problem:**
+
+TypeScript errors occurred when creating/updating team members:
+
+```typescript
+// ❌ TypeScript Error
+await prisma.user.update({
+  data: { role: "admin" }, // Type '"admin"' is not assignable to type 'UserRole'
+});
+```
+
+The UI uses simplified roles (`"admin"`, `"member"`), but `User.role` expects Prisma enum values (`"church_admin"`, `"user"`).
+
+### Decision
+
+**Maintain TWO role systems with type-safe mapping utilities**
+
+We will keep both role systems and create mapping functions to convert between UI roles and database enum values.
+
+#### Role Systems Defined
+
+**1. User.role (Global/Platform-Level Role)** - Prisma enum `UserRole`
+
+```prisma
+enum UserRole {
+  platform_admin      // Platform employees (cross-tenant access)
+  church_owner        // Primary account holder (billing admin)
+  church_admin        // Church team member (can manage content/members)
+  volunteer_leader    // Volunteer coordinator
+  user                // Default role (end user/client)
+}
+```
+
+- **Purpose**: Platform-wide access control
+- **Use Cases**:
+  - Platform admins accessing any organization (support/debugging)
+  - Determining if user can create organizations
+  - Default dashboard redirects after login
+  - Billing/subscription management permissions
+
+**2. Member.role (Organization-Specific Role)** - String field
+
+```prisma
+model Member {
+  id             String       @id @default(uuid())
+  userId         String
+  organizationId String
+  role           String       // "owner", "admin", "member"
+}
+```
+
+- **Purpose**: Permissions within a specific organization (church)
+- **Use Cases**:
+  - Can this user manage team members in THIS church?
+  - Can this user delete data in THIS church?
+  - Can this user edit connect cards in THIS church?
+
+#### Role Mapping Implementation
+
+```typescript
+// /lib/role-mapping.ts
+
+export type UIRole = "owner" | "admin" | "member";
+
+export function mapUIRoleToUserRole(uiRole: UIRole): UserRole {
+  switch (uiRole) {
+    case "owner":
+      return "church_owner";
+    case "admin":
+      return "church_admin";
+    case "member":
+      return "user";
+  }
+}
+
+export function mapUserRoleToUIRole(userRole: UserRole | null): UIRole {
+  switch (userRole) {
+    case "church_owner":
+      return "owner";
+    case "church_admin":
+      return "admin";
+    case "user":
+      return "member";
+    case "volunteer_leader":
+      return "member"; // Treat volunteer leaders as staff
+    case "platform_admin":
+      throw new Error("Platform admins should not be displayed in org UI");
+    case null:
+      return "member"; // Default fallback
+  }
+}
+```
+
+#### Mapping Table
+
+| UI Role | Member.role (String) | User.role (Prisma enum) | Permissions                         |
+| ------- | -------------------- | ----------------------- | ----------------------------------- |
+| Owner   | "owner"              | "church_owner"          | Full org access, billing, team mgmt |
+| Admin   | "admin"              | "church_admin"          | Manage content, edit/delete data    |
+| Staff   | "member"             | "user"                  | View and edit data, no deletions    |
+
+### Implementation Pattern
+
+```typescript
+// Always update BOTH User.role (global) and Member.role (org-specific)
+
+import { mapUIRoleToUserRole } from "@/lib/role-mapping";
+
+export async function updateMember(slug: string, data: UpdateMemberInput) {
+  const userRole = mapUIRoleToUserRole(role as UIRole);
+
+  await prisma.$transaction([
+    // Update User.role (global platform role)
+    prisma.user.update({
+      where: { id: memberId },
+      data: {
+        role: userRole, // Prisma enum: "church_admin" or "user"
+        defaultLocationId: locationId,
+      },
+    }),
+    // Update Member.role (organization-specific role)
+    prisma.member.update({
+      where: { id: member.id },
+      data: {
+        role, // String: "admin" or "member"
+      },
+    }),
+  ]);
+}
+```
+
+### Benefits
+
+1. **Industry-Standard Pattern**: Matches Slack, GitHub, Discord architecture
+
+   - Slack: User account (global) + Workspace roles (per-workspace)
+   - GitHub: User account (global) + Organization roles (per-org)
+   - Discord: User account (global) + Server roles (per-server)
+
+2. **Type Safety**: Compile-time guarantees prevent type errors
+
+   - Role mapping utility enforces correct enum values
+   - TypeScript catches invalid role assignments
+   - Exhaustive checking with switch statements
+
+3. **Multi-Organization Support**: Users can have different roles in different churches
+
+   - User is "admin" in Church A but "member" in Church B
+   - Platform admins can access any church for support
+   - Organization-specific permissions properly scoped
+
+4. **Clear Separation of Concerns**:
+
+   - `User.role` = What can I do across the platform?
+   - `Member.role` = What can I do in this church?
+
+5. **Platform Admin Access**: Special case properly handled
+   - Platform admins bypass organization membership
+   - Can access any church without being a "member"
+   - Permissions checked in `require-dashboard-access.ts`
+
+### Tradeoffs
+
+1. **Dual System Complexity**: Developers must understand when to use which role
+
+   - Mitigated by clear documentation
+   - Type-safe mapping utilities prevent errors
+
+2. **Data Synchronization**: Must keep User.role and Member.role in sync
+
+   - Solved with transactions: both updates succeed or both fail
+   - Clear pattern documented in coding-patterns.md
+
+3. **Migration Complexity**: Existing invitations/updates need mapping logic
+   - One-time migration effort for existing code
+   - All new code follows type-safe pattern
+
+### Security Considerations
+
+**Data Isolation:**
+
+- Member.role ensures organization-specific permission checks
+- User.role provides platform-wide access for support/debugging
+- Both systems enforce multi-tenant data isolation
+
+**Permission Checks:**
+
+```typescript
+// Example from require-dashboard-access.ts
+if (member.role === "owner") {
+  dataScope.filters.canManageUsers = true; // Only owners manage users
+}
+```
+
+**Cross-Organization Access:**
+
+- Platform admins (`user.role === "platform_admin"`) can access any org
+- Regular users isolated to their organization via Member records
+- No cross-tenant data leakage
+
+### Alternatives Considered
+
+**Single Role System (User.role only)**
+
+- ✅ Simpler architecture
+- ❌ No org-specific permissions
+- ❌ User can only have ONE role globally
+- ❌ Doesn't support multi-org membership
+
+**Single Role System (Member.role only)**
+
+- ✅ Organization-specific permissions
+- ❌ No platform-level admin access
+- ❌ No way to grant cross-org permissions
+- ❌ Billing/org creation unclear
+
+**Optional Role Field (User.role?: UserRole)**
+
+- ✅ Simpler type definitions
+- ❌ No compile-time safety for missing roles
+- ❌ Runtime errors if role is null/undefined
+- ❌ Can't distinguish between "no role" and "default role"
+
+### Consequences
+
+#### Files Created
+
+- `/lib/role-mapping.ts` - Type-safe role mapping utilities (116 lines with docs)
+
+#### Files Modified
+
+**Server Actions:**
+
+- `/actions/team/update-member.ts` - Uses mapUIRoleToUserRole()
+- `/actions/team/accept-invitation.ts` - Uses mapUIRoleToUserRole()
+- `/actions/team/remove-member.ts` - Fixed church_owner check
+
+**Permission System:**
+
+- `/app/data/dashboard/require-dashboard-access.ts` - Uses Member.role for org permissions
+
+#### Migration Checklist
+
+- ✅ Create role mapping utility
+- ✅ Update update-member action to use mapping
+- ✅ Update accept-invitation action to use mapping
+- ✅ Fix remove-member church_owner check
+- ✅ TypeScript compilation passes (0 errors)
+- ✅ Document in ADR-009
+
+### Success Criteria
+
+- ✅ All TypeScript errors resolved
+- ✅ Role mapping utilities created and tested
+- ✅ Both User.role and Member.role updated atomically (transactions)
+- ✅ Platform admins can access any church
+- ✅ Organization-specific permissions work correctly
+- ✅ Documentation complete
+
+### Future Enhancements
+
+1. **Multi-Organization Support**: Allow users to belong to multiple churches
+
+   - Remove `User.organizationId` foreign key constraint
+   - Rely entirely on Member records for org membership
+   - Set `User.role = null` for non-platform-admins
+   - User.role reflects highest permission across all orgs
+
+2. **Role Hierarchy Validation**: Prevent admins from promoting themselves
+
+   - Add checks: only owners can promote to owner
+   - Prevent privilege escalation attacks
+
+3. **Audit Logging**: Track all role changes for compliance
+   - Log who changed what role when
+   - Compliance requirement for enterprise customers
+
+### Industry Validation
+
+**Slack Workspace Model:**
+
+```
+User Account (Global):
+  - email, name, id
+  - platform_role: "admin" | "user"
+
+Workspace Member (Per-Workspace):
+  - workspace_id
+  - user_id
+  - role: "owner" | "admin" | "member" | "guest"
+```
+
+**GitHub Organization Model:**
+
+```
+User (Global):
+  - id, email, username
+  - site_admin: boolean (platform-level)
+
+OrganizationMember (Per-Org):
+  - organization_id
+  - user_id
+  - role: "owner" | "admin" | "member"
+```
+
+**Our Model (ChurchSyncAI):**
+
+```
+User (Global):
+  - id, email, name
+  - role: UserRole enum (platform-level)
+
+Member (Per-Church):
+  - user_id
+  - organization_id
+  - role: string ("owner" | "admin" | "member")
+```
+
+**Conclusion**: Our architecture matches industry-standard multi-tenant SaaS patterns.
+
+### References
+
+- Code Review: code-reviewer agent analysis (2025-11-01)
+- Implementation: `/lib/role-mapping.ts`
+- Slack Architecture: [Workspace permissions model](https://api.slack.com/methods/admin.users.setOwner)
+- GitHub Organizations: [Organization permission levels](https://docs.github.com/en/organizations/managing-peoples-access-to-your-organization-with-roles)
+- Discord Servers: [Server member roles](https://discord.com/developers/docs/topics/permissions)
+- Better Auth Documentation: [Organization plugin](https://www.better-auth.com/docs/plugins/organization)
+
+---

@@ -1,7 +1,7 @@
 "use server";
 
 import { requireAdmin } from "@/app/data/admin/require-admin";
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import arcjet, { fixedWindow } from "@/lib/arcjet";
 import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
@@ -58,7 +58,7 @@ export async function deleteCourse(
   try {
     if (context.type === "agency") {
       // Agency Context: Multi-tenant deletion with organization validation
-      const { session, organization } = await requireAgencyAdmin(context.slug);
+      const { session, organization } = await requireChurchAdmin(context.slug);
 
       // Rate limiting
       const req = await request();

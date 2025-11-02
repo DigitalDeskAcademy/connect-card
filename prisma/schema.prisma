@@ -152,10 +152,16 @@ model User {
   /// Role-based access control for multi-tenant architecture
   role             UserRole?
   /// Stripe customer ID for payment processing
-  stripeCustomerId  String?       @unique
+  stripeCustomerId     String?  @unique
   /// Default campus/location for staff member
-  defaultLocationId String?
-  courses           Course[]
+  defaultLocationId    String?
+  /// Multi-campus access permission (for admins who need to see all locations)
+  /// Account Owners: Always true (via logic, not stored)
+  /// Multi-Campus Admins: Explicitly set to true
+  /// Campus Admins: false (default) - restricted to defaultLocationId
+  /// Staff: false (default) - restricted to defaultLocationId
+  canSeeAllLocations   Boolean  @default(false)
+  courses              Course[]
   enrollment        Enrollment[]
   lessonProgress    LessonProgress[]
   accounts          Account[]

@@ -12,8 +12,8 @@
  *
  * Dashboard Routing:
  * - platform_admin → /platform/admin
- * - agency_owner/agency_admin → /agency/[slug]/admin
- * - user (with org) → /agency/[slug]/learning
+ * - agency_owner/agency_admin → /church/[slug]/admin
+ * - user (with org) → /church/[slug]/learning
  * - Regular users → /my-learning
  *
  * Benefits:
@@ -101,10 +101,10 @@ export default async function AuthCallbackPage() {
 
     if (user.role === "church_owner" || user.role === "church_admin") {
       // Church administrators go to church admin dashboard
-      redirectTo = `/agency/${agencySlug}/admin`;
+      redirectTo = `/church/${agencySlug}/admin`;
     } else if (user.role === "user") {
       // End users go to church learning dashboard
-      redirectTo = `/agency/${agencySlug}/learning`;
+      redirectTo = `/church/${agencySlug}/learning`;
     }
   }
   // Regular platform users without organization go to /my-learning (default)

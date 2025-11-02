@@ -15,7 +15,7 @@
 
 import { ReactNode } from "react";
 import { CourseSidebar } from "@/components/courses/CourseSidebar";
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 
@@ -34,7 +34,7 @@ export default async function AgencyPreviewLayout({
   const { slug, courseSlug } = await params;
 
   // Verify agency admin access
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   // Get course data with full structure for sidebar
   // Platform courses (organizationId = null) are accessible to all agencies

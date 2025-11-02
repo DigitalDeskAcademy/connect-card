@@ -44,28 +44,28 @@ export function AgencyNavbar({ agency }: AgencyNavbarProps) {
       : session?.user?.role === "agency_owner" ||
           session?.user?.role === "agency_admin"
         ? [
-            { name: "Home", href: `/agency/${agency.slug}/admin` },
-            { name: "Courses", href: `/agency/${agency.slug}/admin/courses` },
-            { name: "Team", href: `/agency/${agency.slug}/admin/users` },
+            { name: "Home", href: `/church/${agency.slug}/admin` },
+            { name: "Courses", href: `/church/${agency.slug}/admin/courses` },
+            { name: "Team", href: `/church/${agency.slug}/admin/users` },
             {
               name: "Analytics",
-              href: `/agency/${agency.slug}/admin/analytics`,
+              href: `/church/${agency.slug}/admin/analytics`,
             },
           ]
         : session?.user
           ? [
               // Regular agency users see learning navigation
-              { name: "Home", href: `/agency/${agency.slug}/learning` },
-              { name: "My Courses", href: `/agency/${agency.slug}/learning` },
+              { name: "Home", href: `/church/${agency.slug}/learning` },
+              { name: "My Courses", href: `/church/${agency.slug}/learning` },
               {
                 name: "Progress",
-                href: `/agency/${agency.slug}/learning/progress`,
+                href: `/church/${agency.slug}/learning/progress`,
               },
             ]
           : [
-              { name: "Home", href: `/agency/${agency.slug}` }, // Agency homepage
-              { name: "Courses", href: `/agency/${agency.slug}/courses` },
-              { name: "About", href: `/agency/${agency.slug}/about` },
+              { name: "Home", href: `/church/${agency.slug}` }, // Agency homepage
+              { name: "Courses", href: `/church/${agency.slug}/courses` },
+              { name: "About", href: `/church/${agency.slug}/about` },
             ];
 
   return (
@@ -78,10 +78,10 @@ export function AgencyNavbar({ agency }: AgencyNavbarProps) {
               ? "/platform/admin"
               : session?.user?.role === "agency_owner" ||
                   session?.user?.role === "agency_admin"
-                ? `/agency/${agency.slug}/admin`
+                ? `/church/${agency.slug}/admin`
                 : session?.user
-                  ? `/agency/${agency.slug}/learning`
-                  : `/agency/${agency.slug}` // Agency homepage for guests
+                  ? `/church/${agency.slug}/learning`
+                  : `/church/${agency.slug}` // Agency homepage for guests
           }
           className="flex items-center mr-4"
         >
@@ -123,13 +123,13 @@ export function AgencyNavbar({ agency }: AgencyNavbarProps) {
           ) : (
             <>
               <Link
-                href={`/agency/${agency.slug}/login`} // Agency login page
+                href={`/church/${agency.slug}/login`} // Agency login page
                 className={buttonVariants({ variant: "secondary" })}
               >
                 Login
               </Link>
               <Link
-                href={`/agency/${agency.slug}/login`} // Agency login page
+                href={`/church/${agency.slug}/login`} // Agency login page
                 className={buttonVariants()}
               >
                 Free Trial

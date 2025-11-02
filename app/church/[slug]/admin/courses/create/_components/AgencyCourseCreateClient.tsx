@@ -32,7 +32,7 @@ export function AgencyCourseCreateClient({
           <div className="flex items-center gap-4 mb-8">
             <Link
               className={buttonVariants({ variant: "outline" })}
-              href={`/agency/${slug}/admin/courses`}
+              href={`/church/${slug}/admin/courses`}
             >
               <ArrowLeft className="size-4" />
               Back
@@ -44,7 +44,7 @@ export function AgencyCourseCreateClient({
           <CourseForm
             mode="create"
             onSubmit={data => createAgencyCourse(slug, data)}
-            redirectPath={`/agency/${slug}/admin/courses`}
+            redirectPath={`/church/${slug}/admin/courses`}
             cardTitle="Course Information"
             cardDescription="Create a custom course for your organization's clients"
             priceFieldDisabled={true}

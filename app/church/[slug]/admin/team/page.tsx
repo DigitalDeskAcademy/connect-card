@@ -79,6 +79,7 @@ export default async function TeamPage({ params }: PageProps) {
       email: true,
       role: true,
       locationId: true,
+      token: true,
       createdAt: true,
       expiresAt: true,
     },

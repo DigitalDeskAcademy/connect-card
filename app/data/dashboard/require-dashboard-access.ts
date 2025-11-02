@@ -1,12 +1,24 @@
 /**
  * Universal Dashboard Access Control
  *
- * Handles access for all three tiers of users:
- * 1. Platform admins - can access any organization's dashboard
+ * Handles access for all user tiers with granular location-based permissions:
+ * 1. Platform admins - can access any organization's dashboard, all locations
  * 2. Church admins - can access their own organization's dashboard
- * 3. End users (church staff) - can access their assigned organization's dashboard
+ *    - Multi-campus admins: see all locations (canSeeAllLocations = true)
+ *    - Campus admins: see only their assigned location (canSeeAllLocations = false, default)
+ * 3. Church staff - can access their assigned organization's dashboard, restricted to their location
  *
- * All users see the same UI, but data is scoped based on their role.
+ * All users see the same UI, but data is scoped based on their role and location permissions.
+ *
+ * Location Access Model:
+ * - Platform Admin: sees all organizations, all locations
+ * - Account Owner (church_owner): always sees all locations in their org (non-negotiable)
+ * - Multi-Campus Admin (church_admin + canSeeAllLocations): sees all locations in their org
+ * - Campus Admin (church_admin): sees ONLY their assigned location
+ * - Staff (user): sees ONLY their assigned location (dataScope.filters.locationId)
+ *
+ * The canSeeAllLocations flag allows churches to selectively grant multi-campus access
+ * to specific admins (typically 1-2 people) while keeping most admins campus-specific.
  */
 
 import "server-only";
@@ -45,12 +57,14 @@ export const requireDashboardAccess = cache(async (slug: string) => {
     return redirect(`/church/${slug}/login`);
   }
 
-  // Get full user details
+  // Get full user details including location assignment and permissions
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: {
       role: true,
       organizationId: true,
+      defaultLocationId: true,
+      canSeeAllLocations: true,
     },
   });
 
@@ -71,6 +85,8 @@ export const requireDashboardAccess = cache(async (slug: string) => {
         canDeleteData: true,
         canExportData: true,
         canManageUsers: true,
+        canSeeAllLocations: true, // Platform admins see everything
+        locationId: null, // No location restriction
       },
     };
 
@@ -95,8 +111,8 @@ export const requireDashboardAccess = cache(async (slug: string) => {
     return redirect("/unauthorized");
   }
 
-  // Church owners and admins
-  if (member.role === "owner" || member.role === "admin") {
+  // Account Owner (church_owner) - sees all locations
+  if (member.role === "owner") {
     const dataScope: AgencyScope = {
       type: "agency",
       organizationId: organization.id,
@@ -105,16 +121,38 @@ export const requireDashboardAccess = cache(async (slug: string) => {
         canEditData: true,
         canDeleteData: true,
         canExportData: true,
-        canManageUsers: member.role === "owner",
+        canManageUsers: true,
+        canSeeAllLocations: true, // Owner sees all locations
+        locationId: null, // No location restriction
       },
     };
 
     return { session, organization, dataScope, member };
   }
 
-  // Church staff and volunteers
+  // Admin (church_admin) - may be multi-campus or campus-specific
+  if (member.role === "admin") {
+    // Check if this admin has multi-campus access permission
+    const hasMultiCampusAccess = user.canSeeAllLocations;
 
-  // End users - using "member" role (church members/volunteers)
+    const dataScope: AgencyScope = {
+      type: "agency",
+      organizationId: organization.id,
+      filters: {
+        canSeeAllOrganizations: false,
+        canEditData: true,
+        canDeleteData: true,
+        canExportData: true,
+        canManageUsers: false, // Admins cannot manage users (only owner can)
+        canSeeAllLocations: hasMultiCampusAccess, // Based on permission flag
+        locationId: hasMultiCampusAccess ? null : user.defaultLocationId, // Restricted if campus-specific
+      },
+    };
+
+    return { session, organization, dataScope, member };
+  }
+
+  // Staff (member) - location-restricted access
   if (member.role === "member") {
     const dataScope: AgencyScope = {
       type: "agency",
@@ -125,6 +163,8 @@ export const requireDashboardAccess = cache(async (slug: string) => {
         canDeleteData: false,
         canExportData: true,
         canManageUsers: false,
+        canSeeAllLocations: false, // Staff only see their location
+        locationId: user.defaultLocationId, // Restricted to assigned location
       },
     };
 

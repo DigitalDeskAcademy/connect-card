@@ -83,7 +83,7 @@ export function OrganizationSetupForm({
         // Force router refresh to get updated session with activeOrganizationId
         router.refresh();
         // Redirect to agency admin dashboard
-        router.push(`/agency/${result.organizationSlug}/admin`);
+        router.push(`/church/${result.organizationSlug}/admin`);
       } else {
         toast.error(result.message);
       }
