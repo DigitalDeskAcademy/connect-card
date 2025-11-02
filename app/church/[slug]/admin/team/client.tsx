@@ -9,13 +9,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -33,45 +26,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IconUserPlus, IconMail, IconMapPin } from "@tabler/icons-react";
-import { format } from "date-fns";
+import { Users, Clock } from "lucide-react";
 import { inviteStaff } from "@/actions/team/invite-staff";
+import { revokeInvitation } from "@/actions/team/revoke-invitation";
+import { resendInvitation } from "@/actions/team/resend-invitation";
+import { updateMember } from "@/actions/team/update-member";
+import { removeMember } from "@/actions/team/remove-member";
 import { useToast } from "@/hooks/use-toast";
 import type { DataScope } from "@/app/data/dashboard/data-scope-types";
-
-interface TeamMember {
-  id: string;
-  name: string;
-  email: string;
-  role: string | null;
-  defaultLocationId: string | null;
-  locationName: string | null;
-  createdAt: Date;
-}
+import { TeamDataTable } from "@/components/dashboard/team/team-data-table";
+import { createTeamMembersColumns } from "@/components/dashboard/team/team-members-columns";
+import { createPendingInvitationsColumns } from "@/components/dashboard/team/pending-invitations-columns";
+import type { TeamMember } from "@/components/dashboard/team/team-members-columns";
+import type { PendingInvitation } from "@/components/dashboard/team/pending-invitations-columns";
 
 interface Location {
   id: string;
   name: string;
   slug: string;
-}
-
-interface PendingInvitation {
-  id: string;
-  email: string;
-  role: string;
-  locationId: string | null;
-  locationName: string | null;
-  createdAt: Date;
-  expiresAt: Date;
 }
 
 interface TeamManagementClientProps {
@@ -92,16 +66,27 @@ export default function TeamManagementClient({
   pendingInvitations,
 }: TeamManagementClientProps) {
   const { toast } = useToast();
+  const [selectedTab, setSelectedTab] = useState("active");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isRemoveOpen, setIsRemoveOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+
   const [inviteForm, setInviteForm] = useState({
     email: "",
     role: "member" as "admin" | "member",
     locationId: null as string | null,
   });
 
+  const [editForm, setEditForm] = useState({
+    role: "member" as "admin" | "member",
+    locationId: null as string | null,
+  });
+
   const canInviteUsers = dataScope.filters.canManageUsers;
 
+  // Handle invite staff
   const handleInvite = async () => {
     // Validation
     if (!inviteForm.email) {
@@ -162,35 +147,194 @@ export default function TeamManagementClient({
     }
   };
 
-  const getRoleBadgeColor = (role: string | null) => {
-    switch (role) {
-      case "platform_admin":
-        return "bg-purple-100 text-purple-800";
-      case "owner":
-        return "bg-blue-100 text-blue-800";
-      case "admin":
-        return "bg-indigo-100 text-indigo-800";
-      case "member":
-        return "bg-green-100 text-green-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  // Handle edit member
+  const handleEditMember = (member: TeamMember) => {
+    setSelectedMember(member);
+    setEditForm({
+      role: member.role as "admin" | "member",
+      locationId: member.defaultLocationId,
+    });
+    setIsEditOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    if (!selectedMember) return;
+
+    if (editForm.role === "member" && !editForm.locationId) {
+      toast({
+        title: "Location Required",
+        description: "Please select a location for staff members",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await updateMember(organizationSlug, {
+        memberId: selectedMember.id,
+        role: editForm.role,
+        locationId: editForm.locationId,
+      });
+
+      if (result.status === "success") {
+        toast({
+          title: "Member Updated",
+          description: result.message,
+        });
+        setIsEditOpen(false);
+        setSelectedMember(null);
+      } else {
+        toast({
+          title: "Failed to Update Member",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Update member error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const getRoleLabel = (role: string | null) => {
-    switch (role) {
-      case "platform_admin":
-        return "Platform Admin";
-      case "owner":
-        return "Primary Admin";
-      case "admin":
-        return "Admin";
-      case "member":
-        return "Staff";
-      default:
-        return "Staff";
+  // Handle remove member
+  const handleRemoveMember = (member: TeamMember) => {
+    setSelectedMember(member);
+    setIsRemoveOpen(true);
+  };
+
+  const handleRemoveConfirm = async () => {
+    if (!selectedMember) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const result = await removeMember(organizationSlug, {
+        memberId: selectedMember.id,
+      });
+
+      if (result.status === "success") {
+        toast({
+          title: "Member Removed",
+          description: result.message,
+        });
+        setIsRemoveOpen(false);
+        setSelectedMember(null);
+      } else {
+        toast({
+          title: "Failed to Remove Member",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Remove member error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Handle resend invitation
+  const handleResendInvitation = async (invitation: PendingInvitation) => {
+    try {
+      const result = await resendInvitation(organizationSlug, {
+        invitationId: invitation.id,
+      });
+
+      if (result.status === "success") {
+        toast({
+          title: "Invitation Resent",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Failed to Resend Invitation",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Resend invitation error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle copy invite link
+  const handleCopyInviteLink = async (invitation: PendingInvitation) => {
+    try {
+      const inviteUrl = `${window.location.origin}/invite/accept?token=${invitation.token}`;
+      await navigator.clipboard.writeText(inviteUrl);
+      toast({
+        title: "Link Copied",
+        description: "Invitation link copied to clipboard",
+      });
+    } catch (error) {
+      console.error("Copy link error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to copy link. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle revoke invitation
+  const handleRevokeInvitation = async (invitation: PendingInvitation) => {
+    try {
+      const result = await revokeInvitation(organizationSlug, {
+        invitationId: invitation.id,
+      });
+
+      if (result.status === "success") {
+        toast({
+          title: "Invitation Revoked",
+          description: result.message,
+        });
+      } else {
+        toast({
+          title: "Failed to Revoke Invitation",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Revoke invitation error:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Create columns with callbacks
+  const teamMembersColumns = createTeamMembersColumns({
+    currentUserId,
+    onEdit: handleEditMember,
+    onRemove: handleRemoveMember,
+  });
+
+  const pendingInvitationsColumns = createPendingInvitationsColumns({
+    onResend: handleResendInvitation,
+    onCopyLink: handleCopyInviteLink,
+    onRevoke: handleRevokeInvitation,
+  });
 
   return (
     <div className="space-y-6">
@@ -316,147 +460,167 @@ export default function TeamManagementClient({
         )}
       </div>
 
-      {/* Team Members Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Team Members</CardTitle>
-          <CardDescription>
-            {teamMembers.length} member{teamMembers.length !== 1 ? "s" : ""} in
-            your organization
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {teamMembers.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center py-8 text-muted-foreground"
-                  >
-                    No team members found.{" "}
-                    {canInviteUsers &&
-                      "Invite your first staff member to get started."}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                teamMembers.map(member => (
-                  <TableRow key={member.id}>
-                    <TableCell className="font-medium">
-                      {member.name}
-                      {member.id === currentUserId && (
-                        <Badge variant="outline" className="ml-2">
-                          You
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>{member.email}</TableCell>
-                    <TableCell>
-                      <Badge className={getRoleBadgeColor(member.role)}>
-                        {getRoleLabel(member.role)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {member.locationName || (
-                        <span className="text-muted-foreground">
-                          All locations
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(member.createdAt), "MMM d, yyyy")}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      {/* Tabs Layout */}
+      <Tabs
+        defaultValue="active"
+        value={selectedTab}
+        onValueChange={setSelectedTab}
+        className="w-full"
+      >
+        <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
+          <TabsTrigger
+            value="active"
+            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+          >
+            <Users className="mr-2 w-4 h-4" />
+            Active Members ({teamMembers.length})
+          </TabsTrigger>
+          <TabsTrigger
+            value="pending"
+            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+          >
+            <Clock className="mr-2 w-4 h-4" />
+            Pending Invitations ({pendingInvitations.length})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Pending Invitations */}
-      {canInviteUsers && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Pending Invitations</CardTitle>
-            <CardDescription>
-              {pendingInvitations.length} invitation
-              {pendingInvitations.length !== 1 ? "s" : ""} awaiting acceptance
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {pendingInvitations.length === 0 ? (
-              <p className="text-muted-foreground text-center py-8">
-                No pending invitations
-              </p>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Sent</TableHead>
-                    <TableHead>Expires</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingInvitations.map(invitation => (
-                    <TableRow key={invitation.id}>
-                      <TableCell className="font-medium">
-                        {invitation.email}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getRoleBadgeColor(invitation.role)}>
-                          {getRoleLabel(invitation.role)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {invitation.locationName || (
-                          <span className="text-muted-foreground">
-                            All locations
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(invitation.createdAt), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(invitation.expiresAt), "MMM d, yyyy")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            toast({
-                              title: "Feature Coming Soon",
-                              description:
-                                "Revoke invitation feature will be available soon",
-                            });
-                          }}
-                        >
-                          Revoke
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+        {/* Active Members Tab */}
+        <TabsContent value="active" className="mt-6">
+          <TeamDataTable
+            columns={teamMembersColumns}
+            data={teamMembers}
+            searchPlaceholder="Search by name or email..."
+            searchColumn="name"
+            pageSize={10}
+            emptyStateTitle="No team members found"
+            emptyStateDescription="Invite your first staff member to get started."
+            emptyStateAction={
+              canInviteUsers ? (
+                <Button onClick={() => setIsInviteOpen(true)}>
+                  <IconUserPlus className="mr-2 h-4 w-4" />
+                  Invite Staff
+                </Button>
+              ) : undefined
+            }
+          />
+        </TabsContent>
+
+        {/* Pending Invitations Tab */}
+        <TabsContent value="pending" className="mt-6">
+          <TeamDataTable
+            columns={pendingInvitationsColumns}
+            data={pendingInvitations}
+            searchPlaceholder="Search by email..."
+            searchColumn="email"
+            pageSize={10}
+            emptyStateTitle="No pending invitations"
+            emptyStateDescription="All invitations have been accepted or expired."
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Edit Member Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Team Member</DialogTitle>
+            <DialogDescription>
+              Update {selectedMember?.name}&apos;s role and assigned location.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-role">Role</Label>
+              <Select
+                value={editForm.role}
+                onValueChange={(value: "admin" | "member") =>
+                  setEditForm({
+                    ...editForm,
+                    role: value,
+                    // Reset location if switching to admin
+                    locationId: value === "admin" ? null : editForm.locationId,
+                  })
+                }
+                disabled={isSubmitting}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="member">Staff</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Location Selector - Only show for staff role */}
+            {editForm.role === "member" && (
+              <div className="space-y-2">
+                <Label htmlFor="edit-location">Assigned Location</Label>
+                <Select
+                  value={editForm.locationId || ""}
+                  onValueChange={value =>
+                    setEditForm({ ...editForm, locationId: value })
+                  }
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a location..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map(location => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEditSubmit} disabled={isSubmitting}>
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Remove Member Confirmation Dialog */}
+      <Dialog open={isRemoveOpen} onOpenChange={setIsRemoveOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Team Member</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to remove {selectedMember?.name} from your
+              team? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsRemoveOpen(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleRemoveConfirm}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Removing..." : "Remove Member"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

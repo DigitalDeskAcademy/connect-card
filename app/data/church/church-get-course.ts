@@ -1,38 +1,38 @@
 /**
- * Agency Course Data Fetcher
+ * Church Course Data Fetcher
  *
  * Retrieves course data with proper multi-tenant security.
- * Ensures agencies can only access their own custom courses
+ * Ensures churches can only access their own custom courses
  * while preventing cross-tenant data access.
  *
  * Security:
- * - Requires agency admin authentication
+ * - Requires church admin authentication
  * - Validates course belongs to the organization
  * - Returns 404 for unauthorized access attempts
  */
 
 import { prisma } from "@/lib/db";
 import "server-only";
-import { requireAgencyAdmin } from "./require-agency-admin";
+import { requireChurchAdmin } from "./require-church-admin";
 import { notFound } from "next/navigation";
 
 /**
- * Get a single course with full details for agency editing
+ * Get a single course with full details for church editing
  *
- * @param slug - Agency slug for authentication
+ * @param slug - Church slug for authentication
  * @param courseId - Course ID to retrieve
  * @returns Course data with chapters and lessons
  * @throws 404 if course not found or unauthorized
  */
-export async function agencyGetCourse(slug: string, courseId: string) {
-  // Ensure only authenticated agency admins can access
-  const { organization } = await requireAgencyAdmin(slug);
+export async function churchGetCourse(slug: string, courseId: string) {
+  // Ensure only authenticated church admins can access
+  const { organization } = await requireChurchAdmin(slug);
 
   // Fetch course with organization scoping for security
   const data = await prisma.course.findFirst({
     where: {
       id: courseId,
-      // CRITICAL: Only allow access to agency's own courses
+      // CRITICAL: Only allow access to church's own courses
       organizationId: organization.id,
     },
     select: {
@@ -74,7 +74,7 @@ export async function agencyGetCourse(slug: string, courseId: string) {
     },
   });
 
-  // Return 404 if course doesn't exist or doesn't belong to this agency
+  // Return 404 if course doesn't exist or doesn't belong to this church
   if (!data) {
     return notFound();
   }
@@ -83,6 +83,6 @@ export async function agencyGetCourse(slug: string, courseId: string) {
 }
 
 // Export type for type safety in components
-export type AgencyCourseSingularType = Awaited<
-  ReturnType<typeof agencyGetCourse>
+export type ChurchCourseSingularType = Awaited<
+  ReturnType<typeof churchGetCourse>
 >;

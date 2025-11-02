@@ -22,6 +22,8 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
+    GHL_CLIENT_ID: z.string().min(1).optional(), // GoHighLevel - Phase 5 feature
+    GHL_CLIENT_SECRET: z.string().min(1).optional(),
   },
 
   client: {

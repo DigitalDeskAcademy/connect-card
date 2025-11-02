@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePageHeader } from "@/app/providers/page-header-context";
 import { useSearchParams } from "next/navigation";
-import { AgencyCourseSingularType } from "@/app/data/agency/agency-get-course";
+import { ChurchCourseSingularType } from "@/app/data/church/church-get-course";
 import {
   Card,
   CardHeader,
@@ -35,7 +35,7 @@ import { LessonEditDialog as LessonEditDialogComponent } from "@/components/cour
 import { useRouter } from "next/navigation";
 
 interface AgencyCourseEditClientProps {
-  course: AgencyCourseSingularType;
+  course: ChurchCourseSingularType;
   courseId: string;
   slug: string;
 }
@@ -71,7 +71,7 @@ export function AgencyCourseEditClient({
           <div className="flex items-center gap-4 mb-8">
             <Link
               className={buttonVariants({ variant: "outline" })}
-              href={`/agency/${slug}/admin/courses`}
+              href={`/church/${slug}/admin/courses`}
             >
               <ArrowLeft className="size-4" />
               Back
@@ -121,7 +121,7 @@ export function AgencyCourseEditClient({
                       editAgencyCourse(slug, values, id!)
                     }
                     onCancel={() =>
-                      router.push(`/agency/${slug}/admin/courses`)
+                      router.push(`/church/${slug}/admin/courses`)
                     }
                     organizationSlug={slug}
                   />
@@ -145,7 +145,7 @@ export function AgencyCourseEditClient({
                       organizationSlug: slug, // Agency course - include organization slug
                     }}
                     context={{
-                      basePath: `/agency/${slug}/admin/courses`,
+                      basePath: `/church/${slug}/admin/courses`,
                       courseId,
                       onReorderChapters: data =>
                         reorderChapters(slug, courseId, data),
@@ -223,7 +223,7 @@ export function AgencyCourseEditClient({
                     uploaded videos.
                   </p>
                 </div>
-                <Link href={`/agency/${slug}/admin/courses/${courseId}/delete`}>
+                <Link href={`/church/${slug}/admin/courses/${courseId}/delete`}>
                   <Button variant="destructive" size="sm" className="shrink-0">
                     Delete Course
                   </Button>

@@ -11,7 +11,7 @@
  * - Course management actions for custom courses only
  */
 
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import { createAgencyDataScope } from "@/lib/agency-data-scope";
 import { PageContainer } from "@/components/layout/page-container";
 import { CourseListingPage } from "@/components/courses/CourseListingPage";
@@ -24,7 +24,7 @@ export default async function AgencyCoursesPage({
   params,
 }: AgencyCoursesPageProps) {
   const { slug } = await params;
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   // Get all courses available to this agency
   const dataScope = createAgencyDataScope(organization.id);

@@ -71,6 +71,11 @@
   - Upload page with 3 tabs (Files, Camera, Test Single)
   - Review Queue - Manual correction interface with zoomable images
   - Analytics - TanStack Table with sorting, search, filtering, pagination
+- **Team Management** - Full team management with granular multi-campus permissions
+  - Active Members tab - View, edit roles/locations, remove members
+  - Pending Invitations tab - Send invites, resend/cancel invitations
+  - Role-based permissions (Account Owner, Admin, Staff)
+  - Location-based access control (multi-campus or single-campus)
 - **Member Management** - ChurchMember model ready (UI placeholder)
 - **Volunteer Scheduling** - Database model ready (UI placeholder)
 - **Prayer Requests** - Database model ready (UI placeholder)
@@ -192,6 +197,45 @@
 ---
 
 ## 🎯 RECENT COMPLETIONS
+
+### Team Management with Multi-Campus Permissions ✅ COMPLETED (Nov 2, 2025)
+
+- **Complete Team Management UI** - Two-tab interface (Active Members, Pending Invitations)
+  - TanStack Table with sorting, filtering, pagination
+  - Controlled Tabs pattern matching dashboard styling
+  - Edit member dialog - Change roles and location assignments
+  - Remove member dialog - Safety checks for last Account Owner
+  - Invite staff dialog - Email-based invitations with role/location selection
+  - Pending invitations management - Resend/cancel invites with status tracking
+- **Granular Multi-Campus Permissions** - Location-based access control system
+  - Account Owner (`church_owner`) → Always sees ALL locations
+  - Multi-Campus Admin (`church_admin` + `canSeeAllLocations = true`) → Sees ALL locations
+  - Campus Admin (`church_admin` + `canSeeAllLocations = false`) → Sees ONLY their campus
+  - Staff (`user`) → Sees ONLY their assigned location
+  - Added `canSeeAllLocations` boolean field to User model
+  - Created location filter utilities (`getLocationFilter`, `canAccessLocation`)
+  - Updated `requireDashboardAccess` with location-based data scoping
+- **Role Mapping System** - Type-safe conversion between UI and database roles
+  - UI roles: "owner" → "Account Owner", "admin" → "Admin", "member" → "Staff"
+  - Database roles: `church_owner`, `church_admin`, `user` (Prisma enum)
+  - Created `/lib/role-mapping.ts` with exhaustive type checking
+  - Updated all UI references from "Church Owner" to "Account Owner"
+- **Server Actions** - Full CRUD operations with security and validation
+  - `invite-staff.ts` - Email-based invitations with Arcjet rate limiting
+  - `update-member.ts` - Role and location updates with permission checks
+  - `remove-member.ts` - Safe removal with last-owner protection
+  - `resend-invitation.ts` - Resend OTP with 24-hour cooldown
+  - `cancel-invitation.ts` - Cancel pending invitations
+  - All actions include multi-tenant isolation and Zod validation
+- **Seed Data Updates** - Realistic test users with location assignments
+  - Account Owner: Pastor David Johnson (Bainbridge campus)
+  - Multi-Campus Admin: Emily Rodriguez (Bainbridge campus, sees all locations)
+  - Campus Staff: Michael Chen (Bremerton campus, single-campus)
+  - 5 campus locations: Bainbridge, Bremerton, Silverdale, Port Orchard, Poulsbo
+- **Documentation** - Comprehensive pattern documentation
+  - Added location filtering pattern to coding-patterns.md
+  - Added controlled Tabs pattern to coding-patterns.md
+  - Updated architecture-decisions.md with role mapping explanation
 
 ### Slash Commands Library ✅ COMPLETED (Nov 1, 2025)
 

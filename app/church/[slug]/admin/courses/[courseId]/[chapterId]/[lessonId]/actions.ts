@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/db";
 import { lessonSchema, LessonSchemaType } from "@/lib/zodSchemas";
 import { revalidatePath } from "next/cache";
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 
 /**
  * Update lesson - Agency version with organization scoping
@@ -38,7 +38,7 @@ export async function updateLesson(values: LessonSchemaType, lessonId: string) {
     const orgSlug = lesson.Chapter.Course.organization.slug;
 
     // Verify agency admin access
-    const { organization } = await requireAgencyAdmin(orgSlug);
+    const { organization } = await requireChurchAdmin(orgSlug);
 
     // Validate input
     const result = lessonSchema.safeParse(values);
@@ -79,9 +79,9 @@ export async function updateLesson(values: LessonSchemaType, lessonId: string) {
     });
 
     revalidatePath(
-      `/agency/${orgSlug}/admin/courses/${result.data.courseId}/edit`
+      `/church/${orgSlug}/admin/courses/${result.data.courseId}/edit`
     );
-    revalidatePath(`/agency/${orgSlug}/learning`);
+    revalidatePath(`/church/${orgSlug}/learning`);
 
     return {
       status: "success" as const,

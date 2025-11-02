@@ -70,10 +70,10 @@ export default async function SubscriptionExpiredPage({
           </p>
 
           <div className="flex flex-col gap-2 pt-4">
-            <Link href={`/agency/${slug}/billing`}>
+            <Link href={`/church/${slug}/billing`}>
               <Button className="w-full">Renew Subscription</Button>
             </Link>
-            <Link href={`/agency/${slug}`}>
+            <Link href={`/church/${slug}`}>
               <Button variant="outline" className="w-full">
                 Return to Home
               </Button>

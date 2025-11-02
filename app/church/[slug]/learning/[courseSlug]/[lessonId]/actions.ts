@@ -61,8 +61,8 @@ export async function markLessonComplete(
     });
 
     // Revalidate the lesson page and learning dashboard
-    revalidatePath(`/agency/${orgSlug}/learning/${courseSlug}/${lessonId}`);
-    revalidatePath(`/agency/${orgSlug}/learning`);
+    revalidatePath(`/church/${orgSlug}/learning/${courseSlug}/${lessonId}`);
+    revalidatePath(`/church/${orgSlug}/learning`);
 
     return {
       status: "success",
@@ -114,8 +114,8 @@ export async function markLessonIncomplete(
     });
 
     // Revalidate the lesson page and learning dashboard
-    revalidatePath(`/agency/${orgSlug}/learning/${courseSlug}/${lessonId}`);
-    revalidatePath(`/agency/${orgSlug}/learning`);
+    revalidatePath(`/church/${orgSlug}/learning/${courseSlug}/${lessonId}`);
+    revalidatePath(`/church/${orgSlug}/learning`);
 
     return {
       status: "success",

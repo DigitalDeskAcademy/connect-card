@@ -53,7 +53,7 @@ export default async function AgencyLearningPage({
   });
 
   if (!session) {
-    redirect(`/agency/${slug}/login`);
+    redirect(`/church/${slug}/login`);
   }
 
   // Get agency-scoped data - filter hidden courses for end users
@@ -214,7 +214,7 @@ export default async function AgencyLearningPage({
             </div>
             {enrolledCourses.length > 3 && (
               <Link
-                href={`/agency/${slug}/learning/all`}
+                href={`/church/${slug}/learning/all`}
                 className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 View All
@@ -229,7 +229,7 @@ export default async function AgencyLearningPage({
               title="No courses enrolled"
               description="Browse our course catalog to get started"
               buttonText="Browse Courses"
-              href={`/agency/${slug}/learning/courses`}
+              href={`/church/${slug}/learning/courses`}
             />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -283,7 +283,7 @@ export default async function AgencyLearningPage({
                 <CardDescription>Expand your knowledge</CardDescription>
               </div>
               <Link
-                href={`/agency/${slug}/learning/courses`}
+                href={`/church/${slug}/learning/courses`}
                 className={buttonVariants({ variant: "outline", size: "sm" })}
               >
                 Browse All
@@ -297,7 +297,7 @@ export default async function AgencyLearningPage({
                 <CompactCourseCard
                   key={course.id}
                   course={course}
-                  href={`/agency/${slug}/learning/courses/${course.slug}`}
+                  href={`/church/${slug}/learning/courses/${course.slug}`}
                 />
               ))}
             </div>

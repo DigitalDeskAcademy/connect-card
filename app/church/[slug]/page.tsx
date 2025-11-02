@@ -5,7 +5,7 @@
  * homepage but with agency branding instead of SideCar branding.
  * Includes navigation, hero section, and all marketing content.
  *
- * Route: /agency/[slug] (e.g., /agency/digitaldesk, /agency/acme-corp)
+ * Route: /church/[slug] (e.g., /church/digitaldesk, /church/acme-corp)
  */
 
 import { notFound } from "next/navigation";

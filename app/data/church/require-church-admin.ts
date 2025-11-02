@@ -34,7 +34,7 @@ import { prisma } from "@/lib/db";
  * @returns Promise with session, organization, and member data
  * @throws Redirects if any validation fails
  */
-export const requireAgencyAdmin = cache(async (slug: string) => {
+export const requireChurchAdmin = cache(async (slug: string) => {
   // Layer 1: Validate organization exists
   const organization = await getOrganizationBySlug(slug);
   if (!organization) {
@@ -130,8 +130,8 @@ export const requireAgencyAdmin = cache(async (slug: string) => {
  * Check if user is church owner specifically
  * Used for sensitive operations like billing management
  */
-export const requireAgencyOwner = cache(async (slug: string) => {
-  const { session, organization, member } = await requireAgencyAdmin(slug);
+export const requireChurchOwner = cache(async (slug: string) => {
+  const { session, organization, member } = await requireChurchAdmin(slug);
 
   if (member.role !== "owner") {
     return redirect(`/church/${slug}/admin`);

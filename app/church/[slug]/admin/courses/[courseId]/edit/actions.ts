@@ -1,6 +1,6 @@
 "use server";
 
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import arcjet, { fixedWindow } from "@/lib/arcjet";
 import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
@@ -33,7 +33,7 @@ export async function editAgencyCourse(
   data: CourseSchemaType,
   courseId: string
 ): Promise<ApiResponse> {
-  const { session, organization } = await requireAgencyAdmin(slug);
+  const { session, organization } = await requireChurchAdmin(slug);
 
   const req = await request();
   await aj.protect(req, {
@@ -60,8 +60,8 @@ export async function editAgencyCourse(
       },
     });
 
-    revalidatePath(`/agency/${slug}/admin/courses/${courseId}/edit`);
-    revalidatePath(`/agency/${slug}/admin/courses`);
+    revalidatePath(`/church/${slug}/admin/courses/${courseId}/edit`);
+    revalidatePath(`/church/${slug}/admin/courses`);
 
     return {
       status: "success",
@@ -84,7 +84,7 @@ export async function reorderLessons(
   lessons: { id: string; position: number }[],
   courseId: string
 ): Promise<ApiResponse> {
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   try {
     if (!lessons || lessons.length === 0) {
@@ -125,7 +125,7 @@ export async function reorderLessons(
 
     await prisma.$transaction(updates);
 
-    revalidatePath(`/agency/${slug}/admin/courses/${courseId}/edit`);
+    revalidatePath(`/church/${slug}/admin/courses/${courseId}/edit`);
 
     return {
       status: "success",
@@ -147,7 +147,7 @@ export async function reorderChapters(
   courseId: string,
   chapters: { id: string; position: number }[]
 ): Promise<ApiResponse> {
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   try {
     if (!chapters || chapters.length === 0) {
@@ -184,7 +184,7 @@ export async function reorderChapters(
     );
 
     await prisma.$transaction(updates);
-    revalidatePath(`/agency/${slug}/admin/courses/${courseId}/edit`);
+    revalidatePath(`/church/${slug}/admin/courses/${courseId}/edit`);
 
     return {
       status: "success",
@@ -205,7 +205,7 @@ export async function createChapter(
   slug: string,
   values: ChapterSchemaType
 ): Promise<ApiResponse> {
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   try {
     const result = chapterSchema.safeParse(values);
@@ -255,7 +255,7 @@ export async function createChapter(
     });
 
     revalidatePath(
-      `/agency/${slug}/admin/courses/${result.data.courseId}/edit`
+      `/church/${slug}/admin/courses/${result.data.courseId}/edit`
     );
 
     return {
@@ -284,7 +284,7 @@ export async function createLesson(
     videoKey: string | null;
   }>
 > {
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   try {
     const result = lessonSchema.safeParse(values);
@@ -345,7 +345,7 @@ export async function createLesson(
     });
 
     revalidatePath(
-      `/agency/${slug}/admin/courses/${result.data.courseId}/edit`
+      `/church/${slug}/admin/courses/${result.data.courseId}/edit`
     );
 
     return {
@@ -380,7 +380,7 @@ export async function deleteLesson({
   courseId: string;
   lessonId: string;
 }): Promise<ApiResponse> {
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   try {
     // Step 1: Verify ownership and get lesson data for S3 cleanup
@@ -490,7 +490,7 @@ export async function deleteLesson({
       }),
     ]);
 
-    revalidatePath(`/agency/${slug}/admin/courses/${courseId}/edit`);
+    revalidatePath(`/church/${slug}/admin/courses/${courseId}/edit`);
 
     return {
       status: "success",
@@ -517,7 +517,7 @@ export async function deleteChapter({
   chapterId: string;
   courseId: string;
 }): Promise<ApiResponse> {
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   try {
     // Step 1: Get all lessons in chapter for S3 cleanup
@@ -626,7 +626,7 @@ export async function deleteChapter({
       }),
     ]);
 
-    revalidatePath(`/agency/${slug}/admin/courses/${courseId}/edit`);
+    revalidatePath(`/church/${slug}/admin/courses/${courseId}/edit`);
 
     return {
       status: "success",
@@ -648,7 +648,7 @@ export async function toggleCourseVisibility(
   slug: string,
   courseId: string
 ): Promise<ApiResponse> {
-  const { session, organization } = await requireAgencyAdmin(slug);
+  const { session, organization } = await requireChurchAdmin(slug);
 
   const req = await request();
   await aj.protect(req, {
@@ -685,8 +685,8 @@ export async function toggleCourseVisibility(
       },
     });
 
-    revalidatePath(`/agency/${slug}/admin/courses`);
-    revalidatePath(`/agency/${slug}/learning/courses`);
+    revalidatePath(`/church/${slug}/admin/courses`);
+    revalidatePath(`/church/${slug}/learning/courses`);
 
     return {
       status: "success",

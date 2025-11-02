@@ -55,13 +55,13 @@ export function AgencyLearningSidebar({
   const learningNav = [
     {
       title: "Dashboard",
-      url: `/agency/${agencySlug}/learning`,
+      url: `/church/${agencySlug}/learning`,
       icon: IconHome,
       isActive: true,
     },
     {
       title: "My Courses",
-      url: `/agency/${agencySlug}/learning`,
+      url: `/church/${agencySlug}/learning`,
       icon: IconBook,
       badge:
         stats.enrolledCourses > 0
@@ -70,25 +70,25 @@ export function AgencyLearningSidebar({
     },
     {
       title: "Browse Courses",
-      url: `/agency/${agencySlug}/learning/courses`,
+      url: `/church/${agencySlug}/learning/courses`,
       icon: IconListDetails,
     },
     {
       title: "My Progress",
-      url: `/agency/${agencySlug}/progress`,
+      url: `/church/${agencySlug}/progress`,
       icon: IconProgress,
       items: [
         {
           title: "Overview",
-          url: `/agency/${agencySlug}/progress`,
+          url: `/church/${agencySlug}/progress`,
         },
         {
           title: "Achievements",
-          url: `/agency/${agencySlug}/achievements`,
+          url: `/church/${agencySlug}/achievements`,
         },
         {
           title: "Certificates",
-          url: `/agency/${agencySlug}/certificates`,
+          url: `/church/${agencySlug}/certificates`,
         },
       ],
     },
@@ -97,12 +97,12 @@ export function AgencyLearningSidebar({
   const secondaryNav = [
     {
       title: "Support",
-      url: `/agency/${agencySlug}/support`,
+      url: `/church/${agencySlug}/support`,
       icon: IconHelp,
     },
     {
       title: "Settings",
-      url: `/agency/${agencySlug}/settings`,
+      url: `/church/${agencySlug}/settings`,
       icon: IconSettings,
     },
   ];
@@ -113,7 +113,7 @@ export function AgencyLearningSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href={`/agency/${agencySlug}/learning`}>
+              <Link href={`/church/${agencySlug}/learning`}>
                 <div className="flex flex-col gap-0.5 leading-none">
                   {/* Following existing pattern - CSS truncate for long names */}
                   <span className="font-semibold truncate max-w-[150px]">

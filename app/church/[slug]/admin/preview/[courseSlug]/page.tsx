@@ -7,7 +7,7 @@
 
 import { redirect } from "next/navigation";
 import { PageContainer } from "@/components/layout/page-container";
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import { prisma } from "@/lib/db";
 
 type Params = Promise<{
@@ -23,7 +23,7 @@ export default async function AgencyAdminPreviewPage({
   const { slug, courseSlug } = await params;
 
   // Verify agency admin access
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   // Get first lesson from course
   // Platform courses (organizationId = null) are accessible to all agencies
@@ -56,7 +56,7 @@ export default async function AgencyAdminPreviewPage({
   const firstLessonId = course?.chapter[0]?.lessons[0]?.id;
 
   if (firstLessonId) {
-    redirect(`/agency/${slug}/admin/preview/${courseSlug}/${firstLessonId}`);
+    redirect(`/church/${slug}/admin/preview/${courseSlug}/${firstLessonId}`);
   }
 
   return (

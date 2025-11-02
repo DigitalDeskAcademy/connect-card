@@ -23,7 +23,7 @@
  * - Responsive design with tab-based navigation for optimal UX
  */
 
-import { agencyGetCourse } from "@/app/data/agency/agency-get-course";
+import { churchGetCourse } from "@/app/data/church/church-get-course";
 import { PageContainer } from "@/components/layout/page-container";
 import { AgencyCourseEditClient } from "./_components/AgencyCourseEditClient";
 
@@ -45,7 +45,7 @@ export default async function AgencyEditCoursePage({
   const { slug, courseId } = await params;
 
   // Fetch course with organization validation
-  const data = await agencyGetCourse(slug, courseId);
+  const data = await churchGetCourse(slug, courseId);
 
   return (
     <PageContainer variant="none">

@@ -94,6 +94,11 @@ export function getChurchNavigation(slug: string): NavigationConfig {
         url: `/church/${slug}/admin/prayer`,
         icon: IconPray,
       },
+      {
+        title: "Team",
+        url: `/church/${slug}/admin/team`,
+        icon: IconUsers,
+      },
       // Collapsible "More" section for secondary features
       {
         title: "More",
@@ -120,11 +125,6 @@ export function getChurchNavigation(slug: string): NavigationConfig {
             title: "Conversations",
             url: `/church/${slug}/admin/conversations`,
             icon: IconMessage,
-          },
-          {
-            title: "Team",
-            url: `/church/${slug}/admin/team`,
-            icon: IconUsers,
           },
           {
             title: "AI Insights",

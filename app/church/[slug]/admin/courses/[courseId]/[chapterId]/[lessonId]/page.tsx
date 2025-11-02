@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { PageContainer } from "@/components/layout/page-container";
 import { AgencyLessonForm } from "./_components/AgencyLessonForm";
-import { requireAgencyAdmin } from "@/app/data/agency/require-agency-admin";
+import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 
 interface Props {
   params: Promise<{
@@ -17,7 +17,7 @@ export default async function AgencyLessonEditPage({ params }: Props) {
   const { slug, courseId, chapterId, lessonId } = await params;
 
   // Verify agency admin access
-  const { organization } = await requireAgencyAdmin(slug);
+  const { organization } = await requireChurchAdmin(slug);
 
   // Get lesson with authorization check
   const lesson = await prisma.lesson.findFirst({

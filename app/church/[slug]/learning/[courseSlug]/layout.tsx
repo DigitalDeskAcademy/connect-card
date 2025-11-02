@@ -48,7 +48,7 @@ export default async function AgencyCourseLayout({
   });
 
   if (!session) {
-    redirect(`/agency/${slug}/login`);
+    redirect(`/church/${slug}/login`);
   }
 
   // Verify user belongs to organization
