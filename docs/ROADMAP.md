@@ -90,6 +90,31 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 - [x] **Dashboard Analytics** - TanStack Table with sorting, search, filtering, pagination
 - [x] **Status Workflow** - EXTRACTED → REVIEWED status transitions
 
+### Team Management ✅ COMPLETE
+
+- [x] **Team Management UI** - Two-tab interface for managing church staff
+  - [x] Active Members tab with edit/remove capabilities
+  - [x] Pending Invitations tab with resend/cancel actions
+  - [x] Controlled Tabs pattern matching dashboard styling
+- [x] **Multi-Campus Permissions** - Granular location-based access control
+  - [x] Account Owner (sees all locations always)
+  - [x] Multi-Campus Admin (optional all-location access via flag)
+  - [x] Campus Admin (default single-campus restriction)
+  - [x] Staff (always single-campus)
+- [x] **Role Management** - Type-safe role mapping and assignment
+  - [x] UI terminology: "Account Owner", "Admin", "Staff"
+  - [x] Database roles: `church_owner`, `church_admin`, `user`
+  - [x] Role mapping utilities with exhaustive type checking
+- [x] **Invitation System** - Email-based team invitations
+  - [x] Invite staff with role and location selection
+  - [x] Resend invitations (24-hour cooldown)
+  - [x] Cancel pending invitations
+  - [x] Rate limiting with Arcjet
+- [x] **Server Actions** - Complete CRUD with security
+  - [x] invite-staff, update-member, remove-member
+  - [x] resend-invitation, cancel-invitation
+  - [x] Multi-tenant isolation and Zod validation
+
 ### Developer Tools ✅ COMPLETE
 
 - [x] **Slash Commands Library** - 11 comprehensive development workflow automation commands
