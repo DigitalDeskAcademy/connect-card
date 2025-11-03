@@ -66,7 +66,7 @@
 
 ### Church Admin Features
 
-- **Dashboard** - Church overview with connect card analytics table
+- **Dashboard** - Actionable analytics with trend indicators and interactive charts
 - **Connect Cards**
   - Upload page with 3 tabs (Files, Camera, Test Single)
   - Review Queue - Manual correction interface with zoomable images
@@ -197,6 +197,28 @@
 ---
 
 ## 🎯 RECENT COMPLETIONS
+
+### Dashboard Analytics Enhancement ✅ COMPLETED (Nov 3, 2025)
+
+- **Actionable KPI Dashboard** - Transform from vanity metrics to actionable insights
+  - This week vs 4-week rolling average comparisons
+  - Green/red trend indicators showing percentage changes
+  - Top 3 prayer categories from current week
+  - Removed "all time" metrics in favor of weekly actionable data
+- **Weekly Aggregation** - Sunday-Saturday buckets matching church operational cycles
+  - Sunday-based week boundaries for accurate metrics
+  - 4-week rolling average for baseline comparison
+  - Trend percentage calculations (current vs average)
+  - Top 3 prayer category extraction from `extractedData.prayerCategory`
+- **Interactive Area Chart** - Professional visualization with shadcn/recharts
+  - Time range selector: 4w (default), 12w, 26w, 52w
+  - Monotone curve interpolation prevents negative value artifacts
+  - Dynamic Y-axis domain for better trend visibility
+  - Three datasets: Total Cards, First-Time Visitors, Prayer Requests
+- **New Components**
+  - `TrendBadge.tsx` - Green/red visual trend indicators with arrows
+  - `ConnectCardChart.tsx` - Interactive chart with time filtering
+  - `seed-weekly.ts` - Weekly simulation script with 30% variance for realistic trends
 
 ### Team Management with Multi-Campus Permissions ✅ COMPLETED (Nov 2, 2025)
 

@@ -105,11 +105,11 @@
   --ring: oklch(0.709 0 0); /* Focus ring medium gray */
 
   /* Data Visualization Palette */
-  --chart-1: oklch(0.5555 0 0); /* Monochrome chart colors */
-  --chart-2: oklch(0.5555 0 0);
-  --chart-3: oklch(0.5555 0 0);
-  --chart-4: oklch(0.5555 0 0);
-  --chart-5: oklch(0.5555 0 0);
+  --chart-1: oklch(0.65 0.2 240); /* Bright blue for total cards */
+  --chart-2: oklch(0.7 0.18 145); /* Vibrant green for first-time visitors */
+  --chart-3: oklch(0.65 0.18 310); /* Purple/magenta for prayer requests */
+  --chart-4: oklch(0.7 0.2 60); /* Yellow/orange for additional data */
+  --chart-5: oklch(0.65 0.16 30); /* Warm red for accent data */
 
   /* Sidebar Component System */
   --sidebar: oklch(0.9851 0 0); /* Light gray sidebar background */
@@ -204,11 +204,13 @@
   --ring: oklch(0.5555 0 0); /* Focus ring medium gray */
 
   /* Dark Theme Data Visualization */
-  --chart-1: oklch(0.5555 0 0); /* Monochrome chart colors */
-  --chart-2: oklch(0.5555 0 0);
-  --chart-3: oklch(0.5555 0 0);
-  --chart-4: oklch(0.5555 0 0);
-  --chart-5: oklch(0.5555 0 0);
+  --chart-1: oklch(
+    0.7 0.2 240
+  ); /* Bright blue for total cards (more vibrant in dark) */
+  --chart-2: oklch(0.75 0.18 145); /* Vibrant green for first-time visitors */
+  --chart-3: oklch(0.7 0.18 310); /* Purple/magenta for prayer requests */
+  --chart-4: oklch(0.75 0.2 60); /* Yellow/orange for additional data */
+  --chart-5: oklch(0.7 0.16 30); /* Warm red for accent data */
 
   /* Dark Theme Sidebar Component System */
   --sidebar: oklch(0.2046 0 0); /* Dark sidebar background */

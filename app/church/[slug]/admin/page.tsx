@@ -9,7 +9,7 @@
 import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
 import {
   getConnectCardAnalytics,
-  getRecentConnectCards,
+  getConnectCardChartData,
 } from "@/lib/data/connect-card-analytics";
 import { getOrganizationLocations } from "@/lib/data/locations";
 import { PageContainer } from "@/components/layout/page-container";
@@ -25,11 +25,11 @@ export default async function ChurchAdminDashboard({
   const { slug } = await params;
   const { organization } = await requireChurchAdmin(slug);
 
-  // Fetch locations, cumulative analytics, and recent cards
-  const [locations, cumulativeAnalytics, cumulativeCards] = await Promise.all([
+  // Fetch locations, cumulative analytics, and chart data
+  const [locations, cumulativeAnalytics, chartData] = await Promise.all([
     getOrganizationLocations(organization.id),
     getConnectCardAnalytics(organization.id), // No locationId = all locations
-    getRecentConnectCards(organization.id, 100), // No locationId = all cards
+    getConnectCardChartData(organization.id), // Chart data for last 90 days
   ]);
 
   return (
@@ -39,7 +39,7 @@ export default async function ChurchAdminDashboard({
         organizationId={organization.id}
         locations={locations}
         cumulativeAnalytics={cumulativeAnalytics}
-        cumulativeCards={cumulativeCards}
+        chartData={chartData}
       />
     </PageContainer>
   );
