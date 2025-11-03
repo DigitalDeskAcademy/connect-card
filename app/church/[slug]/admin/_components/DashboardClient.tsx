@@ -3,17 +3,13 @@
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ConnectCardsTable } from "@/components/dashboard/connect-cards/connect-cards-table";
-import {
-  FileText,
-  UserPlus,
-  Heart,
-  Users,
-  Calendar,
-  TrendingUp,
-  Building2,
-} from "lucide-react";
-import type { ConnectCardAnalytics } from "@/lib/data/connect-card-analytics";
+import { FileText, UserPlus, Heart, Users, Building2 } from "lucide-react";
+import type {
+  ConnectCardAnalytics,
+  ConnectCardChartDataPoint,
+} from "@/lib/data/connect-card-analytics";
+import { ConnectCardChart } from "./ConnectCardChart";
+import { TrendBadge } from "./TrendBadge";
 
 interface Location {
   id: string;
@@ -26,17 +22,7 @@ interface DashboardClientProps {
   organizationId: string;
   locations: Location[];
   cumulativeAnalytics: ConnectCardAnalytics;
-  cumulativeCards: Array<{
-    id: string;
-    name: string | null;
-    email: string | null;
-    phone: string | null;
-    visitType: string | null;
-    prayerRequest: string | null;
-    interests: string[];
-    scannedAt: Date;
-    createdAt: Date;
-  }>;
+  chartData: ConnectCardChartDataPoint[];
 }
 
 export function DashboardClient({
@@ -44,14 +30,13 @@ export function DashboardClient({
   organizationId, // eslint-disable-line @typescript-eslint/no-unused-vars -- Future: used with locationId for per-tab analytics fetching
   locations,
   cumulativeAnalytics,
-  cumulativeCards,
+  chartData,
 }: DashboardClientProps) {
   const [selectedTab, setSelectedTab] = useState("cumulative");
 
   // For now, we'll just show cumulative data
   // In the future, we can add dynamic fetching per tab using organizationId + locationId
   const analytics = cumulativeAnalytics;
-  const cards = cumulativeCards;
 
   return (
     <Tabs
@@ -81,21 +66,28 @@ export function DashboardClient({
 
       {/* Cumulative Tab Content */}
       <TabsContent value="cumulative" className="mt-6">
-        {/* Summary Stats */}
+        {/* Summary Stats - This Week with Trends */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+          {/* This Week's Cards */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Cards</CardTitle>
+              <CardTitle className="text-sm font-medium">This Week</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analytics.totalCards}</div>
-              <p className="text-xs text-muted-foreground">
-                All time connect cards
+              <div className="flex items-end justify-between">
+                <div className="text-2xl font-bold">
+                  {analytics.thisWeek.totalCards}
+                </div>
+                <TrendBadge trend={analytics.trends.totalCards} />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                vs {analytics.fourWeekAverage.totalCards} avg
               </p>
             </CardContent>
           </Card>
 
+          {/* First-Time Visitors This Week */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -104,21 +96,19 @@ export function DashboardClient({
               <UserPlus className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {analytics.firstTimeVisitors}
+              <div className="flex items-end justify-between">
+                <div className="text-2xl font-bold">
+                  {analytics.thisWeek.firstTimeVisitors}
+                </div>
+                <TrendBadge trend={analytics.trends.firstTimeVisitors} />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {analytics.totalCards > 0
-                  ? (
-                      (analytics.firstTimeVisitors / analytics.totalCards) *
-                      100
-                    ).toFixed(1)
-                  : "0.0"}
-                % of total cards
+              <p className="text-xs text-muted-foreground mt-1">
+                vs {analytics.fourWeekAverage.firstTimeVisitors} avg
               </p>
             </CardContent>
           </Card>
 
+          {/* Prayer Requests This Week */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -127,15 +117,19 @@ export function DashboardClient({
               <Heart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {analytics.prayerRequests}
+              <div className="flex items-end justify-between">
+                <div className="text-2xl font-bold">
+                  {analytics.thisWeek.prayerRequests}
+                </div>
+                <TrendBadge trend={analytics.trends.prayerRequests} />
               </div>
-              <p className="text-xs text-muted-foreground">
-                Cards with prayer requests
+              <p className="text-xs text-muted-foreground mt-1">
+                vs {analytics.fourWeekAverage.prayerRequests} avg
               </p>
             </CardContent>
           </Card>
 
+          {/* Volunteer Interest This Week */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -144,152 +138,64 @@ export function DashboardClient({
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
-                {analytics.volunteersInterested}
+              <div className="flex items-end justify-between">
+                <div className="text-2xl font-bold">
+                  {analytics.thisWeek.volunteersInterested}
+                </div>
+                <TrendBadge trend={analytics.trends.volunteersInterested} />
               </div>
-              <p className="text-xs text-muted-foreground">
-                People interested in serving
+              <p className="text-xs text-muted-foreground mt-1">
+                vs {analytics.fourWeekAverage.volunteersInterested} avg
               </p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.todayCount}</div>
-              <p className="text-xs text-muted-foreground">
-                Cards scanned today
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Week</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.weekCount}</div>
-              <p className="text-xs text-muted-foreground">
-                Cards in last 7 days
-              </p>
-            </CardContent>
-          </Card>
+          {/* Top Prayer Categories */}
+          {analytics.topPrayerCategories.length > 0 && (
+            <Card className="md:col-span-2">
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">
+                  Top Prayer Categories This Week
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {analytics.topPrayerCategories.map((category, index) => (
+                    <div
+                      key={category.category}
+                      className="flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-muted-foreground">
+                          {index + 1}.
+                        </span>
+                        <span className="text-sm font-medium capitalize">
+                          {category.category}
+                        </span>
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {category.count} requests
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Recent Cards Table */}
-        <ConnectCardsTable data={cards} />
+        {/* Chart */}
+        <div className="mb-6">
+          <ConnectCardChart data={chartData} />
+        </div>
       </TabsContent>
 
-      {/* Location-Specific Tab Content */}
+      {/* Location Tabs (same structure for each location) */}
       {locations.map(location => (
-        <TabsContent key={location.id} value={location.slug} className="mt-6">
-          {/* Summary Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Cards
-                </CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.totalCards}</div>
-                <p className="text-xs text-muted-foreground">
-                  All time connect cards
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  First-Time Visitors
-                </CardTitle>
-                <UserPlus className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analytics.firstTimeVisitors}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {analytics.totalCards > 0
-                    ? (
-                        (analytics.firstTimeVisitors / analytics.totalCards) *
-                        100
-                      ).toFixed(1)
-                    : "0.0"}
-                  % of total cards
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Prayer Requests
-                </CardTitle>
-                <Heart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analytics.prayerRequests}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Cards with prayer requests
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Volunteer Interest
-                </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analytics.volunteersInterested}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  People interested in serving
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Today</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.todayCount}</div>
-                <p className="text-xs text-muted-foreground">
-                  Cards scanned today
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">This Week</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{analytics.weekCount}</div>
-                <p className="text-xs text-muted-foreground">
-                  Cards in last 7 days
-                </p>
-              </CardContent>
-            </Card>
+        <TabsContent key={location.slug} value={location.slug} className="mt-6">
+          <div className="text-center text-muted-foreground py-12">
+            Per-location analytics coming soon for {location.name}
           </div>
-
-          {/* Recent Cards Table */}
-          <ConnectCardsTable data={cards} />
         </TabsContent>
       ))}
     </Tabs>
