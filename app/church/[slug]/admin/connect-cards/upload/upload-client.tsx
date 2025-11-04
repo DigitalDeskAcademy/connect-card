@@ -15,14 +15,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { PageContainer } from "@/components/layout/page-container";
 import {
   Upload,
   FileImage,
   CheckCircle2,
   AlertCircle,
   Loader2,
-  ArrowLeft,
   Camera,
   Trash2,
   X,
@@ -557,20 +555,10 @@ export function ConnectCardUploadClient({
   }
 
   return (
-    <PageContainer>
-      {/* Action Bar - Persistent across all page states */}
-      <div className="flex items-center justify-between mb-6">
-        {/* Left: Back Button */}
-        <Button
-          variant="outline"
-          onClick={() => router.push(`/church/${slug}/admin`)}
-          className="h-11"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-
-        {/* Right: Page Actions - Adaptive based on state */}
+    <div className="space-y-6">
+      {/* Action Bar */}
+      <div className="flex items-center justify-end">
+        {/* Page Actions - Adaptive based on state */}
         <div className="flex gap-3">
           {/* State 1: Images added, not all processed yet */}
           {images.length > 0 && savedCount < images.length && !isProcessing && (
@@ -1056,6 +1044,6 @@ export function ConnectCardUploadClient({
         className="hidden"
         onChange={handleCameraCapture}
       />
-    </PageContainer>
+    </div>
   );
 }

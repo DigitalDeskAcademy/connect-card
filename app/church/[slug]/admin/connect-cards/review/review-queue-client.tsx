@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { PageContainer } from "@/components/layout/page-container";
 import {
   CheckCircle2,
   AlertCircle,
@@ -27,7 +26,6 @@ import {
   Save,
   Image as ImageIcon,
   ClipboardCheck,
-  ArrowLeft,
   ZoomIn,
   AlertTriangle,
   X,
@@ -82,6 +80,9 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
   } | null>(null);
   const [checkingDuplicate, setCheckingDuplicate] = useState(false);
 
+  // Image error state
+  const [imageError, setImageError] = useState(false);
+
   // Check for duplicates when card changes
   useEffect(() => {
     if (!currentCard || !formData) return;
@@ -127,6 +128,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
       interests: card.interests || [],
       prayerRequest: card.prayerRequest || "",
     });
+    setImageError(false); // Reset image error state for new card
   };
 
   // Handle save and move to next card
@@ -249,80 +251,35 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
   // Empty state
   if (cards.length === 0) {
     return (
-      <PageContainer>
-        <div className="mb-6">
-          {/* Back Button */}
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/church/${slug}/admin`)}
-            className="h-11"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        </div>
-
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <ClipboardCheck className="w-16 h-16 text-muted-foreground mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">All caught up!</h2>
-            <p className="text-muted-foreground text-center max-w-md mb-6">
-              There are no connect cards awaiting review at this time. Upload
-              new cards to get started.
-            </p>
-            <Button
-              onClick={() =>
-                router.push(`/church/${slug}/admin/connect-cards/upload`)
-              }
-            >
-              Upload Connect Cards
-            </Button>
-          </CardContent>
-        </Card>
-      </PageContainer>
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <ClipboardCheck className="w-16 h-16 text-muted-foreground mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">All caught up!</h2>
+          <p className="text-muted-foreground text-center max-w-md mb-6">
+            There are no connect cards awaiting review at this time. Upload new
+            cards to get started.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
   if (!currentCard || !formData) {
     return (
-      <PageContainer>
-        <div className="mb-6">
-          {/* Back Button */}
-          <Button
-            variant="outline"
-            onClick={() => router.push(`/church/${slug}/admin`)}
-            className="h-11"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-        </div>
-
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Unable to load connect card for review
-          </AlertDescription>
-        </Alert>
-      </PageContainer>
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Unable to load connect card for review
+        </AlertDescription>
+      </Alert>
     );
   }
 
   return (
-    <PageContainer>
+    <div className="space-y-4">
       {/* Action Bar */}
-      <div className="flex items-center justify-between mb-1">
-        {/* Left: Back Button */}
-        <Button
-          variant="outline"
-          onClick={() => router.push(`/church/${slug}/admin`)}
-          className="h-11"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
-
-        {/* Right: Accept All Button */}
+      <div className="flex items-center justify-between">
+        {/* Accept All Button */}
         <Button onClick={handleApproveAll} disabled={isPending} size="lg">
           {isPending ? (
             <>
@@ -339,7 +296,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
       </div>
 
       {/* Progress indicator */}
-      <Alert className="mb-1 py-2 h-11">
+      <Alert className="py-2">
         <ClipboardCheck className="h-4 w-4" />
         <AlertDescription>
           Reviewing card {currentIndex + 1} of {cards.length}
@@ -348,7 +305,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
 
       {/* Duplicate Warning */}
       {duplicateInfo?.isDuplicate && duplicateInfo.existingCard && (
-        <Alert variant="destructive" className="mb-1">
+        <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
             <div className="flex items-start justify-between gap-4">
@@ -392,7 +349,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
 
       {/* Checking for duplicates indicator */}
       {checkingDuplicate && (
-        <Alert className="mb-1">
+        <Alert>
           <Loader2 className="h-4 w-4 animate-spin" />
           <AlertDescription>Checking for duplicates...</AlertDescription>
         </Alert>
@@ -411,7 +368,9 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            {currentCard.imageUrl && currentCard.imageUrl.trim() !== "" ? (
+            {currentCard.imageUrl &&
+            currentCard.imageUrl.trim() !== "" &&
+            !imageError ? (
               <>
                 <Zoom>
                   <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
@@ -420,6 +379,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
                       src={currentCard.imageUrl || undefined}
                       alt="Connect card scan"
                       className="w-full h-full object-contain"
+                      onError={() => setImageError(true)}
                     />
                   </div>
                 </Zoom>
@@ -436,9 +396,14 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
               </>
             ) : (
               <div className="relative w-full aspect-[3/4] bg-muted rounded-lg overflow-hidden border flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">Image not available</p>
+                <div className="text-center text-muted-foreground p-6">
+                  <ImageIcon className="w-16 h-16 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm font-medium mb-1">
+                    Image not available
+                  </p>
+                  <p className="text-xs opacity-75">
+                    {imageError ? "Failed to load image" : "No image uploaded"}
+                  </p>
                 </div>
               </div>
             )}
@@ -593,6 +558,6 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
           </CardContent>
         </Card>
       </div>
-    </PageContainer>
+    </div>
   );
 }
