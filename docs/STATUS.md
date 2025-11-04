@@ -67,10 +67,11 @@
 ### Church Admin Features
 
 - **Dashboard** - Actionable analytics with trend indicators and interactive charts
-- **Connect Cards**
-  - Upload page with 3 tabs (Files, Camera, Test Single)
-  - Review Queue - Manual correction interface with zoomable images
-  - Analytics - TanStack Table with sorting, search, filtering, pagination
+- **Connect Cards** - Tabbed interface following industry-standard pattern
+  - Upload tab - Multi-file upload with internal tabs (Files, Camera, Test Single)
+  - Review Queue tab - Manual correction interface with zoomable images
+  - Analytics tab - Placeholder for future analytics (TanStack Table planned)
+  - Single navigation item (no dropdown) - Clean, consistent UX
 - **Team Management** - Full team management with granular multi-campus permissions
   - Active Members tab - View, edit roles/locations, remove members
   - Pending Invitations tab - Send invites, resend/cancel invitations
@@ -197,6 +198,28 @@
 ---
 
 ## 🎯 RECENT COMPLETIONS
+
+### Connect Card Navigation Cleanup ✅ COMPLETED (Nov 3, 2025)
+
+- **Tabbed Interface** - Converted from dropdown navigation to industry-standard tabs pattern
+  - Main page: `/church/[slug]/admin/connect-cards` with controlled tabs
+  - Three tabs: Upload | Review Queue | Analytics
+  - Follows Team Management pattern with bottom-border indicators
+  - Review Queue count badge on tab (shows pending cards)
+- **Navigation Simplification** - Single "Connect Cards" menu item
+  - Removed dropdown with nested items
+  - Cleaner, more intuitive navigation UX
+  - Consistent with modern SaaS dashboard patterns
+- **Component Refactoring** - Updated client components for tab integration
+  - Removed PageContainer from tab content (handled at page level)
+  - Removed back buttons (tabs provide navigation)
+  - Preserved upload page's internal tabs (Files | Camera | Test Single)
+  - Two-level tabbing: Page tabs → Upload internal tabs
+- **Pattern Compliance** - Full alignment with project standards
+  - Controlled Tabs pattern from coding-patterns.md
+  - PageContainer variant="tabs" at page level
+  - Type-safe with ConnectCardForReview type
+  - Config-based navigation from lib/navigation.ts
 
 ### Dashboard Analytics Enhancement ✅ COMPLETED (Nov 3, 2025)
 
