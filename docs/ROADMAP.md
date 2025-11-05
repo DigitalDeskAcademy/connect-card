@@ -82,10 +82,14 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 **Goal**: Launch to first pilot church with 6 locations
 
-### Connect Card Enhancements ✅ COMPLETE
+### Connect Card Enhancements ✅ COMPLETE (Nov 5, 2025)
 
 - [x] **Review Queue UI** - Manual correction interface with zoomable images
-- [x] **Manual Edit Interface** - Pre-populated forms with AI-extracted data, Save/Skip navigation
+- [x] **Manual Edit Interface** - Pre-populated forms with AI-extracted data
+- [x] **Pagination System** - shadcn Pagination component (3-page window with ellipsis)
+- [x] **Volunteer Categories** - Conditional dropdown for volunteer interest categorization
+- [x] **Duplicate Detection** - "Existing member" checkbox (auto-checked on match)
+- [x] **Batch Management** - Date-based batch naming and tracking
 - [x] **Upload Completion Summary** - Stats dashboard with success/warning/error counts
 - [x] **Dashboard Analytics** - TanStack Table with sorting, search, filtering, pagination
 - [x] **Status Workflow** - EXTRACTED → REVIEWED status transitions

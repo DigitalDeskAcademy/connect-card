@@ -37,12 +37,20 @@
 
 **Review & Correction:**
 
-- **Review Queue** - Manual correction UI for cards with status `EXTRACTED`
+- **Review Queue** ✅ **COMPLETE** - Manual correction UI for cards with status `EXTRACTED`
   - Zoomable image viewer (react-medium-image-zoom) for inspecting handwriting
   - Pre-populated forms with AI-extracted data
-  - Save/Skip navigation through queue
+  - shadcn Pagination component (3-page window with Previous/Next)
+  - Volunteer category dropdown (conditional when "Volunteering" interest selected)
+  - "Existing member" checkbox (auto-checked on duplicate detection)
+  - Batch-based navigation with human-readable batch names
   - Status workflow: EXTRACTED → REVIEWED
   - Server-side S3 signed URLs for secure image access
+- **Batch Management** ✅ **COMPLETE** - Track upload sessions and review progress
+  - Batch creation with date-based naming (e.g., "Bainbridge - Nov 4, 2025")
+  - Status tracking: PENDING → COMPLETED
+  - Card count tracking per batch
+  - Direct links from batch list to review queue
 - **Upload Completion Summary** - Stats dashboard showing success/warning/error counts
 - **Next-Action Buttons** - Clear paths to Review Queue, New Session, or Dashboard
 
