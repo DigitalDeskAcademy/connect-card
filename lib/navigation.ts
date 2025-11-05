@@ -298,6 +298,14 @@ export function getPageTitle(
   // Special cases
   if (!lastSegment || lastSegment === "admin") return "Dashboard";
 
+  // Dynamic route patterns (UUID/ID in URL)
+  if (normalizedPath.includes("/connect-cards/review/")) {
+    return "Review Connect Cards";
+  }
+  if (normalizedPath.includes("/connect-cards/batches/")) {
+    return "Batch Details";
+  }
+
   // Convert kebab-case to Title Case
   return lastSegment
     .split("-")

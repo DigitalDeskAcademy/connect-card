@@ -176,6 +176,7 @@ export const connectCardUpdateSchema = z.object({
     .nullable()
     .optional(),
   interests: z.array(z.string()).default([]),
+  volunteerCategory: z.string().nullable().optional(),
   prayerRequest: z.string().nullable().optional(),
 });
 

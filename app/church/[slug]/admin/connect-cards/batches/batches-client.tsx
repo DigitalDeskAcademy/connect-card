@@ -158,7 +158,11 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
                 <div className="flex gap-2">
                   <Button asChild size="sm">
                     <Link
-                      href={`/church/${slug}/admin/connect-cards/batches/${batch.id}`}
+                      href={
+                        batch.status === "COMPLETED"
+                          ? `/church/${slug}/admin/connect-cards/batches/${batch.id}`
+                          : `/church/${slug}/admin/connect-cards/review/${batch.id}`
+                      }
                     >
                       {batch.status === "COMPLETED"
                         ? "View Batch"
