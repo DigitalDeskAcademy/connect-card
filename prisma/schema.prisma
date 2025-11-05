@@ -471,6 +471,8 @@ model ConnectCard {
   visitType        String?
   /// Areas of interest or ministry preferences
   interests        String[]           @default([])
+  /// Specific volunteer category if "Volunteering" interest selected
+  volunteerCategory String?
   /// Processing status of the card
   status           ConnectCardStatus  @default(PENDING)
   /// Validation issues found during quality check (JSON array)

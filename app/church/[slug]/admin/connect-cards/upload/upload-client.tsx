@@ -39,10 +39,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
-import {
-  getActiveBatchAction,
-  startNewBatchAction,
-} from "@/actions/connect-card/batch-actions";
+import { getActiveBatchAction } from "@/actions/connect-card/batch-actions";
 import { useDropzone } from "react-dropzone";
 
 // Type for extracted connect card data (matches Zod schema)
@@ -671,7 +668,11 @@ export function ConnectCardUploadClient({
               <Button
                 size="lg"
                 onClick={() =>
-                  router.push(`/church/${slug}/admin/connect-cards/review`)
+                  router.push(
+                    activeBatch
+                      ? `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
+                      : `/church/${slug}/admin/connect-cards?tab=batches`
+                  )
                 }
               >
                 <ClipboardCheck className="mr-2 w-5 h-5" />
@@ -1180,55 +1181,35 @@ export function ConnectCardUploadClient({
             !loadingBatch &&
             savedCount === images.length &&
             savedCount > 0 && (
-              <Card className="mb-6 border-green-200 bg-green-50">
+              <Card className="mb-6">
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <CheckCircle2 className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-green-900">
+                        <p className="text-sm font-medium">
                           Batch &quot;{activeBatch.name}&quot; complete
                         </p>
-                        <p className="text-xs text-green-700">
-                          {activeBatch.cardCount}{" "}
-                          {activeBatch.cardCount === 1 ? "card" : "cards"} ready
-                          to review
+                        <p className="text-xs text-muted-foreground">
+                          {savedCount} {savedCount === 1 ? "card" : "cards"}{" "}
+                          ready to review
                         </p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={async () => {
-                          const result = await startNewBatchAction(
-                            slug,
-                            activeBatch.id
-                          );
-                          if (result.status === "success" && result.data) {
-                            setActiveBatch(result.data);
-                            setImages([]);
-                            toast.success("Started new batch");
-                          }
-                        }}
-                        className="bg-white"
-                      >
-                        Start New Batch
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() =>
-                          router.push(
-                            `/church/${slug}/admin/connect-cards?tab=batches`
-                          )
-                        }
-                      >
-                        <ClipboardCheck className="mr-2 w-4 h-4" />
-                        Review Batch
-                      </Button>
-                    </div>
+                    <Button
+                      onClick={() =>
+                        router.push(
+                          activeBatch
+                            ? `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
+                            : `/church/${slug}/admin/connect-cards?tab=batches`
+                        )
+                      }
+                    >
+                      <ClipboardCheck className="mr-2 w-4 h-4" />
+                      Review Batch
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

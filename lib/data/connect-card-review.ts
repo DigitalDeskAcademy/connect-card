@@ -167,6 +167,60 @@ async function generateSignedImageUrl(imageKey: string): Promise<string> {
 }
 
 /**
+ * Get Connect Cards for Batch Review
+ *
+ * Fetches connect cards for a specific batch that need manual review.
+ * Only returns cards with status "EXTRACTED" awaiting staff review.
+ * Generates signed S3 URLs for secure image display.
+ *
+ * @param batchId - Batch ID to fetch cards from
+ * @param organizationId - Organization ID for multi-tenant security
+ * @returns Array of connect cards awaiting review with signed image URLs
+ */
+export async function getConnectCardsForBatchReview(
+  batchId: string,
+  organizationId: string
+): Promise<ConnectCardForReview[]> {
+  // Fetch cards needing review in this batch
+  const cards = await prisma.connectCard.findMany({
+    where: {
+      organizationId, // Multi-tenant isolation
+      batchId, // Filter by batch
+      status: "EXTRACTED", // Only cards awaiting review
+    },
+    orderBy: {
+      scannedAt: "asc", // Review in order scanned
+    },
+    select: {
+      id: true,
+      imageKey: true,
+      extractedData: true,
+      name: true,
+      email: true,
+      phone: true,
+      prayerRequest: true,
+      visitType: true,
+      interests: true,
+      scannedAt: true,
+    },
+  });
+
+  // Generate signed URLs for all images
+  const cardsWithUrls = await Promise.all(
+    cards.map(async card => {
+      const imageUrl = await generateSignedImageUrl(card.imageKey);
+      return {
+        ...card,
+        imageUrl,
+        extractedData: card.extractedData as ExtractedData | null,
+      };
+    })
+  );
+
+  return cardsWithUrls;
+}
+
+/**
  * Get Review Queue Count
  *
  * Returns the number of connect cards awaiting review.

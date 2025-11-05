@@ -19,35 +19,45 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/pagination";
+import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  SkipForward,
   Save,
   Image as ImageIcon,
   ClipboardCheck,
   ZoomIn,
-  AlertTriangle,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
 import { approveAllCards } from "@/actions/connect-card/approve-all-cards";
 import { checkDuplicate } from "@/actions/connect-card/check-duplicate";
-import { markDuplicate } from "@/actions/connect-card/mark-duplicate";
 import type { ConnectCardForReview } from "@/lib/data/connect-card-review";
-import { formatPhoneNumber } from "@/lib/utils";
 import {
   VISIT_STATUS_OPTIONS,
   INTEREST_OPTIONS,
+  VOLUNTEER_CATEGORY_OPTIONS,
 } from "@/lib/types/connect-card";
 
 interface ReviewQueueClientProps {
   cards: ConnectCardForReview[];
   slug: string;
+  batchName: string;
 }
 
-export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
+export function ReviewQueueClient({
+  cards,
+  slug,
+  batchName,
+}: ReviewQueueClientProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
@@ -62,13 +72,15 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
           phone: currentCard.phone || "",
           visitType: currentCard.visitType || "First Visit",
           interests: currentCard.interests || [],
+          volunteerCategory: "",
           prayerRequest: currentCard.prayerRequest || "",
+          isExistingMember: false,
         }
       : null
   );
 
   // Duplicate detection state
-  const [duplicateInfo, setDuplicateInfo] = useState<{
+  const [, setDuplicateInfo] = useState<{
     isDuplicate: boolean;
     existingCard?: {
       id: string;
@@ -78,7 +90,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
       scannedAt: Date;
     };
   } | null>(null);
-  const [checkingDuplicate, setCheckingDuplicate] = useState(false);
+  const [, setCheckingDuplicate] = useState(false);
 
   // Image error state
   const [imageError, setImageError] = useState(false);
@@ -102,18 +114,29 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
             isDuplicate: true,
             existingCard: result.existingCard,
           });
+          // Auto-check the existing member checkbox
+          setFormData(prev =>
+            prev ? { ...prev, isExistingMember: true } : null
+          );
         } else {
           setDuplicateInfo(null);
+          setFormData(prev =>
+            prev ? { ...prev, isExistingMember: false } : null
+          );
         }
       } catch (error) {
         console.error("Duplicate check failed:", error);
         setDuplicateInfo(null);
+        setFormData(prev =>
+          prev ? { ...prev, isExistingMember: false } : null
+        );
       } finally {
         setCheckingDuplicate(false);
       }
     };
 
     checkForDuplicate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentCard?.id, formData?.name, formData?.email, formData?.phone, slug]);
 
   // Note: Sidebar auto-close removed - user can toggle sidebar manually as needed
@@ -126,7 +149,9 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
       phone: card.phone || "",
       visitType: card.visitType || "First Visit",
       interests: card.interests || [],
+      volunteerCategory: "",
       prayerRequest: card.prayerRequest || "",
+      isExistingMember: false,
     });
     setImageError(false); // Reset image error state for new card
   };
@@ -149,6 +174,7 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
               | "Regular attendee"
               | "Other") || null,
           interests: formData.interests,
+          volunteerCategory: formData.volunteerCategory || null,
           prayerRequest: formData.prayerRequest || null,
         });
 
@@ -172,18 +198,6 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
         toast.error("Failed to save connect card");
       }
     });
-  }
-
-  // Handle skip to next card without saving
-  function handleSkip() {
-    if (currentIndex < cards.length - 1) {
-      const nextCard = cards[currentIndex + 1];
-      setCurrentIndex(currentIndex + 1);
-      resetFormForCard(nextCard);
-      toast.info("Skipped to next card");
-    } else {
-      toast.info("This is the last card in the queue");
-    }
   }
 
   // Handle interest checkbox toggle
@@ -216,34 +230,6 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
       } catch (error) {
         console.error("Approve all error:", error);
         toast.error("Failed to approve cards");
-      }
-    });
-  }
-
-  // Handle marking card as duplicate
-  async function handleMarkDuplicate() {
-    if (!currentCard) return;
-
-    startTransition(async () => {
-      try {
-        const result = await markDuplicate(slug, currentCard.id);
-
-        if (result.status === "success") {
-          toast.success(result.message);
-          // Move to next card or refresh if this was the last one
-          if (currentIndex < cards.length - 1) {
-            const nextCard = cards[currentIndex + 1];
-            setCurrentIndex(currentIndex + 1);
-            resetFormForCard(nextCard);
-          } else {
-            router.refresh();
-          }
-        } else {
-          toast.error(result.message);
-        }
-      } catch (error) {
-        console.error("Mark duplicate error:", error);
-        toast.error("Failed to mark as duplicate");
       }
     });
   }
@@ -295,65 +281,118 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
         </Button>
       </div>
 
-      {/* Progress indicator */}
+      {/* Batch info */}
       <Alert className="py-2">
-        <ClipboardCheck className="h-4 w-4" />
-        <AlertDescription>
-          Reviewing card {currentIndex + 1} of {cards.length}
+        <AlertDescription className="flex items-center justify-between">
+          <span>Batch: {batchName}</span>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <ClipboardCheck className="h-4 w-4" />
+            <span>
+              Reviewing card {currentIndex + 1} of {cards.length}
+            </span>
+          </div>
         </AlertDescription>
       </Alert>
 
-      {/* Duplicate Warning */}
-      {duplicateInfo?.isDuplicate && duplicateInfo.existingCard && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <p className="font-semibold mb-1">
-                  Possible Duplicate Detected
-                </p>
-                <p className="text-sm">
-                  Similar card found:{" "}
-                  <strong>{duplicateInfo.existingCard.name}</strong>
-                  {duplicateInfo.existingCard.phone && (
-                    <>
-                      {" "}
-                      • {formatPhoneNumber(duplicateInfo.existingCard.phone)}
-                    </>
-                  )}
-                  {duplicateInfo.existingCard.email && (
-                    <> • {duplicateInfo.existingCard.email}</>
-                  )}
-                </p>
-                <p className="text-xs mt-1 opacity-90">
-                  Last scanned{" "}
-                  {new Date(
-                    duplicateInfo.existingCard.scannedAt
-                  ).toLocaleDateString()}
-                </p>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleMarkDuplicate}
-                disabled={isPending}
-              >
-                <X className="mr-1 h-3 w-3" />
-                Mark as Duplicate
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Pagination */}
+      <Pagination>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={e => {
+                e.preventDefault();
+                if (currentIndex > 0) {
+                  const prevCard = cards[currentIndex - 1];
+                  setCurrentIndex(currentIndex - 1);
+                  resetFormForCard(prevCard);
+                }
+              }}
+              className={
+                currentIndex === 0 || isPending
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
 
-      {/* Checking for duplicates indicator */}
-      {checkingDuplicate && (
-        <Alert>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <AlertDescription>Checking for duplicates...</AlertDescription>
-        </Alert>
-      )}
+          {/* Page numbers - Show 3 consecutive numbers */}
+          {(() => {
+            // Calculate which 3 pages to show
+            let startPage = Math.max(0, currentIndex - 1);
+            const endPage = Math.min(cards.length - 1, startPage + 2);
+
+            // Adjust if we're near the end
+            if (endPage - startPage < 2) {
+              startPage = Math.max(0, endPage - 2);
+            }
+
+            const pages = [];
+
+            // Show ellipsis before if not starting at page 1
+            if (startPage > 0) {
+              pages.push(
+                <PaginationItem key="ellipsis-start">
+                  <PaginationEllipsis />
+                </PaginationItem>
+              );
+            }
+
+            // Show 3 consecutive pages
+            for (let i = startPage; i <= endPage; i++) {
+              pages.push(
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    onClick={e => {
+                      e.preventDefault();
+                      if (!isPending) {
+                        setCurrentIndex(i);
+                        resetFormForCard(cards[i]);
+                      }
+                    }}
+                    isActive={currentIndex === i}
+                    className={
+                      isPending
+                        ? "pointer-events-none opacity-50"
+                        : "cursor-pointer"
+                    }
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              );
+            }
+
+            // Show ellipsis after if not ending at last page
+            if (endPage < cards.length - 1) {
+              pages.push(
+                <PaginationItem key="ellipsis-end">
+                  <PaginationEllipsis />
+                </PaginationItem>
+              );
+            }
+
+            return pages;
+          })()}
+
+          <PaginationItem>
+            <PaginationNext
+              onClick={e => {
+                e.preventDefault();
+                if (currentIndex < cards.length - 1) {
+                  const nextCard = cards[currentIndex + 1];
+                  setCurrentIndex(currentIndex + 1);
+                  resetFormForCard(nextCard);
+                }
+              }}
+              className={
+                currentIndex === cards.length - 1 || isPending
+                  ? "pointer-events-none opacity-50"
+                  : "cursor-pointer"
+              }
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
 
       <div
         className="grid grid-cols-1 lg:grid-cols-2 gap-4"
@@ -368,15 +407,13 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            {currentCard.imageUrl &&
-            currentCard.imageUrl.trim() !== "" &&
-            !imageError ? (
+            {currentCard.imageUrl?.trim() && !imageError ? (
               <>
                 <Zoom>
                   <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={currentCard.imageUrl || undefined}
+                      src={currentCard.imageUrl}
                       alt="Connect card scan"
                       className="w-full h-full object-contain"
                       onError={() => setImageError(true)}
@@ -421,9 +458,31 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
           <CardContent className="flex-1 overflow-y-auto space-y-4">
             {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="name">
-                Name <span className="text-destructive">*</span>
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="name">
+                  Name <span className="text-destructive">*</span>
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="isExistingMember"
+                    checked={formData.isExistingMember}
+                    onCheckedChange={checked =>
+                      setFormData({
+                        ...formData,
+                        isExistingMember: checked === true,
+                      })
+                    }
+                    disabled={isPending}
+                    className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <Label
+                    htmlFor="isExistingMember"
+                    className="text-sm font-normal cursor-pointer"
+                  >
+                    Existing member
+                  </Label>
+                </div>
+              </div>
               <Input
                 id="name"
                 value={formData.name}
@@ -511,6 +570,33 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
               </div>
             </div>
 
+            {/* Volunteer Category - Only show if "Volunteering" is checked */}
+            {formData.interests.includes("Volunteering") && (
+              <div className="space-y-2">
+                <Label htmlFor="volunteerCategory">
+                  Volunteer Category <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={formData.volunteerCategory}
+                  onValueChange={value =>
+                    setFormData({ ...formData, volunteerCategory: value })
+                  }
+                  disabled={isPending}
+                >
+                  <SelectTrigger id="volunteerCategory">
+                    <SelectValue placeholder="Select volunteer category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VOLUNTEER_CATEGORY_OPTIONS.map(category => (
+                      <SelectItem key={category} value={category}>
+                        {category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Prayer Request */}
             <div className="space-y-2">
               <Label htmlFor="prayerRequest">Prayer Request</Label>
@@ -526,21 +612,13 @@ export function ReviewQueueClient({ cards, slug }: ReviewQueueClientProps) {
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                variant="outline"
-                onClick={handleSkip}
-                disabled={isPending || currentIndex === cards.length - 1}
-                className="flex-1"
-              >
-                <SkipForward className="mr-2 w-4 h-4" />
-                Skip
-              </Button>
+            {/* Action Button */}
+            <div className="pt-4">
               <Button
                 onClick={handleSave}
                 disabled={isPending || !formData.name}
-                className="flex-1"
+                className="w-full"
+                size="lg"
               >
                 {isPending ? (
                   <>

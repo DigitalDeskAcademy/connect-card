@@ -98,6 +98,7 @@ export async function updateConnectCard(
         phone: formatPhoneNumber(validation.data.phone),
         visitType: validation.data.visitType,
         interests: validation.data.interests,
+        volunteerCategory: validation.data.volunteerCategory,
         prayerRequest: validation.data.prayerRequest,
         status: "REVIEWED", // Mark as reviewed after correction
         updatedAt: new Date(),

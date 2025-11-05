@@ -58,7 +58,28 @@ export const INTEREST_OPTIONS = [
   "Membership",
   "Baptism",
   "Service",
-  "Volunteer",
+  "Volunteering",
 ] as const;
 
 export type InterestOption = (typeof INTEREST_OPTIONS)[number];
+
+/**
+ * Volunteer category options
+ *
+ * Used when "Volunteering" interest is selected to categorize specific volunteer roles.
+ * Categories are ordered by popularity/frequency of need.
+ */
+export const VOLUNTEER_CATEGORY_OPTIONS = [
+  "General",
+  "Kids Camp",
+  "Kids Ministry",
+  "Worship Team",
+  "Greeting",
+  "Parking",
+  "Tech/Media",
+  "Youth Ministry",
+  "Prayer Team",
+  "Other",
+] as const;
+
+export type VolunteerCategory = (typeof VOLUNTEER_CATEGORY_OPTIONS)[number];
