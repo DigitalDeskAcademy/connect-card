@@ -165,7 +165,7 @@ export function ConnectCardChart({ data }: ConnectCardChartProps) {
               axisLine={false}
               tickMargin={8}
               tickFormatter={value => value.toString()}
-              domain={["dataMin - 20", "dataMax + 20"]}
+              domain={[0, "dataMax + 20"]}
             />
             <ChartTooltip
               cursor={false}

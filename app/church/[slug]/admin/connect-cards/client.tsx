@@ -9,9 +9,11 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, ClipboardCheck, ChartBar } from "lucide-react";
+import { Upload, Package, ChartBar, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { ConnectCardUploadClient } from "./upload/upload-client";
-import { ReviewQueueClient } from "./review/review-queue-client";
+import { BatchesClient } from "./batches/batches-client";
 import {
   Card,
   CardContent,
@@ -19,28 +21,43 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { ConnectCardForReview } from "@/lib/data/connect-card-review";
-
 interface Location {
   id: string;
   name: string;
   slug: string;
 }
 
+interface Batch {
+  id: string;
+  name: string;
+  status: string;
+  cardCount: number;
+  locationId: string | null;
+  location: {
+    id: string;
+    name: string;
+    slug: string;
+  } | null;
+  createdAt: Date;
+  _count: {
+    cards: number;
+  };
+}
+
 interface ConnectCardsClientProps {
   slug: string;
   locations: Location[];
   defaultLocationId: string | null;
-  cardsForReview: ConnectCardForReview[];
-  reviewQueueCount: number;
+  batches: Batch[];
+  pendingBatchCount: number;
 }
 
 export default function ConnectCardsClient({
   slug,
   locations,
   defaultLocationId,
-  cardsForReview,
-  reviewQueueCount,
+  batches,
+  pendingBatchCount,
 }: ConnectCardsClientProps) {
   const [selectedTab, setSelectedTab] = useState("upload");
 
@@ -51,50 +68,59 @@ export default function ConnectCardsClient({
       onValueChange={setSelectedTab}
       className="w-full"
     >
-      <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
-        <TabsTrigger
-          value="upload"
-          className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-        >
-          <Upload className="mr-2 w-4 h-4" />
-          Upload
-        </TabsTrigger>
-        <TabsTrigger
-          value="review"
-          className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-        >
-          <ClipboardCheck className="mr-2 w-4 h-4" />
-          Review Queue
-          {reviewQueueCount > 0 && (
-            <span className="ml-2 inline-flex items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-              {reviewQueueCount}
-            </span>
-          )}
-        </TabsTrigger>
-        <TabsTrigger
-          value="analytics"
-          className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-        >
-          <ChartBar className="mr-2 w-4 h-4" />
-          Analytics
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex items-center justify-between mb-6">
+        <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
+          <TabsTrigger
+            value="upload"
+            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+          >
+            <Upload className="mr-2 w-4 h-4" />
+            Upload
+          </TabsTrigger>
+          <TabsTrigger
+            value="batches"
+            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+          >
+            <Package className="mr-2 w-4 h-4" />
+            Batches
+            {pendingBatchCount > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
+                {pendingBatchCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="analytics"
+            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+          >
+            <ChartBar className="mr-2 w-4 h-4" />
+            Analytics
+          </TabsTrigger>
+        </TabsList>
+
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/church/${slug}/admin`}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Link>
+        </Button>
+      </div>
 
       {/* Upload Tab */}
-      <TabsContent value="upload" className="mt-6">
+      <TabsContent value="upload">
         <ConnectCardUploadClient
           locations={locations}
           defaultLocationId={defaultLocationId}
         />
       </TabsContent>
 
-      {/* Review Queue Tab */}
-      <TabsContent value="review" className="mt-6">
-        <ReviewQueueClient cards={cardsForReview} slug={slug} />
+      {/* Batches Tab */}
+      <TabsContent value="batches">
+        <BatchesClient batches={batches} slug={slug} />
       </TabsContent>
 
       {/* Analytics Tab */}
-      <TabsContent value="analytics" className="mt-6">
+      <TabsContent value="analytics">
         <Card>
           <CardHeader>
             <CardTitle>Connect Card Analytics</CardTitle>

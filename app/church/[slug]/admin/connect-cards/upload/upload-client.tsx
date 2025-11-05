@@ -1,12 +1,18 @@
 "use client";
 // Force rebuild for tab styling
-import { useState, useTransition, useRef } from "react";
+import { useState, useTransition, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -29,9 +35,14 @@ import {
   TestTube,
   ClipboardCheck,
   MapPin,
+  Package,
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
+import {
+  getActiveBatchAction,
+  startNewBatchAction,
+} from "@/actions/connect-card/batch-actions";
 import { useDropzone } from "react-dropzone";
 
 // Type for extracted connect card data (matches Zod schema)
@@ -61,6 +72,9 @@ interface UploadedImage {
   extractedData?: ExtractedData;
   saved: boolean;
   savedId?: string;
+  isDuplicate?: boolean;
+  duplicateType?: "image" | "person";
+  duplicateMessage?: string;
 }
 
 type UploadMode = "files" | "camera" | "test";
@@ -92,6 +106,26 @@ export function ConnectCardUploadClient({
   const [isProcessing, startProcessing] = useTransition();
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Active batch state
+  const [activeBatch, setActiveBatch] = useState<{
+    id: string;
+    name: string;
+    cardCount: number;
+  } | null>(null);
+  const [loadingBatch, setLoadingBatch] = useState(true);
+
+  // Fetch active batch on mount
+  useEffect(() => {
+    async function fetchActiveBatch() {
+      const result = await getActiveBatchAction(slug);
+      if (result.status === "success" && result.data) {
+        setActiveBatch(result.data);
+      }
+      setLoadingBatch(false);
+    }
+    fetchActiveBatch();
+  }, [slug]);
+
   // Test mode state
   const [testImage, setTestImage] = useState<File | null>(null);
   const [testPreview, setTestPreview] = useState<string | null>(null);
@@ -102,6 +136,7 @@ export function ConnectCardUploadClient({
   const [testError, setTestError] = useState<string | null>(null);
   const [testSavedId, setTestSavedId] = useState<string | null>(null);
   const [testSaving, startTestSaving] = useTransition();
+  const [imageModalOpen, setImageModalOpen] = useState(false);
 
   // Drag and drop handler
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -332,11 +367,34 @@ export function ConnectCardUploadClient({
               )
             );
           } else {
+            // Check if it's a duplicate error
+            const isDuplicate =
+              saveResult.message?.includes("Duplicate") ||
+              saveResult.message?.includes("duplicate");
+            const duplicateData = saveResult.data as {
+              duplicateType?: "image" | "person";
+            };
+
             setImages(prev =>
               prev.map(img =>
-                img.id === image.id ? { ...img, error: true } : img
+                img.id === image.id
+                  ? {
+                      ...img,
+                      error: true,
+                      isDuplicate,
+                      duplicateType: duplicateData?.duplicateType,
+                      duplicateMessage: saveResult.message,
+                    }
+                  : img
               )
             );
+
+            // Show specific duplicate toast
+            if (isDuplicate) {
+              toast.warning(saveResult.message || "Duplicate card detected");
+            } else {
+              toast.error("Failed to save card");
+            }
           }
         } catch (error) {
           console.error("Processing error:", error);
@@ -557,8 +615,8 @@ export function ConnectCardUploadClient({
   return (
     <div className="space-y-6">
       {/* Action Bar */}
-      <div className="flex items-center justify-end">
-        {/* Page Actions - Adaptive based on state */}
+      <div className="flex items-center justify-between">
+        {/* Left side - Primary actions */}
         <div className="flex gap-3">
           {/* State 1: Images added, not all processed yet */}
           {images.length > 0 && savedCount < images.length && !isProcessing && (
@@ -622,113 +680,144 @@ export function ConnectCardUploadClient({
             </>
           )}
         </div>
+
+        {/* Right side - Cancel button */}
+        {images.length > 0 && (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleNewUploadSession}
+            className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+          >
+            <X className="mr-2 w-4 h-4" />
+            Cancel
+          </Button>
+        )}
       </div>
 
-      {/* Location Selector - Always visible */}
-      {locations.length > 0 && (
-        <Card className="mb-6">
-          <CardContent className="py-6">
-            <div className="flex items-center gap-4">
-              <MapPin className="h-5 w-5 text-muted-foreground flex-shrink-0 self-start mt-0.5" />
-              <div className="flex-1">
-                <Label
-                  htmlFor="location-select"
-                  className="text-sm font-medium"
-                >
-                  Scanning Location
-                </Label>
-                <p className="text-xs text-muted-foreground mt-1">
-                  All cards in this batch will be assigned to this location
-                </p>
+      {/* Stats Cards - Only show after processing starts */}
+      {savedCount > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Successfully Processed */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Scanned & Saved
+                </CardTitle>
+                <CheckCircle2 className="h-4 w-4 text-primary" />
               </div>
-              <Select
-                value={selectedLocationId || ""}
-                onValueChange={value =>
-                  setSelectedLocationId(value || defaultLocationId)
-                }
-              >
-                <SelectTrigger className="w-[280px]" id="location-select">
-                  <SelectValue placeholder="Select a location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map(location => (
-                    <SelectItem key={location.id} value={location.id}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{savedCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Cards saved to database
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Awaiting Review */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Awaiting Review
+                </CardTitle>
+                <ClipboardCheck className="h-4 w-4 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{savedCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Ready for review queue
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Failed */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Failed
+                </CardTitle>
+                <AlertCircle className="h-4 w-4 text-primary" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{errorCount}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Processing errors
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {/* Stats Cards - Always visible, populate after processing */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Successfully Processed */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Scanned & Saved
-              </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{savedCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Cards saved to database
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Awaiting Review */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Awaiting Review
-              </CardTitle>
-              <ClipboardCheck className="h-4 w-4 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{savedCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Ready for review queue
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Failed */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Failed
-              </CardTitle>
-              <AlertCircle className="h-4 w-4 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{errorCount}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Processing errors
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
       {/* Upload Tabs */}
-      {images.length === 0 && (
+      {images.length === 0 && !testPreview && (
         <Tabs
           defaultValue="files"
           value={uploadMode}
           onValueChange={value => setUploadMode(value as UploadMode)}
           className="w-full"
         >
-          <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs rtl:space-x-reverse">
+          {/* Step 1: Verify Location */}
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                1
+              </div>
+              <h3 className="text-lg font-semibold">Verify Location</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Select the campus location where these connect cards were
+              collected.
+            </p>
+            {locations.length > 0 && (
+              <div className="flex items-center gap-3">
+                <Label
+                  htmlFor="location-select"
+                  className="text-sm font-medium flex items-center gap-2"
+                >
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  Location:
+                </Label>
+                <Select
+                  value={selectedLocationId || ""}
+                  onValueChange={value =>
+                    setSelectedLocationId(value || defaultLocationId)
+                  }
+                >
+                  <SelectTrigger className="w-[200px]" id="location-select">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map(location => (
+                      <SelectItem key={location.id} value={location.id}>
+                        {location.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+
+          {/* Step 2: Upload Connect Cards */}
+          <div className="mb-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                2
+              </div>
+              <h3 className="text-lg font-semibold">Upload Connect Cards</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Choose your upload method below.
+            </p>
+          </div>
+
+          <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs rtl:space-x-reverse mb-6">
             <TabsTrigger
               value="files"
               className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
@@ -752,7 +841,45 @@ export function ConnectCardUploadClient({
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="files" className="mt-6">
+          <TabsContent value="files">
+            {/* Batch Creation Info */}
+            <Alert className="mb-4">
+              <Package className="h-4 w-4" />
+              <AlertDescription>
+                {(() => {
+                  const selectedLocation = locations.find(
+                    loc => loc.id === selectedLocationId
+                  );
+                  const today = new Date();
+                  const monthNames = [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                  ];
+                  const batchName = selectedLocation
+                    ? `${selectedLocation.name} - ${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
+                    : "Select a location to create a batch";
+                  return (
+                    <>
+                      Uploading cards will create batch:{" "}
+                      <span className="font-semibold text-primary">
+                        {batchName}
+                      </span>
+                    </>
+                  );
+                })()}
+              </AlertDescription>
+            </Alert>
+
             <Card
               {...getRootProps()}
               className={`border-2 border-dashed transition-colors cursor-pointer ${
@@ -777,7 +904,45 @@ export function ConnectCardUploadClient({
             </Card>
           </TabsContent>
 
-          <TabsContent value="camera" className="mt-6">
+          <TabsContent value="camera">
+            {/* Batch Creation Info */}
+            <Alert className="mb-4">
+              <Package className="h-4 w-4" />
+              <AlertDescription>
+                {(() => {
+                  const selectedLocation = locations.find(
+                    loc => loc.id === selectedLocationId
+                  );
+                  const today = new Date();
+                  const monthNames = [
+                    "Jan",
+                    "Feb",
+                    "Mar",
+                    "Apr",
+                    "May",
+                    "Jun",
+                    "Jul",
+                    "Aug",
+                    "Sep",
+                    "Oct",
+                    "Nov",
+                    "Dec",
+                  ];
+                  const batchName = selectedLocation
+                    ? `${selectedLocation.name} - ${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
+                    : "Select a location to create a batch";
+                  return (
+                    <>
+                      Uploading cards will create batch:{" "}
+                      <span className="font-semibold text-primary">
+                        {batchName}
+                      </span>
+                    </>
+                  );
+                })()}
+              </AlertDescription>
+            </Alert>
+
             <Card className="border-2 border-dashed border-border">
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Camera className="w-12 h-12 mb-4 text-muted-foreground" />
@@ -802,155 +967,273 @@ export function ConnectCardUploadClient({
             </Card>
           </TabsContent>
 
-          <TabsContent value="test" className="mt-6">
-            <div className="grid grid-cols-2 gap-6">
-              {/* Left side - Image upload and preview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Upload Test Image
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!testPreview ? (
-                    <div className="border-2 border-dashed border-border rounded-lg p-8 text-center">
-                      <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Select a connect card image to test extraction
-                      </p>
-                      <Button
-                        onClick={() =>
-                          document.getElementById("test-file-input")?.click()
-                        }
-                      >
-                        Choose Image
-                      </Button>
-                      <input
-                        id="test-file-input"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleTestImageSelect}
-                      />
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="aspect-video relative rounded-lg overflow-hidden border">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={testPreview}
-                          alt="Test connect card"
-                          className="w-full h-full object-contain bg-muted"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handleTestExtract}
-                          disabled={testExtracting}
-                          className="flex-1"
-                          size="lg"
-                        >
-                          {testExtracting ? (
-                            <>
-                              <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                              Extracting...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="mr-2 w-5 h-5" />
-                              Extract Data
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-10 w-10"
-                          onClick={handleTestReset}
-                          disabled={testExtracting || testSaving}
-                        >
-                          <X className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+          <TabsContent value="test">
+            {!testPreview ? (
+              <>
+                {/* Batch Creation Info */}
+                <Alert className="mb-4">
+                  <Package className="h-4 w-4" />
+                  <AlertDescription>
+                    {(() => {
+                      const selectedLocation = locations.find(
+                        loc => loc.id === selectedLocationId
+                      );
+                      const today = new Date();
+                      const monthNames = [
+                        "Jan",
+                        "Feb",
+                        "Mar",
+                        "Apr",
+                        "May",
+                        "Jun",
+                        "Jul",
+                        "Aug",
+                        "Sep",
+                        "Oct",
+                        "Nov",
+                        "Dec",
+                      ];
+                      const batchName = selectedLocation
+                        ? `${selectedLocation.name} - ${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
+                        : "Select a location to create a batch";
+                      return (
+                        <>
+                          Test mode - Cards will be saved to batch:{" "}
+                          <span className="font-semibold text-primary">
+                            {batchName}
+                          </span>
+                        </>
+                      );
+                    })()}
+                  </AlertDescription>
+                </Alert>
 
-              {/* Right side - Extracted data display */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Extracted Data
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {testError && (
-                    <Alert variant="destructive" className="mb-4">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertDescription>{testError}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  {!testExtractedData && !testError && (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No data extracted yet</p>
-                      <p className="text-sm mt-2">
-                        Upload an image and click Extract Data
-                      </p>
-                    </div>
-                  )}
-
-                  {testExtractedData && (
-                    <div className="space-y-4">
-                      <div className="bg-muted p-4 rounded-lg">
-                        <pre className="text-xs overflow-auto max-h-96">
-                          {JSON.stringify(testExtractedData, null, 2)}
-                        </pre>
-                      </div>
-
-                      {!testSavedId ? (
-                        <Button
-                          onClick={handleTestSave}
-                          disabled={testSaving}
-                          className="w-full"
-                          size="lg"
-                        >
-                          {testSaving ? (
-                            <>
-                              <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                              Saving...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="mr-2 w-5 h-5" />
-                              Save to Database
-                            </>
-                          )}
-                        </Button>
-                      ) : (
-                        <Alert>
-                          <CheckCircle2 className="h-4 w-4" />
-                          <AlertDescription>
-                            Saved successfully! ID: {testSavedId}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                {/* Test Image Upload */}
+                <Card className="border-2 border-dashed border-border">
+                  <CardContent className="flex flex-col items-center justify-center py-12">
+                    <Upload className="w-12 h-12 mb-4 text-muted-foreground" />
+                    <p className="text-lg font-medium mb-2">
+                      Test Single Connect Card
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Select a connect card image to test extraction
+                    </p>
+                    <Button
+                      onClick={() =>
+                        document.getElementById("test-file-input")?.click()
+                      }
+                    >
+                      Choose Image
+                    </Button>
+                    <input
+                      id="test-file-input"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleTestImageSelect}
+                    />
+                  </CardContent>
+                </Card>
+              </>
+            ) : null}
           </TabsContent>
         </Tabs>
+      )}
+
+      {/* Test Mode - Full Page View */}
+      {testPreview && (
+        <div className="space-y-6">
+          {/* Test Mode Action Bar */}
+          <div className="flex items-center justify-between">
+            <div className="flex gap-3">
+              {!testExtractedData && !testExtracting && (
+                <Button onClick={handleTestExtract} size="lg">
+                  <CheckCircle2 className="mr-2 w-5 h-5" />
+                  Extract Data
+                </Button>
+              )}
+
+              {testExtracting && (
+                <Button disabled size="lg">
+                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                  Extracting...
+                </Button>
+              )}
+
+              {testExtractedData && !testSavedId && (
+                <Button
+                  onClick={handleTestSave}
+                  disabled={testSaving}
+                  size="lg"
+                >
+                  {testSaving ? (
+                    <>
+                      <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="mr-2 w-5 h-5" />
+                      Save to Database
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {testSavedId && (
+                <Button variant="outline" size="lg" onClick={handleTestReset}>
+                  <Upload className="mr-2 w-4 h-4" />
+                  Test Another Card
+                </Button>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleTestReset}
+              className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
+            >
+              <X className="mr-2 w-4 h-4" />
+              Cancel
+            </Button>
+          </div>
+
+          {/* Error Alert */}
+          {testError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{testError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Test Card Display */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Image Preview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Connect Card Image</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div
+                  className="relative rounded-lg overflow-hidden border cursor-zoom-in hover:opacity-90 transition-opacity aspect-[3/4]"
+                  onClick={() => setImageModalOpen(true)}
+                  title="Click to view full size"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={testPreview}
+                    alt="Test connect card"
+                    className="w-full h-full object-contain bg-muted"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Extracted Data */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Extracted Data</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!testExtractedData && !testError && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No data extracted yet</p>
+                    <p className="text-sm mt-2">
+                      Click &quot;Extract Data&quot; to process
+                    </p>
+                  </div>
+                )}
+
+                {testExtractedData && (
+                  <div className="bg-muted p-4 rounded-lg">
+                    <pre className="text-sm overflow-auto max-h-[500px]">
+                      {JSON.stringify(testExtractedData, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
 
       {/* Image Grid */}
       {images.length > 0 && (
         <>
+          {/* Simple Batch Indicator - Only show before processing complete */}
+          {activeBatch && !loadingBatch && savedCount < images.length && (
+            <Alert className="mb-4">
+              <Package className="h-4 w-4" />
+              <AlertDescription>
+                These cards will be added to batch:{" "}
+                <span className="font-semibold text-primary">
+                  {activeBatch.name}
+                </span>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Batch Actions - Only show after processing complete */}
+          {activeBatch &&
+            !loadingBatch &&
+            savedCount === images.length &&
+            savedCount > 0 && (
+              <Card className="mb-6 border-green-200 bg-green-50">
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white">
+                        <CheckCircle2 className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-green-900">
+                          Batch &quot;{activeBatch.name}&quot; complete
+                        </p>
+                        <p className="text-xs text-green-700">
+                          {activeBatch.cardCount}{" "}
+                          {activeBatch.cardCount === 1 ? "card" : "cards"} ready
+                          to review
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          const result = await startNewBatchAction(
+                            slug,
+                            activeBatch.id
+                          );
+                          if (result.status === "success" && result.data) {
+                            setActiveBatch(result.data);
+                            setImages([]);
+                            toast.success("Started new batch");
+                          }
+                        }}
+                        className="bg-white"
+                      >
+                        Start New Batch
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() =>
+                          router.push(
+                            `/church/${slug}/admin/connect-cards?tab=batches`
+                          )
+                        }
+                      >
+                        <ClipboardCheck className="mr-2 w-4 h-4" />
+                        Review Batch
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
           {/* Progress */}
           {isProcessing && (
             <Alert>
@@ -1005,8 +1288,18 @@ export function ConnectCardUploadClient({
                     {image.saved && (
                       <CheckCircle2 className="w-8 h-8 text-primary" />
                     )}
-                    {image.error && (
+                    {image.error && !image.isDuplicate && (
                       <AlertCircle className="w-8 h-8 text-destructive" />
+                    )}
+                    {image.isDuplicate && (
+                      <div className="flex flex-col items-center gap-2">
+                        <AlertCircle className="w-8 h-8 text-yellow-500" />
+                        <span className="text-xs text-yellow-500 font-semibold">
+                          {image.duplicateType === "image"
+                            ? "Duplicate Image"
+                            : "Duplicate Person"}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -1018,14 +1311,28 @@ export function ConnectCardUploadClient({
                     {image.uploading && "Uploading..."}
                     {image.uploaded && !image.extracting && "Uploaded"}
                     {image.extracting && "Analyzing..."}
-                    {image.extracted && !image.saved && "Saving..."}
+                    {image.extracted &&
+                      !image.saved &&
+                      !image.error &&
+                      "Saving..."}
                     {image.saved && (
                       <>
                         <CheckCircle2 className="w-3 h-3 text-primary" />
                         <span>Saved</span>
                       </>
                     )}
-                    {image.error && "❌ Failed"}
+                    {image.error && !image.isDuplicate && "❌ Failed"}
+                    {image.isDuplicate && (
+                      <span
+                        className="text-yellow-600"
+                        title={image.duplicateMessage}
+                      >
+                        ⚠️{" "}
+                        {image.duplicateType === "image"
+                          ? "Duplicate Image"
+                          : "Duplicate Person"}
+                      </span>
+                    )}
                   </p>
                 </CardContent>
               </Card>
@@ -1044,6 +1351,31 @@ export function ConnectCardUploadClient({
         className="hidden"
         onChange={handleCameraCapture}
       />
+
+      {/* Image Modal */}
+      <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
+        <DialogContent
+          className="p-2 [&>button]:bg-white [&>button]:text-black [&>button]:hover:bg-gray-200 [&>button]:rounded-full [&>button]:h-10 [&>button]:w-10 [&>button]:flex [&>button]:items-center [&>button]:justify-center"
+          style={{
+            maxWidth: "90vw",
+            width: "90vw",
+            maxHeight: "calc(100vh - 4rem)",
+          }}
+        >
+          <DialogHeader className="sr-only">
+            <DialogTitle>Connect Card Image</DialogTitle>
+          </DialogHeader>
+          {testPreview && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={testPreview}
+              alt="Connect card full size"
+              className="w-full h-auto object-contain"
+              style={{ maxHeight: "calc(100vh - 5rem)" }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

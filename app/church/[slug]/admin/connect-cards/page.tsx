@@ -8,7 +8,7 @@
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
 import { PageContainer } from "@/components/layout/page-container";
 import { getOrganizationLocations } from "@/lib/data/locations";
-import { getConnectCardsForReview } from "@/lib/data/connect-card-review";
+import { getBatchesForReview } from "@/lib/data/connect-card-batch";
 import { prisma } from "@/lib/db";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -64,8 +64,14 @@ export default async function ConnectCardsPage({ params }: PageProps) {
       ? user.defaultLocationId
       : locations[0]?.id || null;
 
-  // Fetch connect cards awaiting review
-  const cardsForReview = await getConnectCardsForReview(organization.id);
+  // Fetch batches for review
+  const batches = await getBatchesForReview(session.user.id, organization.id);
+
+  // Count pending batches (PENDING or IN_REVIEW status)
+  const pendingBatchCount = batches.filter(
+    (batch: { status: string }) =>
+      batch.status === "PENDING" || batch.status === "IN_REVIEW"
+  ).length;
 
   return (
     <PageContainer as="main">
@@ -73,8 +79,8 @@ export default async function ConnectCardsPage({ params }: PageProps) {
         slug={slug}
         locations={locations}
         defaultLocationId={defaultLocationId}
-        cardsForReview={cardsForReview}
-        reviewQueueCount={cardsForReview.length}
+        batches={batches}
+        pendingBatchCount={pendingBatchCount}
       />
     </PageContainer>
   );

@@ -46,6 +46,7 @@ model Organization {
   ghlToken              GHLToken?
   payments              Payment[]
   connectCards          ConnectCard[]
+  connectCardBatches    ConnectCardBatch[]
   locations             Location[]
 
   @@map("organization")
@@ -67,9 +68,10 @@ model Location {
   createdAt      DateTime      @default(now())
   /// Last update timestamp
   updatedAt      DateTime      @updatedAt
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  connectCards   ConnectCard[]
-  users          User[]
+  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  connectCards       ConnectCard[]
+  connectCardBatches ConnectCardBatch[]
+  users              User[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -409,6 +411,38 @@ model GHLToken {
   @@map("ghl_token")
 }
 
+/// Upload batch for connect card processing
+/// Groups cards uploaded together for batch processing and location tracking
+model ConnectCardBatch {
+  id             String      @id @default(cuid())
+  /// Organization that owns this batch
+  organizationId String
+  /// Campus/location where cards were collected
+  locationId     String?
+  /// User who uploaded this batch
+  uploadedBy     String
+  /// Batch display name (e.g., "Bainbridge - Nov 4, 2025")
+  name           String
+  /// Number of cards in this batch (denormalized for performance)
+  cardCount      Int         @default(0)
+  /// Batch processing status
+  status         BatchStatus @default(PENDING)
+  /// Optional batch notes (e.g., "Morning Service", "Special Event")
+  notes          String?
+  /// When batch was created
+  createdAt      DateTime    @default(now())
+  /// Last update timestamp
+  updatedAt      DateTime    @updatedAt
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  location       Location?    @relation(fields: [locationId], references: [id])
+  cards          ConnectCard[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, locationId])
+  @@index([createdAt])
+  @@map("connect_card_batch")
+}
+
 /// Connect card scanning and OCR data management
 /// Stores scanned visitor cards with extracted information for follow-up
 model ConnectCard {
@@ -417,6 +451,8 @@ model ConnectCard {
   organizationId   String
   /// S3/Tigris storage key for scanned card image
   imageKey         String
+  /// SHA-256 hash of image for duplicate detection
+  imageHash        String?
   /// Raw OCR text output from scanning service
   rawText          String?
   /// Structured extracted data (JSON format)
@@ -443,6 +479,8 @@ model ConnectCard {
   churchMemberId   String?
   /// Campus/location where card was scanned
   locationId       String?
+  /// Batch this card belongs to
+  batchId          String?
   /// User who scanned the card
   scannedBy        String?
   /// When the card was scanned
@@ -454,10 +492,12 @@ model ConnectCard {
   organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   churchMember     ChurchMember?      @relation(fields: [churchMemberId], references: [id])
   location         Location?          @relation(fields: [locationId], references: [id])
+  batch            ConnectCardBatch?  @relation(fields: [batchId], references: [id])
 
   @@index([organizationId, status])
   @@index([organizationId, locationId])
   @@index([scannedAt])
+  @@index([imageHash])
   @@map("connect_card")
 }
 
@@ -782,6 +822,18 @@ enum ConnectCardStatus {
   PROCESSED
   /// Card rejected (duplicate, illegible, etc.)
   REJECTED
+}
+
+/// Batch processing status
+enum BatchStatus {
+  /// Cards uploaded, awaiting review
+  PENDING
+  /// Batch currently being reviewed
+  IN_REVIEW
+  /// All cards reviewed and processed
+  COMPLETED
+  /// Batch archived for historical records
+  ARCHIVED
 }
 
 /// Appointment status tracking
