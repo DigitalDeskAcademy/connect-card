@@ -8,6 +8,11 @@ import { connectCardSchema, ConnectCardSchemaType } from "@/lib/zodSchemas";
 import { request } from "@arcjet/next";
 import { validateConnectCardData } from "@/lib/validation/connect-card-quality";
 import { formatPhoneNumber } from "@/lib/utils";
+import {
+  getOrCreateActiveBatch,
+  incrementBatchCardCount,
+} from "@/lib/data/connect-card-batch";
+import { calculateImageHash } from "@/lib/utils/image-hash";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -131,11 +136,50 @@ export async function saveConnectCard(
   }
 
   try {
-    // 5. Save to database
+    // 5. Calculate image hash for duplicate detection
+    const imageHash = calculateImageHash(validation.data.imageKey);
+
+    // 6. Check for duplicate image (same physical card scanned twice)
+    const duplicateImage = await prisma.connectCard.findFirst({
+      where: {
+        organizationId: organization.id,
+        imageHash,
+      },
+      select: {
+        id: true,
+        name: true,
+        scannedAt: true,
+      },
+    });
+
+    if (duplicateImage) {
+      return {
+        status: "error",
+        message:
+          "Duplicate image detected - this exact card has already been scanned",
+        data: {
+          duplicateType: "image",
+          existingCard: duplicateImage,
+        } as never,
+      };
+    }
+
+    // Note: We intentionally do NOT check for duplicate person data here.
+    // Returning members filling out prayer requests or updating info should be allowed.
+    // Future enhancement: Link to existing ChurchMember records instead of blocking.
+
+    // 7. Get or create active batch for this upload
+    const batch = await getOrCreateActiveBatch(
+      session.user.id,
+      organization.id
+    );
+
+    // 8. Save to database with batch assignment and image hash
     const connectCard = await prisma.connectCard.create({
       data: {
         organizationId: organization.id,
         imageKey: validation.data.imageKey,
+        imageHash,
         extractedData: validation.data.extractedData,
         // Map extracted fields to database columns
         name: validation.data.extractedData.name,
@@ -156,11 +200,16 @@ export async function saveConnectCard(
         scannedAt: new Date(),
         // Use provided locationId or staff member's default campus
         locationId: finalLocationId,
+        // Assign to active batch
+        batchId: batch.id,
       },
       select: {
         id: true,
       },
     });
+
+    // 9. Increment batch card count
+    await incrementBatchCardCount(batch.id);
 
     return {
       status: "success",
