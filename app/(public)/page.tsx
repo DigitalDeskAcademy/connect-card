@@ -84,9 +84,9 @@ export default function Home() {
   const { data: session } = authClient.useSession();
 
   return (
-    <>
+    <article>
       {/* Hero Section */}
-      <section className="relative py-20">
+      <section aria-labelledby="hero-title" className="relative py-20">
         <div className="flex flex-col items-center text-center space-y-8">
           <Badge className="text-sm bg-orange-100 text-orange-800 border-orange-200">
             Early Access • Limited to 25 Founding Churches
@@ -151,7 +151,7 @@ export default function Home() {
       </section>
 
       {/* Problem Validation Section */}
-      <section className="mb-40">
+      <section aria-labelledby="challenges-title" className="mb-40">
         <div className="text-center mb-12">
           <h2 id="challenges-title" className="text-3xl font-bold mb-8">
             Does This Sound Like Your Monday?
@@ -203,7 +203,7 @@ export default function Home() {
       </section>
 
       {/* Our Story Section */}
-      <section className="mb-40" id="story">
+      <section aria-labelledby="partnership-title" className="mb-40" id="story">
         <div className="text-center mb-12">
           <h2 id="partnership-title" className="text-3xl font-bold mb-4">
             Built With Real Churches, For Real Churches
@@ -305,7 +305,7 @@ export default function Home() {
       </section>
 
       {/* What We've Built Section */}
-      <section className="mb-40" id="solution">
+      <section aria-labelledby="workflow-title" className="mb-40" id="solution">
         <div className="text-center mb-12">
           <h2 id="workflow-title" className="text-3xl font-bold mb-4">
             A Complete Connect Card Workflow (That Actually Works)
@@ -366,7 +366,7 @@ export default function Home() {
       </section>
 
       {/* Founding Church Benefits */}
-      <section className="mb-40" id="benefits">
+      <section aria-labelledby="benefits-title" className="mb-40" id="benefits">
         <div className="text-center mb-12">
           <h2 id="benefits-title" className="text-3xl font-bold mb-4">
             Become a Founding Church
@@ -450,7 +450,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section className="mb-40" id="pricing">
+      <section aria-labelledby="pricing-title" className="mb-40" id="pricing">
         <div className="text-center mb-12">
           <h2 id="pricing-title" className="text-3xl font-bold mb-4">
             Founding Church Pricing (50% Off Forever)
@@ -618,7 +618,7 @@ export default function Home() {
       </section>
 
       {/* FAQ Section */}
-      <section className="mb-40">
+      <section aria-labelledby="faq-title" className="mb-40">
         <div className="text-center mb-12">
           <h2 id="faq-title" className="text-3xl font-bold mb-4">
             Early Access Questions
@@ -692,7 +692,7 @@ export default function Home() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="mb-40" id="signup">
+      <section aria-labelledby="cta-title" className="mb-40" id="signup">
         <div className="text-center">
           <h2 id="cta-title" className="text-3xl font-bold mb-4">
             Join Us in Solving Monday Morning Data Entry
@@ -751,6 +751,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-    </>
+    </article>
   );
 }
