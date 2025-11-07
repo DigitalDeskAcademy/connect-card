@@ -1,8 +1,8 @@
 /**
- * Pricing Page - Church Sync AI Early Access Pricing
+ * Pricing Page - Church Sync Early Access Pricing
  *
  * Founding church pricing with lifetime 50% discount for first 25 churches.
- * Three-tier model: Small Church, Growing Church, Multi-Campus.
+ * Three-tier model: Single Campus, Multi-Campus, Large Network.
  *
  * @page PricingPage
  * @route /pricing
@@ -10,6 +10,12 @@
  * @returns {JSX.Element} Early access pricing with founding benefits
  */
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,17 +37,17 @@ export default function PricingPage() {
 
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
           The first 25 churches get lifetime pricing locked in at half the
-          regular rate, plus a FREE ScanSnap scanner ($425 value) with annual
+          regular rate, plus a FREE connect card scanner ($425 value) with annual
           plans.
         </p>
       </div>
 
       {/* Pricing Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16">
-        {/* Small Church Plan */}
-        <Card>
+        {/* Single Campus Plan */}
+        <Card className="flex flex-col">
           <CardHeader className="text-center">
-            <Badge className="w-fit mx-auto mb-4">Small Church</Badge>
+            <Badge className="w-fit mx-auto mb-4">Single Campus</Badge>
             <div className="space-y-2">
               <div className="text-muted-foreground line-through text-lg">
                 $158/month
@@ -50,14 +56,14 @@ export default function PricingPage() {
               <div className="text-muted-foreground">/month</div>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              Perfect for churches under 200 members
+              Perfect for single-location churches
             </p>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="flex-1 flex flex-col space-y-6">
             <h3 className="font-semibold text-center">What&apos;s Included:</h3>
 
-            <ul className="space-y-4">
+            <ul className="space-y-4 flex-1">
               <li className="flex items-center gap-3">
                 <div className="rounded-full p-1 bg-green-500/10 text-green-500">
                   <CheckIcon className="size-4" />
@@ -69,7 +75,7 @@ export default function PricingPage() {
                   <CheckIcon className="size-4" />
                 </div>
                 <span className="text-sm font-medium">
-                  AI Vision extraction (95% accuracy)
+                  AI Vision extraction (high accuracy)
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -103,15 +109,15 @@ export default function PricingPage() {
             <div className="space-y-3">
               <Link href="/signup" className="block">
                 <Button className="w-full cursor-pointer" size="lg">
-                  Request Early Access
+                  Start Today
                 </Button>
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* Growing Church Plan - Featured */}
-        <Card className="border-2 border-primary shadow-xl relative">
+        {/* Multi-Campus Plan - Featured */}
+        <Card className="border-2 border-primary shadow-xl relative flex flex-col">
           <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
             FREE $425 Scanner
           </Badge>
@@ -125,14 +131,14 @@ export default function PricingPage() {
               <div className="text-muted-foreground">/month</div>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              For churches with 200-500 members
+              For multi-campus churches
             </p>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="flex-1 flex flex-col space-y-6">
             <h3 className="font-semibold text-center">What&apos;s Included:</h3>
 
-            <ul className="space-y-4">
+            <ul className="space-y-4 flex-1">
               <li className="flex items-center gap-3">
                 <div className="rounded-full p-1 bg-green-500/10 text-green-500">
                   <CheckIcon className="size-4" />
@@ -144,7 +150,7 @@ export default function PricingPage() {
                   <CheckIcon className="size-4" />
                 </div>
                 <span className="text-sm font-medium">
-                  All Small Church features
+                  All Single Campus features
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -180,20 +186,20 @@ export default function PricingPage() {
             <div className="space-y-3">
               <Link href="/signup" className="block">
                 <Button className="w-full cursor-pointer" size="lg">
-                  Request Early Access
+                  Start Today
                 </Button>
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        {/* Multi-Campus Plan */}
-        <Card className="relative">
+        {/* Large Network Plan */}
+        <Card className="relative flex flex-col">
           <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
             FREE $425 Scanner
           </Badge>
           <CardHeader className="text-center">
-            <Badge className="w-fit mx-auto mb-4">Multi-Campus</Badge>
+            <Badge className="w-fit mx-auto mb-4">Large Network</Badge>
             <div className="space-y-2">
               <div className="text-muted-foreground line-through text-lg">
                 $598/month
@@ -202,14 +208,14 @@ export default function PricingPage() {
               <div className="text-muted-foreground">/month</div>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              For churches with 500+ members
+              For large church networks
             </p>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="flex-1 flex flex-col space-y-6">
             <h3 className="font-semibold text-center">What&apos;s Included:</h3>
 
-            <ul className="space-y-4">
+            <ul className="space-y-4 flex-1">
               <li className="flex items-center gap-3">
                 <div className="rounded-full p-1 bg-green-500/10 text-green-500">
                   <CheckIcon className="size-4" />
@@ -221,7 +227,7 @@ export default function PricingPage() {
                   <CheckIcon className="size-4" />
                 </div>
                 <span className="text-sm font-medium">
-                  All Growing Church features
+                  All Multi-Campus features
                 </span>
               </li>
               <li className="flex items-center gap-3">
@@ -257,7 +263,7 @@ export default function PricingPage() {
             <div className="space-y-3">
               <Link href="/signup" className="block">
                 <Button className="w-full cursor-pointer" size="lg">
-                  Request Early Access
+                  Start Today
                 </Button>
               </Link>
             </div>
@@ -268,60 +274,65 @@ export default function PricingPage() {
       {/* FAQ Section */}
       <div className="text-center space-y-6 bg-muted/50 rounded-lg p-12 mb-16">
         <h2 className="text-3xl font-bold">Early Access Questions</h2>
-        <div className="text-left max-w-4xl mx-auto space-y-8">
-          <div>
-            <h3 className="font-semibold mb-2">Who built this?</h3>
-            <p className="text-muted-foreground text-sm">
-              Church Sync AI was developed in partnership with NewLife
+        <Accordion
+          type="single"
+          collapsible
+          className="max-w-4xl mx-auto text-left"
+          defaultValue="item-1"
+        >
+          <AccordionItem value="item-1">
+            <AccordionTrigger>Who built this?</AccordionTrigger>
+            <AccordionContent>
+              Church Sync was developed in partnership with NewLife
               Church&apos;s operations team. We build the technology, they
               ensure it works for real church workflows across their 5 campuses
               and 2,000 members.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">When can we start?</h3>
-            <p className="text-muted-foreground text-sm">
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-2">
+            <AccordionTrigger>When can we start?</AccordionTrigger>
+            <AccordionContent>
               NewLife Church has been live since October 2024. Founding churches
               begin onboarding in January 2025. We&apos;re accepting
               applications now for the first 25 spots.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            <AccordionTrigger>
               What if it doesn&apos;t work for us?
-            </h3>
-            <p className="text-muted-foreground text-sm">
+            </AccordionTrigger>
+            <AccordionContent>
               30-day money back guarantee, no questions asked. We&apos;ll even
               pay return shipping on the scanner if you decide it&apos;s not the
               right fit.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Can we influence features?</h3>
-            <p className="text-muted-foreground text-sm">
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-4">
+            <AccordionTrigger>Can we influence features?</AccordionTrigger>
+            <AccordionContent>
               Absolutely. Founding churches get monthly feedback calls and
               direct input on our feature roadmap. Your real-world needs will
               shape what we build next.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">Is our data secure?</h3>
-            <p className="text-muted-foreground text-sm">
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-5">
+            <AccordionTrigger>Is our data secure?</AccordionTrigger>
+            <AccordionContent>
               Bank-level encryption with complete data isolation. Your church
               data never mingles with other organizations. We use role-based
               access control, audit logs, and regular backups.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-semibold mb-2">What makes you different?</h3>
-            <p className="text-muted-foreground text-sm">
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-6">
+            <AccordionTrigger>What makes you different?</AccordionTrigger>
+            <AccordionContent>
               We&apos;re partnered with church operators, not just selling
               software. Every feature has been tested in real Sunday services at
               NewLife Church. We understand the Monday morning data entry
               problem because we&apos;ve solved it.
-            </p>
-          </div>
-        </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </div>
 
       {/* Final CTA */}

@@ -20,7 +20,7 @@ export function PublicHeader() {
   return (
     <header className="flex h-14 shrink-0 items-center border-b md:hidden w-full">
       <div className="flex w-full items-center px-4 min-w-0">
-        <h1 className="font-bold text-xl shrink-0">Church Sync AI</h1>
+        <h1 className="font-bold text-xl shrink-0">Church Sync</h1>
         <div className="ml-auto flex items-center gap-2 shrink-0">
           <ThemeToggle />
           {!session && (

@@ -1,5 +1,5 @@
 /**
- * Features Page - Church Sync AI Early Access Capabilities
+ * Features Page - Church Sync Early Access Capabilities
  *
  * Showcase of platform features being built in partnership with NewLife Church.
  * Positions features as battle-tested solutions with real-world proof points.
@@ -27,7 +27,7 @@ const features = [
   {
     title: "AI Vision Extraction",
     description:
-      "Claude AI reads handwriting from connect cards with 95% accuracy. Automatically extracts names, emails, phone numbers, prayer requests, interests, and volunteer preferences. NewLife processes 500+ cards weekly with this technology.",
+      "Claude AI reads handwriting from connect cards with high accuracy. Automatically extracts names, emails, phone numbers, prayer requests, interests, and volunteer preferences. NewLife processes 500+ cards weekly with this technology.",
     icon: "🤖",
   },
   {

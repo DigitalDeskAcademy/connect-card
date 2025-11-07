@@ -1,5 +1,5 @@
 /**
- * Church Sync AI - Early Access Landing Page
+ * Church Sync - Early Access Landing Page
  *
  * Beta/Early access landing page for founding churches program.
  * Positions as software developers partnering with NewLife Church
@@ -33,7 +33,7 @@ import { CheckCircle, X } from "lucide-react";
 import Link from "next/link";
 
 /**
- * Feature Interface for Church Sync AI
+ * Feature Interface for Church Sync
  * @interface FeatureProps
  * @property {string} title - Feature name
  * @property {string} description - Feature benefit description
@@ -58,7 +58,7 @@ const workflowSteps: FeatureProps[] = [
   {
     title: "Extract",
     description:
-      "AI reads handwriting with 95% accuracy (tested on real cards at NewLife Church).",
+      "AI reads handwritten cards and understands what people mean, just like a person would.",
     icon: "🤖",
   },
   {
@@ -76,7 +76,7 @@ const workflowSteps: FeatureProps[] = [
 ];
 
 /**
- * Church Sync AI Early Access Landing Page
+ * Church Sync Early Access Landing Page
  *
  * Founding churches program with limited spots and lifetime benefits
  */
@@ -98,7 +98,7 @@ export default function Home() {
 
           <p className="max-w-[700px] text-muted-foreground md:text-xl">
             NewLife Church processes 500+ connect cards across 5 campuses. We
-            partnered with their team to build Church Sync AI—the solution that
+            partnered with their team to build Church Sync—the solution that
             actually works. Now opening to 25 founding churches.
           </p>
 
@@ -345,9 +345,9 @@ export default function Home() {
               </p>
             </div>
             <div>
-              <p className="text-6xl font-bold text-primary mb-2">95%</p>
+              <p className="text-6xl font-bold text-primary mb-2">90%</p>
               <p className="text-sm text-muted-foreground">
-                First-scan accuracy
+                Time saved vs manual entry
               </p>
             </div>
             <div>
@@ -454,10 +454,10 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {/* Small Church */}
-          <Card>
+          {/* Single Campus */}
+          <Card className="flex flex-col">
             <CardHeader className="text-center">
-              <Badge className="w-fit mx-auto mb-4">Small Church</Badge>
+              <Badge className="w-fit mx-auto mb-4">Single Campus</Badge>
               <div className="space-y-2">
                 <div className="text-muted-foreground line-through text-lg">
                   $158/month
@@ -469,8 +469,8 @@ export default function Home() {
                 {"<"}200 members
               </p>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3 mb-6">
+            <CardContent className="flex-1 flex flex-col">
+              <div className="space-y-3 mb-6 flex-1">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
                   <span className="text-sm">200 cards/month</span>
@@ -497,8 +497,8 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          {/* Growing Church */}
-          <Card className="border-2 border-primary relative">
+          {/* Multi-Campus */}
+          <Card className="border-2 border-primary relative flex flex-col">
             <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
               FREE $425 Scanner
             </Badge>
@@ -515,8 +515,8 @@ export default function Home() {
                 200-500 members
               </p>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3 mb-6">
+            <CardContent className="flex-1 flex flex-col">
+              <div className="space-y-3 mb-6 flex-1">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
                   <span className="text-sm">500 cards/month</span>
@@ -549,13 +549,13 @@ export default function Home() {
             </CardContent>
           </Card>
 
-          {/* Multi-Campus */}
-          <Card className="relative">
+          {/* Large Network */}
+          <Card className="relative flex flex-col">
             <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
               FREE $425 Scanner
             </Badge>
             <CardHeader className="text-center">
-              <Badge className="w-fit mx-auto mb-4">Multi-Campus</Badge>
+              <Badge className="w-fit mx-auto mb-4">Large Network</Badge>
               <div className="space-y-2">
                 <div className="text-muted-foreground line-through text-lg">
                   $598/month
@@ -565,8 +565,8 @@ export default function Home() {
               </div>
               <p className="text-sm text-muted-foreground mt-4">500+ members</p>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3 mb-6">
+            <CardContent className="flex-1 flex flex-col">
+              <div className="space-y-3 mb-6 flex-1">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
                   <span className="text-sm">Unlimited cards</span>
@@ -622,7 +622,7 @@ export default function Home() {
               <div className="space-y-2">
                 <h3 className="font-semibold">Who built this?</h3>
                 <p className="text-sm text-muted-foreground">
-                  Church Sync AI was developed in partnership with NewLife
+                  Church Sync was developed in partnership with NewLife
                   Church&apos;s operations team. We build the technology, they
                   ensure it works for real church workflows.
                 </p>

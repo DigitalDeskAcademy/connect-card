@@ -67,7 +67,7 @@ export default function DemoPage() {
                 <div>
                   <p className="font-medium">Live AI Extraction Demo</p>
                   <p className="text-sm text-muted-foreground">
-                    Watch Claude Vision AI read real handwritten cards with 95%
+                    Watch Claude Vision AI read real handwritten cards with high
                     accuracy—extracting names, emails, phone numbers, and prayer
                     requests in seconds
                   </p>
