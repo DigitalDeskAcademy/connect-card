@@ -1,14 +1,15 @@
 /**
- * Demo Booking Page - Schedule a 15-minute demo
+ * Demo Booking Page - Schedule Early Access Demo
  *
- * Placeholder page for demo scheduling that can be replaced with
- * Calendly embed, Cal.com, or other booking solution.
+ * Early access demo scheduling for founding churches. Shows NewLife Church
+ * validation and provides email-based booking during beta phase.
  *
  * @page DemoPage
  * @route /demo
  * @access Public (no authentication required)
  */
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, Video, ArrowLeft } from "lucide-react";
@@ -28,85 +29,92 @@ export default function DemoPage() {
 
       {/* Hero Section */}
       <div className="text-center space-y-4 mb-12">
+        <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
+          Early Access Demo • See NewLife Church&apos;s Live System
+        </Badge>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-          Book Your 15-Minute Demo
+          See the System Processing 500+ Cards Weekly at NewLife Church
         </h1>
         <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl">
-          See how Sidecar can transform your GHL client onboarding in just 15
-          minutes
+          15-minute live demo showing real connect card extraction from a
+          working 5-campus church system
         </p>
       </div>
 
       {/* Main Demo Card */}
       <Card className="mb-12">
         <CardHeader>
-          <CardTitle className="text-xl">Quick Demo Session</CardTitle>
+          <CardTitle className="text-xl">What We&apos;ll Show You</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* What to Expect */}
           <div className="space-y-4">
-            <h3 className="font-semibold">What we&apos;ll cover:</h3>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
                 <Video className="size-5 text-primary mt-0.5" />
                 <div>
                   <p className="font-medium">
-                    Your Current Onboarding Pain Points
+                    NewLife Church&apos;s Real Results
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Quick discussion about your specific GHL client challenges
+                    See how NewLife went from 20 hours weekly to under 2 hours
+                    processing 500+ connect cards across 5 campuses
                   </p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <Calendar className="size-5 text-primary mt-0.5" />
                 <div>
-                  <p className="font-medium">Live Platform Walkthrough</p>
+                  <p className="font-medium">Live AI Extraction Demo</p>
                   <p className="text-sm text-muted-foreground">
-                    See the 8-module system and how clients actually use it
+                    Watch Claude Vision AI read real handwritten cards with 95%
+                    accuracy—extracting names, emails, phone numbers, and prayer
+                    requests in seconds
                   </p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <Clock className="size-5 text-primary mt-0.5" />
                 <div>
-                  <p className="font-medium">ROI Calculator</p>
+                  <p className="font-medium">Smart Review Queue</p>
                   <p className="text-sm text-muted-foreground">
-                    Calculate your time savings and support reduction
+                    See keyboard shortcuts and workflow optimizations that
+                    reduce review time from 6-8 minutes per card to under 2
+                    minutes
+                  </p>
+                </div>
+              </li>
+              <li className="flex items-start gap-3">
+                <Video className="size-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-medium">Founding Church Benefits</p>
+                  <p className="text-sm text-muted-foreground">
+                    Learn about 50% lifetime discount, FREE ScanSnap scanner,
+                    and direct input on feature roadmap for first 25 churches
                   </p>
                 </div>
               </li>
             </ul>
           </div>
 
-          {/* Temporary Booking Instructions */}
-          <div className="bg-muted/50 rounded-lg p-6 text-center space-y-4">
-            <p className="text-sm text-muted-foreground">
-              📅 Demo booking calendar coming soon!
-            </p>
-            <p className="text-sm">
-              In the meantime, email us to schedule your demo:
+          {/* Demo Booking */}
+          <div className="bg-muted/50 rounded-lg p-8 text-center space-y-4">
+            <h3 className="font-semibold text-lg">Schedule Your Demo</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Email us to schedule a 15-minute live demo. We&apos;ll show you
+              NewLife Church&apos;s working system and answer your questions
+              about the founding church program.
             </p>
             <a
-              href="mailto:hello@sidecarplatform.com?subject=15-Min Demo Request"
+              href="mailto:hello@churchsyncai.com?subject=Early Access Demo Request&body=Church Name:%0D%0AYour Name:%0D%0AEmail:%0D%0APhone:%0D%0AHow many connect cards weekly:%0D%0AHow many campuses:"
               className="inline-block"
             >
               <Button size="lg" className="w-full sm:w-auto">
-                Email to Schedule Demo
+                Request Demo via Email
               </Button>
             </a>
             <p className="text-xs text-muted-foreground">
               We&apos;ll reply within 24 hours with available times
-            </p>
-          </div>
-
-          {/* Future Calendly Embed Area */}
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-12 text-center">
-            <p className="text-sm text-muted-foreground mb-2">
-              [Calendly embed will go here]
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Integration with Calendly, Cal.com, or similar booking tool
             </p>
           </div>
         </CardContent>
@@ -118,21 +126,21 @@ export default function DemoPage() {
           <Clock className="size-8 mx-auto mb-2 text-primary" />
           <h3 className="font-semibold mb-1">15 Minutes</h3>
           <p className="text-sm text-muted-foreground">
-            Quick and focused on your needs
+            Quick demo focused on NewLife Church&apos;s results
           </p>
         </div>
         <div>
           <Video className="size-8 mx-auto mb-2 text-primary" />
-          <h3 className="font-semibold mb-1">Screen Share</h3>
+          <h3 className="font-semibold mb-1">Live System Access</h3>
           <p className="text-sm text-muted-foreground">
-            See the actual platform in action
+            See the actual platform processing 500+ cards weekly
           </p>
         </div>
         <div>
           <Calendar className="size-8 mx-auto mb-2 text-primary" />
-          <h3 className="font-semibold mb-1">No Pressure</h3>
+          <h3 className="font-semibold mb-1">Limited Availability</h3>
           <p className="text-sm text-muted-foreground">
-            Just a helpful conversation
+            Only 25 founding church spots available
           </p>
         </div>
       </div>

@@ -1,32 +1,30 @@
 /**
- * Signup Page - Honest trial activation page
+ * Signup Page - Request Early Access
  *
- * Simple, truthful conversion page for GHL agencies to start their free trial.
- * No fake testimonials, no unverified claims, just the real value proposition.
- *
- * Business Objectives:
- * - Convert interested agencies into trial users
- * - Communicate real platform value without exaggeration
- * - Reduce signup friction with "no credit card required" messaging
- * - Build trust through honesty and transparency
+ * Early access application page for founding churches. Explains the
+ * founding church program and directs to account creation.
  *
  * @page SignupPage
  * @route /signup
  * @access Public (no authentication required)
- * @returns {JSX.Element} Signup page with 14-day trial offer
+ * @returns {JSX.Element} Early access signup page with founding benefits
  */
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 
 const benefits = [
-  "Complete 8-module GHL onboarding system",
-  "Ready to use immediately (no setup)",
-  "Client progress tracking dashboard",
-  "14 days to test with real clients",
-  "Cancel anytime, no BS",
+  "50% off lifetime pricing (locked in forever)",
+  "FREE ScanSnap ix1600 scanner ($425 value)",
+  "Direct input on feature roadmap",
+  "Monthly feedback calls with our team",
+  "White-glove onboarding and setup",
+  "Priority access to new features",
+  "30-day money back guarantee, no questions asked",
+  "Limited to first 25 founding churches only",
 ];
 
 export default function SignupPage() {
@@ -34,31 +32,30 @@ export default function SignupPage() {
     <div className="container mx-auto px-4 py-16 max-w-2xl">
       {/* Hero Section */}
       <div className="text-center space-y-6 mb-12">
+        <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
+          Early Access • Limited to 25 Founding Churches
+        </Badge>
         <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-          Ready to stop being GHL support?
+          Join the 25 Founding Churches
         </h1>
         <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl">
-          Join forward-thinking agencies using Sidecar to transform confused GHL
-          clients into power users who actually launch campaigns and stick
-          around.
+          NewLife Church reduced data entry from 20 hours to under 2 hours
+          weekly. Get the same results plus lifetime benefits as a founding
+          church.
         </p>
       </div>
 
       {/* Single centered Sign Up Card */}
       <Card className="border-primary shadow-lg">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
-            Start Your 14-Day Free Trial
-          </CardTitle>
+          <CardTitle className="text-2xl">Request Early Access</CardTitle>
           <p className="text-muted-foreground">
-            No credit card required. Full access to all features.
+            Create your account to apply for founding church program
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-4">
-            <h3 className="font-semibold">
-              What&apos;s included in your trial:
-            </h3>
+            <h3 className="font-semibold">Founding Church Benefits:</h3>
             <ul className="space-y-3">
               {benefits.map((benefit, index) => (
                 <li key={index} className="flex items-center gap-3">
@@ -73,19 +70,22 @@ export default function SignupPage() {
 
           <Link href="/login" className="block">
             <Button size="lg" className="w-full">
-              Start Free Trial
+              Request Early Access
             </Button>
           </Link>
 
           <p className="text-sm text-muted-foreground text-center mt-2 mb-4">
-            Sign in with GitHub or email to continue. New users automatically
-            get a 14-day trial.
+            Sign in with GitHub or email to create your account. We&apos;ll
+            review your application and reach out within 24 hours.
           </p>
 
-          <p className="text-xs text-muted-foreground text-center">
-            By signing up, you agree to our Terms of Service and Privacy Policy.
-            Cancel anytime during your trial with no charges.
-          </p>
+          <div className="bg-muted/50 rounded-lg p-4 text-center">
+            <p className="text-sm font-medium mb-2">Tested at NewLife Church</p>
+            <p className="text-xs text-muted-foreground">
+              Processing 500+ cards weekly across 5 campuses since October 2024.
+              Founding churches begin onboarding January 2025.
+            </p>
+          </div>
 
           <div className="text-center">
             <p className="text-sm text-muted-foreground">

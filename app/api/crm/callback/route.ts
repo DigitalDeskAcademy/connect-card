@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
+import { env } from "@/lib/env";
 
 /**
  * GHL OAuth Callback Endpoint
@@ -38,9 +39,9 @@ export async function GET(req: NextRequest) {
     }
 
     // 3. Exchange authorization code for tokens
-    const clientId = process.env.GHL_CLIENT_ID;
-    const clientSecret = process.env.GHL_CLIENT_SECRET;
-    const redirectUri = process.env.GHL_REDIRECT_URI;
+    const clientId = env.GHL_CLIENT_ID;
+    const clientSecret = env.GHL_CLIENT_SECRET;
+    const redirectUri = env.GHL_REDIRECT_URI;
 
     if (!clientId || !clientSecret || !redirectUri) {
       return NextResponse.redirect(

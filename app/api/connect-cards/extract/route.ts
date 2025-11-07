@@ -1,20 +1,98 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
+import arcjet, { fixedWindow } from "@/lib/arcjet";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { prisma } from "@/lib/db";
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
   apiKey: env.ANTHROPIC_API_KEY,
 });
 
+// Rate limiting: Very strict for expensive AI API calls
+const aj = arcjet.withRule(
+  fixedWindow({
+    mode: "LIVE",
+    window: "1m",
+    max: 3, // Only 3 extractions per minute (Claude Vision is expensive)
+  })
+);
+
 export async function POST(request: NextRequest) {
   try {
-    const { imageData, mediaType } = await request.json();
+    // 1. Authentication check
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: "Unauthorized - authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // 2. Parse request body (read once)
+    const body = await request.json();
+    const { imageData, mediaType, organizationSlug } = body;
+
+    if (!organizationSlug) {
+      return NextResponse.json(
+        { error: "Organization slug is required" },
+        { status: 400 }
+      );
+    }
 
     if (!imageData || !mediaType) {
       return NextResponse.json(
         { error: "Image data and media type are required" },
         { status: 400 }
+      );
+    }
+
+    // 3. Verify user has access to organization
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        organizationId: true,
+        organization: {
+          select: {
+            id: true,
+            slug: true,
+          },
+        },
+      },
+    });
+
+    if (!user?.organization || user.organization.slug !== organizationSlug) {
+      return NextResponse.json(
+        { error: "Forbidden - invalid organization access" },
+        { status: 403 }
+      );
+    }
+
+    // 4. Rate limiting (use request, not the original parameter)
+    const req = await import("@arcjet/next").then(m => m.request());
+    const decision = await aj.protect(await req, {
+      fingerprint: `${session.user.id}_${user.organization.id}_extract`,
+    });
+
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
+        return NextResponse.json(
+          {
+            error:
+              "Rate limited - too many extraction requests. Please wait before trying again.",
+          },
+          { status: 429 }
+        );
+      }
+      return NextResponse.json(
+        { error: "Request blocked by security policy" },
+        { status: 403 }
       );
     }
 

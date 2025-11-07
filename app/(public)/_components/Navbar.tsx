@@ -166,7 +166,7 @@ export function Navbar() {
           }
           className="flex items-center mr-4"
         >
-          <span className="font-bold text-2xl">SideCar.</span>
+          <span className="font-bold text-2xl">Church Sync AI</span>
         </Link>
 
         {/* Desktop Navigation Menu - Hidden on mobile, full width on desktop */}

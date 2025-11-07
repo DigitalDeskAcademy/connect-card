@@ -13,6 +13,7 @@ export const env = createEnv({
     AUTH_GITHUB_CLIENT_ID_LIVE_PREVIEW: z.string().min(1).optional(),
     AUTH_GITHUB_CLIENT_SECRET_LIVE_PREVIEW: z.string().min(1).optional(),
     RESEND_API_KEY: z.string().min(1),
+    RESEND_FROM_EMAIL: z.string().email().optional(),
     ARCJET_KEY: z.string().min(1),
     AWS_ACCESS_KEY_ID: z.string().min(1),
     AWS_SECRET_ACCESS_KEY: z.string().min(1),
@@ -22,8 +23,11 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
+    S3_UPLOAD_ALLOWED_DOMAINS: z.string().optional(), // Comma-separated production domains
+    PLATFORM_ADMIN_EMAIL: z.string().email().optional(), // Platform admin email for auto-promotion
     GHL_CLIENT_ID: z.string().min(1).optional(), // GoHighLevel - Phase 5 feature
     GHL_CLIENT_SECRET: z.string().min(1).optional(),
+    GHL_REDIRECT_URI: z.string().url().optional(),
   },
 
   client: {

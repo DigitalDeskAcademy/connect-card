@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
 
 /**
  * Get valid GHL access token for organization
@@ -26,8 +27,8 @@ export async function getGHLAccessToken(
     }
 
     // 3. Token expired - refresh it
-    const clientId = process.env.GHL_CLIENT_ID;
-    const clientSecret = process.env.GHL_CLIENT_SECRET;
+    const clientId = env.GHL_CLIENT_ID;
+    const clientSecret = env.GHL_CLIENT_SECRET;
 
     if (!clientId || !clientSecret) {
       throw new Error("GHL OAuth credentials not configured");

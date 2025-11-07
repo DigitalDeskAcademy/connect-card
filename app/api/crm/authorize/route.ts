@@ -1,5 +1,6 @@
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import { NextResponse } from "next/server";
+import { env } from "@/lib/env";
 
 /**
  * GHL OAuth Authorization Endpoint
@@ -11,8 +12,8 @@ export async function GET() {
     await requireAdmin();
 
     // 2. Get OAuth credentials from environment
-    const clientId = process.env.GHL_CLIENT_ID;
-    const redirectUri = process.env.GHL_REDIRECT_URI;
+    const clientId = env.GHL_CLIENT_ID;
+    const redirectUri = env.GHL_REDIRECT_URI;
 
     if (!clientId || !redirectUri) {
       return NextResponse.json(
