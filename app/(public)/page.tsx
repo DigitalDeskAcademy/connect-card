@@ -92,7 +92,10 @@ export default function Home() {
             Early Access • Limited to 25 Founding Churches
           </Badge>
 
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight max-w-4xl">
+          <h1
+            id="hero-title"
+            className="text-4xl md:text-6xl font-bold tracking-tight max-w-4xl"
+          >
             We&apos;re Building the Connect Card Solution Churches Actually Need
           </h1>
 
@@ -150,7 +153,7 @@ export default function Home() {
       {/* Problem Validation Section */}
       <section className="mb-40">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-8">
+          <h2 id="challenges-title" className="text-3xl font-bold mb-8">
             Does This Sound Like Your Monday?
           </h2>
         </div>
@@ -202,7 +205,7 @@ export default function Home() {
       {/* Our Story Section */}
       <section className="mb-40" id="story">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 id="partnership-title" className="text-3xl font-bold mb-4">
             Built With Real Churches, For Real Churches
           </h2>
         </div>
@@ -246,7 +249,9 @@ export default function Home() {
           </div>
 
           <div className="bg-primary/5 rounded-lg p-8 border-l-4 border-primary">
-            <h3 className="font-semibold mb-4">The Partnership:</h3>
+            <h3 id="partnership-details" className="font-semibold mb-4">
+              The Partnership:
+            </h3>
             <p className="text-muted-foreground mb-6">
               We bring the technical expertise. NewLife&apos;s team brings 20
               years of church operations experience. Together, we built what
@@ -302,7 +307,7 @@ export default function Home() {
       {/* What We've Built Section */}
       <section className="mb-40" id="solution">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 id="workflow-title" className="text-3xl font-bold mb-4">
             A Complete Connect Card Workflow (That Actually Works)
           </h2>
           <p className="text-muted-foreground">
@@ -328,7 +333,7 @@ export default function Home() {
 
         {/* Live Statistics */}
         <div className="bg-muted/30 rounded-lg p-8">
-          <h3 className="font-semibold text-center mb-8">
+          <h3 id="stats-title" className="font-semibold text-center mb-8">
             Live Statistics from NewLife Church:
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
@@ -363,7 +368,9 @@ export default function Home() {
       {/* Founding Church Benefits */}
       <section className="mb-40" id="benefits">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Become a Founding Church</h2>
+          <h2 id="benefits-title" className="text-3xl font-bold mb-4">
+            Become a Founding Church
+          </h2>
           <p className="text-muted-foreground">
             Exclusive Benefits for Our First 25 Churches
           </p>
@@ -445,7 +452,7 @@ export default function Home() {
       {/* Pricing Section */}
       <section className="mb-40" id="pricing">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 id="pricing-title" className="text-3xl font-bold mb-4">
             Founding Church Pricing (50% Off Forever)
           </h2>
           <p className="text-muted-foreground">
@@ -613,7 +620,9 @@ export default function Home() {
       {/* FAQ Section */}
       <section className="mb-40">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Early Access Questions</h2>
+          <h2 id="faq-title" className="text-3xl font-bold mb-4">
+            Early Access Questions
+          </h2>
         </div>
 
         <div className="max-w-3xl mx-auto space-y-6">
@@ -685,7 +694,7 @@ export default function Home() {
       {/* Final CTA Section */}
       <section className="mb-40" id="signup">
         <div className="text-center">
-          <h2 className="text-3xl font-bold mb-4">
+          <h2 id="cta-title" className="text-3xl font-bold mb-4">
             Join Us in Solving Monday Morning Data Entry
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">

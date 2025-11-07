@@ -14,17 +14,20 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ### Issues Identified
 
 **Critical (Legal Risk):**
+
 - Multiple H1 tags per page (WCAG 2.1.6 violation)
 - Broken heading hierarchy (WCAG 1.3.1 violation)
 - Missing semantic HTML (WCAG 1.3.1 violation)
 - Touch targets below 44px minimum (Usability issue)
 
 **Performance:**
+
 - Homepage using client components unnecessarily
 - No loading states or suspense boundaries
 - Missing metadata for SEO
 
 **UX:**
+
 - Inconsistent FAQ patterns (static on homepage, accordion on pricing)
 - Brand terminology inconsistencies (ScanSnap vs connect card scanner)
 
@@ -33,12 +36,14 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ## PR Strategy
 
 ### Rules
+
 1. **One PR per phase** - Each phase is independently testable
 2. **Atomic commits within PRs** - Each fix is its own commit
 3. **No cross-phase dependencies** - Can be reviewed/deployed independently
 4. **Testing before merge** - All acceptance criteria must pass
 
 ### PR Sequence
+
 1. **PR #18:** Fix critical WCAG 2.1 Level A violations (`fix/accessibility-compliance`)
 2. **PR #19:** Convert homepage to Server Component for SSR/SEO (`perf/server-components`)
 3. **PR #20:** Add FAQ accordion and brand consistency (`feat/ux-improvements`)
@@ -57,11 +62,13 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 **File:** `app/(public)/page.tsx`
 
 **Changes:**
+
 - Remove duplicate H1 tags (currently 3, should be 1)
 - Ensure sequential heading levels (H1→H2→H3, no jumps)
 - Add IDs to all headings for ARIA references
 
 **Current Issues:**
+
 ```tsx
 // Line 95 - First H1 ✅
 <h1>We're Building the Connect Card Solution...</h1>
@@ -78,6 +85,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ```
 
 **Fix Pattern:**
+
 ```tsx
 // Keep one H1 per page
 <h1 id="hero-title">We're Building the Connect Card Solution...</h1>
@@ -94,6 +102,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Only 1 H1 on the page
 - [ ] All headings sequential (no level jumps)
 - [ ] Lighthouse accessibility: No heading errors
@@ -108,18 +117,24 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 **File:** `app/(public)/page.tsx`
 
 **Changes:**
+
 - Wrap main content in `<article>`
 - Convert generic divs to `<section>` with `aria-labelledby`
 - Link ARIA labels to heading IDs
 
 **Current Structure (WRONG):**
+
 ```tsx
 <div className="container">
   <div className="space-y-16">
-    <div>  {/* Generic div */}
+    <div>
+      {" "}
+      {/* Generic div */}
       <h1>Hero Title</h1>
     </div>
-    <div>  {/* Generic div */}
+    <div>
+      {" "}
+      {/* Generic div */}
       <h2>Section Title</h2>
     </div>
   </div>
@@ -127,6 +142,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ```
 
 **Fixed Structure:**
+
 ```tsx
 <div className="container">
   <article>
@@ -142,6 +158,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ```
 
 **Sections to Create:**
+
 1. Hero section (`aria-labelledby="hero-title"`)
 2. Challenges section (`aria-labelledby="challenges-title"`)
 3. Partnership section (`aria-labelledby="partnership-title"`)
@@ -152,6 +169,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 8. CTA section (`aria-labelledby="cta-title"`)
 
 **Acceptance Criteria:**
+
 - [ ] Content wrapped in `<article>`
 - [ ] All major sections use `<section>` with `aria-labelledby`
 - [ ] All ARIA labels link to valid heading IDs
@@ -165,11 +183,13 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ### Commit 1.3: Fix touch target sizes
 
 **Files:**
+
 - `app/(public)/_components/PublicHeader.tsx`
 - `app/(public)/_components/Navbar.tsx`
 - `app/(public)/_components/PublicSidebar.tsx`
 
 **Current Violations (Mobile 375px):**
+
 - Toggle theme button: 36×36px (needs 44×44px)
 - Login link: 68×36px (height needs 44px)
 - Toggle sidebar: 28×28px (needs 44×44px)
@@ -177,6 +197,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 **Changes:**
 
 **PublicHeader.tsx:**
+
 ```tsx
 // BEFORE
 <Button size="icon" className="h-9 w-9">  {/* 36×36px ❌ */}
@@ -190,6 +211,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ```
 
 **Navigation Links:**
+
 ```tsx
 // BEFORE
 <Link className="text-sm">  {/* Variable height ❌ */}
@@ -203,6 +225,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ```
 
 **Acceptance Criteria:**
+
 - [ ] All icon buttons ≥44×44px
 - [ ] All navigation links ≥44px height
 - [ ] Mobile tested at 375px width
@@ -216,18 +239,21 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ### Commit 1.4: Apply accessibility fixes to all public pages
 
 **Files:**
+
 - `app/(public)/features/page.tsx`
 - `app/(public)/pricing/page.tsx`
 - `app/(public)/demo/page.tsx`
 - `app/(public)/signup/page.tsx`
 
 **Changes:**
+
 - Apply same heading hierarchy fixes
 - Add semantic HTML (`<article>`, `<section>`)
 - Ensure only 1 H1 per page
 - Sequential heading levels
 
 **Acceptance Criteria:**
+
 - [ ] All pages: Only 1 H1
 - [ ] All pages: Sequential headings
 - [ ] All pages: Semantic HTML structure
@@ -239,12 +265,14 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 ### Phase 1 PR Checklist
 
 **Before Creating PR:**
+
 - [ ] All 4 commits completed
 - [ ] Each commit has clear message
 - [ ] Code formatted with `pnpm format`
 - [ ] Build succeeds: `pnpm build`
 
 **Testing Requirements:**
+
 - [ ] Lighthouse accessibility score: 100
 - [ ] axe DevTools: 0 violations
 - [ ] WAVE: 0 errors
@@ -253,17 +281,21 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 - [ ] No visual regressions
 
 **PR Description Template:**
+
 ```markdown
 ## Summary
+
 Fixes critical WCAG 2.1 Level A violations across all public pages.
 
 ## Changes
+
 - Fixed heading hierarchy (1 H1 per page, sequential levels)
 - Added semantic HTML structure (article, section with ARIA)
 - Increased touch targets to 44px minimum
 - Applied fixes to all public pages
 
 ## Testing
+
 - ✅ Lighthouse accessibility: 100
 - ✅ axe DevTools: 0 violations
 - ✅ WAVE: 0 errors
@@ -271,6 +303,7 @@ Fixes critical WCAG 2.1 Level A violations across all public pages.
 - ✅ Mobile tested (375px)
 
 ## Before/After Screenshots
+
 [Attach screenshots showing heading structure, touch targets]
 
 Closes #[issue-number]
@@ -294,6 +327,7 @@ Closes #[issue-number]
 **File:** `app/(public)/_components/AdminLink.tsx` (NEW)
 
 **Implementation:**
+
 ```tsx
 "use client";
 
@@ -314,10 +348,7 @@ export default function AdminLink({ session }: AdminLinkProps) {
   }
 
   return (
-    <Link
-      href="/platform"
-      className={buttonVariants({ variant: "default" })}
-    >
+    <Link href="/platform" className={buttonVariants({ variant: "default" })}>
       Admin Dashboard
     </Link>
   );
@@ -325,6 +356,7 @@ export default function AdminLink({ session }: AdminLinkProps) {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Component compiles without errors
 - [ ] TypeScript types are correct
 - [ ] Displays only for platform_admin role
@@ -341,22 +373,24 @@ export default function AdminLink({ session }: AdminLinkProps) {
 **Changes:**
 
 **REMOVE:**
+
 ```tsx
-"use client";  // Line 25 - DELETE THIS
-import { authClient } from "@/lib/auth-client";  // DELETE THIS
+"use client"; // Line 25 - DELETE THIS
+import { authClient } from "@/lib/auth-client"; // DELETE THIS
 
 // Inside component:
-const { data: session } = authClient.useSession();  // DELETE THIS
+const { data: session } = authClient.useSession(); // DELETE THIS
 ```
 
 **ADD:**
+
 ```tsx
-import { auth } from "@/lib/auth";  // Server-side auth
-import AdminLink from "./_components/AdminLink";  // Client component
+import { auth } from "@/lib/auth"; // Server-side auth
+import AdminLink from "./_components/AdminLink"; // Client component
 
 // Make function async
 export default async function HomePage() {
-  const session = await auth();  // Server-side data fetch
+  const session = await auth(); // Server-side data fetch
 
   return (
     <div>
@@ -368,10 +402,12 @@ export default async function HomePage() {
 ```
 
 **Before/After Bundle Size:**
+
 - Before: ~250KB (entire page + auth client + React hooks)
 - After: ~8KB (just AdminLink component)
 
 **Acceptance Criteria:**
+
 - [ ] No `"use client"` directive in page.tsx
 - [ ] Function is `async`
 - [ ] Uses server-side `auth()` function
@@ -389,17 +425,26 @@ export default async function HomePage() {
 **File:** `app/(public)/page.tsx`
 
 **Implementation:**
+
 ```tsx
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Church Sync - Connect Card Management for Churches",
-  description: "AI-powered connect card processing. Built with NewLife Church. Transform 20 hours of manual entry into 2 hours. 50% off for 25 founding churches.",
-  keywords: ["church management", "connect cards", "church software", "visitor management", "church administration"],
+  description:
+    "AI-powered connect card processing. Built with NewLife Church. Transform 20 hours of manual entry into 2 hours. 50% off for 25 founding churches.",
+  keywords: [
+    "church management",
+    "connect cards",
+    "church software",
+    "visitor management",
+    "church administration",
+  ],
   authors: [{ name: "Church Sync" }],
   openGraph: {
     title: "Church Sync - Connect Card Management for Churches",
-    description: "Transform connect card processing from 20 hours to 2 hours weekly with AI-powered automation",
+    description:
+      "Transform connect card processing from 20 hours to 2 hours weekly with AI-powered automation",
     url: "https://churchsync.com",
     siteName: "Church Sync",
     images: [
@@ -427,6 +472,7 @@ export const metadata: Metadata = {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Metadata appears in HTML `<head>`
 - [ ] Social media preview works (test with Facebook debugger, Twitter card validator)
 - [ ] Google Search Console validates metadata
@@ -441,6 +487,7 @@ export const metadata: Metadata = {
 **File:** `app/(public)/loading.tsx` (NEW)
 
 **Implementation:**
+
 ```tsx
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -482,6 +529,7 @@ export default function Loading() {
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Loading state shows during navigation
 - [ ] Roughly matches page layout
 - [ ] No layout shift when content loads
@@ -494,11 +542,13 @@ export default function Loading() {
 ### Phase 2 PR Checklist
 
 **Before Creating PR:**
+
 - [ ] All 4 commits completed
 - [ ] Page functionality unchanged
 - [ ] Build succeeds
 
 **Testing Requirements:**
+
 - [ ] Lighthouse performance: +15 points minimum
 - [ ] View source shows HTML (not just `<div id="root">`)
 - [ ] Admin link works for platform_admin
@@ -507,6 +557,7 @@ export default function Loading() {
 - [ ] No TypeScript errors
 
 **Performance Metrics to Record:**
+
 - [ ] Before: Lighthouse Performance score
 - [ ] After: Lighthouse Performance score
 - [ ] Before: First Contentful Paint (FCP)
@@ -532,6 +583,7 @@ export default function Loading() {
 **File:** `app/(public)/page.tsx`
 
 **Current (Static List):**
+
 ```tsx
 // Lines ~308-335
 <div>
@@ -545,6 +597,7 @@ export default function Loading() {
 ```
 
 **Fixed (Accordion):**
+
 ```tsx
 import {
   Accordion,
@@ -568,47 +621,48 @@ import {
       <AccordionTrigger>Who built this?</AccordionTrigger>
       <AccordionContent>
         Church Sync was developed in partnership with NewLife Church's
-        operations team. We build the technology, they ensure it works
-        for real church workflows.
+        operations team. We build the technology, they ensure it works for real
+        church workflows.
       </AccordionContent>
     </AccordionItem>
 
     <AccordionItem value="item-2">
       <AccordionTrigger>When can we start?</AccordionTrigger>
       <AccordionContent>
-        NewLife has been live since October 2024. Founding churches
-        begin onboarding January 2025.
+        NewLife has been live since October 2024. Founding churches begin
+        onboarding January 2025.
       </AccordionContent>
     </AccordionItem>
 
     <AccordionItem value="item-3">
       <AccordionTrigger>What if it doesn't work for us?</AccordionTrigger>
       <AccordionContent>
-        30-day money back guarantee, no questions asked. We'll even pay
-        return shipping on the scanner.
+        30-day money back guarantee, no questions asked. We'll even pay return
+        shipping on the scanner.
       </AccordionContent>
     </AccordionItem>
 
     <AccordionItem value="item-4">
       <AccordionTrigger>Can we influence features?</AccordionTrigger>
       <AccordionContent>
-        Absolutely. Founding churches have monthly feedback calls and
-        direct input on our roadmap.
+        Absolutely. Founding churches have monthly feedback calls and direct
+        input on our roadmap.
       </AccordionContent>
     </AccordionItem>
 
     <AccordionItem value="item-5">
       <AccordionTrigger>Is our data secure?</AccordionTrigger>
       <AccordionContent>
-        Bank-level encryption. Complete church isolation. Your data
-        never mingles with other churches.
+        Bank-level encryption. Complete church isolation. Your data never
+        mingles with other churches.
       </AccordionContent>
     </AccordionItem>
   </Accordion>
-</section>
+</section>;
 ```
 
 **Acceptance Criteria:**
+
 - [ ] Accordion imports correctly
 - [ ] First question open by default
 - [ ] Click to expand/collapse works
@@ -623,6 +677,7 @@ import {
 ### Commit 3.2: Replace all ScanSnap references
 
 **Files:**
+
 - `app/(public)/page.tsx` (2 references)
 - `app/(public)/features/page.tsx` (2 references)
 - `app/(public)/signup/page.tsx` (1 reference)
@@ -630,6 +685,7 @@ import {
 - `app/(public)/pricing/page.tsx` (1 reference - already fixed)
 
 **Find/Replace:**
+
 ```bash
 ScanSnap → connect card scanner
 ```
@@ -637,20 +693,25 @@ ScanSnap → connect card scanner
 **Specific Changes:**
 
 **page.tsx:**
+
 - Line 55: "Use a ScanSnap or phone camera" → "Use a connect card scanner or phone camera"
 - Line 173: "$425 ScanSnap ix1600" → "$425 connect card scanner"
 
 **features/page.tsx:**
+
 - Line 36: "ScanSnap scanner" → "connect card scanner"
 - Line 161: "ScanSnap ix1600" → "connect card scanner"
 
 **signup/page.tsx:**
+
 - Line 21: "FREE ScanSnap ix1600 scanner" → "FREE connect card scanner"
 
 **demo/page.tsx:**
+
 - Line 92: "FREE ScanSnap scanner" → "FREE connect card scanner"
 
 **Acceptance Criteria:**
+
 - [ ] No "ScanSnap" mentions on any public page
 - [ ] All references say "connect card scanner"
 - [ ] Copy still reads naturally
@@ -665,11 +726,13 @@ ScanSnap → connect card scanner
 **File:** `app/(public)/pricing/page.tsx`
 
 **Changes:**
+
 - Verify accordion matches homepage implementation
 - Ensure same default open behavior
 - Check spacing consistency
 
 **Acceptance Criteria:**
+
 - [ ] Both FAQ sections visually identical
 - [ ] Same spacing/padding
 - [ ] Same default open state
@@ -680,11 +743,13 @@ ScanSnap → connect card scanner
 ### Phase 3 PR Checklist
 
 **Before Creating PR:**
+
 - [ ] All 3 commits completed
 - [ ] Visual QA passed
 - [ ] Build succeeds
 
 **Testing Requirements:**
+
 - [ ] Accordion works on both pages
 - [ ] Keyboard navigation tested
 - [ ] Mobile tested
@@ -763,16 +828,19 @@ EOF
 ## TESTING TOOLS
 
 ### Automated Testing
+
 - **Lighthouse:** Chrome DevTools > Lighthouse tab
 - **axe DevTools:** Browser extension (free)
 - **WAVE:** https://wave.webaim.org/extension/
 
 ### Manual Testing
+
 - **Screen Reader (Windows):** NVDA (free) - https://www.nvaccess.org/
 - **Screen Reader (Mac):** VoiceOver (built-in) - Cmd+F5
 - **Mobile Testing:** Chrome DevTools > Toggle device toolbar > iPhone SE
 
 ### Commands
+
 ```bash
 # Build verification
 pnpm build
@@ -792,16 +860,19 @@ npm run lighthouse
 ## SUCCESS METRICS
 
 ### Phase 1 (Accessibility)
+
 - **Target:** Lighthouse Accessibility Score = 100
 - **Target:** axe DevTools Violations = 0
 - **Target:** WCAG 2.1 Level A Compliance = 100%
 
 ### Phase 2 (Performance)
+
 - **Target:** Lighthouse Performance +15 points
 - **Target:** First Contentful Paint -30% reduction
 - **Target:** Total Blocking Time -50% reduction
 
 ### Phase 3 (UX)
+
 - **Target:** UX Consistency = 100%
 - **Target:** Brand Terminology = 100% consistent
 
@@ -835,29 +906,32 @@ git push origin main
 
 ### Change Log
 
-| Date | Phase | Status | Notes |
-|------|-------|--------|-------|
-| 2025-11-07 | Planning | Complete | Initial plan created |
-| TBD | Phase 1 | Pending | Awaiting implementation |
-| TBD | Phase 2 | Pending | Awaiting Phase 1 merge |
-| TBD | Phase 3 | Pending | Awaiting Phase 2 merge |
+| Date       | Phase    | Status   | Notes                   |
+| ---------- | -------- | -------- | ----------------------- |
+| 2025-11-07 | Planning | Complete | Initial plan created    |
+| TBD        | Phase 1  | Pending  | Awaiting implementation |
+| TBD        | Phase 2  | Pending  | Awaiting Phase 1 merge  |
+| TBD        | Phase 3  | Pending  | Awaiting Phase 2 merge  |
 
 ---
 
 ## REFERENCES
 
 ### Standards
+
 - [WCAG 2.1 Guidelines](https://www.w3.org/WAI/WCAG21/quickref/)
 - [HTML Living Standard](https://html.spec.whatwg.org/)
 - [Next.js 15 Documentation](https://nextjs.org/docs)
 - [React Server Components](https://react.dev/reference/rsc/server-components)
 
 ### Tools
+
 - [Lighthouse](https://developer.chrome.com/docs/lighthouse/)
 - [axe DevTools](https://www.deque.com/axe/devtools/)
 - [WAVE](https://wave.webaim.org/)
 
 ### Research
+
 - [Nielsen Norman Group - Progressive Disclosure](https://www.nngroup.com/articles/progressive-disclosure/)
 - [WebAIM Screen Reader Survey](https://webaim.org/projects/screenreadersurvey9/)
 - [Luke Wroblewski - Skeleton Screens](https://www.lukew.com/ff/entry.asp?1797)

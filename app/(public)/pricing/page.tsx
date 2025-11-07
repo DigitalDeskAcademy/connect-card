@@ -37,8 +37,8 @@ export default function PricingPage() {
 
         <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
           The first 25 churches get lifetime pricing locked in at half the
-          regular rate, plus a FREE connect card scanner ($425 value) with annual
-          plans.
+          regular rate, plus a FREE connect card scanner ($425 value) with
+          annual plans.
         </p>
       </div>
 

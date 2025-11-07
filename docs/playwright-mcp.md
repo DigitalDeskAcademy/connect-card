@@ -111,7 +111,8 @@ To reuse authenticated sessions across projects, specify a custom profile locati
 {
   "args": [
     "@playwright/mcp@latest",
-    "--user-data-dir", "/path/to/custom/profile"
+    "--user-data-dir",
+    "/path/to/custom/profile"
   ]
 }
 ```
@@ -126,8 +127,10 @@ You can also load pre-saved authentication states using `--storage-state /path/t
 {
   "args": [
     "@playwright/mcp@latest",
-    "--allowed-origins", "https://example.com;https://trusted.com",
-    "--blocked-origins", "ads.tracker.com;analytics.spam.com"
+    "--allowed-origins",
+    "https://example.com;https://trusted.com",
+    "--blocked-origins",
+    "ads.tracker.com;analytics.spam.com"
   ]
 }
 ```
@@ -138,8 +141,10 @@ The semicolon-separated lists provide allowlist and blocklist functionality. For
 {
   "args": [
     "@playwright/mcp@latest",
-    "--proxy-server", "http://proxy:3128",
-    "--proxy-bypass", ".local,.dev"
+    "--proxy-server",
+    "http://proxy:3128",
+    "--proxy-bypass",
+    ".local,.dev"
   ]
 }
 ```
@@ -152,8 +157,10 @@ Default timeouts (5 seconds for actions, 60 seconds for navigation) work for mos
 {
   "args": [
     "@playwright/mcp@latest",
-    "--timeout-action", "10000",
-    "--timeout-navigation", "120000"
+    "--timeout-action",
+    "10000",
+    "--timeout-navigation",
+    "120000"
   ]
 }
 ```
@@ -217,7 +224,7 @@ Type `/mcp` in Claude Code to view the complete tool list. **Playwright MCP prov
 
 - **browser_navigate** - Go to URLs
 - **browser_click** - Click elements by role/name
-- **browser_type** - Enter text into fields  
+- **browser_type** - Enter text into fields
 - **browser_snapshot** - Capture accessibility tree (faster than screenshots)
 - **browser_fill_form** - Fill multiple form fields at once
 - **browser_evaluate** - Execute JavaScript on the page
@@ -358,6 +365,7 @@ Each instance gets its own ephemeral browser context, enabling concurrent test e
 **Start with simple tests** and gradually increase complexity. Begin with single-page interactions before multi-step workflows. This helps you understand Claude's decision-making patterns and identify when it struggles.
 
 **Review and refactor generated code.** While Playwright MCP produces working tests, they often lack sophistication. Add:
+
 - Custom expect messages for clearer failure diagnostics
 - Proper test organization with describe/it blocks
 - Intermediate assertions to catch failures early
@@ -398,6 +406,7 @@ Verify installation by checking the cache directory. On Linux/Mac: `ls ~/.cache/
 **Cause**: MCP server started but tools aren't registering with the AI session
 
 **Solutions**:
+
 1. **Completely restart** VSCode or your terminal session
 2. **Terminate all MCP processes**: `pkill -f playwright` (Linux/Mac) or use Task Manager (Windows)
 3. **Use a specific version** instead of @latest: `@playwright/mcp@0.0.30`
@@ -462,6 +471,7 @@ Identify what's using the port: `lsof -i :3000` (Mac/Linux) or `netstat -ano | f
 **Error**: `Cannot find configuration file` or JSON parsing errors
 
 **Solutions**:
+
 1. **Verify file location**: Use full paths in your configuration
 2. **Validate JSON syntax**: Use `jq` (Linux/Mac) or an online JSON validator
 3. **Check file permissions**: Ensure the configuration file is readable
@@ -512,7 +522,7 @@ Test across different browsers in a single session:
 
 ```
 1. Navigate to example.com using chromium browser and take screenshot
-2. Navigate to example.com using firefox browser and take screenshot  
+2. Navigate to example.com using firefox browser and take screenshot
 3. Navigate to example.com using webkit browser and take screenshot
 4. Compare the three screenshots and report any visual differences
 ```
@@ -524,7 +534,7 @@ Use the `--browser` configuration option or specify browsers in prompts if your 
 After logging in manually, save the authentication state:
 
 ```
-I've logged in. Use browser_evaluate to execute: 
+I've logged in. Use browser_evaluate to execute:
 localStorage.getItem('authToken')
 
 Save this token and use storage-state to persist it
@@ -550,8 +560,10 @@ For pages with heavy JavaScript frameworks:
 {
   "args": [
     "@playwright/mcp@latest",
-    "--timeout-navigation", "120000",
-    "--timeout-action", "10000"
+    "--timeout-navigation",
+    "120000",
+    "--timeout-action",
+    "10000"
   ]
 }
 ```
@@ -591,7 +603,7 @@ After generating initial tests, refine them iteratively:
 ```
 Review the generated test file. Improve it by:
 1. Adding custom expect messages
-2. Splitting into smaller test functions  
+2. Splitting into smaller test functions
 3. Adding intermediate assertions
 4. Extracting page objects for reusable locators
 5. Adding error handling for network requests
@@ -610,6 +622,7 @@ The same prompt may produce different results across runs. **Claude 3.5 Sonnet r
 ### Code quality expectations
 
 Generated tests work but often lack sophistication. Expect to review and refactor:
+
 - **Locators may be fragile**: Overly specific selectors that break with minor UI changes
 - **Missing error handling**: No retry logic for flaky scenarios
 - **Incomplete assertions**: Tests that verify action completion but not correct state
@@ -654,6 +667,7 @@ As MCP continues evolving, keep these practices in mind for long-term success.
 The **Model Context Protocol roadmap** includes server discovery mechanisms, standardized extensions, and multimodality (video streaming, bidirectional communication). The Playwright MCP implementation will likely expand its capabilities as these features arrive.
 
 **Stay current with official sources**:
+
 - Playwright MCP GitHub: [https://github.com/microsoft/playwright-mcp](https://github.com/microsoft/playwright-mcp)
 - MCP Specification: [https://modelcontextprotocol.io/](https://modelcontextprotocol.io/)
 - Claude Documentation: [https://docs.claude.com/en/docs/claude-code/](https://docs.claude.com/en/docs/claude-code/)

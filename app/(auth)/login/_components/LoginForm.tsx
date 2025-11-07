@@ -229,9 +229,7 @@ export function LoginForm() {
         {/* Help text for new users */}
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <p className="text-xs text-muted-foreground">
-            <span className="font-bold text-primary">
-              New to Church Sync?
-            </span>{" "}
+            <span className="font-bold text-primary">New to Church Sync?</span>{" "}
             Just enter your email above. We&apos;ll create your account
             automatically when you sign in.
           </p>
