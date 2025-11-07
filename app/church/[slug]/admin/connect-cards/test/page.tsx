@@ -18,6 +18,7 @@ import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
 import { PageContainer } from "@/components/layout/page-container";
+import { env } from "@/lib/env";
 
 interface ExtractedData {
   name: string | null;
@@ -57,7 +58,7 @@ export default function ConnectCardTestPage() {
 
     try {
       // Construct full S3 URL from key
-      const bucketName = process.env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES;
+      const bucketName = env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES;
       const imageUrl = `https://${bucketName}.s3.amazonaws.com/${imageKey}`;
 
       console.log("📤 Sending image to vision API:", imageUrl);

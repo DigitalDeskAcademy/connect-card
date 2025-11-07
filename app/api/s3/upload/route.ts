@@ -85,8 +85,7 @@ function validateOrigin(origin: string | null): boolean {
 
   // Add production domains from environment variable
   // Supports comma-separated list: "domain.com,www.domain.com"
-  const productionDomains =
-    process.env.S3_UPLOAD_ALLOWED_DOMAINS?.split(",") || [];
+  const productionDomains = env.S3_UPLOAD_ALLOWED_DOMAINS?.split(",") || [];
   productionDomains.forEach(domain => {
     const trimmedDomain = domain.trim();
     if (trimmedDomain) {

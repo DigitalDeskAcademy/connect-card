@@ -117,7 +117,7 @@ export function PublicSidebar() {
                 }
               >
                 <span className="font-semibold text-[1.75rem] truncate max-w-[180px] block">
-                  SideCar.
+                  Church Sync AI
                 </span>
               </Link>
             </SidebarMenuButton>

@@ -138,7 +138,9 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Welcome to SideCar</CardTitle>
+        <CardTitle className="text-2xl font-bold">
+          Welcome to Church Sync AI
+        </CardTitle>
         <CardDescription className="text-base">
           Sign in to your account or create one instantly
         </CardDescription>
@@ -227,9 +229,11 @@ export function LoginForm() {
         {/* Help text for new users */}
         <div className="rounded-lg bg-muted/50 p-3 text-center">
           <p className="text-xs text-muted-foreground">
-            <span className="font-bold text-primary">New to SideCar?</span> Just
-            enter your email above. We&apos;ll create your account automatically
-            when you sign in.
+            <span className="font-bold text-primary">
+              New to Church Sync AI?
+            </span>{" "}
+            Just enter your email above. We&apos;ll create your account
+            automatically when you sign in.
           </p>
         </div>
       </CardContent>

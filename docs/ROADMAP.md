@@ -128,6 +128,33 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 - [x] **Pattern Enforcement** - All commands encode multi-tenant isolation, security, PageContainer usage
 - [x] **Documentation** - 17KB comprehensive reference guide (.claude/COMMANDS.md)
 
+### Public Site Early Access Copy ✅ COMPLETE (Nov 7, 2025)
+
+- [x] **Homepage Rewrite** - Early access positioning with NewLife Church validation
+  - [x] Hero section with founding church badge (25 churches, 50% off, FREE scanner)
+  - [x] Statistics display (text-6xl) showing 500+ cards weekly, 95% accuracy, 2min avg
+  - [x] Benefits section converted to 6-card grid with icons
+  - [x] Pricing cards with FREE scanner badges on Growth and Multi-Campus tiers
+- [x] **Features Page** - Battle-tested features with real-world proof
+  - [x] All features include NewLife Church validation
+  - [x] Early access CTA replacing "Start Free Trial"
+  - [x] Founding church benefits grid
+- [x] **Pricing Page** - Founding church pricing model
+  - [x] Prices: $79/$149/$299 (50% off $158/$298/$598) with strikethrough
+  - [x] FREE scanner badges on Growth and Multi-Campus cards
+  - [x] Early access FAQ section
+- [x] **Demo Page** - Live system demonstration
+  - [x] Removed Calendly placeholder sections
+  - [x] Email booking with pre-filled template
+  - [x] NewLife Church proof points
+- [x] **Signup Page** - Early access application flow
+  - [x] Founding church benefits list (8 items)
+  - [x] NewLife Church validation box
+  - [x] Application messaging vs. trial messaging
+- [x] **Branding** - Complete "SideCar" → "Church Sync AI" rebrand
+  - [x] Updated LoginForm, Navbar, PublicHeader, PublicSidebar
+- [x] **Documentation** - Added `/docs/copywriting-public-facing.md`
+
 ### Environment Setup
 
 - [ ] **Production Database** - Configure Neon production Postgres

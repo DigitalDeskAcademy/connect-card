@@ -27,6 +27,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { env } from "@/lib/env";
 
 export default async function AuthCallbackPage() {
   const session = await auth.api.getSession({
@@ -54,8 +55,8 @@ export default async function AuthCallbackPage() {
 
   // Auto-promote platform admin if email matches env variable
   if (
-    process.env.PLATFORM_ADMIN_EMAIL &&
-    user?.email === process.env.PLATFORM_ADMIN_EMAIL &&
+    env.PLATFORM_ADMIN_EMAIL &&
+    user?.email === env.PLATFORM_ADMIN_EMAIL &&
     user.role !== "platform_admin"
   ) {
     await prisma.user.update({
