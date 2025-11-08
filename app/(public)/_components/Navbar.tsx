@@ -166,7 +166,7 @@ export function Navbar() {
           }
           className="flex items-center mr-4"
         >
-          <span className="font-bold text-2xl">Church Sync AI</span>
+          <span className="font-bold text-2xl">Church Sync</span>
         </Link>
 
         {/* Desktop Navigation Menu - Hidden on mobile, full width on desktop */}
@@ -211,14 +211,20 @@ export function Navbar() {
               {/* Secondary CTA - Login for existing users */}
               <Link
                 href="/login"
-                className={buttonVariants({ variant: "secondary" })}
+                className={buttonVariants({
+                  variant: "secondary",
+                  className: "h-11",
+                })}
               >
                 Login
               </Link>
 
               {/* Primary CTA - Free trial for new users (conversion focus) */}
               {!isAgencyPage && (
-                <Link href="/signup" className={buttonVariants()}>
+                <Link
+                  href="/signup"
+                  className={buttonVariants({ className: "h-11" })}
+                >
                   Free Trial
                 </Link>
               )}

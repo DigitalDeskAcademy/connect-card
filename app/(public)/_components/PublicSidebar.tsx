@@ -117,7 +117,7 @@ export function PublicSidebar() {
                 }
               >
                 <span className="font-semibold text-[1.75rem] truncate max-w-[180px] block">
-                  Church Sync AI
+                  Church Sync
                 </span>
               </Link>
             </SidebarMenuButton>
@@ -157,7 +157,7 @@ export function PublicSidebar() {
             <Button
               variant="outline"
               size="default"
-              className="w-full"
+              className="w-full h-11"
               onClick={() => {
                 authClient.signOut({
                   fetchOptions: {
@@ -173,11 +173,16 @@ export function PublicSidebar() {
           </div>
         ) : (
           <div className="space-y-2">
-            <Button asChild variant="outline" size="default" className="w-full">
+            <Button
+              asChild
+              variant="outline"
+              size="default"
+              className="w-full h-11"
+            >
               <Link href="/login">Login</Link>
             </Button>
             {!isAgencyPage && (
-              <Button asChild size="default" className="w-full">
+              <Button asChild size="default" className="w-full h-11">
                 <Link href="/signup">Start Free Trial</Link>
               </Button>
             )}
