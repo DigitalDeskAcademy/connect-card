@@ -50,231 +50,241 @@ export default function PricingPage() {
       {/* Pricing Cards */}
       <section aria-label="Pricing Plans" className="mb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-        {/* Single Campus Plan */}
-        <Card className="flex flex-col">
-          <CardHeader className="text-center">
-            <Badge className="w-fit mx-auto mb-4">Single Campus</Badge>
-            <div className="space-y-2">
-              <div className="text-muted-foreground line-through text-lg">
-                $158/month
+          {/* Single Campus Plan */}
+          <Card className="flex flex-col">
+            <CardHeader className="text-center">
+              <Badge className="w-fit mx-auto mb-4">Single Campus</Badge>
+              <div className="space-y-2">
+                <div className="text-muted-foreground line-through text-lg">
+                  $158/month
+                </div>
+                <CardTitle className="text-6xl">$79</CardTitle>
+                <div className="text-muted-foreground">/month</div>
               </div>
-              <CardTitle className="text-6xl">$79</CardTitle>
-              <div className="text-muted-foreground">/month</div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              Perfect for single-location churches
-            </p>
-          </CardHeader>
+              <p className="text-sm text-muted-foreground mt-4">
+                Perfect for single-location churches
+              </p>
+            </CardHeader>
 
-          <CardContent className="flex-1 flex flex-col space-y-6">
-            <h3 className="font-semibold text-center">What&apos;s Included:</h3>
+            <CardContent className="flex-1 flex flex-col space-y-6">
+              <h3 className="font-semibold text-center">
+                What&apos;s Included:
+              </h3>
 
-            <ul className="space-y-4 flex-1">
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">200 cards/month</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">
-                  AI Vision extraction (high accuracy)
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">
-                  Batch scanning workflow
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">Smart review queue</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">Single location</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">Email support</span>
-              </li>
-            </ul>
+              <ul className="space-y-4 flex-1">
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">200 cards/month</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    AI Vision extraction (high accuracy)
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    Batch scanning workflow
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    Smart review queue
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">Single location</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">Email support</span>
+                </li>
+              </ul>
 
-            <div className="space-y-3">
-              <Link href="/signup" className="block">
-                <Button className="w-full cursor-pointer" size="lg">
-                  Start Today
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Multi-Campus Plan - Featured */}
-        <Card className="border-2 border-primary shadow-xl relative flex flex-col">
-          <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
-            FREE $425 Scanner
-          </Badge>
-          <CardHeader className="text-center pb-6">
-            <Badge className="w-fit mx-auto mb-4">Most Popular</Badge>
-            <div className="space-y-2">
-              <div className="text-muted-foreground line-through text-lg">
-                $298/month
+              <div className="space-y-3">
+                <Link href="/signup" className="block">
+                  <Button className="w-full cursor-pointer" size="lg">
+                    Start Today
+                  </Button>
+                </Link>
               </div>
-              <CardTitle className="text-6xl">$149</CardTitle>
-              <div className="text-muted-foreground">/month</div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              For multi-campus churches
-            </p>
-          </CardHeader>
+            </CardContent>
+          </Card>
 
-          <CardContent className="flex-1 flex flex-col space-y-6">
-            <h3 className="font-semibold text-center">What&apos;s Included:</h3>
-
-            <ul className="space-y-4 flex-1">
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
+          {/* Multi-Campus Plan - Featured */}
+          <Card className="border-2 border-primary shadow-xl relative flex flex-col">
+            <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
+              FREE $425 Scanner
+            </Badge>
+            <CardHeader className="text-center pb-6">
+              <Badge className="w-fit mx-auto mb-4">Most Popular</Badge>
+              <div className="space-y-2">
+                <div className="text-muted-foreground line-through text-lg">
+                  $298/month
                 </div>
-                <span className="text-sm font-medium">500 cards/month</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">
-                  All Single Campus features
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">
-                  FREE Scanner with annual plan
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">
-                  Multi-campus support
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">Team permissions</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">Priority support</span>
-              </li>
-            </ul>
-
-            <div className="space-y-3">
-              <Link href="/signup" className="block">
-                <Button className="w-full cursor-pointer" size="lg">
-                  Start Today
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Large Network Plan */}
-        <Card className="relative flex flex-col">
-          <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
-            FREE $425 Scanner
-          </Badge>
-          <CardHeader className="text-center">
-            <Badge className="w-fit mx-auto mb-4">Large Network</Badge>
-            <div className="space-y-2">
-              <div className="text-muted-foreground line-through text-lg">
-                $598/month
+                <CardTitle className="text-6xl">$149</CardTitle>
+                <div className="text-muted-foreground">/month</div>
               </div>
-              <CardTitle className="text-6xl">$299</CardTitle>
-              <div className="text-muted-foreground">/month</div>
-            </div>
-            <p className="text-sm text-muted-foreground mt-4">
-              For large church networks
-            </p>
-          </CardHeader>
+              <p className="text-sm text-muted-foreground mt-4">
+                For multi-campus churches
+              </p>
+            </CardHeader>
 
-          <CardContent className="flex-1 flex flex-col space-y-6">
-            <h3 className="font-semibold text-center">What&apos;s Included:</h3>
+            <CardContent className="flex-1 flex flex-col space-y-6">
+              <h3 className="font-semibold text-center">
+                What&apos;s Included:
+              </h3>
 
-            <ul className="space-y-4 flex-1">
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">Unlimited cards</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">
-                  All Multi-Campus features
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">
-                  FREE Scanner with annual plan
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">Multiple locations</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">
-                  White-glove onboarding
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
-                <div className="rounded-full p-1 bg-green-500/10 text-green-500">
-                  <CheckIcon className="size-4" />
-                </div>
-                <span className="text-sm font-medium">Phone support</span>
-              </li>
-            </ul>
+              <ul className="space-y-4 flex-1">
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">500 cards/month</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    All Single Campus features
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    FREE Scanner with annual plan
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    Multi-campus support
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">Team permissions</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">Priority support</span>
+                </li>
+              </ul>
 
-            <div className="space-y-3">
-              <Link href="/signup" className="block">
-                <Button className="w-full cursor-pointer" size="lg">
-                  Start Today
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="space-y-3">
+                <Link href="/signup" className="block">
+                  <Button className="w-full cursor-pointer" size="lg">
+                    Start Today
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Large Network Plan */}
+          <Card className="relative flex flex-col">
+            <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
+              FREE $425 Scanner
+            </Badge>
+            <CardHeader className="text-center">
+              <Badge className="w-fit mx-auto mb-4">Large Network</Badge>
+              <div className="space-y-2">
+                <div className="text-muted-foreground line-through text-lg">
+                  $598/month
+                </div>
+                <CardTitle className="text-6xl">$299</CardTitle>
+                <div className="text-muted-foreground">/month</div>
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">
+                For large church networks
+              </p>
+            </CardHeader>
+
+            <CardContent className="flex-1 flex flex-col space-y-6">
+              <h3 className="font-semibold text-center">
+                What&apos;s Included:
+              </h3>
+
+              <ul className="space-y-4 flex-1">
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">Unlimited cards</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    All Multi-Campus features
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    FREE Scanner with annual plan
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    Multiple locations
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">
+                    White-glove onboarding
+                  </span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="rounded-full p-1 bg-green-500/10 text-green-500">
+                    <CheckIcon className="size-4" />
+                  </div>
+                  <span className="text-sm font-medium">Phone support</span>
+                </li>
+              </ul>
+
+              <div className="space-y-3">
+                <Link href="/signup" className="block">
+                  <Button className="w-full cursor-pointer" size="lg">
+                    Start Today
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </section>
 
@@ -284,65 +294,65 @@ export default function PricingPage() {
           <h2 id="faq-title" className="text-3xl font-bold">
             Early Access Questions
           </h2>
-        <Accordion
-          type="single"
-          collapsible
-          className="max-w-4xl mx-auto text-left"
-          defaultValue="item-1"
-        >
-          <AccordionItem value="item-1">
-            <AccordionTrigger>Who built this?</AccordionTrigger>
-            <AccordionContent>
-              Church Sync was developed in partnership with NewLife
-              Church&apos;s operations team. We build the technology, they
-              ensure it works for real church workflows across their 5 campuses
-              and 2,000 members.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-2">
-            <AccordionTrigger>When can we start?</AccordionTrigger>
-            <AccordionContent>
-              NewLife Church has been live since October 2024. Founding churches
-              begin onboarding in January 2025. We&apos;re accepting
-              applications now for the first 25 spots.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-3">
-            <AccordionTrigger>
-              What if it doesn&apos;t work for us?
-            </AccordionTrigger>
-            <AccordionContent>
-              30-day money back guarantee, no questions asked. We&apos;ll even
-              pay return shipping on the scanner if you decide it&apos;s not the
-              right fit.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-4">
-            <AccordionTrigger>Can we influence features?</AccordionTrigger>
-            <AccordionContent>
-              Absolutely. Founding churches get monthly feedback calls and
-              direct input on our feature roadmap. Your real-world needs will
-              shape what we build next.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-5">
-            <AccordionTrigger>Is our data secure?</AccordionTrigger>
-            <AccordionContent>
-              Bank-level encryption with complete data isolation. Your church
-              data never mingles with other organizations. We use role-based
-              access control, audit logs, and regular backups.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="item-6">
-            <AccordionTrigger>What makes you different?</AccordionTrigger>
-            <AccordionContent>
-              We&apos;re partnered with church operators, not just selling
-              software. Every feature has been tested in real Sunday services at
-              NewLife Church. We understand the Monday morning data entry
-              problem because we&apos;ve solved it.
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+          <Accordion
+            type="single"
+            collapsible
+            className="max-w-4xl mx-auto text-left"
+            defaultValue="item-1"
+          >
+            <AccordionItem value="item-1">
+              <AccordionTrigger>Who built this?</AccordionTrigger>
+              <AccordionContent>
+                Church Sync was developed in partnership with NewLife
+                Church&apos;s operations team. We build the technology, they
+                ensure it works for real church workflows across their 5
+                campuses and 2,000 members.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-2">
+              <AccordionTrigger>When can we start?</AccordionTrigger>
+              <AccordionContent>
+                NewLife Church has been live since October 2024. Founding
+                churches begin onboarding in January 2025. We&apos;re accepting
+                applications now for the first 25 spots.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-3">
+              <AccordionTrigger>
+                What if it doesn&apos;t work for us?
+              </AccordionTrigger>
+              <AccordionContent>
+                30-day money back guarantee, no questions asked. We&apos;ll even
+                pay return shipping on the scanner if you decide it&apos;s not
+                the right fit.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-4">
+              <AccordionTrigger>Can we influence features?</AccordionTrigger>
+              <AccordionContent>
+                Absolutely. Founding churches get monthly feedback calls and
+                direct input on our feature roadmap. Your real-world needs will
+                shape what we build next.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-5">
+              <AccordionTrigger>Is our data secure?</AccordionTrigger>
+              <AccordionContent>
+                Bank-level encryption with complete data isolation. Your church
+                data never mingles with other organizations. We use role-based
+                access control, audit logs, and regular backups.
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="item-6">
+              <AccordionTrigger>What makes you different?</AccordionTrigger>
+              <AccordionContent>
+                We&apos;re partnered with church operators, not just selling
+                software. Every feature has been tested in real Sunday services
+                at NewLife Church. We understand the Monday morning data entry
+                problem because we&apos;ve solved it.
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </div>
       </section>
 
@@ -352,23 +362,23 @@ export default function PricingPage() {
           <h2 id="final-cta-title" className="text-3xl font-bold mb-4">
             Join the 25 Founding Churches
           </h2>
-        <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
-          NewLife Church went from 20 hours weekly to under 2 hours. Get the
-          same results plus 50% off forever, a FREE scanner, and direct input on
-          features.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/signup" className="inline-block">
-            <Button size="lg" className="cursor-pointer">
-              Request Early Access
-            </Button>
-          </Link>
-          <Link href="/demo" className="inline-block">
-            <Button size="lg" variant="outline" className="cursor-pointer">
-              Schedule a Demo
-            </Button>
-          </Link>
-        </div>
+          <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
+            NewLife Church went from 20 hours weekly to under 2 hours. Get the
+            same results plus 50% off forever, a FREE scanner, and direct input
+            on features.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup" className="inline-block">
+              <Button size="lg" className="cursor-pointer">
+                Request Early Access
+              </Button>
+            </Link>
+            <Link href="/demo" className="inline-block">
+              <Button size="lg" variant="outline" className="cursor-pointer">
+                Schedule a Demo
+              </Button>
+            </Link>
+          </div>
           <p className="text-sm text-muted-foreground mt-4">
             Limited to 25 founding churches • 30-day guarantee, no questions
             asked

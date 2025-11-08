@@ -129,18 +129,18 @@ export default function FeaturesPage() {
       {/* Features Grid */}
       <section aria-label="Features Grid" className="mb-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {features.map((feature, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="text-4xl mb-4">{feature.icon}</div>
-              <CardTitle className="text-xl">{feature.title}</CardTitle>
-            </CardHeader>
+          {features.map((feature, index) => (
+            <Card key={index} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <CardTitle className="text-xl">{feature.title}</CardTitle>
+              </CardHeader>
 
-            <CardContent>
-              <p className="text-muted-foreground">{feature.description}</p>
-            </CardContent>
-          </Card>
-        ))}
+              <CardContent>
+                <p className="text-muted-foreground">{feature.description}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
@@ -151,45 +151,49 @@ export default function FeaturesPage() {
             Join the 25 Founding Churches
           </h2>
 
-        <p className="text-muted-foreground max-w-[600px] mx-auto">
-          NewLife Church went from 20 hours of manual data entry to under 2
-          hours weekly. Now we&apos;re opening this solution to 25 churches who
-          want the same results—plus lifetime discounts and direct input on
-          features.
-        </p>
+          <p className="text-muted-foreground max-w-[600px] mx-auto">
+            NewLife Church went from 20 hours of manual data entry to under 2
+            hours weekly. Now we&apos;re opening this solution to 25 churches
+            who want the same results—plus lifetime discounts and direct input
+            on features.
+          </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto text-sm text-left mb-6">
-          <div>
-            <p className="font-semibold text-primary mb-1">50% Off Forever</p>
-            <p className="text-muted-foreground text-xs">
-              Locked-in lifetime pricing for founding churches
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto text-sm text-left mb-6">
+            <div>
+              <p className="font-semibold text-primary mb-1">50% Off Forever</p>
+              <p className="text-muted-foreground text-xs">
+                Locked-in lifetime pricing for founding churches
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold text-primary mb-1">
+                FREE $425 Scanner
+              </p>
+              <p className="text-muted-foreground text-xs">
+                ScanSnap ix1600 included with annual plan
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold text-primary mb-1">
+                Shape the Product
+              </p>
+              <p className="text-muted-foreground text-xs">
+                Monthly calls to influence feature roadmap
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-primary mb-1">FREE $425 Scanner</p>
-            <p className="text-muted-foreground text-xs">
-              ScanSnap ix1600 included with annual plan
-            </p>
-          </div>
-          <div>
-            <p className="font-semibold text-primary mb-1">Shape the Product</p>
-            <p className="text-muted-foreground text-xs">
-              Monthly calls to influence feature roadmap
-            </p>
-          </div>
-        </div>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/signup">
-            <Button size="lg">Request Early Access</Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/signup">
+              <Button size="lg">Request Early Access</Button>
+            </Link>
 
-          <Link href="/demo">
-            <Button size="lg" variant="outline">
-              Schedule a Demo
-            </Button>
-          </Link>
-        </div>
+            <Link href="/demo">
+              <Button size="lg" variant="outline">
+                Schedule a Demo
+              </Button>
+            </Link>
+          </div>
 
           <p className="text-sm text-muted-foreground mt-4">
             Limited to 25 founding churches • 30-day guarantee, no questions
