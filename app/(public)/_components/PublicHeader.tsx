@@ -24,7 +24,7 @@ export function PublicHeader() {
         <div className="ml-auto flex items-center gap-2 shrink-0">
           <ThemeToggle />
           {!session && (
-            <Button variant="outline" size="sm" className="h-9" asChild>
+            <Button variant="outline" size="sm" className="h-11" asChild>
               <Link href="/login">Login</Link>
             </Button>
           )}

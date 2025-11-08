@@ -211,14 +211,14 @@ export function Navbar() {
               {/* Secondary CTA - Login for existing users */}
               <Link
                 href="/login"
-                className={buttonVariants({ variant: "secondary" })}
+                className={buttonVariants({ variant: "secondary", className: "h-11" })}
               >
                 Login
               </Link>
 
               {/* Primary CTA - Free trial for new users (conversion focus) */}
               {!isAgencyPage && (
-                <Link href="/signup" className={buttonVariants()}>
+                <Link href="/signup" className={buttonVariants({ className: "h-11" })}>
                   Free Trial
                 </Link>
               )}
