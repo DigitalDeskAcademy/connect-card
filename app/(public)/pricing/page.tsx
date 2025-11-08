@@ -24,26 +24,32 @@ import Link from "next/link";
 
 export default function PricingPage() {
   return (
-    <div className="container mx-auto px-4 py-16">
+    <article className="container mx-auto px-4 py-16">
       {/* Hero Section */}
-      <div className="text-center space-y-6 mb-16">
-        <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
-          Early Access • Limited to 25 Founding Churches
-        </Badge>
+      <section aria-labelledby="hero-title">
+        <div className="text-center space-y-6 mb-16">
+          <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
+            Early Access • Limited to 25 Founding Churches
+          </Badge>
 
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-          Founding Church Pricing: 50% Off Forever
-        </h1>
+          <h1
+            id="hero-title"
+            className="text-4xl md:text-6xl font-bold tracking-tight"
+          >
+            Founding Church Pricing: 50% Off Forever
+          </h1>
 
-        <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          The first 25 churches get lifetime pricing locked in at half the
-          regular rate, plus a FREE connect card scanner ($425 value) with
-          annual plans.
-        </p>
-      </div>
+          <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
+            The first 25 churches get lifetime pricing locked in at half the
+            regular rate, plus a FREE connect card scanner ($425 value) with
+            annual plans.
+          </p>
+        </div>
+      </section>
 
       {/* Pricing Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-16">
+      <section aria-label="Pricing Plans" className="mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {/* Single Campus Plan */}
         <Card className="flex flex-col">
           <CardHeader className="text-center">
@@ -269,11 +275,15 @@ export default function PricingPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </section>
 
       {/* FAQ Section */}
-      <div className="text-center space-y-6 bg-muted/50 rounded-lg p-12 mb-16">
-        <h2 className="text-3xl font-bold">Early Access Questions</h2>
+      <section aria-labelledby="faq-title" className="mb-16">
+        <div className="text-center space-y-6 bg-muted/50 rounded-lg p-12">
+          <h2 id="faq-title" className="text-3xl font-bold">
+            Early Access Questions
+          </h2>
         <Accordion
           type="single"
           collapsible
@@ -333,13 +343,15 @@ export default function PricingPage() {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </div>
+        </div>
+      </section>
 
       {/* Final CTA */}
-      <div className="text-center">
-        <h2 className="text-3xl font-bold mb-4">
-          Join the 25 Founding Churches
-        </h2>
+      <section aria-labelledby="final-cta-title">
+        <div className="text-center">
+          <h2 id="final-cta-title" className="text-3xl font-bold mb-4">
+            Join the 25 Founding Churches
+          </h2>
         <p className="text-lg text-muted-foreground mb-6 max-w-2xl mx-auto">
           NewLife Church went from 20 hours weekly to under 2 hours. Get the
           same results plus 50% off forever, a FREE scanner, and direct input on
@@ -357,10 +369,12 @@ export default function PricingPage() {
             </Button>
           </Link>
         </div>
-        <p className="text-sm text-muted-foreground mt-4">
-          Limited to 25 founding churches • 30-day guarantee, no questions asked
-        </p>
-      </div>
-    </div>
+          <p className="text-sm text-muted-foreground mt-4">
+            Limited to 25 founding churches • 30-day guarantee, no questions
+            asked
+          </p>
+        </div>
+      </section>
+    </article>
   );
 }

@@ -103,26 +103,32 @@ const features = [
  */
 export default function FeaturesPage() {
   return (
-    <div className="container mx-auto px-4 py-16">
+    <article className="container mx-auto px-4 py-16">
       {/* Hero Section */}
-      <div className="text-center space-y-6 mb-16">
-        <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
-          Early Access • Built with NewLife Church
-        </Badge>
+      <section aria-labelledby="hero-title">
+        <div className="text-center space-y-6 mb-16">
+          <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
+            Early Access • Built with NewLife Church
+          </Badge>
 
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-          Features Battle-Tested on 500+ Connect Cards Weekly
-        </h1>
+          <h1
+            id="hero-title"
+            className="text-4xl md:text-6xl font-bold tracking-tight"
+          >
+            Features Battle-Tested on 500+ Connect Cards Weekly
+          </h1>
 
-        <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
-          NewLife Church runs 5 campuses through this platform. Every feature
-          below has been tested in real Sunday services, refined based on staff
-          feedback, and proven to save 18+ hours weekly.
-        </p>
-      </div>
+          <p className="max-w-[700px] mx-auto text-muted-foreground md:text-xl">
+            NewLife Church runs 5 campuses through this platform. Every feature
+            below has been tested in real Sunday services, refined based on
+            staff feedback, and proven to save 18+ hours weekly.
+          </p>
+        </div>
+      </section>
 
       {/* Features Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+      <section aria-label="Features Grid" className="mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {features.map((feature, index) => (
           <Card key={index} className="hover:shadow-lg transition-shadow">
             <CardHeader>
@@ -135,11 +141,15 @@ export default function FeaturesPage() {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      </section>
 
       {/* Call-to-Action Section */}
-      <div className="text-center space-y-6 bg-muted/50 rounded-lg p-12">
-        <h2 className="text-3xl font-bold">Join the 25 Founding Churches</h2>
+      <section aria-labelledby="cta-title">
+        <div className="text-center space-y-6 bg-muted/50 rounded-lg p-12">
+          <h2 id="cta-title" className="text-3xl font-bold">
+            Join the 25 Founding Churches
+          </h2>
 
         <p className="text-muted-foreground max-w-[600px] mx-auto">
           NewLife Church went from 20 hours of manual data entry to under 2
@@ -181,10 +191,12 @@ export default function FeaturesPage() {
           </Link>
         </div>
 
-        <p className="text-sm text-muted-foreground mt-4">
-          Limited to 25 founding churches • 30-day guarantee, no questions asked
-        </p>
-      </div>
-    </div>
+          <p className="text-sm text-muted-foreground mt-4">
+            Limited to 25 founding churches • 30-day guarantee, no questions
+            asked
+          </p>
+        </div>
+      </section>
+    </article>
   );
 }

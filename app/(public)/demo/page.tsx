@@ -17,7 +17,7 @@ import Link from "next/link";
 
 export default function DemoPage() {
   return (
-    <div className="container mx-auto px-4 py-16 max-w-4xl">
+    <article className="container mx-auto px-4 py-16 max-w-4xl">
       {/* Back to Home Link */}
       <Link
         href="/"
@@ -28,21 +28,27 @@ export default function DemoPage() {
       </Link>
 
       {/* Hero Section */}
-      <div className="text-center space-y-4 mb-12">
-        <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
-          Early Access Demo • See NewLife Church&apos;s Live System
-        </Badge>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-          See the System Processing 500+ Cards Weekly at NewLife Church
-        </h1>
-        <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl">
-          15-minute live demo showing real connect card extraction from a
-          working 5-campus church system
-        </p>
-      </div>
+      <section aria-labelledby="hero-title">
+        <div className="text-center space-y-4 mb-12">
+          <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
+            Early Access Demo • See NewLife Church&apos;s Live System
+          </Badge>
+          <h1
+            id="hero-title"
+            className="text-4xl md:text-5xl font-bold tracking-tight"
+          >
+            See the System Processing 500+ Cards Weekly at NewLife Church
+          </h1>
+          <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl">
+            15-minute live demo showing real connect card extraction from a
+            working 5-campus church system
+          </p>
+        </div>
+      </section>
 
       {/* Main Demo Card */}
-      <Card className="mb-12">
+      <section aria-label="Demo Details" className="mb-12">
+        <Card>
         <CardHeader>
           <CardTitle className="text-xl">What We&apos;ll Show You</CardTitle>
         </CardHeader>
@@ -118,10 +124,12 @@ export default function DemoPage() {
             </p>
           </div>
         </CardContent>
-      </Card>
+        </Card>
+      </section>
 
       {/* Additional Info */}
-      <div className="grid md:grid-cols-3 gap-6 text-center">
+      <section aria-label="Demo Information">
+        <div className="grid md:grid-cols-3 gap-6 text-center">
         <div>
           <Clock className="size-8 mx-auto mb-2 text-primary" />
           <h3 className="font-semibold mb-1">15 Minutes</h3>
@@ -143,7 +151,8 @@ export default function DemoPage() {
             Only 25 founding church spots available
           </p>
         </div>
-      </div>
-    </div>
+        </div>
+      </section>
+    </article>
   );
 }

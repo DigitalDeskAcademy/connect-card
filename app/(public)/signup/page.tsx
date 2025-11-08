@@ -29,24 +29,30 @@ const benefits = [
 
 export default function SignupPage() {
   return (
-    <div className="container mx-auto px-4 py-16 max-w-2xl">
+    <article className="container mx-auto px-4 py-16 max-w-2xl">
       {/* Hero Section */}
-      <div className="text-center space-y-6 mb-12">
-        <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
-          Early Access • Limited to 25 Founding Churches
-        </Badge>
-        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
-          Join the 25 Founding Churches
-        </h1>
-        <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl">
-          NewLife Church reduced data entry from 20 hours to under 2 hours
-          weekly. Get the same results plus lifetime benefits as a founding
-          church.
-        </p>
-      </div>
+      <section aria-labelledby="hero-title">
+        <div className="text-center space-y-6 mb-12">
+          <Badge className="mb-4 text-sm bg-orange-100 text-orange-800 border-orange-200">
+            Early Access • Limited to 25 Founding Churches
+          </Badge>
+          <h1
+            id="hero-title"
+            className="text-4xl md:text-5xl font-bold tracking-tight"
+          >
+            Join the 25 Founding Churches
+          </h1>
+          <p className="max-w-[600px] mx-auto text-muted-foreground md:text-xl">
+            NewLife Church reduced data entry from 20 hours to under 2 hours
+            weekly. Get the same results plus lifetime benefits as a founding
+            church.
+          </p>
+        </div>
+      </section>
 
       {/* Single centered Sign Up Card */}
-      <Card className="border-primary shadow-lg">
+      <section aria-label="Signup Form">
+        <Card className="border-primary shadow-lg">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Request Early Access</CardTitle>
           <p className="text-muted-foreground">
@@ -96,7 +102,8 @@ export default function SignupPage() {
             </p>
           </div>
         </CardContent>
-      </Card>
-    </div>
+        </Card>
+      </section>
+    </article>
   );
 }

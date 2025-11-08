@@ -173,7 +173,12 @@ export function PublicSidebar() {
           </div>
         ) : (
           <div className="space-y-2">
-            <Button asChild variant="outline" size="default" className="w-full h-11">
+            <Button
+              asChild
+              variant="outline"
+              size="default"
+              className="w-full h-11"
+            >
               <Link href="/login">Login</Link>
             </Button>
             {!isAgencyPage && (
