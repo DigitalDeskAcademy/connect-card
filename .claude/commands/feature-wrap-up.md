@@ -9,7 +9,7 @@ Complete feature workflow: build → commit → PR → merge → handoff text (c
 
 ## Your Tasks:
 
-### Phase 1: Quality Verification
+### Stage 1: Quality Verification
 
 **Step 1: Run Build**
 
@@ -45,7 +45,7 @@ If issues found, report them and ask user if acceptable to proceed.
 
 ---
 
-### Phase 2: Commit & Documentation
+### Stage 2: Commit & Documentation
 
 **Step 4: Check Git Status**
 
@@ -111,7 +111,7 @@ git commit -m "docs: update STATUS and ROADMAP for <feature-name>"
 
 ---
 
-### Phase 3: Pull Request
+### Stage 3: Pull Request
 
 **Step 10: Push Branch**
 
@@ -177,7 +177,7 @@ Store PR number for later use.
 
 ---
 
-### Phase 4: Testing & Merge
+### Stage 4: Testing & Merge
 
 **Step 13: Ask About Testing**
 
@@ -228,7 +228,7 @@ Should show "Merged" status.
 
 ---
 
-### Phase 5: Cleanup & Switch to Main
+### Stage 5: Cleanup & Switch to Main
 
 **Step 16: Switch to Main Branch**
 
@@ -263,7 +263,7 @@ Should show:
 
 ---
 
-### Phase 6: Next Feature Planning
+### Stage 6: Next Feature Planning
 
 **Step 20: Ask About Next Feature**
 
@@ -557,7 +557,7 @@ Great work on <completed-feature>! 🎉
 - Stop workflow
 - Report errors with file:line references
 - Offer to help fix
-- Resume from Phase 1 after fixes
+- Resume from Stage 1 after fixes
 
 **Commit Failures:**
 
