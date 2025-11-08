@@ -155,6 +155,20 @@ Churches manually enter connect card data (visitor info, prayer requests), which
   - [x] Updated LoginForm, Navbar, PublicHeader, PublicSidebar
 - [x] **Documentation** - Added `/docs/copywriting-public-facing.md`
 
+### Public Site Accessibility Compliance ✅ COMPLETE (Nov 7, 2025)
+
+- [x] **WCAG 2.1 Level A Compliance** - All public pages meet accessibility standards
+  - [x] Heading hierarchy fixes (removed duplicate H1s, added IDs)
+  - [x] Semantic HTML structure (article/section elements with ARIA)
+  - [x] Touch target compliance (44×44px minimum per WCAG 2.5.5)
+  - [x] All pages updated: home, features, pricing, demo, signup
+- [x] **Brand Refinement** - "Church Sync AI" → "Church Sync"
+  - [x] Removed "AI" from brand name across site
+  - [x] Softened accuracy claims (removed "95%" references)
+  - [x] Church-friendly pricing tier names
+- [x] **UX Polish** - shadcn Accordion for FAQ, button alignment
+- [x] **Documentation** - Added `/docs/technical/accessibility-modernization-plan.md`
+
 ### Environment Setup
 
 - [ ] **Production Database** - Configure Neon production Postgres
