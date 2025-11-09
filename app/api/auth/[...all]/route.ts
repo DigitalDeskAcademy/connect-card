@@ -238,6 +238,27 @@ export const { GET } = authHandlers;
  * @returns Response with auth result or security denial
  */
 export const POST = async (req: NextRequest) => {
+  /**
+   * Development-Only Exception: Anonymous Auth Bypass
+   *
+   * In development mode, skip Arcjet protection for anonymous sign-in endpoint.
+   * This enables E2E testing with Playwright without triggering bot detection.
+   *
+   * Security: Safe because:
+   * - Only enabled in NODE_ENV === 'development'
+   * - Anonymous plugin itself is only enabled in dev mode (see lib/auth.ts)
+   * - Production deployments won't have this endpoint available
+   */
+  if (
+    process.env.NODE_ENV === "development" &&
+    req.nextUrl.pathname === "/api/auth/sign-in/anonymous"
+  ) {
+    console.log(
+      "🔓 Skipping Arcjet protection for anonymous sign-in (dev mode)"
+    );
+    return authHandlers.POST(req);
+  }
+
   // Apply security protection rules before processing auth request
   const decision = await protect(req);
 
