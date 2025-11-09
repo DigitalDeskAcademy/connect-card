@@ -1,4 +1,5 @@
 "use client";
+"use no memo"; // TanStack Table returns non-memoizable functions
 
 import React, { useState } from "react";
 import {

@@ -122,6 +122,7 @@
   - Development: /session-start, /commit, /add-route, /add-server-action
   - Quality: /check-patterns, /check-security, /check-multi-tenant, /clean
   - Integration: /review-code, /update-docs, /feature-wrap-up
+- ✅ **Playwright E2E Testing** - Complete authentication infrastructure for E2E tests
 
 ---
 
@@ -206,6 +207,49 @@
 ---
 
 ## 🎯 RECENT COMPLETIONS
+
+### Playwright E2E Testing Infrastructure ✅ COMPLETED (Nov 8, 2025)
+
+- **Email OTP Authentication** - Robust E2E testing using existing Better Auth infrastructure
+  - Uses Email OTP plugin with console logging in dev mode
+  - Playwright captures OTP codes from dev server console output
+  - Real Better Auth sign-in flow (not mocked) with properly signed session tokens
+  - Zero new authentication code - leverages existing infrastructure
+- **Test Scripts** - Comprehensive test user management utilities
+  - `scripts/setup-test-user.ts` - Creates test user with proper organization membership
+  - `scripts/clear-test-sessions.ts` - Clears sessions for fresh authentication
+  - `scripts/fix-test-user.ts` - Updates existing test user (legacy, superseded by setup)
+- **Test Data** - 3 test connect card images for upload testing
+  - `public/connect-card-examples/` - Real connect card images for E2E tests
+  - Connect-Card-Test-01.png (Tanner Brandt, First Visit)
+  - Connect-Card-Test-02.png (Leanna Upchurch, Second Visit)
+  - Connect-Card-Test-03.png (Leanna Upchurch, Member)
+- **Test Workflow** - Complete E2E authentication and upload testing
+  - Start dev server with Playwright (captures console)
+  - Authenticate via Email OTP with console-captured codes
+  - Upload 3 test images and verify AI extraction
+  - Successfully tested full workflow: auth → upload → AI extraction
+- **Key Learnings** - Better Auth organization plugin requirements
+  - Requires BOTH `user.organizationId` AND `Member` table entry
+  - Session tokens are cryptographically signed (cannot be manually created)
+  - Test user needs: organizationId, role, defaultLocationId, and Member entry
+
+### Server Components Performance Optimization ✅ COMPLETED (Nov 8, 2025)
+
+- **React Compiler Fixes** - Resolved build errors for production readiness
+  - Fixed setState in useEffect error (dashboard-content-wrapper.tsx:64)
+  - Converted to ref-based tracking to prevent cascading renders
+  - Added "use no memo" directive for TanStack Table compatibility
+  - Optimized sidebar state management for better performance
+- **Schema Enhancements** - Added visit_status field support
+  - Updated Zod schema (connectCardSchema) with visit_status and first_time_visitor optional fields
+  - Support both new (visit_status) and legacy (first_time_visitor) extraction formats
+  - Maintains backwards compatibility while enabling new AI extraction capabilities
+- **Build Quality** - Production build passing with clean code
+  - All TypeScript errors resolved
+  - ESLint clean (only informational React Compiler warnings)
+  - Prettier formatting enforced via pre-commit hooks
+  - Production build verified and passing
 
 ### Public Site Accessibility Compliance ✅ COMPLETED (Nov 7, 2025)
 

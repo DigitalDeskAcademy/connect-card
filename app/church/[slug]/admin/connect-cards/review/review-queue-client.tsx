@@ -35,11 +35,14 @@ import {
   Image as ImageIcon,
   ClipboardCheck,
   ZoomIn,
+  Trash2,
+  ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
 import { approveAllCards } from "@/actions/connect-card/approve-all-cards";
 import { checkDuplicate } from "@/actions/connect-card/check-duplicate";
+import { deleteConnectCard } from "@/actions/connect-card/delete-connect-card";
 import type { ConnectCardForReview } from "@/lib/data/connect-card-review";
 import {
   VISIT_STATUS_OPTIONS,
@@ -64,20 +67,26 @@ export function ReviewQueueClient({
 
   // Form state for current card
   const currentCard = cards[currentIndex];
-  const [formData, setFormData] = useState(() =>
-    currentCard
-      ? {
-          name: currentCard.name || "",
-          email: currentCard.email || "",
-          phone: currentCard.phone || "",
-          visitType: currentCard.visitType || "First Visit",
-          interests: currentCard.interests || [],
-          volunteerCategory: "",
-          prayerRequest: currentCard.prayerRequest || "",
-          isExistingMember: false,
-        }
-      : null
-  );
+  const [formData, setFormData] = useState(() => {
+    if (!currentCard) return null;
+
+    // Normalize visitType - handle legacy "First Time Visitor" value
+    let normalizedVisitType = currentCard.visitType || "First Visit";
+    if (normalizedVisitType === "First Time Visitor") {
+      normalizedVisitType = "First Visit";
+    }
+
+    return {
+      name: currentCard.name || "",
+      email: currentCard.email || "",
+      phone: currentCard.phone || "",
+      visitType: normalizedVisitType,
+      interests: currentCard.interests || [],
+      volunteerCategory: "",
+      prayerRequest: currentCard.prayerRequest || "",
+      isExistingMember: false,
+    };
+  });
 
   // Duplicate detection state
   const [, setDuplicateInfo] = useState<{
@@ -94,6 +103,11 @@ export function ReviewQueueClient({
 
   // Image error state
   const [imageError, setImageError] = useState(false);
+
+  // Validation error state
+  const [validationErrors, setValidationErrors] = useState<{
+    volunteerCategory?: boolean;
+  }>({});
 
   // Check for duplicates when card changes
   useEffect(() => {
@@ -143,22 +157,50 @@ export function ReviewQueueClient({
 
   // Update form data when card changes
   const resetFormForCard = (card: ConnectCardForReview) => {
+    // Normalize visitType - handle legacy "First Time Visitor" value
+    let normalizedVisitType = card.visitType || "First Visit";
+    if (normalizedVisitType === "First Time Visitor") {
+      normalizedVisitType = "First Visit";
+    }
+
     setFormData({
       name: card.name || "",
       email: card.email || "",
       phone: card.phone || "",
-      visitType: card.visitType || "First Visit",
+      visitType: normalizedVisitType,
       interests: card.interests || [],
       volunteerCategory: "",
       prayerRequest: card.prayerRequest || "",
       isExistingMember: false,
     });
     setImageError(false); // Reset image error state for new card
+    setValidationErrors({}); // Clear validation errors for new card
   };
 
   // Handle save and move to next card
   async function handleSave() {
     if (!currentCard || !formData) return;
+
+    // Client-side validation
+    const errors: { volunteerCategory?: boolean } = {};
+
+    // Check if "Volunteering" is selected but no category chosen
+    if (
+      formData.interests.includes("Volunteering") &&
+      !formData.volunteerCategory
+    ) {
+      errors.volunteerCategory = true;
+    }
+
+    // If there are validation errors, show them and don't submit
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(errors);
+      toast.error("Please select a volunteer category");
+      return;
+    }
+
+    // Clear any previous validation errors
+    setValidationErrors({});
 
     startTransition(async () => {
       try {
@@ -203,12 +245,23 @@ export function ReviewQueueClient({
   // Handle interest checkbox toggle
   function toggleInterest(interest: string) {
     if (!formData) return;
+
+    const newInterests = formData.interests.includes(interest)
+      ? formData.interests.filter(i => i !== interest)
+      : [...formData.interests, interest];
+
     setFormData({
       ...formData,
-      interests: formData.interests.includes(interest)
-        ? formData.interests.filter(i => i !== interest)
-        : [...formData.interests, interest],
+      interests: newInterests,
     });
+
+    // Clear volunteer category validation error if unchecking "Volunteering"
+    if (interest === "Volunteering" && formData.interests.includes(interest)) {
+      setValidationErrors({
+        ...validationErrors,
+        volunteerCategory: false,
+      });
+    }
   }
 
   // Handle batch approval of all cards
@@ -230,6 +283,52 @@ export function ReviewQueueClient({
       } catch (error) {
         console.error("Approve all error:", error);
         toast.error("Failed to approve cards");
+      }
+    });
+  }
+
+  // Handle discarding a card (delete from database)
+  async function handleDiscard() {
+    if (!currentCard) return;
+
+    if (
+      !confirm(
+        "Are you sure you want to discard this card? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const result = await deleteConnectCard(slug, currentCard.id);
+
+        if (result.status === "success") {
+          toast.success("Connect card discarded");
+
+          // Move to next card or navigate back if this was the last one
+          if (currentIndex < cards.length - 1) {
+            const nextCard = cards[currentIndex + 1];
+            setCurrentIndex(currentIndex + 1);
+            resetFormForCard(nextCard);
+          } else if (currentIndex > 0) {
+            // If this was the last card but not the only one, go to previous
+            const prevCard = cards[currentIndex - 1];
+            setCurrentIndex(currentIndex - 1);
+            resetFormForCard(prevCard);
+          } else {
+            // This was the only card - navigate back to batches
+            router.push(`/church/${slug}/admin/connect-cards/batches`);
+          }
+
+          // Refresh to update the queue
+          router.refresh();
+        } else {
+          toast.error(result.message);
+        }
+      } catch (error) {
+        console.error("Discard error:", error);
+        toast.error("Failed to discard connect card");
       }
     });
   }
@@ -278,6 +377,19 @@ export function ReviewQueueClient({
               Accept All ({cards.length})
             </>
           )}
+        </Button>
+
+        {/* Back Button */}
+        <Button
+          onClick={() =>
+            router.push(`/church/${slug}/admin/connect-cards/batches`)
+          }
+          variant="outline"
+          size="lg"
+          disabled={isPending}
+        >
+          <ArrowLeft className="mr-2 w-5 h-5" />
+          Back
         </Button>
       </div>
 
@@ -413,7 +525,7 @@ export function ReviewQueueClient({
                   <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={currentCard.imageUrl}
+                      src={currentCard.imageUrl.trim() || undefined}
                       alt="Connect card scan"
                       className="w-full h-full object-contain"
                       onError={() => setImageError(true)}
@@ -452,7 +564,7 @@ export function ReviewQueueClient({
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5" />
-              Review & Correct Information
+              Review
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto space-y-4">
@@ -578,12 +690,26 @@ export function ReviewQueueClient({
                 </Label>
                 <Select
                   value={formData.volunteerCategory}
-                  onValueChange={value =>
-                    setFormData({ ...formData, volunteerCategory: value })
-                  }
+                  onValueChange={value => {
+                    setFormData({ ...formData, volunteerCategory: value });
+                    // Clear validation error when user selects a value
+                    if (validationErrors.volunteerCategory) {
+                      setValidationErrors({
+                        ...validationErrors,
+                        volunteerCategory: false,
+                      });
+                    }
+                  }}
                   disabled={isPending}
                 >
-                  <SelectTrigger id="volunteerCategory">
+                  <SelectTrigger
+                    id="volunteerCategory"
+                    className={
+                      validationErrors.volunteerCategory
+                        ? "border-destructive focus:ring-destructive"
+                        : ""
+                    }
+                  >
                     <SelectValue placeholder="Select volunteer category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -594,6 +720,11 @@ export function ReviewQueueClient({
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.volunteerCategory && (
+                  <p className="text-sm text-destructive">
+                    Volunteer category is required
+                  </p>
+                )}
               </div>
             )}
 
@@ -612,8 +743,8 @@ export function ReviewQueueClient({
               />
             </div>
 
-            {/* Action Button */}
-            <div className="pt-4">
+            {/* Action Buttons */}
+            <div className="pt-4 space-y-3">
               <Button
                 onClick={handleSave}
                 disabled={isPending || !formData.name}
@@ -629,6 +760,25 @@ export function ReviewQueueClient({
                   <>
                     <Save className="mr-2 w-4 h-4" />
                     Save & Next
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleDiscard}
+                variant="destructive"
+                className="w-full"
+                size="lg"
+                disabled={isPending}
+              >
+                {isPending ? (
+                  <>
+                    <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                    Discarding...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 w-4 h-4" />
+                    Discard
                   </>
                 )}
               </Button>

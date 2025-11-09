@@ -260,6 +260,7 @@ export function ConnectCardUploadClient({
       body: JSON.stringify({
         imageData: base64Image,
         mediaType: imageFile.type,
+        organizationSlug: slug,
       }),
     });
 
@@ -492,6 +493,7 @@ export function ConnectCardUploadClient({
         body: JSON.stringify({
           imageData: base64Image,
           mediaType: testImage.type,
+          organizationSlug: slug,
         }),
       });
 

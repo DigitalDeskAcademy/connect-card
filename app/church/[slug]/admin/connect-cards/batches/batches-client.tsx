@@ -1,12 +1,32 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, MapPin, Calendar, FileText } from "lucide-react";
+import {
+  Package,
+  MapPin,
+  Calendar,
+  FileText,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { deleteBatchAction } from "@/actions/connect-card/batch-actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Batch {
   id: string;
@@ -53,7 +73,33 @@ function getStatusBadge(status: string) {
 }
 
 export function BatchesClient({ batches, slug }: BatchesClientProps) {
+  const router = useRouter();
   const [filter, setFilter] = useState<string>("all");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const handleDeleteClick = (batch: Batch) => {
+    setBatchToDelete(batch);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!batchToDelete) return;
+
+    startTransition(async () => {
+      const result = await deleteBatchAction(slug, batchToDelete.id);
+
+      if (result.status === "success") {
+        toast.success(result.message);
+        setDeleteDialogOpen(false);
+        setBatchToDelete(null);
+        router.refresh(); // Refresh to show updated batch list
+      } else {
+        toast.error(result.message);
+      }
+    });
+  };
 
   // Filter batches by status
   const filteredBatches = batches.filter(batch => {
@@ -169,12 +215,71 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
                         : "Review Cards"}
                     </Link>
                   </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleDeleteClick(batch)}
+                    disabled={isPending}
+                  >
+                    {isPending && batchToDelete?.id === batch.id ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Batch?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {batchToDelete && (
+                <>
+                  Are you sure you want to delete &quot;{batchToDelete.name}
+                  &quot;?
+                  <br />
+                  <br />
+                  {batchToDelete._count.cards > 0 ? (
+                    <span className="text-destructive font-medium">
+                      This will permanently delete {batchToDelete._count.cards}{" "}
+                      card{batchToDelete._count.cards !== 1 ? "s" : ""} and
+                      cannot be undone.
+                    </span>
+                  ) : (
+                    <span>
+                      This batch has no cards and can be safely deleted.
+                    </span>
+                  )}
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Batch"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

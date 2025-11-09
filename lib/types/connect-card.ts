@@ -15,7 +15,8 @@
  * @property email - Email address for follow-up communication
  * @property phone - Phone number for SMS and call follow-up
  * @property prayer_request - Prayer requests or spiritual needs
- * @property first_time_visitor - Boolean flag for first-time church visitors
+ * @property visit_status - Actual text of marked visit status option (e.g., "First Visit", "New Guest", "Returning")
+ * @property first_time_visitor - (Legacy) Boolean flag for first-time church visitors - kept for backwards compatibility
  * @property interests - Array of ministry interests (Membership, Baptism, Service, Volunteer)
  * @property address - Physical mailing address
  * @property age_group - Age range or demographic category
@@ -27,7 +28,8 @@ export interface ExtractedData {
   email: string | null;
   phone: string | null;
   prayer_request: string | null;
-  first_time_visitor: boolean | null;
+  visit_status?: string | null; // NEW: Extract actual text from card
+  first_time_visitor?: boolean | null; // Legacy field
   interests: string[] | null;
   address: string | null;
   age_group: string | null;

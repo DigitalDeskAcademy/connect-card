@@ -7,6 +7,7 @@ import { emailOTP } from "better-auth/plugins";
 import { resend } from "./resend";
 import { admin } from "better-auth/plugins";
 import { organization } from "better-auth/plugins";
+import { anonymous } from "better-auth/plugins";
 
 /**
  * BASE URL CONFIGURATION
@@ -97,6 +98,8 @@ export const auth = betterAuth({
   },
 
   plugins: [
+    // Anonymous auth for testing (dev only)
+    ...(process.env.NODE_ENV === "development" ? [anonymous()] : []),
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
         // In development mode OR Vercel preview, log OTP to console for easy testing

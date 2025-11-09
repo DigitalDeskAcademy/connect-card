@@ -14,6 +14,51 @@ import {
 } from "@/lib/data/connect-card-batch";
 import { calculateImageHash } from "@/lib/utils/image-hash";
 
+/**
+ * Normalize Visit Status
+ *
+ * Intelligently maps AI-extracted visit status text to our standard options.
+ * Handles variations in terminology across different church connect cards.
+ *
+ * Standard options: "First Visit", "Second Visit", "Regular attendee", "Other"
+ *
+ * @param visitStatus - Raw text extracted by AI from connect card
+ * @returns Normalized visit status or null if unrecognized
+ */
+function normalizeVisitStatus(visitStatus: string | null): string | null {
+  if (!visitStatus) return null;
+
+  const normalized = visitStatus.toLowerCase().trim();
+
+  // First Visit variations
+  if (
+    normalized.includes("first") ||
+    normalized.includes("new") ||
+    (normalized.includes("guest") && !normalized.includes("return"))
+  ) {
+    return "First Visit";
+  }
+
+  // Second Visit variations
+  if (normalized.includes("second") || normalized.includes("2nd")) {
+    return "Second Visit";
+  }
+
+  // Regular attendee variations
+  if (
+    normalized.includes("regular") ||
+    normalized.includes("member") ||
+    normalized.includes("returning") ||
+    normalized.includes("frequent")
+  ) {
+    return "Regular attendee";
+  }
+
+  // If we can't confidently map it, store the original text
+  // Staff will correct it during review
+  return visitStatus;
+}
+
 const aj = arcjet.withRule(
   fixedWindow({
     mode: "LIVE",
@@ -187,9 +232,12 @@ export async function saveConnectCard(
         phone: formatPhoneNumber(validation.data.extractedData.phone),
         address: validation.data.extractedData.address,
         prayerRequest: validation.data.extractedData.prayer_request,
-        visitType: validation.data.extractedData.first_time_visitor
-          ? "First Time Visitor"
-          : null,
+        visitType: normalizeVisitStatus(
+          validation.data.extractedData.visit_status ||
+            (validation.data.extractedData.first_time_visitor
+              ? "First Visit"
+              : null)
+        ),
         interests: validation.data.extractedData.interests || [],
         // Status: All cards go to review queue initially (EXTRACTED)
         // Staff can batch approve or review individually

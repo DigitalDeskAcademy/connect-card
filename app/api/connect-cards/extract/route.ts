@@ -125,7 +125,7 @@ Extract these visitor-specific fields:
 - Email address (visitor's email)
 - Phone number (visitor's phone)
 - Prayer request or prayer needs (visitor's written request)
-- Whether this is a first-time visitor (checkbox marked by visitor)
+- Visit status (extract the EXACT text of whichever checkbox/option is marked: "First Visit", "First Time", "New Guest", "Returning", "Member", etc. - use the actual words on the form)
 - Interests or ministries they checked or wrote
 - Address (if visitor filled it in)
 - Age or age group (if visitor indicated)
@@ -145,7 +145,7 @@ Return ONLY a JSON object with this structure:
   "email": "extracted email or null",
   "phone": "extracted phone or null",
   "prayer_request": "extracted prayer request or null",
-  "first_time_visitor": true/false/null,
+  "visit_status": "exact text of marked option or null",
   "interests": ["array", "of", "interests"] or null,
   "address": "extracted address or null",
   "age_group": "extracted age group or null",
