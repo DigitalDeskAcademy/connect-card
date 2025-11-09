@@ -48,7 +48,8 @@ interface ExtractedData {
   email: string | null;
   phone: string | null;
   prayer_request: string | null;
-  first_time_visitor: boolean | null;
+  visit_status?: string | null; // New field from AI extraction
+  first_time_visitor?: boolean | null; // Legacy field - optional
   interests: string[] | null;
   address: string | null;
   age_group: string | null;
