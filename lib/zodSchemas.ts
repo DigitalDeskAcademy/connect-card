@@ -152,8 +152,8 @@ export const connectCardSchema = z.object({
     email: z.string().nullable(),
     phone: z.string().nullable(),
     prayer_request: z.string().nullable(),
-    visit_status: z.string().nullable().optional(), // Extract actual text from card
-    first_time_visitor: z.boolean().nullable().optional(), // Legacy field
+    visit_status: z.string().nullish(), // Extract actual text from card (null or undefined OK)
+    first_time_visitor: z.boolean().nullish(), // Legacy field (null or undefined OK)
     interests: z.array(z.string()).nullable(),
     address: z.string().nullable(),
     age_group: z.string().nullable(),

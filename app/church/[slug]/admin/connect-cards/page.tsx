@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import ConnectCardsClient from "./client";
+import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -22,7 +23,13 @@ interface PageProps {
 
 export default async function ConnectCardsPage({ params }: PageProps) {
   const { slug } = await params;
-  const { session, organization } = await requireDashboardAccess(slug);
+  const { session, organization, member } = await requireDashboardAccess(slug);
+
+  // Block staff users from accessing connect cards admin
+  // Only owners and admins can manage connect cards
+  if (member && member.role === "member") {
+    redirect("/unauthorized");
+  }
 
   // Fetch locations for upload functionality
   const locations = await getOrganizationLocations(organization.id);

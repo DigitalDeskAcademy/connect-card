@@ -10,6 +10,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import TeamManagementClient from "./client";
 import { prisma } from "@/lib/db";
 import { getOrganizationLocations } from "@/lib/data/locations";
+import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -17,8 +18,14 @@ interface PageProps {
 
 export default async function TeamPage({ params }: PageProps) {
   const { slug } = await params;
-  const { organization, dataScope, session } =
+  const { organization, dataScope, session, member } =
     await requireDashboardAccess(slug);
+
+  // Block staff users from accessing team management
+  // Only owners and admins can manage team members
+  if (member && member.role === "member") {
+    redirect("/unauthorized");
+  }
 
   // Fetch team members with their assigned locations
   type TeamMember = {
