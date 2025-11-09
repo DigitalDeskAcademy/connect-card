@@ -22,15 +22,63 @@
  * @returns {JSX.Element} Early access landing page
  */
 
-"use client";
-
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
+import { auth } from "@/lib/auth";
 import { CheckCircle, X } from "lucide-react";
+import type { Metadata } from "next";
+import { headers } from "next/headers";
 
 import Link from "next/link";
+import AdminLink from "./_components/AdminLink";
+
+/**
+ * Metadata for SEO and social sharing
+ */
+export const metadata: Metadata = {
+  title: "Church Sync - Connect Card Management for Churches",
+  description:
+    "AI-powered connect card processing. Built with NewLife Church. Transform 20 hours of manual entry into 2 hours. 50% off for 25 founding churches.",
+  keywords: [
+    "church management",
+    "connect cards",
+    "church software",
+    "visitor management",
+    "church administration",
+    "volunteer management",
+    "prayer requests",
+  ],
+  authors: [{ name: "Church Sync" }],
+  openGraph: {
+    title: "Church Sync - Connect Card Management for Churches",
+    description:
+      "Transform connect card processing from 20 hours to 2 hours weekly with AI-powered automation. Built in partnership with NewLife Church.",
+    url: "https://churchsync.com",
+    siteName: "Church Sync",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Church Sync - Connect Card Management",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Church Sync - Connect Card Management",
+    description:
+      "AI-powered connect card processing for churches. 50% off for founding churches.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 /**
  * Feature Interface for Church Sync
@@ -80,8 +128,10 @@ const workflowSteps: FeatureProps[] = [
  *
  * Founding churches program with limited spots and lifetime benefits
  */
-export default function Home() {
-  const { data: session } = authClient.useSession();
+export default async function Home() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
 
   return (
     <article>
@@ -115,23 +165,9 @@ export default function Home() {
               Request Early Access
             </Link>
 
-            {session ? (
-              <Link
-                className={buttonVariants({
-                  size: "lg",
-                  variant: "outline",
-                })}
-                href={
-                  session.user.role === "platform_admin"
-                    ? "/platform/admin"
-                    : "#features"
-                }
-              >
-                {session.user.role === "platform_admin"
-                  ? "Go to Dashboard"
-                  : "Learn More"}
-              </Link>
-            ) : (
+            <AdminLink session={session} />
+
+            {!session && (
               <Link
                 className={buttonVariants({
                   size: "lg",

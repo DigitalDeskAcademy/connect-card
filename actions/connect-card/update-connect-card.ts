@@ -65,9 +65,17 @@ export async function updateConnectCard(
   const validation = connectCardUpdateSchema.safeParse(data);
 
   if (!validation.success) {
+    // Log validation errors to console for debugging
+    console.error(
+      "Connect card validation failed:",
+      validation.error.flatten()
+    );
+
+    // Return first validation error for user feedback
+    const firstError = validation.error.errors[0];
     return {
       status: "error",
-      message: "Invalid Form Data",
+      message: firstError?.message || "Invalid form data",
     };
   }
 
