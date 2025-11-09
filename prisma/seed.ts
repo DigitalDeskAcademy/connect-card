@@ -78,12 +78,12 @@ async function cleanupStripeCustomers(emails: string[]) {
 async function main() {
   console.log("🌱 Starting Church Connect Card seed...\n");
 
-  // Define test users
+  // Define test users (matching E2E test expectations)
   const testEmails = [
-    "digitaldeskacademy@outlook.com",
-    "owner@newlife.com",
-    "admin@newlife.com",
-    "staff@newlife.com",
+    "platform@test.com",
+    "test@playwright.dev",
+    "admin@newlife.test",
+    "staff@newlife.test",
   ];
 
   // Clean up existing Stripe customers
@@ -186,34 +186,34 @@ async function main() {
     throw new Error("Failed to create locations");
   }
 
-  // Define users with roles and location assignments
+  // Define users with roles and location assignments (matching E2E test expectations)
   const users: TestUser[] = [
     {
-      email: "digitaldeskacademy@outlook.com",
-      name: "Sarah Mitchell",
+      email: "platform@test.com",
+      name: "Platform Admin Test User",
       role: "platform_admin",
       organizationId: platformOrg.id,
       // Platform admin doesn't need a location
     },
     {
-      email: "owner@newlife.com",
-      name: "Pastor David Johnson",
+      email: "test@playwright.dev",
+      name: "Church Owner Test User",
       role: "church_owner",
       organizationId: newlifeOrg.id,
       defaultLocationId: bainbridge.id, // Owner primary location: Bainbridge
       // Owners always see all locations (via logic, not flag)
     },
     {
-      email: "admin@newlife.com",
-      name: "Emily Rodriguez",
+      email: "admin@newlife.test",
+      name: "Church Admin Test User",
       role: "church_admin",
       organizationId: newlifeOrg.id,
       defaultLocationId: bainbridge.id, // Admin primary location: Bainbridge
       canSeeAllLocations: true, // Multi-campus admin - can see all locations
     },
     {
-      email: "staff@newlife.com",
-      name: "Michael Chen",
+      email: "staff@newlife.test",
+      name: "Church Staff Test User",
       role: "user",
       organizationId: newlifeOrg.id,
       defaultLocationId: bremerton.id, // Staff assigned to: Bremerton
@@ -320,10 +320,10 @@ async function main() {
   console.log(`   👥 Staff Members: 1\n`);
 
   console.log("🔐 Test Credentials (use email for OTP login):");
-  console.log(`   digitaldeskacademy@outlook.com  (platform_admin)`);
-  console.log(`   owner@newlife.com               (church_owner)`);
-  console.log(`   admin@newlife.com               (church_admin)`);
-  console.log(`   staff@newlife.com               (user/staff)\n`);
+  console.log(`   platform@test.com       (platform_admin)`);
+  console.log(`   test@playwright.dev     (church_owner)`);
+  console.log(`   admin@newlife.test      (church_admin)`);
+  console.log(`   staff@newlife.test      (user/staff)\n`);
 
   console.log("🌐 Login URLs:");
   console.log(`   Platform Admin: http://localhost:3000/login`);
