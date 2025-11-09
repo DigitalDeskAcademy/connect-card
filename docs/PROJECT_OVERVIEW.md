@@ -146,32 +146,11 @@ Each slice contains:
 
 ### 1. Multi-Tenant Data Isolation
 
-**EVERY query must filter by organizationId:**
-
-```typescript
-// ❌ WRONG - Cross-tenant data leak
-const courses = await db.course.findMany();
-
-// ✅ CORRECT - Tenant-isolated
-const courses = await db.course.findMany({
-  where: { organizationId: org.id },
-});
-```
+**EVERY query must filter by organizationId.** See [Multi-Tenant Data Isolation](essentials/coding-patterns.md#multi-tenant-data-isolation) for detailed patterns and examples.
 
 ### 2. Server Actions Pattern
 
-**Import actions directly, never pass as props:**
-
-```typescript
-// ❌ WRONG - Passing action as callback
-<DeleteButton onDelete={deleteAction} />
-
-// ✅ CORRECT - Import directly in component
-import { deleteAction } from '@/actions/delete-course';
-<DeleteButton /> // Calls deleteAction internally
-```
-
-**Why**: See ADR-001 in `/docs/technical/architecture-decisions.md`
+**Import actions directly, never pass as props.** See [Server Actions Pattern](essentials/coding-patterns.md#server-actions-pattern) for detailed implementation guide and ADR-001 for rationale.
 
 ### 3. Authentication & Authorization
 

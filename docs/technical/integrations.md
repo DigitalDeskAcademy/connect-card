@@ -1,15 +1,15 @@
 # Integration Architecture
 
-This document covers all external system integrations for the Sidecar CRM platform.
+This document covers all external system integrations for the Church Connect Card platform.
 
-**Last Updated:** 2025-10-16
+**Last Updated:** 2025-11-08
 **Status:** Living document - updated as integrations evolve
 
 ---
 
 ## Overview
 
-The Sidecar CRM integrates with multiple external services to provide a unified operations dashboard:
+The Church Connect Card platform integrates with multiple external services to provide a unified church operations dashboard:
 
 - **GoHighLevel (GHL)** - Primary CRM data source
 - **Cal.com** - Calendar scheduling infrastructure
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
     },
   });
 
-  return redirect("/agency/[slug]/admin/settings?integration=success");
+  return redirect("/church/[slug]/admin/settings?integration=success");
 }
 ```
 
@@ -893,8 +893,8 @@ export async function createAgencySubscription(params: {
     customer: customerId,
     mode: "subscription",
     line_items: [{ price: params.priceId, quantity: 1 }],
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/agency/${organization?.slug}/admin?payment=success`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/agency/${organization?.slug}/admin?payment=cancelled`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/church/${organization?.slug}/admin?payment=success`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/church/${organization?.slug}/admin?payment=cancelled`,
     metadata: { organizationId: params.organizationId },
   });
 
@@ -1072,7 +1072,7 @@ GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
 
 # App
-NEXT_PUBLIC_APP_URL=https://sidecar-crm.vercel.app
+NEXT_PUBLIC_APP_URL=https://church-connect-card.vercel.app
 DATABASE_URL=
 ```
 

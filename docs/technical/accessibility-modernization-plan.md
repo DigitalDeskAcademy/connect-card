@@ -1,9 +1,8 @@
 # Accessibility & Modernization Implementation Plan
 
 **Status:** In Progress
-**Created:** 2025-11-07
+**Created:** November 2025
 **Branch Base:** `feature/update-public-site-copy`
-**Target Completion:** Week of 2025-11-11
 
 ---
 
@@ -54,10 +53,9 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 
 **Branch:** `fix/accessibility-compliance`
 **PR Title:** "Fix critical WCAG 2.1 Level A violations"
-**Estimated Time:** 2-3 hours
 **Priority:** CRITICAL (Legal exposure)
 
-### Commit 1.1: Fix heading hierarchy on homepage
+### Step 1.1: Fix heading hierarchy on homepage
 
 **File:** `app/(public)/page.tsx`
 
@@ -112,7 +110,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 
 ---
 
-### Commit 1.2: Add semantic HTML structure
+### Step 1.2: Add semantic HTML structure
 
 **File:** `app/(public)/page.tsx`
 
@@ -180,7 +178,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 
 ---
 
-### Commit 1.3: Fix touch target sizes
+### Step 1.3: Fix touch target sizes
 
 **Files:**
 
@@ -236,7 +234,7 @@ Comprehensive plan to fix critical WCAG 2.1 violations, optimize performance wit
 
 ---
 
-### Commit 1.4: Apply accessibility fixes to all public pages
+### Step 1.4: Apply accessibility fixes to all public pages
 
 **Files:**
 
@@ -315,7 +313,6 @@ Closes #[issue-number]
 
 **Branch:** `perf/server-components`
 **PR Title:** "Convert homepage to Server Component for SSR/SEO"
-**Estimated Time:** 1-2 hours
 **Priority:** HIGH (SEO + Performance)
 
 **Prerequisites:** Phase 1 merged to main
@@ -571,7 +568,6 @@ export default function Loading() {
 
 **Branch:** `feat/ux-improvements`
 **PR Title:** "Add FAQ accordion and brand consistency improvements"
-**Estimated Time:** 1 hour
 **Priority:** MEDIUM (UX consistency)
 
 **Prerequisites:** Phase 2 merged to main
@@ -771,7 +767,7 @@ git pull origin feature/update-public-site-copy
 git checkout -b fix/accessibility-compliance
 
 # Make changes (via Claude Code)
-# After Commit 1.1: Fix heading hierarchy on homepage
+# After Step 1.1: Fix heading hierarchy on homepage
 git add app/(public)/page.tsx
 git commit -m "fix(a11y): correct heading hierarchy on homepage
 

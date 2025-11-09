@@ -1194,184 +1194,17 @@ enum SyncStatusType {
 
 ---
 
-## ADR-005: Named Slots Pattern for Page Headers
+## ADR-005: Named Slots for Page Headers (DEPRECATED)
 
 **Date:** 2025-01-17
-**Status:** Superseded (Replaced by config-based header pattern)
+**Status:** Superseded
 **Superseded Date:** 2025-01-27
-**Decision Makers:** Development team, architecture review
 
-**Note:** This pattern was implemented but later replaced with a simpler config-based approach using `/lib/navigation.ts` and `SiteHeader` component. The config-based pattern provides a single source of truth for both sidebar navigation and page headers, reducing complexity and maintenance burden for the MVP phase. See "Navigation Pattern" in `/docs/PROJECT_OVERVIEW.md` for current implementation.
+**Historical Note:** Named Slots (@header directories using Next.js Parallel Routes) was implemented but replaced with simpler config-based navigation pattern using `/lib/navigation.ts` and `SiteHeader` component. The config-based pattern provides a single source of truth for both sidebar navigation and page headers, reducing complexity and maintenance burden for the MVP phase.
 
-### Context
+**Current Implementation:** See [Navigation Configuration Pattern](../essentials/coding-patterns.md#navigation-configuration-pattern) for current approach.
 
-The platform needs a consistent way to render page-level headers (title, tabs, actions) across all dashboard pages. We have identified three different patterns currently in use:
-
-1. **Platform courses**: Use React Context (`usePageHeader` hook)
-2. **Agency courses**: Pass header props to components internally
-3. **Conversations**: Hardcode headers inside components
-
-This inconsistency creates:
-
-- Maintenance burden (3 different patterns to maintain)
-- Layout shift issues (client-side header rendering)
-- Performance problems at scale (client component cascade)
-- Developer confusion (which pattern to use?)
-
-**Requirements:**
-
-- Consistent header pattern across 15+ dashboard pages
-- Support for title, subtitle, tabs, and action buttons
-- Optional headers (some pages like Settings don't need them)
-- Server-side rendering for performance
-- Type-safe and developer-friendly
-- Scale to 100 agencies × 1000s of users
-
-**Options Considered:**
-
-1. **React Context Pattern** - Keep and standardize existing Context approach
-2. **Named Slots Pattern** - Use Next.js 15 parallel routes feature
-
-### Decision
-
-**Use Named Slots (Parallel Routes) pattern for all page headers**
-
-Named Slots is the architecturally correct solution for Next.js 15 because it uses true Server Components, eliminates client-side state management, and follows framework conventions.
-
-**Implementation Pattern:**
-
-```typescript
-// Layout accepts header slot parameter
-export default async function AgencyAdminLayout({
-  children,
-  header, // ← Named slot for header content
-  params,
-}: {
-  children: ReactNode;
-  header?: ReactNode;
-  params: Promise<{ slug: string }>;
-}) {
-  return (
-    <DashboardLayout>
-      {header} {/* Render header slot */}
-      {children}
-    </DashboardLayout>
-  );
-}
-
-// Header file: @header/default.tsx
-import { PageHeader } from "@/components/layout/page-header";
-
-export default function ConversationsHeader() {
-  return (
-    <PageHeader
-      title="Conversations"
-      tabs={[
-        { label: "All", href: "?view=all" },
-        { label: "Unread", href: "?view=unread" },
-      ]}
-      actions={<Button>New Message</Button>}
-    />
-  );
-}
-```
-
-### Benefits
-
-1. **True Server Components**: Headers render server-side (0 extra client JS)
-2. **Zero Layout Shift**: Headers present on initial HTML (CLS = 0)
-3. **Scalable Performance**: No client state, no memory leaks
-   - Context: 1000 users = 110MB bandwidth, 5-10GB RAM
-   - Named Slots: 1000 users = 20MB bandwidth, minimal RAM
-4. **Next.js Native**: Uses framework-provided parallel routes feature
-5. **Type Safety**: TypeScript enforces layout contracts
-6. **Better SEO**: Headers in initial HTML, not hydrated client-side
-7. **Developer Experience**: Clear file structure, easy to discover
-
-### Tradeoffs
-
-1. **Migration Effort**: Multi-route refactoring required
-2. **New File Structure**: Developers must learn `@header/` directory pattern
-3. **Less Familiar**: Most React developers know Context, fewer know Named Slots
-4. **Framework Lock-In**: Tied to Next.js App Router (acceptable given stack choice)
-
-### Alternatives Considered
-
-**React Context Pattern**
-
-- ✅ Familiar to React developers
-- ✅ Easier to implement initially
-- ❌ Client component cascade (200KB+ per user)
-- ❌ Memory leaks at scale (compounds with user count)
-- ❌ Layout shift (CLS = 0.2, failing Core Web Vitals)
-- ❌ Performance degradation (500ms delay per navigation at 1000 users)
-- ❌ Not Next.js native (React SPA pattern)
-
-**Conclusion**: Context is easier now but creates technical debt that becomes painful at 100 agencies. Named Slots is the correct long-term architecture.
-
-### Consequences
-
-#### Files to Modify
-
-**Layouts (2 files):**
-
-- `/app/platform/admin/layout.tsx` - Add header slot parameter
-- `/app/agency/[slug]/admin/layout.tsx` - Add header slot parameter
-
-**Headers to Create (15+ files):**
-
-- `@header/default.tsx` for each route (dashboard, conversations, contacts, calendar, courses, analytics, insights, inventory, settings)
-
-**Components to Clean Up:**
-
-- Remove internal headers from `CourseListingPage.tsx` (lines 135-147)
-- Remove `usePageHeader` from `CoursesPageClient.tsx`
-- Update `PageHeader.tsx` to support client-side tab interactions
-
-**Files to Delete:**
-
-- `/app/providers/page-header-context.tsx` - No longer needed
-- Context provider references in layouts
-
-#### Migration Strategy
-
-See `/docs/technical/NAMED-SLOTS-MIGRATION.md` for complete 3-phase implementation plan:
-
-- **Phase 1**: Infrastructure Setup - Update layouts
-- **Phase 2**: Create Headers for Routes - Create `@header/` files
-- **Phase 3**: Clean Up Existing Components - Remove old patterns
-
-#### Success Criteria
-
-- ✅ All dashboard pages use Named Slots pattern
-- ✅ Zero client-side header state management
-- ✅ CLS score < 0.1 for all pages
-- ✅ Page load times < 1 second
-- ✅ Build passing with no TypeScript errors
-- ✅ Consistent developer experience across all routes
-
-### Industry Precedent
-
-This pattern aligns with:
-
-- **Next.js 15 Documentation**: Recommends parallel routes for layout composition
-- **Vercel Dashboard**: Uses parallel routes for section headers
-- **Linear**: Server-side layout composition
-- **Notion**: Progressive enhancement with server components
-
-### Lessons Learned
-
-1. **Optimize for scale, not ease**: The "easier" solution (Context) doesn't scale to 100 agencies
-2. **Trust framework conventions**: Next.js provides patterns for a reason
-3. **Measure the right thing**: Initial implementation time < long-term maintainability
-4. **Plan for growth**: Architecture decisions should consider 10× scale, not current state
-
-### References
-
-- [Next.js Parallel Routes Documentation](https://nextjs.org/docs/app/building-your-application/routing/parallel-routes)
-- Implementation Plan: `/docs/technical/NAMED-SLOTS-MIGRATION.md`
-- Code examples: Migration document Phase 2 section
-- Performance analysis: Migration document "Why Named Slots" section
+**Removed:** All @header directories have been removed from the codebase (October 2025).
 
 ---
 
@@ -1757,7 +1590,7 @@ export function isClinicScope(scope: DataScope): scope is ClinicScope {
 ```
 components/dashboard/contacts/contacts-client.tsx ← SHARED
 app/platform/admin/contacts/page.tsx → imports shared component
-app/agency/[slug]/admin/contacts/page.tsx → imports shared component
+app/church/[slug]/admin/contacts/page.tsx → imports shared component
 ```
 
 **Pattern:**
@@ -1933,9 +1766,9 @@ Consulted industry research (2025 best practices):
 
 ```
 /app/platform/admin/contacts/_components/ContactsPageClient.tsx
-/app/agency/[slug]/admin/contacts/client.tsx
+/app/church/[slug]/admin/contacts/client.tsx
 /app/platform/admin/courses/[courseId]/edit/_components/CourseEditClient.tsx
-/app/agency/[slug]/admin/courses/[courseId]/edit/_components/AgencyCourseEditClient.tsx
+/app/church/[slug]/admin/courses/[courseId]/edit/_components/ChurchCourseEditClient.tsx
 ```
 
 #### Files to Modify
@@ -1951,7 +1784,7 @@ Consulted industry research (2025 best practices):
   - Use scoped data helpers
   - Pass DataScope to components
 
-/app/agency/[slug]/admin/*/page.tsx (15+ files)
+/app/church/[slug]/admin/*/page.tsx (15+ files)
   - Import from @/components/dashboard/
   - Use requireDashboardAccess()
   - Use scoped data helpers
