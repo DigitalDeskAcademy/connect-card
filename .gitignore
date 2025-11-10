@@ -56,3 +56,12 @@ public/issues_images_save/
 
 # staging area for files to remove
 .to-remove/
+
+# Git worktree directories
+backend/
+frontend/
+
+# Test artifacts and screenshots
+test-results.txt
+public/vscode-window.png
+public/*-screenshot-*.png

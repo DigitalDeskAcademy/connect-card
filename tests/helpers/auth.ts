@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Page } from "@playwright/test";
 import { prisma } from "@/lib/db";
 

@@ -9,6 +9,7 @@ Custom slash commands to accelerate development workflows for Church Connect Car
 | `/session-start`     | Initialize feature session             | Starting new feature work |
 | `/add-route`         | Scaffold new route                     | Creating new page         |
 | `/add-server-action` | Generate secure server action          | Creating API endpoint     |
+| `/test-creator`      | Create industry-standard E2E tests     | Testing feature workflows |
 | `/review-code`       | Launch code review                     | Before committing         |
 | `/update-docs`       | Comprehensive doc audit                | After code changes        |
 | `/commit`            | Complete commit workflow               | Ready to commit           |
@@ -614,6 +615,10 @@ Follow pattern from existing commands in `.claude/commands/`
 - `/update-docs` - Documentation audit
 - `/commit` - Commit workflow
 - `/feature-wrap-up` - Complete workflow
+
+**v1.1** - Test automation (Nov 2025)
+
+- `/test-creator` - Industry-standard E2E test generation
 
 **Future commands (planned):**
 

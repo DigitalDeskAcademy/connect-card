@@ -246,17 +246,23 @@ export function ReviewQueueClient({
   function toggleInterest(interest: string) {
     if (!formData) return;
 
-    const newInterests = formData.interests.includes(interest)
+    const isCurrentlyChecked = formData.interests.includes(interest);
+    const newInterests = isCurrentlyChecked
       ? formData.interests.filter(i => i !== interest)
       : [...formData.interests, interest];
 
     setFormData({
       ...formData,
       interests: newInterests,
+      // When checking "Volunteering", default to "general" category
+      volunteerCategory:
+        interest === "Volunteering" && !isCurrentlyChecked
+          ? "general"
+          : formData.volunteerCategory,
     });
 
     // Clear volunteer category validation error if unchecking "Volunteering"
-    if (interest === "Volunteering" && formData.interests.includes(interest)) {
+    if (interest === "Volunteering" && isCurrentlyChecked) {
       setValidationErrors({
         ...validationErrors,
         volunteerCategory: false,
