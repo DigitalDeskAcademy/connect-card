@@ -82,7 +82,7 @@ export async function getConnectCardAnalytics(
     prisma.connectCard.findMany({
       where: {
         organizationId,
-        status: "EXTRACTED",
+        status: "REVIEWED", // Only count reviewed/approved cards
         scannedAt: {
           gte: fourWeeksAgo,
           lt: thisWeekEnd,
@@ -101,7 +101,7 @@ export async function getConnectCardAnalytics(
     prisma.connectCard.findMany({
       where: {
         organizationId,
-        status: "EXTRACTED",
+        status: "REVIEWED", // Only count reviewed/approved cards
         ...(locationId && { locationId }),
       },
       select: {
@@ -249,7 +249,7 @@ export async function getRecentConnectCards(
   return await prisma.connectCard.findMany({
     where: {
       organizationId,
-      status: "EXTRACTED",
+      status: "REVIEWED", // Only show reviewed/approved cards
       // Only filter by locationId if provided (undefined means all locations)
       ...(locationId && { locationId }),
     },
@@ -318,7 +318,7 @@ export async function getConnectCardChartData(
   const cards = await prisma.connectCard.findMany({
     where: {
       organizationId,
-      status: "EXTRACTED",
+      status: "REVIEWED", // Only chart reviewed/approved cards
       scannedAt: {
         gte: startDate,
         lte: now,
