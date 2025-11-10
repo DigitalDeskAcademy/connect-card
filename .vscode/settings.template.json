@@ -1,4 +1,7 @@
 {
+  "// INSTRUCTIONS": "Copy this to settings.json and add your personal settings",
+  "// NOTE": "settings.json is git-ignored to protect API keys and personal preferences",
+
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.formatOnType": false,
   "editor.formatOnPaste": true,
@@ -36,16 +39,9 @@
       ]
     }
   },
-  "mcp": {
-    "servers": {
-      "context7": {
-        "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@upstash/context7-mcp"],
-        "env": {
-          "CONTEXT7_API_KEY": "ctx7sk-92c0f5d2-76bf-48ee-83e5-71b9099d743d"
-        }
-      }
-    }
-  }
+
+  "// ADD YOUR PERSONAL SETTINGS BELOW": "",
+  "// Examples": "",
+  "// peacock.color": "#ff0000 (for backend worktree color coding)",
+  "// mcp.servers": "{ your MCP configuration with API keys }"
 }
