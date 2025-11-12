@@ -15,11 +15,13 @@ This project uses **workspace-specific VS Code settings** to protect API keys an
 ### For New Developers
 
 1. Copy the template file:
+
    ```bash
    cp .vscode/settings.template.json .vscode/settings.json
    ```
 
 2. Add your personal settings to `.vscode/settings.json`:
+
    - Peacock colors (for worktree identification)
    - MCP server configurations with API keys
    - Any personal preferences
@@ -39,6 +41,7 @@ This color coding prevents accidentally working in the wrong worktree.
 ## Why This Approach?
 
 **Problem**: Committing `settings.json` to git causes two issues:
+
 1. **Security**: API keys get exposed in git history
 2. **Conflicts**: Personal settings (like Peacock colors) get overwritten when switching branches
 
@@ -47,6 +50,7 @@ This color coding prevents accidentally working in the wrong worktree.
 ## What Goes Where?
 
 ### settings.template.json (Committed)
+
 - Editor formatting rules
 - ESLint configuration
 - Prettier settings
@@ -55,6 +59,7 @@ This color coding prevents accidentally working in the wrong worktree.
 - **No Peacock colors**
 
 ### settings.json (Local Only)
+
 - Everything from template
 - **Plus**: Your API keys (MCP, Context7, etc.)
 - **Plus**: Peacock color for this worktree
@@ -91,15 +96,19 @@ Add these to your `settings.json`:
 ## Troubleshooting
 
 ### Lost Peacock Colors After Branch Switch?
+
 This is normal! Since `settings.json` is git-ignored, it won't change when you switch branches. Your colors should persist.
 
 If they disappear, re-add them to `settings.json` in that worktree.
 
 ### API Keys Not Working?
+
 Make sure your API keys are in `settings.json` (not `settings.template.json`). The template file doesn't contain real API keys.
 
 ### Settings Keep Getting Overwritten?
+
 Check that `.vscode/settings.json` is in `.gitignore`. Run:
+
 ```bash
 git check-ignore .vscode/settings.json
 # Should output: .vscode/settings.json
@@ -112,6 +121,7 @@ If it's not ignored, it's being committed to git and will get overwritten.
 **Never commit API keys to git!**
 
 If you accidentally committed `settings.json` with API keys:
+
 1. Rotate all exposed API keys immediately
 2. Remove the file from git history
 3. Verify `.vscode/settings.json` is in `.gitignore`

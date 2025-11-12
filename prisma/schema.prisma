@@ -547,6 +547,8 @@ model ChurchMember {
   connectCards   ConnectCard[]
   /// Payments made by this member
   payments       Payment[]
+  /// Volunteer profile (one-to-one relationship)
+  volunteer      Volunteer?
   /// Member creation timestamp
   createdAt      DateTime              @default(now())
   /// Last profile update
@@ -714,6 +716,317 @@ model Task {
   @@index([churchMemberId])
   @@index([assignedTo])
   @@map("task")
+}
+
+// ============================================================================
+// VOLUNTEER MANAGEMENT SYSTEM
+// ============================================================================
+
+/// Volunteer profile extending ChurchMember with volunteer-specific information
+/// One-to-one relationship with ChurchMember (not all members are volunteers)
+model Volunteer {
+  id                    String                     @id @default(uuid())
+  /// Reference to the church member this volunteer profile belongs to
+  churchMemberId        String                     @unique
+  /// Organization for multi-tenant isolation
+  organizationId        String
+  /// Default location for multi-campus churches
+  locationId            String?
+  /// Volunteer status for lifecycle management
+  status                VolunteerStatus            @default(ACTIVE)
+  /// Date the volunteer started serving
+  startDate             DateTime                   @default(now())
+  /// Date the volunteer stopped serving (if inactive)
+  endDate               DateTime?
+  /// Reason for leaving (if inactive)
+  inactiveReason        String?
+  /// Emergency contact name
+  emergencyContactName  String?
+  /// Emergency contact phone
+  emergencyContactPhone String?
+  /// Background check status for kids ministry
+  backgroundCheckStatus BackgroundCheckStatus      @default(NOT_STARTED)
+  /// Background check completion date
+  backgroundCheckDate   DateTime?
+  /// Background check expiration date (typically 2-3 years)
+  backgroundCheckExpiry DateTime?
+  /// Notes about the volunteer (preferences, restrictions, etc.)
+  notes                 String?
+  /// Custom fields for church-specific data
+  customFields          Json?
+  /// Optimistic locking version for concurrent edit protection
+  version               Int                        @default(0)
+  /// Volunteer creation timestamp
+  createdAt             DateTime                   @default(now())
+  /// Last update timestamp
+  updatedAt             DateTime                   @updatedAt
+  /// Relations
+  churchMember          ChurchMember               @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
+  skills                VolunteerSkill[]
+  availability          VolunteerAvailability[]
+  shifts                VolunteerShift[]
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([organizationId, locationId])
+  @@index([backgroundCheckStatus])
+  @@map("volunteer")
+}
+
+/// Serving opportunities - ministry roles that need volunteers
+/// Examples: Greeter, Usher, Kids Ministry, Worship Team, Parking, Coffee/Hospitality
+model ServingOpportunity {
+  id                 String                        @id @default(uuid())
+  /// Organization for multi-tenant isolation
+  organizationId     String
+  /// Location for multi-campus churches (null = all locations)
+  locationId         String?
+  /// Opportunity name (e.g., "Sunday Greeter", "Kids Ministry Helper")
+  name               String
+  /// Detailed description of the role
+  description        String?
+  /// Ministry or team category (e.g., "Hospitality", "Kids Ministry")
+  category           String?
+  /// Number of volunteers needed per service/event
+  volunteersNeeded   Int                           @default(1)
+  /// Day of week for regular opportunities (0=Sunday, 6=Saturday, null=varies)
+  dayOfWeek          Int?
+  /// Service time or time slot
+  serviceTime        String?
+  /// Duration in minutes (e.g., 120 for 2-hour shift)
+  durationMinutes    Int?
+  /// Whether this opportunity is active and accepting volunteers
+  isActive           Boolean                       @default(true)
+  /// Whether this is a recurring opportunity (weekly, bi-weekly)
+  isRecurring        Boolean                       @default(true)
+  /// Recurrence pattern for scheduling (weekly, biweekly, monthly)
+  recurrencePattern  RecurrencePattern?            @default(WEEKLY)
+  /// Sort order for display
+  sortOrder          Int                           @default(0)
+  /// Custom fields for church-specific data
+  customFields       Json?
+  /// Optimistic locking version for concurrent edit protection
+  version            Int                           @default(0)
+  /// Creation timestamp
+  createdAt          DateTime                      @default(now())
+  /// Last update timestamp
+  updatedAt          DateTime                      @updatedAt
+  /// Relations
+  requiredSkills     ServingOpportunitySkill[]
+  shifts             VolunteerShift[]
+
+  @@index([organizationId])
+  @@index([organizationId, isActive])
+  @@index([organizationId, locationId])
+  @@index([organizationId, category])
+  @@map("serving_opportunity")
+}
+
+/// Skills and qualifications volunteers can have
+/// Examples: "Background Check Cleared", "Musical Ability", "CPR Certified"
+model VolunteerSkill {
+  id             String   @id @default(uuid())
+  /// Volunteer this skill belongs to
+  volunteerId    String
+  /// Skill name or qualification
+  skillName      String
+  /// Skill level or proficiency (beginner, intermediate, advanced)
+  proficiency    String?
+  /// Whether this skill is verified/certified
+  isVerified     Boolean  @default(false)
+  /// Verification date
+  verifiedDate   DateTime?
+  /// Expiration date for time-limited certifications
+  expiryDate     DateTime?
+  /// Notes about this skill
+  notes          String?
+  /// Creation timestamp
+  createdAt      DateTime @default(now())
+  /// Last update timestamp
+  updatedAt      DateTime @updatedAt
+  /// Relations
+  volunteer      Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@index([volunteerId])
+  @@index([skillName])
+  @@map("volunteer_skill")
+}
+
+/// Many-to-many relationship between serving opportunities and required skills
+model ServingOpportunitySkill {
+  id                   String             @id @default(uuid())
+  /// Serving opportunity requiring this skill
+  servingOpportunityId String
+  /// Required skill name
+  skillName            String
+  /// Whether this skill is required (true) or preferred (false)
+  isRequired           Boolean            @default(true)
+  /// Creation timestamp
+  createdAt            DateTime           @default(now())
+  /// Relations
+  servingOpportunity   ServingOpportunity @relation(fields: [servingOpportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([servingOpportunityId, skillName])
+  @@index([servingOpportunityId])
+  @@map("serving_opportunity_skill")
+}
+
+/// Volunteer availability patterns and blackout dates
+model VolunteerAvailability {
+  id                String             @id @default(uuid())
+  /// Volunteer this availability belongs to
+  volunteerId       String
+  /// Type of availability (recurring schedule or specific blackout date)
+  availabilityType  AvailabilityType
+  /// Day of week (0=Sunday, 6=Saturday) for recurring availability
+  dayOfWeek         Int?
+  /// Start date for availability or blackout period
+  startDate         DateTime?
+  /// End date for blackout period (null for recurring availability)
+  endDate           DateTime?
+  /// Start time for recurring availability (e.g., "09:00")
+  startTime         String?
+  /// End time for recurring availability (e.g., "12:00")
+  endTime           String?
+  /// Whether volunteer is available (true) or unavailable (false) during this time
+  isAvailable       Boolean            @default(true)
+  /// Reason for unavailability (vacation, work conflict, etc.)
+  reason            String?
+  /// Recurrence pattern (weekly, biweekly, monthly)
+  recurrencePattern RecurrencePattern? @default(WEEKLY)
+  /// Notes about this availability
+  notes             String?
+  /// Creation timestamp
+  createdAt         DateTime           @default(now())
+  /// Last update timestamp
+  updatedAt         DateTime           @updatedAt
+  /// Relations
+  volunteer         Volunteer          @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@index([volunteerId])
+  @@index([volunteerId, availabilityType])
+  @@index([startDate, endDate])
+  @@map("volunteer_availability")
+}
+
+/// Scheduled volunteer shifts - assignments of volunteers to serving opportunities
+model VolunteerShift {
+  id                   String             @id @default(uuid())
+  /// Organization for multi-tenant isolation
+  organizationId       String
+  /// Location for multi-campus churches
+  locationId           String?
+  /// Volunteer assigned to this shift
+  volunteerId          String
+  /// Serving opportunity for this shift
+  servingOpportunityId String
+  /// Shift date
+  shiftDate            DateTime
+  /// Shift start time
+  startTime            String
+  /// Shift end time
+  endTime              String
+  /// Current shift status
+  status               ShiftStatus        @default(SCHEDULED)
+  /// Whether volunteer confirmed they'll attend
+  isConfirmed          Boolean            @default(false)
+  /// Check-in timestamp (when volunteer arrived)
+  checkInTime          DateTime?
+  /// Check-out timestamp (when volunteer left)
+  checkOutTime         DateTime?
+  /// Whether reminder was sent
+  reminderSent         Boolean            @default(false)
+  /// Notes about this shift
+  notes                String?
+  /// Optimistic locking version for concurrent edit protection
+  version              Int                @default(0)
+  /// Creation timestamp
+  createdAt            DateTime           @default(now())
+  /// Last update timestamp
+  updatedAt            DateTime           @updatedAt
+  /// Relations
+  volunteer            Volunteer          @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  servingOpportunity   ServingOpportunity @relation(fields: [servingOpportunityId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([organizationId, shiftDate])
+  @@index([organizationId, locationId])
+  @@index([volunteerId])
+  @@index([servingOpportunityId])
+  @@index([shiftDate, status])
+  @@map("volunteer_shift")
+}
+
+// ============================================================================
+// VOLUNTEER MANAGEMENT ENUMS
+// ============================================================================
+
+/// Volunteer lifecycle status
+enum VolunteerStatus {
+  /// Volunteer is actively serving
+  ACTIVE
+  /// Volunteer is on temporary break (sabbatical, personal reasons)
+  ON_BREAK
+  /// Volunteer is no longer serving
+  INACTIVE
+  /// Volunteer application pending approval
+  PENDING_APPROVAL
+}
+
+/// Background check status for kids ministry and sensitive roles
+enum BackgroundCheckStatus {
+  /// Background check not yet initiated
+  NOT_STARTED
+  /// Background check in progress
+  IN_PROGRESS
+  /// Background check completed and passed
+  CLEARED
+  /// Background check failed or flagged
+  FLAGGED
+  /// Background check expired and needs renewal
+  EXPIRED
+}
+
+/// Availability type for scheduling
+enum AvailabilityType {
+  /// Regular weekly/recurring availability
+  RECURRING
+  /// Specific blackout date or unavailable period
+  BLACKOUT
+  /// One-time availability for special event
+  ONE_TIME
+}
+
+/// Recurrence pattern for schedules
+enum RecurrencePattern {
+  /// Every week
+  WEEKLY
+  /// Every two weeks
+  BIWEEKLY
+  /// Once per month
+  MONTHLY
+  /// First [day] of the month
+  FIRST_OF_MONTH
+  /// Third [day] of the month
+  THIRD_OF_MONTH
+  /// Does not repeat
+  ONE_TIME
+}
+
+/// Volunteer shift status
+enum ShiftStatus {
+  /// Shift is scheduled but not confirmed
+  SCHEDULED
+  /// Volunteer confirmed attendance
+  CONFIRMED
+  /// Volunteer checked in (arrived)
+  CHECKED_IN
+  /// Shift completed successfully
+  COMPLETED
+  /// Volunteer did not show up
+  NO_SHOW
+  /// Shift was cancelled
+  CANCELLED
 }
 
 /// Organization types for business logic and access control

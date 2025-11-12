@@ -181,6 +181,255 @@ export const connectCardUpdateSchema = z.object({
   prayerRequest: z.string().nullable().optional(),
 });
 
+// ============================================================================
+// VOLUNTEER MANAGEMENT SCHEMAS
+// ============================================================================
+
+// Volunteer status enum
+export const volunteerStatuses = [
+  "ACTIVE",
+  "ON_BREAK",
+  "INACTIVE",
+  "PENDING_APPROVAL",
+] as const;
+
+// Background check status enum
+export const backgroundCheckStatuses = [
+  "NOT_STARTED",
+  "IN_PROGRESS",
+  "CLEARED",
+  "FLAGGED",
+  "EXPIRED",
+] as const;
+
+// Availability type enum
+export const availabilityTypes = ["RECURRING", "BLACKOUT", "ONE_TIME"] as const;
+
+// Recurrence pattern enum
+export const recurrencePatterns = [
+  "WEEKLY",
+  "BIWEEKLY",
+  "MONTHLY",
+  "FIRST_OF_MONTH",
+  "THIRD_OF_MONTH",
+  "ONE_TIME",
+] as const;
+
+// Shift status enum
+export const shiftStatuses = [
+  "SCHEDULED",
+  "CONFIRMED",
+  "CHECKED_IN",
+  "COMPLETED",
+  "NO_SHOW",
+  "CANCELLED",
+] as const;
+
+// Day of week (0=Sunday, 6=Saturday)
+export const daysOfWeek = [0, 1, 2, 3, 4, 5, 6] as const;
+
+// Volunteer profile schema (create/update)
+export const volunteerSchema = z.object({
+  churchMemberId: z.string().uuid({ message: "Invalid member ID" }),
+  organizationId: z.string().uuid({ message: "Invalid organization ID" }),
+  locationId: z
+    .string()
+    .uuid({ message: "Invalid location ID" })
+    .nullable()
+    .optional(),
+  status: z.enum(volunteerStatuses, { message: "Status is required" }),
+  startDate: z.coerce.date({ message: "Start date is required" }),
+  endDate: z.coerce.date().nullable().optional(),
+  inactiveReason: z.string().nullable().optional(),
+  emergencyContactName: z
+    .string()
+    .min(2, { message: "Name must be at least 2 characters" })
+    .max(100, { message: "Name must be at most 100 characters" })
+    .nullable()
+    .optional(),
+  emergencyContactPhone: z
+    .string()
+    .regex(/^\+?[1-9]\d{1,14}$/, { message: "Invalid phone number" })
+    .nullable()
+    .optional(),
+  backgroundCheckStatus: z.enum(backgroundCheckStatuses, {
+    message: "Background check status is required",
+  }),
+  backgroundCheckDate: z.coerce.date().nullable().optional(),
+  backgroundCheckExpiry: z.coerce.date().nullable().optional(),
+  notes: z
+    .string()
+    .max(1000, { message: "Notes too long" })
+    .nullable()
+    .optional(),
+});
+
+// Serving opportunity schema (create/update)
+export const servingOpportunitySchema = z.object({
+  organizationId: z.string().uuid({ message: "Invalid organization ID" }),
+  locationId: z
+    .string()
+    .uuid({ message: "Invalid location ID" })
+    .nullable()
+    .optional(),
+  name: z
+    .string()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be at most 100 characters" }),
+  description: z
+    .string()
+    .max(500, { message: "Description must be at most 500 characters" })
+    .nullable()
+    .optional(),
+  category: z
+    .string()
+    .max(50, { message: "Category must be at most 50 characters" })
+    .nullable()
+    .optional(),
+  volunteersNeeded: z.coerce
+    .number()
+    .int({ message: "Must be a whole number" })
+    .min(1, { message: "At least 1 volunteer needed" })
+    .max(100, { message: "Maximum 100 volunteers" }),
+  dayOfWeek: z
+    .number()
+    .int()
+    .min(0, { message: "Invalid day" })
+    .max(6, { message: "Invalid day" })
+    .nullable()
+    .optional(),
+  serviceTime: z
+    .string()
+    .max(50, { message: "Service time must be at most 50 characters" })
+    .nullable()
+    .optional(),
+  durationMinutes: z.coerce
+    .number()
+    .int()
+    .min(15, { message: "Minimum 15 minutes" })
+    .max(480, { message: "Maximum 8 hours" })
+    .nullable()
+    .optional(),
+  isActive: z.boolean().default(true),
+  isRecurring: z.boolean().default(true),
+  recurrencePattern: z
+    .enum(recurrencePatterns, { message: "Invalid recurrence pattern" })
+    .nullable()
+    .optional(),
+  sortOrder: z.coerce.number().int().min(0).default(0),
+});
+
+// Volunteer shift schema (create/update)
+export const volunteerShiftSchema = z.object({
+  organizationId: z.string().uuid({ message: "Invalid organization ID" }),
+  locationId: z
+    .string()
+    .uuid({ message: "Invalid location ID" })
+    .nullable()
+    .optional(),
+  volunteerId: z.string().uuid({ message: "Invalid volunteer ID" }),
+  servingOpportunityId: z
+    .string()
+    .uuid({ message: "Invalid serving opportunity ID" }),
+  shiftDate: z.coerce.date({ message: "Shift date is required" }),
+  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: "Invalid time format (HH:MM)",
+  }),
+  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+    message: "Invalid time format (HH:MM)",
+  }),
+  status: z.enum(shiftStatuses, { message: "Status is required" }),
+  isConfirmed: z.boolean().default(false),
+  checkInTime: z.coerce.date().nullable().optional(),
+  checkOutTime: z.coerce.date().nullable().optional(),
+  reminderSent: z.boolean().default(false),
+  notes: z
+    .string()
+    .max(500, { message: "Notes must be at most 500 characters" })
+    .nullable()
+    .optional(),
+});
+
+// Volunteer skill schema (create/update)
+export const volunteerSkillSchema = z.object({
+  volunteerId: z.string().uuid({ message: "Invalid volunteer ID" }),
+  skillName: z
+    .string()
+    .min(2, { message: "Skill name must be at least 2 characters" })
+    .max(100, { message: "Skill name must be at most 100 characters" }),
+  proficiency: z
+    .string()
+    .max(50, { message: "Proficiency must be at most 50 characters" })
+    .nullable()
+    .optional(),
+  isVerified: z.boolean().default(false),
+  verifiedDate: z.coerce.date().nullable().optional(),
+  expiryDate: z.coerce.date().nullable().optional(),
+  notes: z
+    .string()
+    .max(500, { message: "Notes must be at most 500 characters" })
+    .nullable()
+    .optional(),
+});
+
+// Volunteer availability schema (create/update)
+export const volunteerAvailabilitySchema = z.object({
+  volunteerId: z.string().uuid({ message: "Invalid volunteer ID" }),
+  availabilityType: z.enum(availabilityTypes, {
+    message: "Availability type is required",
+  }),
+  dayOfWeek: z
+    .number()
+    .int()
+    .min(0, { message: "Invalid day" })
+    .max(6, { message: "Invalid day" })
+    .nullable()
+    .optional(),
+  startDate: z.coerce.date().nullable().optional(),
+  endDate: z.coerce.date().nullable().optional(),
+  startTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+      message: "Invalid time format (HH:MM)",
+    })
+    .nullable()
+    .optional(),
+  endTime: z
+    .string()
+    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
+      message: "Invalid time format (HH:MM)",
+    })
+    .nullable()
+    .optional(),
+  isAvailable: z.boolean().default(true),
+  reason: z
+    .string()
+    .max(200, { message: "Reason must be at most 200 characters" })
+    .nullable()
+    .optional(),
+  recurrencePattern: z
+    .enum(recurrencePatterns, { message: "Invalid recurrence pattern" })
+    .nullable()
+    .optional(),
+  notes: z
+    .string()
+    .max(500, { message: "Notes must be at most 500 characters" })
+    .nullable()
+    .optional(),
+});
+
+// Serving opportunity skill schema (create)
+export const servingOpportunitySkillSchema = z.object({
+  servingOpportunityId: z
+    .string()
+    .uuid({ message: "Invalid serving opportunity ID" }),
+  skillName: z
+    .string()
+    .min(2, { message: "Skill name must be at least 2 characters" })
+    .max(100, { message: "Skill name must be at most 100 characters" }),
+  isRequired: z.boolean().default(true),
+});
+
 export type CourseSchemaType = z.infer<typeof courseSchema>;
 export type ChapterSchemaType = z.infer<typeof chapterSchema>;
 export type LessonSchemaType = z.infer<typeof lessonSchema>;
@@ -190,4 +439,16 @@ export type OrganizationSetupSchemaType = z.infer<
 export type ConnectCardSchemaType = z.infer<typeof connectCardSchema>;
 export type ConnectCardUpdateSchemaType = z.infer<
   typeof connectCardUpdateSchema
+>;
+export type VolunteerSchemaType = z.infer<typeof volunteerSchema>;
+export type ServingOpportunitySchemaType = z.infer<
+  typeof servingOpportunitySchema
+>;
+export type VolunteerShiftSchemaType = z.infer<typeof volunteerShiftSchema>;
+export type VolunteerSkillSchemaType = z.infer<typeof volunteerSkillSchema>;
+export type VolunteerAvailabilitySchemaType = z.infer<
+  typeof volunteerAvailabilitySchema
+>;
+export type ServingOpportunitySkillSchemaType = z.infer<
+  typeof servingOpportunitySkillSchema
 >;

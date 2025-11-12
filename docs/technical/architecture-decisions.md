@@ -2600,3 +2600,449 @@ Member (Per-Church):
 - Better Auth Documentation: [Organization plugin](https://www.better-auth.com/docs/plugins/organization)
 
 ---
+
+## ADR-010: Volunteer Management Schema - Dedicated Tables Architecture
+
+**Date:** 2025-11-11
+**Status:** Approved
+**Decision Makers:** Development team
+
+### Context
+
+Churches need robust volunteer management for coordinating Sunday services and ministry activities. The initial platform had no volunteer-specific tables - only a `VOLUNTEER` enum value in `ChurchMember.memberType`.
+
+**Requirements:**
+
+- Volunteer profiles (skills, availability, emergency contacts)
+- Serving opportunities (ministry roles: Greeter, Usher, Kids Ministry, Worship Team)
+- Shift scheduling with recurrence patterns
+- Background check tracking (required for kids ministry)
+- Check-in/check-out tracking
+- Multi-campus support (location-based scheduling)
+- Skills matching (not everyone can serve in every role)
+
+**Architecture Options:**
+
+**Option A: Extend ChurchMember (Lightweight)**
+
+- Add volunteer fields via JSON columns
+- Quick MVP, simpler data model
+- Less scalable for complex scheduling
+
+**Option B: Dedicated Volunteer Tables (Scalable)** ⭐ **CHOSEN**
+
+- Separate models for volunteers, opportunities, shifts, skills, availability
+- Industry standard for church management systems
+- Better long-term scalability
+
+### Decision
+
+**Build dedicated volunteer management tables with full scheduling capabilities**
+
+We chose Option B because:
+
+1. **Churches have complex volunteer needs** - Sunday services require 10-20 volunteers across multiple roles
+2. **Skills matter** - Background checks required for kids ministry, musical ability for worship team
+3. **Availability scheduling is complex** - Volunteers have blackout dates, recurring schedules, preferred service times
+4. **Industry validation** - Planning Center, Breeze, Church Community Builder all use dedicated volunteer tables
+5. **Better separation of concerns** - Volunteer data separate from general member data
+
+### Schema Design
+
+#### Core Models
+
+**1. Volunteer (Profile Extension)**
+
+```prisma
+model Volunteer {
+  id                    String                @id @default(uuid())
+  churchMemberId        String                @unique
+  organizationId        String
+  locationId            String?
+  status                VolunteerStatus       @default(ACTIVE)
+  startDate             DateTime              @default(now())
+  endDate               DateTime?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  backgroundCheckStatus BackgroundCheckStatus @default(NOT_STARTED)
+  backgroundCheckDate   DateTime?
+  backgroundCheckExpiry DateTime?
+  notes                 String?
+  customFields          Json?
+
+  churchMember          ChurchMember          @relation(...)
+  skills                VolunteerSkill[]
+  availability          VolunteerAvailability[]
+  shifts                VolunteerShift[]
+}
+```
+
+**2. ServingOpportunity (Ministry Roles)**
+
+```prisma
+model ServingOpportunity {
+  id                 String                 @id @default(uuid())
+  organizationId     String
+  locationId         String?
+  name               String                  // "Sunday Greeter"
+  description        String?
+  category           String?                 // "Hospitality"
+  volunteersNeeded   Int                     @default(1)
+  dayOfWeek          Int?                    // 0=Sunday
+  serviceTime        String?                 // "9:00 AM Service"
+  durationMinutes    Int?
+  isActive           Boolean                 @default(true)
+  isRecurring        Boolean                 @default(true)
+  recurrencePattern  RecurrencePattern?      @default(WEEKLY)
+
+  requiredSkills     ServingOpportunitySkill[]
+  shifts             VolunteerShift[]
+}
+```
+
+**3. VolunteerShift (Scheduled Assignments)**
+
+```prisma
+model VolunteerShift {
+  id                   String             @id @default(uuid())
+  organizationId       String
+  locationId           String?
+  volunteerId          String
+  servingOpportunityId String
+  shiftDate            DateTime
+  startTime            String
+  endTime              String
+  status               ShiftStatus        @default(SCHEDULED)
+  isConfirmed          Boolean            @default(false)
+  checkInTime          DateTime?
+  checkOutTime         DateTime?
+  reminderSent         Boolean            @default(false)
+
+  volunteer            Volunteer          @relation(...)
+  servingOpportunity   ServingOpportunity @relation(...)
+}
+```
+
+**4. VolunteerSkill (Skills & Qualifications)**
+
+```prisma
+model VolunteerSkill {
+  id             String   @id @default(uuid())
+  volunteerId    String
+  skillName      String                    // "Background Check Cleared"
+  proficiency    String?                   // "beginner" | "intermediate"
+  isVerified     Boolean  @default(false)
+  verifiedDate   DateTime?
+  expiryDate     DateTime?
+
+  volunteer      Volunteer @relation(...)
+}
+```
+
+**5. VolunteerAvailability (Availability Patterns)**
+
+```prisma
+model VolunteerAvailability {
+  id                String             @id @default(uuid())
+  volunteerId       String
+  availabilityType  AvailabilityType   // RECURRING | BLACKOUT
+  dayOfWeek         Int?               // 0=Sunday
+  startDate         DateTime?
+  endDate           DateTime?
+  startTime         String?            // "09:00"
+  endTime           String?            // "12:00"
+  isAvailable       Boolean            @default(true)
+  reason            String?            // "On vacation"
+  recurrencePattern RecurrencePattern? @default(WEEKLY)
+
+  volunteer         Volunteer          @relation(...)
+}
+```
+
+**6. ServingOpportunitySkill (Required Skills)**
+
+```prisma
+model ServingOpportunitySkill {
+  id                   String             @id @default(uuid())
+  servingOpportunityId String
+  skillName            String
+  isRequired           Boolean            @default(true)
+
+  servingOpportunity   ServingOpportunity @relation(...)
+}
+```
+
+#### Enums
+
+```prisma
+enum VolunteerStatus {
+  ACTIVE
+  ON_BREAK
+  INACTIVE
+  PENDING_APPROVAL
+}
+
+enum BackgroundCheckStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  CLEARED
+  FLAGGED
+  EXPIRED
+}
+
+enum AvailabilityType {
+  RECURRING    // Regular weekly schedule
+  BLACKOUT     // Unavailable period
+  ONE_TIME     // Special event
+}
+
+enum RecurrencePattern {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  FIRST_OF_MONTH
+  THIRD_OF_MONTH
+  ONE_TIME
+}
+
+enum ShiftStatus {
+  SCHEDULED
+  CONFIRMED
+  CHECKED_IN
+  COMPLETED
+  NO_SHOW
+  CANCELLED
+}
+```
+
+### Benefits
+
+1. **Scalable Architecture**
+
+   - Supports 100+ volunteers across multiple campuses
+   - Complex scheduling with recurrence patterns
+   - Skills matching for role assignments
+
+2. **Multi-Tenant Isolation**
+
+   - `organizationId` on all tables
+   - `locationId` for multi-campus filtering
+   - Follows project's data isolation patterns
+
+3. **Background Check Tracking**
+
+   - Required for kids ministry and sensitive roles
+   - Expiration tracking (typically 2-3 years)
+   - Status workflow: NOT_STARTED → IN_PROGRESS → CLEARED
+
+4. **Availability Management**
+
+   - Recurring schedules (every Sunday 9am-12pm)
+   - Blackout dates (vacation, work conflicts)
+   - One-time availability for special events
+
+5. **Shift Management**
+
+   - Check-in/check-out tracking
+   - No-show tracking for accountability
+   - Reminder automation support
+
+6. **Skills Matching**
+   - Required vs preferred skills
+   - Skill verification and expiration
+   - Prevents unqualified volunteers in sensitive roles
+
+### Tradeoffs
+
+1. **Schema Complexity**
+
+   - 6 new models vs 0 (current state)
+   - 5 new enums
+   - Higher initial implementation effort
+
+2. **Migration Complexity**
+
+   - Existing `ChurchMember` records with `memberType = VOLUNTEER` need migration
+   - No breaking changes (volunteer field optional)
+
+3. **Query Complexity**
+   - More JOINs for volunteer shift assignments
+   - Mitigated by proper indexes
+
+### Security & Multi-Tenant Considerations
+
+**Data Isolation:**
+
+```typescript
+// Every query must filter by organizationId
+const volunteers = await prisma.volunteer.findMany({
+  where: {
+    organizationId: user.organizationId, // REQUIRED
+    ...getLocationFilter(dataScope), // Location-based filtering
+  },
+});
+```
+
+**Background Check Privacy:**
+
+- Sensitive field: `backgroundCheckStatus`
+- Only church admins can view/update
+- Audit logging for compliance
+
+**Emergency Contact Security:**
+
+- PII: `emergencyContactName`, `emergencyContactPhone`
+- Encrypted at rest (application-level)
+- Access logged for GDPR compliance
+
+### Database Indexes
+
+```prisma
+// Volunteer
+@@index([organizationId])
+@@index([organizationId, status])
+@@index([organizationId, locationId])
+@@index([backgroundCheckStatus])
+
+// ServingOpportunity
+@@index([organizationId])
+@@index([organizationId, isActive])
+@@index([organizationId, locationId])
+@@index([organizationId, category])
+
+// VolunteerShift
+@@index([organizationId])
+@@index([organizationId, shiftDate])
+@@index([organizationId, locationId])
+@@index([volunteerId])
+@@index([servingOpportunityId])
+@@index([shiftDate, status])
+
+// VolunteerSkill
+@@index([volunteerId])
+@@index([skillName])
+
+// VolunteerAvailability
+@@index([volunteerId])
+@@index([volunteerId, availabilityType])
+@@index([startDate, endDate])
+```
+
+### Implementation Phases
+
+**Phase 1: Schema & Migrations**
+
+- Create Prisma models
+- Run `prisma db push`
+- Generate Prisma client
+- Create seed data
+
+**Phase 2: Server Actions**
+
+- CRUD operations for volunteers
+- CRUD operations for serving opportunities
+- Shift scheduling actions
+- Skills management actions
+
+**Phase 3: UI Components**
+
+- Volunteer directory (TanStack Table)
+- Serving opportunities management
+- Shift scheduling calendar
+- Skills tracking interface
+
+**Phase 4: Advanced Features**
+
+- Automated reminders (SMS/email before shifts)
+- Check-in mobile app
+- Skills matching recommendations
+- Volunteer analytics dashboard
+
+### Alternatives Considered
+
+**Option A: Extend ChurchMember with JSON**
+
+- ✅ Faster MVP (less tables)
+- ✅ Simpler queries
+- ❌ No type safety for volunteer fields
+- ❌ Can't query/filter on volunteer-specific data
+- ❌ Poor scalability for complex scheduling
+- ❌ Harder to add features later
+
+**Option C: Third-Party Integration (Planning Center)**
+
+- ✅ No development effort
+- ✅ Battle-tested volunteer system
+- ❌ External dependency
+- ❌ Additional cost per church
+- ❌ No control over feature development
+- ❌ Data synchronization complexity
+
+### Industry Validation
+
+**Planning Center Services:**
+
+- Uses dedicated volunteer tables
+- Skills/positions tracking
+- Scheduling with blackout dates
+- Background check management
+
+**Breeze ChMS:**
+
+- Separate volunteer module
+- Role assignments with recurrence
+- Check-in tracking
+- Skills matching
+
+**Church Community Builder:**
+
+- Volunteer database distinct from member database
+- Serving opportunities with required skills
+- Availability management
+
+**Conclusion:** Dedicated tables is the industry-standard pattern for church volunteer management.
+
+### Success Criteria
+
+- ✅ Schema supports 100+ volunteers per church
+- ✅ Multi-campus filtering works correctly
+- ✅ Background check tracking with expiration
+- ✅ Shift scheduling with recurrence patterns
+- ✅ Skills matching for role assignments
+- ✅ Check-in/check-out tracking
+- ✅ No cross-tenant data leakage
+
+### Future Enhancements
+
+1. **Mobile Check-In App**
+
+   - QR code scanning for shift check-in
+   - Geolocation verification
+   - Push notifications for shift reminders
+
+2. **Skills Matching AI**
+
+   - Suggest volunteers for open shifts based on skills
+   - Predict volunteer burnout risk
+   - Optimize schedule for maximum coverage
+
+3. **Volunteer Portal**
+
+   - Self-service shift sign-ups
+   - Availability management
+   - View serving history
+
+4. **Analytics Dashboard**
+   - Volunteer retention metrics
+   - Service coverage heatmaps
+   - Skills gap analysis
+
+### References
+
+- Prisma Schema: `/prisma/schema.prisma` (lines 721-1024)
+- Planning Center Services: [Volunteer scheduling model](https://planning.center/services)
+- Breeze ChMS: [Volunteer management](https://www.breezechms.com/features/volunteer-scheduling)
+- Church Community Builder: [Volunteer tracking](https://www.churchcommunitybuilder.com/)
+- Industry Research: Church volunteer management best practices (2025)
+
+---
