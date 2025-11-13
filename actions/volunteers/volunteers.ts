@@ -144,7 +144,6 @@ export async function createVolunteer(
       data: { volunteerId: volunteer.id },
     };
   } catch (error) {
-    console.error("Failed to create volunteer:", error);
     return {
       status: "error",
       message: "Failed to create volunteer profile. Please try again.",
@@ -250,9 +249,6 @@ export async function updateVolunteer(
       });
 
       if (!volunteer) {
-        console.error(
-          `Volunteer ${volunteerId} not found for org ${organization.id}`
-        );
         return {
           status: "error",
           message: "Unable to update volunteer",
@@ -277,7 +273,6 @@ export async function updateVolunteer(
       message: "Volunteer profile updated successfully",
     };
   } catch (error) {
-    console.error("Failed to update volunteer:", error);
     return {
       status: "error",
       message: "Unable to update volunteer. Please try again.",
@@ -369,7 +364,6 @@ export async function deleteVolunteer(
       message: `${volunteer.churchMember.name}'s volunteer profile has been deleted`,
     };
   } catch (error) {
-    console.error("Failed to delete volunteer:", error);
     return {
       status: "error",
       message: "Failed to delete volunteer profile. Please try again.",
@@ -468,7 +462,6 @@ export async function deactivateVolunteer(
       message: `${volunteer.churchMember.name} has been marked as inactive`,
     };
   } catch (error) {
-    console.error("Failed to deactivate volunteer:", error);
     return {
       status: "error",
       message: "Failed to deactivate volunteer. Please try again.",
@@ -564,7 +557,6 @@ export async function reactivateVolunteer(
       message: `${volunteer.churchMember.name} has been reactivated`,
     };
   } catch (error) {
-    console.error("Failed to reactivate volunteer:", error);
     return {
       status: "error",
       message: "Failed to reactivate volunteer. Please try again.",

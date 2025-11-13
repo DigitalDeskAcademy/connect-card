@@ -118,8 +118,7 @@ export function VolunteerForm({
         } else {
           toast.error(result.message);
         }
-      } catch (error) {
-        console.error("Form submission error:", error);
+      } catch {
         toast.error("An unexpected error occurred. Please try again.");
       }
     });

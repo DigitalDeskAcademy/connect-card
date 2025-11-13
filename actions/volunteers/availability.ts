@@ -123,7 +123,6 @@ export async function addVolunteerAvailability(
       data: { availabilityId: availability.id },
     };
   } catch (error) {
-    console.error("Failed to add volunteer availability:", error);
     return {
       status: "error",
       message: "Failed to add volunteer availability. Please try again.",
@@ -219,7 +218,6 @@ export async function updateVolunteerAvailability(
       message: "Volunteer availability updated successfully",
     };
   } catch (error) {
-    console.error("Failed to update volunteer availability:", error);
     return {
       status: "error",
       message: "Failed to update volunteer availability. Please try again.",
@@ -312,7 +310,6 @@ export async function deleteVolunteerAvailability(
       message: "Volunteer availability removed successfully",
     };
   } catch (error) {
-    console.error("Failed to delete volunteer availability:", error);
     return {
       status: "error",
       message: "Failed to delete volunteer availability. Please try again.",

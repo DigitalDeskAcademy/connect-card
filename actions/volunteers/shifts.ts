@@ -288,7 +288,6 @@ export async function createVolunteerShift(
     };
   } catch (error) {
     // Log error details server-side for debugging
-    console.error("Failed to create volunteer shift:", error);
 
     // Return generic error messages to prevent information leakage
     if (error instanceof Error) {
@@ -451,7 +450,6 @@ export async function updateVolunteerShift(
       message: "Shift updated successfully",
     };
   } catch (error) {
-    console.error("Failed to update volunteer shift:", error);
     return {
       status: "error",
       message: "Unable to update shift. Please try again.",

@@ -18,27 +18,32 @@ Archived documentation is **historical content that is no longer actively used**
 ## Archived Files
 
 ### `/guides/CLAUDE_MD_CREATION_GUIDE.md`
+
 - **Original Location:** `/docs/CLAUDE_MD_CREATION_GUIDE.md`
 - **Why Archived:** Meta-guide for creating CLAUDE.md files. Not actively used in daily development. Industry standard: Reference external documentation rather than maintain internal meta-guides.
 - **Date Archived:** 2025-11-12
 
 ### `/guides/playwright-mcp.md`
+
 - **Original Location:** `/docs/playwright-mcp.md`
 - **Why Archived:** Third-party tool setup guide (Playwright MCP installation). E2E testing infrastructure was completed on 2025-11-08. The official Playwright/MCP documentation is the better source of truth.
 - **Date Archived:** 2025-11-12
 
 ### `/copywriting/copywriting-public-facing.md`
+
 - **Original Location:** `/docs/copywriting-public-facing.md`
 - **Why Archived:** Early access landing page copy. Public site accessibility work was completed on 2025-11-07. Copy is live in production, no longer needs to be in active docs.
 - **Date Archived:** 2025-11-12
 
 ### `/technical/deprecated-adrs.md`
+
 - **Original Location:** Created from `/docs/technical/architecture-decisions.md`
 - **Why Archived:** ADRs from original SideCar Platform (IV clinic system) that are not relevant to Church Connect Card platform. Preserved for historical context.
 - **Date Archived:** 2025-11-12
 - **Deprecated ADRs:** ADR-002, ADR-003, ADR-004, ADR-005
 
 ### `/technical/adr-007-role-framework-consolidation.md`
+
 - **Original Location:** `/docs/technical/architecture-decisions.md` (ADR-007)
 - **Why Archived:** Superseded ADR from SideCar Platform era describing 3-tier role system (platform → agency → clinic). ChurchSyncAI simplified to 2-tier (platform → church) with location filtering via `user.defaultLocationId`. Historical reference only.
 - **Date Archived:** 2025-11-12

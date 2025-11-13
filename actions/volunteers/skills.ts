@@ -133,7 +133,6 @@ export async function addVolunteerSkill(
       data: { skillId: skill.id },
     };
   } catch (error) {
-    console.error("Failed to add volunteer skill:", error);
     return {
       status: "error",
       message: "Failed to add volunteer skill. Please try again.",
@@ -226,7 +225,6 @@ export async function updateVolunteerSkill(
       message: "Volunteer skill updated successfully",
     };
   } catch (error) {
-    console.error("Failed to update volunteer skill:", error);
     return {
       status: "error",
       message: "Failed to update volunteer skill. Please try again.",
@@ -316,7 +314,6 @@ export async function deleteVolunteerSkill(
       message: `Skill "${skill.skillName}" removed successfully`,
     };
   } catch (error) {
-    console.error("Failed to delete volunteer skill:", error);
     return {
       status: "error",
       message: "Failed to delete volunteer skill. Please try again.",
@@ -416,7 +413,6 @@ export async function addServingOpportunitySkill(
       data: { skillRequirementId: skillRequirement.id },
     };
   } catch (error) {
-    console.error("Failed to add serving opportunity skill:", error);
     return {
       status: "error",
       message: "Failed to add required skill. Please try again.",
@@ -505,7 +501,6 @@ export async function removeServingOpportunitySkill(
       message: `Required skill "${skillRequirement.skillName}" removed successfully`,
     };
   } catch (error) {
-    console.error("Failed to remove serving opportunity skill:", error);
     return {
       status: "error",
       message: "Failed to remove required skill. Please try again.",

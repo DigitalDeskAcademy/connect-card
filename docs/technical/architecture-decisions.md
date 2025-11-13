@@ -163,6 +163,7 @@ Navigation tabs should live in the content area and use URL query parameters for
 ### Alternatives Considered
 
 **Keep Tabs in PageHeader**
+
 - ✅ Familiar pattern (same as before)
 - ✅ Tabs stay with page title
 - ❌ Not bookmarkable (client-side state only)
@@ -171,6 +172,7 @@ Navigation tabs should live in the content area and use URL query parameters for
 - ❌ Tab state lost on refresh
 
 **Client-Side Tabs in Content**
+
 - ✅ Smooth transitions (no page reload)
 - ✅ Can use React state for tab selection
 - ❌ Not bookmarkable
@@ -179,6 +181,7 @@ Navigation tabs should live in the content area and use URL query parameters for
 - ❌ Forces client component
 
 **Hybrid Approach (Both)**
+
 - ❌ Inconsistent UX (some tabs bookmarkable, some not)
 - ❌ Confusing for developers
 - ❌ Maintenance burden (two patterns to maintain)
@@ -192,14 +195,17 @@ Navigation tabs should live in the content area and use URL query parameters for
 #### Files Modified
 
 **PageHeader Component:**
+
 - Removed `tabs` prop support
 - Added `subtitle` and `compact` props
 - Simplified to focus on page identity only
 
 **17+ Header Pages:**
+
 - Removed tabs from all @header pages (Platform + Agency)
 
 **DashboardContentWrapper:**
+
 - Removed all padding/gap to support edge-to-edge layouts
 - Gives pages full control over their own spacing
 
@@ -288,6 +294,7 @@ The PageContainer component enforces consistent page spacing across all admin pa
 ### Benefits
 
 1. **Full Coverage**: All 28+ pages can migrate (100% coverage)
+
    - `default` → 12 standard pages
    - `padded` → 8 data table pages
    - `tight` → 4 contacts-style pages
@@ -296,19 +303,23 @@ The PageContainer component enforces consistent page spacing across all admin pa
    - `none` → Split-pane layouts (conversations)
 
 2. **Type Safety**: Exhaustiveness checking prevents missed variants
+
    - `Record<PageContainerVariant, string>` enforces all variants defined
    - TypeScript errors if variant added but not implemented
 
 3. **Responsive Design**: Mobile-first spacing
+
    - `p-4` (16px) on mobile → `p-6` (24px) on desktop
    - Industry standard pattern (Vercel, Stripe, Supabase)
 
 4. **Semantic HTML**: Accessibility best practices
+
    - `as="main"` for top-level page content
    - `as="section"` for sub-sections
    - Improves SEO and screen reader support
 
 5. **Developer Experience**: Makes correct spacing the default
+
    - No more manual spacing decisions
    - Consistent across all pages
    - Clear variant names describe intent
@@ -327,18 +338,21 @@ The PageContainer component enforces consistent page spacing across all admin pa
 ### Alternatives Considered
 
 **CSS Utility Classes**
+
 - ❌ No TypeScript type safety
 - ❌ No JSDoc documentation
 - ❌ Harder to enforce usage
 - ✅ Simpler, less abstraction
 
 **Layout Slot Pattern (Next.js Parallel Routes)**
+
 - ❌ Significant file structure changes
 - ❌ Over-engineered for simple spacing
 - ✅ Framework-native
 - ✅ Enforced by file system
 
 **Do Nothing (Status Quo)**
+
 - ✅ Zero migration cost
 - ❌ Inconsistencies remain
 - ❌ No enforced standards
@@ -349,12 +363,14 @@ The PageContainer component enforces consistent page spacing across all admin pa
 **TypeScript Expert Rating: 9.5/10**
 
 ✅ Strengths:
+
 - Proper type safety with discriminated union variant type
 - Semantic HTML support (`as` prop)
 - Data attributes for testing
 - Comprehensive JSDoc documentation
 
 ⚠️ Recommendations Applied:
+
 - Added `Record<PageContainerVariant, string>` for exhaustiveness
 - Added `as` prop for semantic HTML (`main`, `section`, `div`)
 - Added responsive spacing (`p-4 md:p-6`)
@@ -363,12 +379,14 @@ The PageContainer component enforces consistent page spacing across all admin pa
 **Code Reviewer Rating: Conditional Approval**
 
 ✅ Strengths:
+
 - Solves real problem (28+ inconsistent pages)
 - Follows industry patterns (Vercel, Stripe, Supabase)
 - Clean, minimal implementation
 - Excellent documentation
 
 ⚠️ Concerns Addressed:
+
 - Missing variants added (tight, tabs, none)
 - Renamed "canvas" → "fill" (more descriptive)
 - Added responsive spacing
@@ -388,19 +406,23 @@ The PageContainer component enforces consistent page spacing across all admin pa
 #### Migration Strategy
 
 **Phase 1: Pilot Migration (3 pages)**
+
 - `/platform/admin/dashboard/page.tsx` → `variant="default"`
 - `/platform/admin/payments/page.tsx` → `variant="padded"`
 - `/platform/admin/profile/page.tsx` → `variant="default"`
 
 **Phase 2: Category Migration**
+
 - Standard pages (12 pages) → `variant="default"`
 - Data tables (8 pages) → `variant="padded"`
 
 **Phase 3: Complex Layouts**
+
 - NavTabs pages (4 pages) → `variant="tabs"`
 - Custom layouts (4 pages) → `variant="fill"` or `variant="none"`
 
 **Phase 4: Validation**
+
 - Visual regression testing
 - Build verification
 - Documentation updates
@@ -506,21 +528,25 @@ Values: `"owner"`, `"admin"`, `"member"`
 ### Benefits
 
 1. **Industry-Standard Pattern**: Matches Slack, GitHub, Discord architecture
+
    - Slack: User account (global) + Workspace roles (per-workspace)
    - GitHub: User account (global) + Organization roles (per-org)
    - Discord: User account (global) + Server roles (per-server)
 
 2. **Type Safety**: Compile-time guarantees prevent type errors
+
    - Role mapping utility enforces correct enum values
    - TypeScript catches invalid role assignments
    - Exhaustive checking with switch statements
 
 3. **Multi-Organization Support**: Users can have different roles in different churches
+
    - User is "admin" in Church A but "member" in Church B
    - Platform admins can access any church for support
    - Organization-specific permissions properly scoped
 
 4. **Clear Separation of Concerns**:
+
    - `User.role` = What can I do across the platform?
    - `Member.role` = What can I do in this church?
 
@@ -532,10 +558,12 @@ Values: `"owner"`, `"admin"`, `"member"`
 ### Tradeoffs
 
 1. **Dual System Complexity**: Developers must understand when to use which role
+
    - Mitigated by clear documentation
    - Type-safe mapping utilities prevent errors
 
 2. **Data Synchronization**: Must keep User.role and Member.role in sync
+
    - Solved with transactions: both updates succeed or both fail
    - Clear pattern documented in coding-patterns.md
 
@@ -546,11 +574,13 @@ Values: `"owner"`, `"admin"`, `"member"`
 ### Security Considerations
 
 **Data Isolation:**
+
 - Member.role ensures organization-specific permission checks
 - User.role provides platform-wide access for support/debugging
 - Both systems enforce multi-tenant data isolation
 
 **Cross-Organization Access:**
+
 - Platform admins (`user.role === "platform_admin"`) can access any org
 - Regular users isolated to their organization via Member records
 - No cross-tenant data leakage
@@ -558,18 +588,21 @@ Values: `"owner"`, `"admin"`, `"member"`
 ### Alternatives Considered
 
 **Single Role System (User.role only)**
+
 - ✅ Simpler architecture
 - ❌ No org-specific permissions
 - ❌ User can only have ONE role globally
 - ❌ Doesn't support multi-org membership
 
 **Single Role System (Member.role only)**
+
 - ✅ Organization-specific permissions
 - ❌ No platform-level admin access
 - ❌ No way to grant cross-org permissions
 - ❌ Billing/org creation unclear
 
 **Optional Role Field (User.role?: UserRole)**
+
 - ✅ Simpler type definitions
 - ❌ No compile-time safety for missing roles
 - ❌ Runtime errors if role is null/undefined
@@ -584,11 +617,13 @@ Values: `"owner"`, `"admin"`, `"member"`
 #### Files Modified
 
 **Server Actions:**
+
 - `/actions/team/update-member.ts` - Uses mapUIRoleToUserRole()
 - `/actions/team/accept-invitation.ts` - Uses mapUIRoleToUserRole()
 - `/actions/team/remove-member.ts` - Fixed church_owner check
 
 **Permission System:**
+
 - `/app/data/dashboard/require-dashboard-access.ts` - Uses Member.role for org permissions
 
 ### Success Criteria
@@ -645,11 +680,13 @@ Churches need robust volunteer management for coordinating Sunday services and m
 **Architecture Options:**
 
 **Option A: Extend ChurchMember (Lightweight)**
+
 - Add volunteer fields via JSON columns
 - Quick MVP, simpler data model
 - Less scalable for complex scheduling
 
 **Option B: Dedicated Volunteer Tables (Scalable)** ⭐ **CHOSEN**
+
 - Separate models for volunteers, opportunities, shifts, skills, availability
 - Industry standard for church management systems
 - Better long-term scalability
@@ -684,26 +721,31 @@ We chose Option B because:
 ### Benefits
 
 1. **Scalable Architecture**
+
    - Supports 100+ volunteers across multiple campuses
    - Complex scheduling with recurrence patterns
    - Skills matching for role assignments
 
 2. **Multi-Tenant Isolation**
+
    - `organizationId` on all tables
    - `locationId` for multi-campus filtering
    - Follows project's data isolation patterns
 
 3. **Background Check Tracking**
+
    - Required for kids ministry and sensitive roles
    - Expiration tracking (typically 2-3 years)
    - Status workflow: NOT_STARTED → IN_PROGRESS → CLEARED
 
 4. **Availability Management**
+
    - Recurring schedules (every Sunday 9am-12pm)
    - Blackout dates (vacation, work conflicts)
    - One-time availability for special events
 
 5. **Shift Management**
+
    - Check-in/check-out tracking
    - No-show tracking for accountability
    - Reminder automation support
@@ -716,11 +758,13 @@ We chose Option B because:
 ### Tradeoffs
 
 1. **Schema Complexity**
+
    - 6 new models vs 0 (current state)
    - 5 new enums
    - Higher initial implementation effort
 
 2. **Migration Complexity**
+
    - Existing `ChurchMember` records with `memberType = VOLUNTEER` need migration
    - No breaking changes (volunteer field optional)
 
@@ -731,24 +775,28 @@ We chose Option B because:
 ### Implementation Phases
 
 **Phase 1: Schema & Migrations** ✅ COMPLETE
+
 - Create Prisma models
 - Run `prisma db push`
 - Generate Prisma client
 - Create seed data
 
 **Phase 2: Server Actions** ✅ COMPLETE
+
 - CRUD operations for volunteers
 - CRUD operations for serving opportunities
 - Shift scheduling actions
 - Skills management actions
 
 **Phase 3: UI Components** 🔄 IN PROGRESS
+
 - Volunteer directory (TanStack Table) ✅ COMPLETE
 - Serving opportunities management
 - Shift scheduling calendar
 - Skills tracking interface
 
 **Phase 4: Advanced Features**
+
 - Automated reminders (SMS/email before shifts)
 - Check-in mobile app
 - Skills matching recommendations
@@ -757,6 +805,7 @@ We chose Option B because:
 ### Alternatives Considered
 
 **Option A: Extend ChurchMember with JSON**
+
 - ✅ Faster MVP (less tables)
 - ✅ Simpler queries
 - ❌ No type safety for volunteer fields
@@ -765,6 +814,7 @@ We chose Option B because:
 - ❌ Harder to add features later
 
 **Option C: Third-Party Integration (Planning Center)**
+
 - ✅ No development effort
 - ✅ Battle-tested volunteer system
 - ❌ External dependency
@@ -775,18 +825,21 @@ We chose Option B because:
 ### Industry Validation
 
 **Planning Center Services:**
+
 - Uses dedicated volunteer tables
 - Skills/positions tracking
 - Scheduling with blackout dates
 - Background check management
 
 **Breeze ChMS:**
+
 - Separate volunteer module
 - Role assignments with recurrence
 - Check-in tracking
 - Skills matching
 
 **Church Community Builder:**
+
 - Volunteer database distinct from member database
 - Serving opportunities with required skills
 - Availability management

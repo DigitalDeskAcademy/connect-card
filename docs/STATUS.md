@@ -86,7 +86,13 @@
   - Role-based permissions (Account Owner, Admin, Staff)
   - Location-based access control (multi-campus or single-campus)
 - **Member Management** - ChurchMember model ready (UI placeholder)
-- **Volunteer Scheduling** - Database model ready (UI placeholder)
+- **Volunteer Management** ✅ **IN PROGRESS** - Backend complete, directory UI complete, forms in progress
+  - ✅ Database schema (6 models, 5 enums) - Volunteer, ServingOpportunity, VolunteerShift, VolunteerSkill, VolunteerAvailability, ServingOpportunitySkill
+  - ✅ Server actions with optimistic locking and transaction handling
+  - ✅ Data access layer (`/lib/data/volunteers.ts`, serving-opportunities, shifts)
+  - ✅ Volunteer directory with TanStack Table (sorting, search, filtering)
+  - 🔄 Create volunteer form (component exists, needs dialog wrapper)
+  - See `/docs/volunteer-feature-roadmap.md` for complete status
 - **Prayer Requests** - Database model ready (UI placeholder)
 - **Training Center** - Full LMS system with courses, chapters, lessons
 
@@ -143,11 +149,16 @@
 - [ ] **Email Campaigns** - Welcome series, event invitations
 - [ ] **Prayer Request Follow-up** - Automated check-ins for prayer needs
 
-### Volunteer Management (Phase 5)
+### Volunteer Management (Phase 5-6) - UI Completion
 
-- [ ] **Volunteer Database** - Track volunteer skills, availability, preferences
-- [ ] **Scheduling System** - Assign volunteers to serving opportunities
-- [ ] **Check-in System** - Track volunteer attendance
+**Note:** Backend and directory are complete. Remaining UI work:
+
+- [ ] **Volunteer Detail Page** - Tabbed interface for individual volunteer profiles
+- [ ] **Create/Edit Forms** - Dialog-based forms for volunteer CRUD operations
+- [ ] **Skills Management UI** - Add/remove skills with proficiency levels
+- [ ] **Availability Management** - Recurring schedules, blackout dates, one-time availability
+- [ ] **Shift Scheduling Calendar** - Assign volunteers to serving opportunities
+- [ ] **Shift Management** - Check-in/out tracking, confirmation flow, no-show marking
 
 ### Prayer Request System (Phase 5)
 
@@ -207,6 +218,25 @@
 ---
 
 ## 🎯 RECENT COMPLETIONS
+
+### Documentation Consolidation & Organization ✅ COMPLETED (Nov 12, 2025)
+
+- **Workspace Color Persistence** - Git-tracked VSCode workspace colors for all 3 worktrees
+  - Committed `.vscode/settings.json` to git in volunteer (green), prayer (blue), main (red) branches
+  - Prevents color reset after VSCode reboots
+  - Maintained consistent visual identity across worktrees
+- **Architecture Decisions Cleanup** - Archived outdated ADRs from SideCar Platform era
+  - Moved ADR-002, 003, 004, 005 to `.archive/docs/technical/deprecated-adrs.md`
+  - Reduced `architecture-decisions.md` from 3018 lines to 2104 lines (30% reduction)
+  - Kept 7 relevant ADRs (ADR-001, 006, 007, 008, 009, 010) for Church Connect Card
+- **Coding Patterns Consolidation** - Extracted shadcn and DataTable sections
+  - Created `/docs/essentials/shadcn-usage-patterns.md` (dedicated shadcn component patterns)
+  - Created `/docs/essentials/data-table-pattern.md` (TanStack Table implementation guide)
+  - Reduced `coding-patterns.md` from 1803 lines to 1272 lines (29.5% reduction)
+- **Documentation Structure Cleanup** - Archived meta-guides and completed work
+  - Moved 3 files to archive (53K total): CLAUDE_MD_CREATION_GUIDE.md, copywriting-public-facing.md, playwright-mcp.md
+  - Created `.archive/docs/README.md` documenting archive rationale
+  - Industry-standard organization: Active docs in `/docs`, historical in `.archive`
 
 ### Playwright E2E Testing Infrastructure ✅ COMPLETED (Nov 8, 2025)
 

@@ -556,7 +556,7 @@ enum ShiftStatus {
 const volunteers = await prisma.volunteer.findMany({
   where: {
     organizationId: user.organizationId, // REQUIRED
-    ...getLocationFilter(dataScope),      // Location-based filtering
+    ...getLocationFilter(dataScope), // Location-based filtering
   },
 });
 ```

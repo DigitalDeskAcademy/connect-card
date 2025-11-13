@@ -115,7 +115,6 @@ export async function createServingOpportunity(
       data: { opportunityId: opportunity.id },
     };
   } catch (error) {
-    console.error("Failed to create serving opportunity:", error);
     return {
       status: "error",
       message: "Failed to create serving opportunity. Please try again.",
@@ -222,9 +221,6 @@ export async function updateServingOpportunity(
       });
 
       if (!opportunity) {
-        console.error(
-          `Opportunity ${opportunityId} not found for org ${organization.id}`
-        );
         return {
           status: "error",
           message: "Unable to update opportunity",
@@ -248,7 +244,6 @@ export async function updateServingOpportunity(
       message: "Serving opportunity updated successfully",
     };
   } catch (error) {
-    console.error("Failed to update serving opportunity:", error);
     return {
       status: "error",
       message: "Unable to update opportunity. Please try again.",
@@ -337,7 +332,6 @@ export async function deleteServingOpportunity(
       message: `"${opportunity.name}" has been deleted`,
     };
   } catch (error) {
-    console.error("Failed to delete serving opportunity:", error);
     return {
       status: "error",
       message: "Failed to delete serving opportunity. Please try again.",
@@ -428,7 +422,6 @@ export async function toggleServingOpportunityStatus(
       message: `"${opportunity.name}" has been ${isActive ? "activated" : "deactivated"}`,
     };
   } catch (error) {
-    console.error("Failed to toggle serving opportunity status:", error);
     return {
       status: "error",
       message: "Failed to update serving opportunity status. Please try again.",

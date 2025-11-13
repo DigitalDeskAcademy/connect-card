@@ -429,4 +429,3 @@ Share components but use optional `clinicId?: string`
 - Next.js Documentation: Multi-tenant architecture guide
 - Implementation Plan: `/docs/STATUS.md` and `/docs/ROADMAP.md`
 - Coding Patterns: `/docs/essentials/coding-patterns.md` (Universal Component Pattern section)
-
