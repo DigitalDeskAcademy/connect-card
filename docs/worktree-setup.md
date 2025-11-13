@@ -106,7 +106,67 @@ your-project/
 
 ## PHASE 3: WORKSPACE CONFIGURATION
 
-### Step 5: Set Up VS Code Workspaces
+### Step 5: Set Up direnv for Automatic Environment Loading ⭐ RECOMMENDED
+
+**direnv** automatically loads `.env` files when you `cd` into a worktree. This eliminates manual copying and ensures all worktrees stay in sync.
+
+```bash
+# Install direnv
+sudo apt install direnv -y   # Linux
+# or
+brew install direnv          # Mac
+
+# Add to shell configuration
+echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Create .envrc in parent directory (already done)
+# This file tells direnv to load .env from parent
+cd /path/to/your/project
+echo 'dotenv' > .envrc
+
+# Allow direnv to load this directory
+direnv allow
+
+# Add .envrc to gitignore (already done)
+echo '.envrc' >> .gitignore
+```
+
+**How it works:**
+
+- When you `cd volunteer/`, direnv automatically loads `../.env`
+- When you `cd main/`, direnv automatically loads `../.env`
+- Changes to parent `.env` propagate to all worktrees instantly
+- No manual copying or symlinks needed
+
+**Verification:**
+
+```bash
+# Test it works
+cd volunteer/
+env | grep DATABASE_URL  # Should show your connection string
+
+cd ../main/
+env | grep DATABASE_URL  # Should show same connection string
+```
+
+**Alternative (If you can't use direnv):**
+
+Use symlinks to share the parent `.env`:
+
+```bash
+# In each worktree, create symlink to parent .env
+cd volunteer/
+ln -s ../.env .env
+
+cd ../main/
+ln -s ../.env .env
+
+cd ../prayer/
+ln -s ../.env .env
+```
+
+### Step 6: Set Up VS Code Workspaces
 
 ```bash
 # Open backend worktree in VS Code
@@ -114,17 +174,6 @@ code backend/
 
 # Open frontend worktree in separate VS Code window
 code frontend/
-```
-
-### Step 6: Copy Essential Configuration Files
-
-```bash
-# Copy .env files to each worktree (if needed)
-cp .env backend/.env
-cp .env frontend/.env
-
-# Copy other configuration files as needed
-# (Do NOT copy node_modules - install fresh per worktree)
 ```
 
 ### Step 7: Install Dependencies Per Worktree

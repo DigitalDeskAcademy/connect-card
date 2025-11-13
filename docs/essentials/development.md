@@ -47,6 +47,45 @@ npx prisma generate # Generate Prisma client
 npx tsx prisma/seed.ts  # Seed complete production data
 ```
 
+### Environment Variable Management
+
+**For Git Worktrees: Use direnv (Automatic Loading)**
+
+If you're using git worktrees for parallel development, use **direnv** to automatically load environment variables:
+
+```bash
+# Install direnv (one-time setup)
+sudo apt install direnv -y
+
+# Add to shell
+echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
+source ~/.bashrc
+
+# The project already has .envrc configured
+# Just allow direnv when you first enter the directory
+cd /path/to/connect-card
+direnv allow
+```
+
+**How it works:**
+
+- `.envrc` in parent directory contains `dotenv`
+- When you `cd` into any worktree, direnv loads `../.env` automatically
+- No manual copying of `.env` files needed
+- All worktrees stay in sync automatically
+
+**For Regular Development:**
+
+```bash
+# Copy .env.example to .env
+cp .env.example .env
+
+# Edit with your credentials
+nano .env
+```
+
+**See `/docs/worktree-setup.md` for complete worktree configuration guide.**
+
 ## 👥 User Roles & Multi-Tenant Architecture
 
 ### User Roles (UserRole Enum)

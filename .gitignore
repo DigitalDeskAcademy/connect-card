@@ -65,3 +65,10 @@ frontend/
 test-results.txt
 public/vscode-window.png
 public/*-screenshot-*.png
+
+# VS Code workspace settings (local only - contains API keys and Peacock colors)
+.vscode/settings.json
+
+# Playwright test artifacts
+/playwright-report/
+/test-results/
