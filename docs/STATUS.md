@@ -95,7 +95,16 @@
   - ✅ Neon database branching - Isolated volunteer-feature database for development
   - 🔄 Create volunteer form (component exists, needs dialog wrapper)
   - See `/docs/volunteer-feature-roadmap.md` for complete status
-- **Prayer Requests** - Database model ready (UI placeholder)
+- **Prayer Requests** ✅ **COMPLETE** - Multi-tenant prayer request management with security isolation
+  - ✅ Database schema (PrayerRequest model with JSONB metadata)
+  - ✅ Data access layer with multi-tenant scoping (`/lib/data/prayer-requests.ts`)
+  - ✅ TanStack Table UI with search, filtering, sorting, pagination
+  - ✅ Status management (Pending, Approved, Answered, Archived)
+  - ✅ Privacy levels (Public, Members Only, Leadership, Private to Requester)
+  - ✅ Assignment workflow for pastoral care
+  - ✅ E2E test suite (10 tests, 8 passing - 2 edge cases tracked)
+  - ✅ Git worktree isolation with dedicated database
+  - See `/docs/PRAYER_MANAGEMENT_PLAN.md` and `/docs/worktree-database-setup.md`
 - **Training Center** - Full LMS system with courses, chapters, lessons
 
 ### Learning Management System (LMS)
