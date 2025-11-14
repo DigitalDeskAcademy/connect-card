@@ -112,7 +112,7 @@ export function VolunteerForm({
         // Convert "none" to null for locationId since Radix Select doesn't allow empty string values
         const processedData = {
           ...data,
-          locationId: data.locationId === "none" ? null : data.locationId
+          locationId: data.locationId === "none" ? null : data.locationId,
         };
         const result = await createVolunteer(slug, processedData);
 

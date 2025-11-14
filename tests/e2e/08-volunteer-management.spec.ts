@@ -25,9 +25,7 @@ test.describe("Volunteer Management", () => {
 
   test("Directory page loads correctly", async ({ page }) => {
     // Verify page loads
-    await expect(page).toHaveURL(
-      /\/church\/newlife\/admin\/volunteer$/
-    );
+    await expect(page).toHaveURL(/\/church\/newlife\/admin\/volunteer$/);
 
     // Check for "New Volunteer" button (should always be visible)
     const newVolunteerButton = page.locator('button:has-text("New Volunteer")');
@@ -37,7 +35,9 @@ test.describe("Volunteer Management", () => {
     const pageContent = await page.textContent("body");
     const hasEmptyState =
       pageContent?.includes("No volunteers yet") ||
-      pageContent?.includes("Add your first volunteer to get started with volunteer management");
+      pageContent?.includes(
+        "Add your first volunteer to get started with volunteer management"
+      );
     const hasTable = await page.locator('[role="table"]').isVisible();
 
     // Should have either empty state OR table (not both)
@@ -59,7 +59,9 @@ test.describe("Volunteer Management", () => {
 
     // Verify dialog title
     await expect(
-      dialog.locator('[data-slot="dialog-title"]:has-text("Create Volunteer Profile")')
+      dialog.locator(
+        '[data-slot="dialog-title"]:has-text("Create Volunteer Profile")'
+      )
     ).toBeVisible();
 
     // Verify form fields are present
@@ -67,7 +69,9 @@ test.describe("Volunteer Management", () => {
       dialog.locator('label:has-text("Church Member")')
     ).toBeVisible();
     // Use exact text match to avoid matching "Background Check Status"
-    await expect(dialog.locator('label').filter({ hasText: /^Status \*$/ })).toBeVisible();
+    await expect(
+      dialog.locator("label").filter({ hasText: /^Status \*$/ })
+    ).toBeVisible();
     await expect(dialog.locator('label:has-text("Start Date")')).toBeVisible();
 
     // Close dialog by clicking cancel
