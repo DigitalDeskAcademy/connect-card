@@ -44,6 +44,13 @@ export async function loginWithOTP(
   page: Page,
   email: string
 ): Promise<string | null> {
+  // Clean up any existing OTP codes for this email to avoid conflicts
+  await prisma.verification.deleteMany({
+    where: {
+      identifier: `sign-in-otp-${email}`,
+    },
+  });
+
   // Navigate to login
   await page.goto("/login");
 
@@ -59,7 +66,8 @@ export async function loginWithOTP(
   });
 
   // Wait for the OTP to be generated and stored in database
-  await page.waitForTimeout(3000);
+  // Reduced from 3000ms to avoid OTP expiry
+  await page.waitForTimeout(1500);
 
   // Query database for the most recent OTP code for this email
   // Better Auth stores it with prefix: "sign-in-otp-{email}"

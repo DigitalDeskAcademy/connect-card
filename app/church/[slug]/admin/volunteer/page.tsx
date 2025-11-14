@@ -1,45 +1,82 @@
 /**
- * Volunteer Management
+ * Church Admin - Volunteers Page
  *
- * Manage church volunteers and serving teams:
- * - Volunteer roster and scheduling
- * - Team assignments
- * - Service area tracking
- * - Volunteer hours and check-in
+ * Displays volunteer directory and management interface.
+ * Shows all volunteers with their status, skills, background checks, and shift assignments.
+ * Data is automatically scoped based on user role (church admin, staff, etc.)
+ *
+ * Features:
+ * - Volunteer directory with search and filtering
+ * - Summary cards showing key metrics
+ * - Background check status tracking
+ * - Skills and availability management
  */
 
+import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
 import { PageContainer } from "@/components/layout/page-container";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { VolunteersClient } from "@/components/dashboard/volunteers/volunteers-client";
+import { getVolunteersForScope } from "@/lib/data/volunteers";
+import { prisma } from "@/lib/db";
 
-export default function VolunteerPage() {
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function ChurchVolunteersPage({ params }: PageProps) {
+  const { slug } = await params;
+
+  // Universal access control - handles all user roles with proper data scoping
+  const { dataScope, organization } = await requireDashboardAccess(slug);
+
+  // Fetch volunteers with proper data scoping (multi-tenant + location filtering)
+  const volunteers = await getVolunteersForScope(dataScope);
+
+  // Fetch church members for volunteer creation dropdown
+  // Only fetch members who don't already have a volunteer profile
+  const churchMembers = await prisma.churchMember.findMany({
+    where: {
+      organizationId: organization.id,
+      volunteer: null, // Only members without volunteer profiles
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
+  // Fetch active locations for multi-campus assignment
+  const locations = await prisma.location.findMany({
+    where: {
+      organizationId: organization.id,
+      isActive: true,
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
+  // Note: Data is automatically filtered based on dataScope:
+  // - Church admins see all volunteers in their organization
+  // - Location staff see only volunteers at their assigned location
+  // - Platform admins see all (but shouldn't access this route directly)
+
   return (
-    <PageContainer as="main">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Volunteer Management</CardTitle>
-          <CardDescription>Manage volunteers and serving teams</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Volunteer management features coming soon.
-          </p>
-          <div className="mt-6 space-y-2 text-sm">
-            <p className="font-medium">Planned Features:</p>
-            <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-              <li>Volunteer roster and profiles</li>
-              <li>Team and service area assignments</li>
-              <li>Scheduling and availability tracking</li>
-              <li>Check-in and hour logging</li>
-            </ul>
-          </div>
-        </CardContent>
-      </Card>
+    <PageContainer variant="none">
+      <VolunteersClient
+        volunteers={volunteers}
+        slug={slug}
+        organizationId={organization.id}
+        churchMembers={churchMembers}
+        locations={locations}
+      />
     </PageContainer>
   );
 }
