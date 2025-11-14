@@ -19,7 +19,8 @@ export default defineConfig({
   workers: 1,
   reporter: "html",
   use: {
-    baseURL: "http://localhost:3000",
+    // Use environment variable if set, otherwise default to 3000
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
     trace: "on-first-retry",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
@@ -35,7 +36,8 @@ export default defineConfig({
   // Start dev server before running tests
   webServer: {
     command: "pnpm dev",
-    url: "http://localhost:3000",
+    // Use environment variable if set, otherwise default to 3000
+    url: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
     stdout: "pipe",
     stderr: "pipe",

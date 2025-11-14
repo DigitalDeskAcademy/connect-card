@@ -48,6 +48,7 @@ model Organization {
   connectCards          ConnectCard[]
   connectCardBatches    ConnectCardBatch[]
   locations             Location[]
+  prayerRequests        PrayerRequest[]
 
   @@map("organization")
 }
@@ -72,6 +73,7 @@ model Location {
   connectCards       ConnectCard[]
   connectCardBatches ConnectCardBatch[]
   users              User[]
+  prayerRequests     PrayerRequest[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -171,6 +173,7 @@ model User {
   sessions          Session[]
   organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   defaultLocation   Location?     @relation(fields: [defaultLocationId], references: [id])
+  assignedPrayerRequests PrayerRequest[] @relation("AssignedPrayerRequests")
 
   @@index([defaultLocationId])
   @@map("user")
@@ -495,6 +498,7 @@ model ConnectCard {
   churchMember     ChurchMember?      @relation(fields: [churchMemberId], references: [id])
   location         Location?          @relation(fields: [locationId], references: [id])
   batch            ConnectCardBatch?  @relation(fields: [batchId], references: [id])
+  prayerRequests   PrayerRequest[]
 
   @@index([organizationId, status])
   @@index([organizationId, locationId])
@@ -1271,6 +1275,66 @@ model Payment {
   @@map("payment")
 }
 
+/// Prayer request tracking and management for church prayer ministry
+/// Supports privacy controls, team assignments, and follow-up tracking
+model PrayerRequest {
+  id             String              @id @default(uuid())
+  /// Organization that owns this prayer request
+  organizationId String
+  /// Campus/location where request originated (null for multi-campus requests)
+  locationId     String?
+
+  /// Request details
+  /// Full prayer request text (max 2000 characters)
+  request        String              @db.Text
+  /// Prayer category for filtering and reporting
+  category       String?
+  /// Privacy flag - true = only visible to assigned team and admins
+  isPrivate      Boolean             @default(false)
+  /// Urgency flag for priority requests
+  isUrgent       Boolean             @default(false)
+
+  /// Source tracking
+  /// Link to originating connect card (if from card scan)
+  connectCardId  String?
+  /// Name of person submitting request (if not from connect card)
+  submittedBy    String?
+  /// Submitter email for follow-up communication
+  submitterEmail String?
+  /// Submitter phone for follow-up communication
+  submitterPhone String?
+
+  /// Assignment and tracking
+  /// Current workflow status
+  status         PrayerRequestStatus @default(PENDING)
+  /// User ID of assigned prayer team member
+  assignedToId   String?
+  /// Denormalized name for display (performance optimization)
+  assignedToName String?
+  /// Follow-up date scheduled
+  followUpDate   DateTime?
+  /// Date prayer was answered
+  answeredDate   DateTime?
+  /// Testimony or notes about answered prayer
+  answeredNotes  String?             @db.Text
+
+  /// Timestamps
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+
+  /// Relations
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  location       Location?           @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  connectCard    ConnectCard?        @relation(fields: [connectCardId], references: [id], onDelete: SetNull)
+  assignedTo     User?               @relation("AssignedPrayerRequests", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([organizationId, locationId])
+  @@index([organizationId, status])
+  @@index([assignedToId])
+  @@map("prayer_request")
+}
+
 /// Payment transaction status
 enum PaymentStatus {
   /// Payment pending/processing
@@ -1283,4 +1347,18 @@ enum PaymentStatus {
   REFUNDED
   /// Payment partially refunded
   PARTIALLY_REFUNDED
+}
+
+/// Prayer request status for tracking workflow
+enum PrayerRequestStatus {
+  /// Newly submitted, needs review or assignment
+  PENDING
+  /// Assigned to prayer team member
+  ASSIGNED
+  /// Actively being prayed for
+  PRAYING
+  /// Prayer answered, marked complete
+  ANSWERED
+  /// Archived (no longer active)
+  ARCHIVED
 }

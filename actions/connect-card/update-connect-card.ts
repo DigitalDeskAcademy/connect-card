@@ -10,6 +10,7 @@ import {
 } from "@/lib/zodSchemas";
 import { request } from "@arcjet/next";
 import { formatPhoneNumber } from "@/lib/utils";
+import { createPrayerRequestFromConnectCard } from "@/lib/data/prayer-requests";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -115,6 +116,47 @@ export async function updateConnectCard(
         id: true,
       },
     });
+
+    // 6. Create PrayerRequest record if prayer request exists
+    // Only create if:
+    // - Card has a prayer request
+    // - Prayer request is not empty/whitespace
+    // - Prayer request hasn't already been created for this card
+    const prayerRequestText = validation.data.prayerRequest?.trim();
+
+    if (prayerRequestText && prayerRequestText.length > 0) {
+      // Check if prayer request already exists for this card (avoid duplicates)
+      const existingPrayerRequest = await prisma.prayerRequest.findFirst({
+        where: {
+          connectCardId: validation.data.id,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      if (!existingPrayerRequest) {
+        try {
+          // Create prayer request from connect card
+          await createPrayerRequestFromConnectCard(
+            validation.data.id,
+            organization.id,
+            existingCard.locationId,
+            prayerRequestText
+          );
+
+          console.log(
+            `[Prayer Request Created] From connect card: ${validation.data.id}`
+          );
+        } catch (error) {
+          // Log error but don't fail the card update
+          console.error(
+            "[Prayer Request Creation Failed] Card still updated:",
+            error
+          );
+        }
+      }
+    }
 
     return {
       status: "success",
