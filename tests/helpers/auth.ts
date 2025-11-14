@@ -44,8 +44,11 @@ export async function loginWithOTP(
   page: Page,
   email: string
 ): Promise<string | null> {
-  // Navigate to login
-  await page.goto("/login");
+  // Navigate to login (handle both relative and absolute URLs)
+  const currentUrl = page.url();
+  if (!currentUrl.includes("/login")) {
+    await page.goto("/login");
+  }
 
   // Enter email
   await page.fill('input[type="email"]', email);
@@ -118,7 +121,7 @@ export async function logout(page: Page): Promise<void> {
   if (await userMenu.isVisible()) {
     await userMenu.click();
     await page.click('text="Sign out"');
-    await page.waitForURL("/login");
+    await page.waitForURL("/");
   }
 }
 
