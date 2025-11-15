@@ -95,16 +95,19 @@
   - ✅ Neon database branching - Isolated volunteer-feature database for development
   - 🔄 Create volunteer form (component exists, needs dialog wrapper)
   - See `/docs/volunteer-feature-roadmap.md` for complete status
-- **Prayer Requests** ✅ **COMPLETE** - Multi-tenant prayer request management with security isolation
-  - ✅ Database schema (PrayerRequest model with JSONB metadata)
+- **Prayer Requests** 🔄 **IN PROGRESS** - Multi-tenant prayer request management (60% complete)
+  - ✅ Database schema (PrayerRequest model with status enum, privacy controls)
   - ✅ Data access layer with multi-tenant scoping (`/lib/data/prayer-requests.ts`)
   - ✅ TanStack Table UI with search, filtering, sorting, pagination
-  - ✅ Status management (Pending, Approved, Answered, Archived)
-  - ✅ Privacy levels (Public, Members Only, Leadership, Private to Requester)
-  - ✅ Assignment workflow for pastoral care
-  - ✅ E2E test suite (10 tests, 8 passing - 2 edge cases tracked)
-  - ✅ Git worktree isolation with dedicated database
-  - See `/docs/PRAYER_MANAGEMENT_PLAN.md` and `/docs/worktree-database-setup.md`
+  - ✅ Privacy controls (Staff can only see public + assigned private requests)
+  - ✅ Auto-categorization (8 categories) and sensitive keyword detection
+  - ✅ E2E test suite (10 tests covering multi-tenant isolation and privacy)
+  - ✅ Git worktree isolation with dedicated database (ep-long-feather-ad7s8ao0)
+  - ❌ Server actions (create, update, delete, assign, mark answered) - **NEXT PRIORITY**
+  - ❌ Detail view/dialog for viewing full prayer request
+  - ❌ Edit forms for updating requests and assignments
+  - ❌ Connect card integration (auto-create from card review)
+  - See `/docs/PRAYER_MANAGEMENT_PLAN.md` for implementation roadmap
 - **Training Center** - Full LMS system with courses, chapters, lessons
 
 ### Learning Management System (LMS)
@@ -125,6 +128,19 @@
 ---
 
 ## ⏳ IN PROGRESS
+
+### Prayer Management Feature Completion (Current Priority)
+
+- 🔄 **Server Actions** - IN PROGRESS - CRUD operations for prayer requests
+  - [ ] Create prayer request action with validation
+  - [ ] Update prayer request (text, category, privacy, status)
+  - [ ] Delete/archive prayer request
+  - [ ] Assign to prayer team member
+  - [ ] Mark as answered with testimony
+  - [ ] Zod schemas for all mutations
+- [ ] **Detail View** - Sheet/Dialog for viewing full prayer request
+- [ ] **Edit UI** - Forms for updating requests and assignments
+- [ ] **Connect Card Integration** - Auto-create from connect card review
 
 ### Production Launch Prep (Phase 3)
 
@@ -171,11 +187,13 @@
 - [ ] **Shift Scheduling Calendar** - Assign volunteers to serving opportunities
 - [ ] **Shift Management** - Check-in/out tracking, confirmation flow, no-show marking
 
-### Prayer Request System (Phase 5)
+### Prayer Request Future Enhancements (Phase 5+)
 
-- [ ] **Prayer Wall** - Public/private prayer request board
-- [ ] **Prayer Assignments** - Assign prayer requests to prayer teams
-- [ ] **Follow-up Tracking** - Mark requests as answered, in progress
+- [ ] **Prayer Wall** - Public/private prayer request board for congregation
+- [ ] **Prayer Team Dashboard** - Export prayer lists for weekly meetings
+- [ ] **Follow-up Workflow** - Automated reminders after 1 week, 1 month
+- [ ] **Answered Prayer Reporting** - Track and celebrate answered requests
+- [ ] **GHL SMS Notifications** - Notify team members on assignment
 
 ### Reporting & Analytics (Phase 6)
 

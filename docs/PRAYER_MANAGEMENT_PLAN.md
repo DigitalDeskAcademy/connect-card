@@ -1,8 +1,8 @@
 # Prayer Management Feature - Implementation Plan
 
 **Feature Branch:** `feature/prayer-management`
-**Status:** Planning
-**Last Updated:** 2025-11-12
+**Status:** Phase 1-3 Complete (60%) | Phase 5 In Progress (Server Actions)
+**Last Updated:** 2025-11-15
 
 ---
 
@@ -183,10 +183,12 @@ model Location {
 
 **Deliverables:**
 
-- ✅ Database schema updated and pushed
-- ✅ TypeScript types generated
-- ✅ Scoped query helpers created
-- ✅ Test data seeded
+- ✅ Database schema updated and pushed (PrayerRequest model + PrayerRequestStatus enum)
+- ✅ TypeScript types generated (Prisma client)
+- ✅ Scoped query helpers created (`/lib/data/prayer-requests.ts` - 621 lines)
+- ✅ Test data seeded (30 prayer requests with varied statuses/categories)
+
+**STATUS: ✅ COMPLETE**
 
 **Patterns to Follow:**
 
@@ -229,10 +231,12 @@ model Location {
 
 **Deliverables:**
 
-- ✅ Connect card review creates PrayerRequest records
-- ✅ Historical data backfilled
-- ✅ Privacy detection working
-- ✅ Category assignment (if implemented)
+- ❌ Connect card review creates PrayerRequest records (NOT IMPLEMENTED - Phase 2 work deferred)
+- ❌ Historical data backfilled (Depends on above)
+- ✅ Privacy detection working (hasSensitiveKeywords function in data layer)
+- ✅ Category assignment implemented (detectPrayerCategory with 8 categories)
+
+**STATUS: ⏸️ DEFERRED - Connect card integration postponed until server actions are complete**
 
 **Patterns to Follow:**
 
@@ -294,12 +298,14 @@ model Location {
 
 **Deliverables:**
 
-- ✅ Prayer request list displays all requests
-- ✅ Filtering and search working
-- ✅ Multi-campus location filtering
-- ✅ Privacy toggle hides private requests
-- ✅ Pagination working
-- ✅ Empty states for no data
+- ✅ Prayer request list displays all requests (TanStack Table implementation)
+- ✅ Filtering and search working (status, category, location, search text)
+- ✅ Multi-campus location filtering (getLocationFilter integration)
+- ✅ Privacy controls (staff see only public + assigned private)
+- ✅ Pagination working (shadcn Pagination component)
+- ✅ Empty states for no data (shadcn Empty component)
+
+**STATUS: ✅ COMPLETE**
 
 **Patterns to Follow:**
 
@@ -405,11 +411,26 @@ model Location {
 
 **Deliverables:**
 
-- ✅ All CRUD operations have server actions
-- ✅ Rate limiting implemented
-- ✅ Multi-tenant security validated
-- ✅ Privacy controls enforced
-- ✅ Zod validation complete
+- ❌ All CRUD operations have server actions (IN PROGRESS - CURRENT PRIORITY)
+- ❌ Rate limiting implemented (Will use Arcjet pattern from team management)
+- ❌ Multi-tenant security validated (Patterns exist, need to apply to actions)
+- ❌ Privacy controls enforced (Data layer ready, needs action implementation)
+- ❌ Zod validation complete (Schemas need to be created in /lib/zodSchemas.ts)
+
+**STATUS: 🔄 IN PROGRESS - CURRENT PRIORITY**
+
+**Next Steps:**
+
+1. Create Zod schemas in `/lib/zodSchemas.ts`
+2. Implement 6 server actions in `/actions/prayer-requests/`:
+   - create-prayer-request.ts
+   - update-prayer-request.ts
+   - delete-prayer-request.ts
+   - assign-prayer-request.ts
+   - mark-answered.ts
+   - toggle-privacy.ts
+3. Test with existing E2E test suite
+4. Wire up to UI (detail view + edit forms)
 
 **Patterns to Follow:**
 

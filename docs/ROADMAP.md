@@ -266,19 +266,38 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 ### Prayer Request System
 
-**✅ COMPLETED (Nov 2025)** - Prayer Management MVP
+**🔄 IN PROGRESS (Nov 2025)** - Prayer Management MVP (60% Complete)
 
-- [x] **Prayer Request Database** - Multi-tenant schema with privacy levels
+**✅ Completed:**
+
+- [x] **Prayer Request Database** - Multi-tenant schema with privacy levels and status enum
+- [x] **Data Access Layer** - Multi-tenant scoped queries with privacy filtering (`/lib/data/prayer-requests.ts`)
+- [x] **TypeScript Types** - Comprehensive type definitions for all operations
 - [x] **Prayer Request Table UI** - TanStack Table with search, filter, sort, pagination
-- [x] **Status Management** - Pending, Approved, Answered, Archived workflow
-- [x] **Privacy Levels** - Public, Members Only, Leadership, Private to Requester
-- [x] **Assignment Workflow** - Assign requests to staff for pastoral care
-- [x] **Multi-Tenant Security** - Organization-level data isolation tested
+- [x] **Auto-Categorization** - 8 categories with keyword detection (Health, Family, Salvation, etc.)
+- [x] **Sensitive Keyword Detection** - Auto-marks private based on content
+- [x] **Privacy Controls** - Staff see only public + assigned private requests
+- [x] **Multi-Tenant Security** - Organization and location-based data isolation
 - [x] **E2E Test Suite** - 10 comprehensive security and workflow tests
-- [x] **Worktree Development** - Isolated database branching for parallel development
-- [x] **Production Merge** - PR #23 merged to main (Nov 14, 2025)
+- [x] **Worktree Development** - Isolated database branching (ep-long-feather-ad7s8ao0)
+- [x] **Seed Data** - 30 test prayer requests with varied statuses and categories
 
-**Future Enhancements**:
+**🔄 Current Work (Server Actions):**
+
+- [ ] **Create Prayer Request** - Manual prayer request creation with validation
+- [ ] **Update Prayer Request** - Edit text, category, privacy, urgency, status
+- [ ] **Delete/Archive** - Soft delete or archive workflow
+- [ ] **Assign to Team Member** - Assignment with status update to ASSIGNED
+- [ ] **Mark as Answered** - Capture answered date and testimony
+- [ ] **Zod Schemas** - Validation for all mutations
+
+**📋 Next Steps:**
+
+- [ ] **Detail View** - Sheet/Dialog for viewing full prayer request
+- [ ] **Edit Forms** - UI for updating requests and assignments
+- [ ] **Connect Card Integration** - Auto-create from connect card review
+
+**Future Enhancements:**
 
 - [ ] **Prayer Wall (Public Display)** - Anonymous prayer board for congregation (no personal info)
   - Real-time feed of recent prayer requests (names removed)
