@@ -150,10 +150,14 @@ test.describe("Volunteer Management", () => {
     console.log("✓ Filled emergency contact phone");
 
     // Select Background Check Status
-    const bgCheckButton = dialog.locator(
-      'button:has-text("Select background check status")'
+    // Find the select trigger under "Background Check Status" label
+    const bgCheckLabel = dialog.locator(
+      'label:has-text("Background Check Status")'
     );
-    await bgCheckButton.click();
+    const bgCheckSelect = bgCheckLabel
+      .locator("..")
+      .locator('[role="combobox"]');
+    await bgCheckSelect.click();
     await page.waitForTimeout(500);
 
     const notStartedOption = page.locator(
