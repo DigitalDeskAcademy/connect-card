@@ -89,18 +89,17 @@
   - Location-based access control (multi-campus or single-campus)
   - **Volunteer Category Assignment** - Assign team members to volunteer leadership roles (Hospitality, Worship Team, Kids Ministry, etc.)
 - **Member Management** - ChurchMember model ready (UI placeholder)
-- **Volunteer Management** ✅ **Phase 3 COMPLETE** - Volunteer assignment workflow with N2N integration
-  - ✅ Database schema (6 models, 5 enums) + assignment fields (User.volunteerCategories, ConnectCard.assignedLeaderId, ConnectCard.smsAutomationEnabled)
+- **Volunteer Management** ✅ **COMPLETE (MVP)** - Automated volunteer onboarding from connect cards
+  - ✅ Database schema (Volunteer model with background checks, emergency contacts, skills tracking)
   - ✅ Server actions with optimistic locking and transaction handling
-  - ✅ Data access layer (`/lib/data/volunteers.ts`, serving-opportunities, shifts)
+  - ✅ Data access layer (`/lib/data/volunteers.ts`)
   - ✅ Volunteer directory with TanStack Table (sorting, search, filtering)
   - ✅ Create volunteer form - Full form with validation (volunteer-form.tsx 18KB + create-volunteer-dialog.tsx)
-  - ✅ Volunteer detail page - Tabbed interface with overview and edit capability (PR #24 - 4 components, 985 lines)
-  - ✅ Skills Management UI - Add/remove skills with proficiency levels, verification tracking, expiration dates (PR #25 - skills-tab.tsx, add-skill-dialog.tsx)
-  - ✅ Volunteer Assignment Workflow - Team members assigned to volunteer categories, connect card routing to appropriate leaders (PR #26)
+  - ✅ Volunteer detail page - 2-tab interface: Overview (profile, background check, emergency contacts) + Skills (certifications with expiration tracking)
+  - ✅ Skills Management UI - Track certifications (CPR, First Aid, background checks) with expiration dates (PR #25)
+  - ✅ Volunteer Assignment Workflow - Route connect card volunteer inquiries to appropriate ministry leaders with automated onboarding kickoff (PR #26)
   - ✅ E2E test suite - 7 test cases covering directory, dialogs, forms, table interactions
-  - 🔄 Serving Opportunities UI - NEXT (create/edit opportunities, required skills, shift scheduling)
-  - See `/docs/volunteer-feature-roadmap.md` for complete status
+  - **Vision:** Automate volunteer intake process similar to prayer requests - extract from connect cards, assign to leaders, trigger automated onboarding (background checks, forms, calendar invites). NOT a scheduling system (churches use Planning Center for that). See `/docs/volunteer-vision.md` for complete product vision.
 - **Prayer Requests** 🔄 **IN PROGRESS** - Multi-tenant prayer request management (60% complete)
   - ✅ Database schema (PrayerRequest model with status enum, privacy controls)
   - ✅ Data access layer with multi-tenant scoping (`/lib/data/prayer-requests.ts`)
@@ -182,16 +181,20 @@
 - [ ] **Email Campaigns** - Welcome series, event invitations
 - [ ] **Prayer Request Follow-up** - Automated check-ins for prayer needs
 
-### Volunteer Management (Phase 5-6) - UI Completion
+### Volunteer Onboarding Automation (Phase 2 - Planned)
 
-**Note:** Backend and directory are complete. Remaining UI work:
+**Current:** Manual assignment + SMS toggle (MVP complete)
+**Future:** Full automated onboarding workflows
 
-- [ ] **Volunteer Detail Page** - Tabbed interface for individual volunteer profiles
-- [ ] **Create/Edit Forms** - Dialog-based forms for volunteer CRUD operations
-- [ ] **Skills Management UI** - Add/remove skills with proficiency levels
-- [ ] **Availability Management** - Recurring schedules, blackout dates, one-time availability
-- [ ] **Shift Scheduling Calendar** - Assign volunteers to serving opportunities
-- [ ] **Shift Management** - Check-in/out tracking, confirmation flow, no-show marking
+- [ ] **Welcome Email Automation** - Instant welcome based on ministry area
+- [ ] **Form Routing** - Auto-send waivers, applications based on volunteer category
+- [ ] **Background Check Integration** - Checkr/Sterling API for Kids Ministry
+- [ ] **Calendar Automation** - Send orientation invites automatically
+- [ ] **Progress Pipeline** - Track volunteer status (Inquiry → Forms → Background Check → Active)
+- [ ] **Leader Notifications** - Alert ministry leaders of new volunteers and completed steps
+- [ ] **Onboarding Dashboard** - Visual pipeline showing volunteer progress through intake
+
+**Note:** NOT building shift scheduling (churches use Planning Center for that). Focus is automating the intake/onboarding process only.
 
 ### Prayer Request Future Enhancements (Phase 5+)
 
