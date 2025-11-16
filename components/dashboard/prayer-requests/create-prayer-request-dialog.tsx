@@ -22,6 +22,7 @@ interface CreatePrayerRequestDialogProps {
   slug: string;
   locations: Location[];
   triggerButton?: React.ReactNode;
+  onSuccess?: () => void;
 }
 
 /**
@@ -34,17 +35,20 @@ interface CreatePrayerRequestDialogProps {
  * - Auto-closes on successful submission
  * - Cancellable with keyboard (Esc) or close button
  * - Responsive design
+ * - Optional onSuccess callback for parent component refresh
  */
 export function CreatePrayerRequestDialog({
   slug,
   locations,
   triggerButton,
+  onSuccess,
 }: CreatePrayerRequestDialogProps) {
   const [open, setOpen] = useState(false);
 
   // Handle successful form submission
   const handleSuccess = () => {
     setOpen(false);
+    onSuccess?.(); // Call parent's success handler if provided
   };
 
   // Handle cancel button click

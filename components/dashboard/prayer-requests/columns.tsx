@@ -3,16 +3,42 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   IconArrowsSort,
   IconSortAscending,
   IconSortDescending,
   IconLock,
   IconAlertTriangle,
+  IconChevronDown,
 } from "@tabler/icons-react";
-import { formatDistanceToNow } from "date-fns";
 import type { PrayerRequestListItem } from "@/lib/types/prayer-request";
 import type { PrayerRequestStatus } from "@/lib/generated/prisma";
+
+/**
+ * Format time ago in simplified format
+ * Examples: "< 1 min", "5 min", "2 hrs", "3 days", "> 1 week", "> 1 month"
+ */
+function formatTimeAgo(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffWeeks = Math.floor(diffDays / 7);
+
+  if (diffMins < 1) return "< 1 min";
+  if (diffMins < 60) return `${diffMins} min`;
+  if (diffHours < 24) return `${diffHours} hrs`;
+  if (diffDays < 7) return `${diffDays} days`;
+  if (diffWeeks < 4) return `> 1 week`;
+  return `> 1 month`;
+}
 
 /**
  * Prayer Request Status Badge Component
@@ -66,55 +92,155 @@ function CategoryBadge({ category }: { category: string | null }) {
  * Prayer Request Columns Definition
  *
  * TanStack Table column definitions for prayer requests
- * Includes sorting, badges, privacy indicators, and date formatting
+ * Includes bulk selection, sortable flags, badges, and date formatting
  */
 export const prayerRequestColumns: ColumnDef<PrayerRequestListItem>[] = [
   {
-    accessorKey: "request",
+    id: "select",
+    header: ({ table }) => (
+      <div className="flex justify-center">
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={value => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      </div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    id: "flags",
+    accessorFn: row => {
+      // Create a filterable value array for multi-select
+      const flags = [];
+      if (row.isUrgent) flags.push("urgent");
+      if (row.isPrivate) flags.push("private");
+      if (flags.length === 0) flags.push("none");
+      return flags;
+    },
+    filterFn: (row, columnId, filterValue: string[] | undefined) => {
+      if (!filterValue || filterValue.length === 0) return true;
+
+      const rowFlags = row.getValue(columnId) as string[];
+      return filterValue.some(f => rowFlags.includes(f));
+    },
     header: ({ column }) => {
+      const filterValue =
+        (column.getFilterValue() as string[] | undefined) || [];
+
+      const toggleFilter = (value: string) => {
+        const newValue = filterValue.includes(value)
+          ? filterValue.filter(v => v !== value)
+          : [...filterValue, value];
+        column.setFilterValue(newValue.length > 0 ? newValue : undefined);
+      };
+
       return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Prayer Request
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4" />
-          )}
-        </Button>
+        <div className="flex items-center justify-center">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                <IconChevronDown
+                  className={`h-4 w-4 ${filterValue.length > 0 ? "text-primary" : ""}`}
+                />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="start">
+              <div className="space-y-1">
+                <div
+                  className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
+                  onClick={() => toggleFilter("urgent")}
+                >
+                  <Checkbox
+                    checked={filterValue.includes("urgent")}
+                    onCheckedChange={() => toggleFilter("urgent")}
+                  />
+                  <IconAlertTriangle className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm">Urgent</span>
+                </div>
+                <div
+                  className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
+                  onClick={() => toggleFilter("private")}
+                >
+                  <Checkbox
+                    checked={filterValue.includes("private")}
+                    onCheckedChange={() => toggleFilter("private")}
+                  />
+                  <IconLock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Private</span>
+                </div>
+                <div
+                  className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
+                  onClick={() => toggleFilter("none")}
+                >
+                  <Checkbox
+                    checked={filterValue.includes("none")}
+                    onCheckedChange={() => toggleFilter("none")}
+                  />
+                  <div className="h-4 w-4 flex items-center justify-center text-muted-foreground text-xs">
+                    —
+                  </div>
+                  <span className="text-sm">No Flags</span>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
       );
     },
     cell: ({ row }) => {
-      const request = row.getValue("request") as string;
       const isPrivate = row.original.isPrivate;
       const isUrgent = row.original.isUrgent;
+
+      return (
+        <div className="flex items-center justify-center">
+          {isUrgent ? (
+            // Urgent takes priority - shows emergency icon only
+            <IconAlertTriangle
+              className="h-4 w-4 text-orange-500"
+              title={isPrivate ? "Urgent & Private" : "Urgent"}
+            />
+          ) : isPrivate ? (
+            // Show lock only if not urgent
+            <IconLock
+              className="h-4 w-4 text-muted-foreground"
+              title="Private"
+            />
+          ) : (
+            <span className="text-muted-foreground text-xs">—</span>
+          )}
+        </div>
+      );
+    },
+    enableSorting: false,
+    enableColumnFilter: true,
+  },
+  {
+    accessorKey: "request",
+    header: "Prayer Request",
+    cell: ({ row }) => {
+      const request = row.getValue("request") as string;
 
       // Truncate long requests
       const truncated =
         request.length > 80 ? `${request.substring(0, 80)}...` : request;
 
-      return (
-        <div className="flex items-start gap-2">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              {isPrivate && (
-                <IconLock className="h-4 w-4 text-muted-foreground shrink-0" />
-              )}
-              {isUrgent && (
-                <IconAlertTriangle className="h-4 w-4 text-orange-500 shrink-0" />
-              )}
-              <span className="text-sm">{truncated}</span>
-            </div>
-          </div>
-        </div>
-      );
+      return <div className="text-sm">{truncated}</div>;
     },
+    enableSorting: false,
   },
   {
     accessorKey: "category",
@@ -228,7 +354,25 @@ export const prayerRequestColumns: ColumnDef<PrayerRequestListItem>[] = [
   },
   {
     accessorKey: "locationName",
-    header: "Location",
+    header: ({ column }) => {
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
+          Location
+          {column.getIsSorted() === "asc" ? (
+            <IconSortAscending className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <IconSortDescending className="ml-2 h-4 w-4" />
+          ) : (
+            <IconArrowsSort className="ml-2 h-4 w-4" />
+          )}
+        </Button>
+      );
+    },
     cell: ({ row }) => {
       const location = row.getValue("locationName") as string | null;
       return (
@@ -263,7 +407,7 @@ export const prayerRequestColumns: ColumnDef<PrayerRequestListItem>[] = [
       const date = row.getValue("createdAt") as Date;
       return (
         <div className="text-sm text-muted-foreground whitespace-nowrap">
-          {formatDistanceToNow(date, { addSuffix: true })}
+          {formatTimeAgo(date)}
         </div>
       );
     },

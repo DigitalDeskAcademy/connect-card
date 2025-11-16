@@ -7,6 +7,7 @@
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
 import { getPrayerRequestsForScope } from "@/lib/data/prayer-requests";
+import { getOrganizationLocations } from "@/lib/data/locations";
 import { PrayerRequestDataTable } from "./data-table";
 import { prayerRequestColumns } from "./columns";
 import type { PrayerRequestListItem } from "@/lib/types/prayer-request";
@@ -17,13 +18,17 @@ interface PrayerRequestsTableProps {
 
 export async function PrayerRequestsTable({ slug }: PrayerRequestsTableProps) {
   // 1. Verify access and get data scope
-  const { dataScope, session } = await requireDashboardAccess(slug);
+  const { dataScope, session, organization } =
+    await requireDashboardAccess(slug);
 
   // 2. Fetch prayer requests for user's scope
   const prayerRequests = await getPrayerRequestsForScope(
     dataScope,
     session.user.id
   );
+
+  // 3. Fetch organization locations for create dialog
+  const locations = await getOrganizationLocations(organization.id);
 
   // 3. Transform to list items for table
   const listItems: PrayerRequestListItem[] = prayerRequests.map(request => ({
@@ -47,6 +52,8 @@ export async function PrayerRequestsTable({ slug }: PrayerRequestsTableProps) {
       data={listItems}
       title="Prayer Requests"
       pageSize={10}
+      slug={slug}
+      locations={locations}
     />
   );
 }
