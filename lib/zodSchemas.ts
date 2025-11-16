@@ -179,6 +179,8 @@ export const connectCardUpdateSchema = z.object({
   interests: z.array(z.string()).default([]),
   volunteerCategory: z.string().nullable().optional(),
   prayerRequest: z.string().nullable().optional(),
+  assignedLeaderId: z.string().uuid().nullable().optional(),
+  smsAutomationEnabled: z.boolean().default(false),
 });
 
 // ============================================================================

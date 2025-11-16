@@ -20,6 +20,7 @@ export interface TeamMember {
   role: string | null;
   defaultLocationId: string | null;
   locationName: string | null;
+  volunteerCategories: string[];
   createdAt: Date;
 }
 
