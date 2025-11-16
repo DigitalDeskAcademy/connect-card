@@ -29,6 +29,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { IconUserPlus, IconMail, IconMapPin } from "@tabler/icons-react";
 import { Users, Clock } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { inviteStaff } from "@/actions/team/invite-staff";
 import { revokeInvitation } from "@/actions/team/revoke-invitation";
 import { resendInvitation } from "@/actions/team/resend-invitation";
@@ -41,12 +42,26 @@ import { createTeamMembersColumns } from "@/components/dashboard/team/team-membe
 import { createPendingInvitationsColumns } from "@/components/dashboard/team/pending-invitations-columns";
 import type { TeamMember } from "@/components/dashboard/team/team-members-columns";
 import type { PendingInvitation } from "@/components/dashboard/team/pending-invitations-columns";
+import { mapUserRoleToUIRole } from "@/lib/role-mapping";
+import type { UserRole } from "@/lib/generated/prisma";
 
 interface Location {
   id: string;
   name: string;
   slug: string;
 }
+
+// Predefined volunteer categories for assignment workflow
+const VOLUNTEER_CATEGORIES = [
+  "Kids Ministry",
+  "Worship Team",
+  "Hospitality",
+  "Parking & Traffic",
+  "Connection Team",
+  "Audio/Visual Tech",
+  "Prayer Team",
+  "Facility Setup",
+] as const;
 
 interface TeamManagementClientProps {
   teamMembers: TeamMember[];
@@ -82,6 +97,7 @@ export default function TeamManagementClient({
   const [editForm, setEditForm] = useState({
     role: "member" as "admin" | "member",
     locationId: null as string | null,
+    volunteerCategories: [] as string[],
   });
 
   const canInviteUsers = dataScope.filters.canManageUsers;
@@ -150,9 +166,17 @@ export default function TeamManagementClient({
   // Handle edit member
   const handleEditMember = (member: TeamMember) => {
     setSelectedMember(member);
+
+    // Map database role to UI role (church_owner → owner, church_admin → admin, user → member)
+    const uiRole = mapUserRoleToUIRole(member.role as UserRole);
+
+    // Only allow editing admin/member roles (owner role cannot be changed in team UI)
+    const editableRole = uiRole === "owner" ? "admin" : uiRole;
+
     setEditForm({
-      role: member.role as "admin" | "member",
+      role: editableRole as "admin" | "member",
       locationId: member.defaultLocationId,
+      volunteerCategories: member.volunteerCategories || [],
     });
     setIsEditOpen(true);
   };
@@ -176,6 +200,7 @@ export default function TeamManagementClient({
         memberId: selectedMember.id,
         role: editForm.role,
         locationId: editForm.locationId,
+        volunteerCategories: editForm.volunteerCategories,
       });
 
       if (result.status === "success") {
@@ -577,6 +602,53 @@ export default function TeamManagementClient({
                 </Select>
               </div>
             )}
+
+            {/* Volunteer Categories Section */}
+            <div className="space-y-3">
+              <div>
+                <Label>Volunteer Categories (Optional)</Label>
+                <p className="text-sm text-muted-foreground">
+                  Assign volunteer leadership categories for the assignment
+                  workflow
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {VOLUNTEER_CATEGORIES.map(category => (
+                  <div key={category} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`category-${category}`}
+                      checked={editForm.volunteerCategories.includes(category)}
+                      onCheckedChange={checked => {
+                        if (checked) {
+                          setEditForm({
+                            ...editForm,
+                            volunteerCategories: [
+                              ...editForm.volunteerCategories,
+                              category,
+                            ],
+                          });
+                        } else {
+                          setEditForm({
+                            ...editForm,
+                            volunteerCategories:
+                              editForm.volunteerCategories.filter(
+                                c => c !== category
+                              ),
+                          });
+                        }
+                      }}
+                      disabled={isSubmitting}
+                    />
+                    <label
+                      htmlFor={`category-${category}`}
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      {category}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
           <DialogFooter>
             <Button

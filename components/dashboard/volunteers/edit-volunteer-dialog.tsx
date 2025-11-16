@@ -84,11 +84,21 @@ export function EditVolunteerDialog({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
+  // Parse member name into first/last name for form (not editable in this dialog)
+  const memberName = volunteer.churchMember.name || "";
+  const nameParts = memberName.trim().split(" ");
+  const firstName = nameParts[0] || "";
+  const lastName = nameParts.slice(1).join(" ") || "";
+
   // Form setup with pre-filled values
   const form = useForm<VolunteerSchemaType>({
     resolver: zodResolver(volunteerSchema),
     defaultValues: {
-      churchMemberId: volunteer.churchMemberId,
+      // Member fields (not editable, just for form validation)
+      firstName,
+      lastName,
+      email: "", // Not available in this context, edit dialog doesn't change member info
+      phone: null,
       organizationId: volunteer.organizationId,
       locationId: volunteer.locationId,
       status: volunteer.status,

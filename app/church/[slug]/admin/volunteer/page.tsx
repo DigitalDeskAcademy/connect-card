@@ -31,23 +31,6 @@ export default async function ChurchVolunteersPage({ params }: PageProps) {
   // Fetch volunteers with proper data scoping (multi-tenant + location filtering)
   const volunteers = await getVolunteersForScope(dataScope);
 
-  // Fetch church members for volunteer creation dropdown
-  // Only fetch members who don't already have a volunteer profile
-  const churchMembers = await prisma.churchMember.findMany({
-    where: {
-      organizationId: organization.id,
-      volunteer: null, // Only members without volunteer profiles
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-    },
-    orderBy: {
-      name: "asc",
-    },
-  });
-
   // Fetch active locations for multi-campus assignment
   const locations = await prisma.location.findMany({
     where: {
@@ -74,7 +57,6 @@ export default async function ChurchVolunteersPage({ params }: PageProps) {
         volunteers={volunteers}
         slug={slug}
         organizationId={organization.id}
-        churchMembers={churchMembers}
         locations={locations}
       />
     </PageContainer>

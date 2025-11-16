@@ -109,11 +109,14 @@ export async function updateConnectCard(
         interests: validation.data.interests,
         volunteerCategory: validation.data.volunteerCategory,
         prayerRequest: validation.data.prayerRequest,
+        assignedLeaderId: validation.data.assignedLeaderId,
+        smsAutomationEnabled: validation.data.smsAutomationEnabled,
         status: "REVIEWED", // Mark as reviewed after correction
         updatedAt: new Date(),
       },
       select: {
         id: true,
+        smsAutomationEnabled: true,
       },
     });
 
@@ -158,9 +161,15 @@ export async function updateConnectCard(
       }
     }
 
+    // Return success with SMS automation status (if applicable)
+    const baseMessage = "Connect card updated successfully";
+    const smsMessage = updatedCard.smsAutomationEnabled
+      ? " SMS automation started - This is a test placeholder (workflow not yet implemented)"
+      : "";
+
     return {
       status: "success",
-      message: "Connect card updated successfully",
+      message: baseMessage + smsMessage,
       data: { id: updatedCard.id },
     };
   } catch {

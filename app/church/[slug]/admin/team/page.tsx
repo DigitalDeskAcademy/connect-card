@@ -36,6 +36,7 @@ export default async function TeamPage({ params }: PageProps) {
     createdAt: Date;
     defaultLocationId: string | null;
     locationName: string | null;
+    volunteerCategories: string[];
   };
 
   // Fetch users with their default locations
@@ -50,6 +51,7 @@ export default async function TeamPage({ params }: PageProps) {
       role: true,
       createdAt: true,
       defaultLocationId: true,
+      volunteerCategories: true,
       defaultLocation: {
         select: {
           name: true,
@@ -70,6 +72,7 @@ export default async function TeamPage({ params }: PageProps) {
     createdAt: user.createdAt,
     defaultLocationId: user.defaultLocationId,
     locationName: user.defaultLocation?.name || null,
+    volunteerCategories: user.volunteerCategories,
   }));
 
   // Fetch organization locations for staff assignment

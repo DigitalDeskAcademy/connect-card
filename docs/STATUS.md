@@ -86,14 +86,15 @@
   - Role-based permissions (Account Owner, Admin, Staff)
   - Location-based access control (multi-campus or single-campus)
 - **Member Management** - ChurchMember model ready (UI placeholder)
-- **Volunteer Management** ✅ **IN PROGRESS** - Backend complete, directory UI complete, E2E tests complete, forms in progress
+- **Volunteer Management** ✅ **IN PROGRESS** - Phase 3 (Volunteer UI) - Directory, forms, and detail page complete
   - ✅ Database schema (6 models, 5 enums) - Volunteer, ServingOpportunity, VolunteerShift, VolunteerSkill, VolunteerAvailability, ServingOpportunitySkill
   - ✅ Server actions with optimistic locking and transaction handling
   - ✅ Data access layer (`/lib/data/volunteers.ts`, serving-opportunities, shifts)
   - ✅ Volunteer directory with TanStack Table (sorting, search, filtering)
+  - ✅ Create volunteer form - Full form with validation (volunteer-form.tsx 18KB + create-volunteer-dialog.tsx)
+  - ✅ Volunteer detail page - Tabbed interface with overview and edit capability (PR #24 - 4 components, 985 lines)
   - ✅ E2E test suite - 7 test cases covering directory, dialogs, forms, table interactions
-  - ✅ Neon database branching - Isolated volunteer-feature database for development
-  - 🔄 Create volunteer form (component exists, needs dialog wrapper)
+  - 🔄 Skills Management UI - NEXT (skills tab, add/remove skills with proficiency levels)
   - See `/docs/volunteer-feature-roadmap.md` for complete status
 - **Prayer Requests** ✅ **COMPLETE** - Multi-tenant prayer request management with security isolation
   - ✅ Database schema (PrayerRequest model with JSONB metadata)

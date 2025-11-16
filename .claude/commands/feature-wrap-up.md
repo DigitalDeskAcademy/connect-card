@@ -330,6 +330,32 @@ git status
 
 Current worktree now has merged feature.
 
+**Step 16.5: Check for Schema Changes**
+
+If `prisma/schema.prisma` was modified in your feature:
+
+```bash
+# Check if schema.prisma changed
+git diff <feature-branch>...main --name-only | grep "prisma/schema.prisma"
+```
+
+If schema was modified, **you must update the database** before testing:
+
+```
+⚠️  SCHEMA CHANGES DETECTED
+
+Your PR modified prisma/schema.prisma.
+
+REQUIRED: Run database migration in main worktree:
+
+  cd ../main
+  pnpm prisma db push
+
+This adds the new columns/tables to main's database.
+
+Without this, your code will fail when it tries to use the new schema.
+```
+
 **Step 17: Identify Other Worktrees**
 
 ```bash
@@ -384,6 +410,12 @@ Handle based on user choice.
 
 ```bash
 git merge main --no-edit
+
+# If schema.prisma was in your feature, update database for this worktree too
+if git diff HEAD~1..HEAD --name-only | grep -q "prisma/schema.prisma"; then
+  echo "⚠️  Schema changed - running database migration..."
+  pnpm prisma db push
+fi
 ```
 
 **If merge conflicts:**

@@ -1,7 +1,7 @@
 # Volunteer Management - Complete Implementation Roadmap
 
-**Status:** In Progress (Phase 3)
-**Last Updated:** 2025-11-11
+**Status:** In Progress (Phase 3 - Skills/Availability/Shifts UI)
+**Last Updated:** 2025-11-15
 
 ---
 
@@ -38,74 +38,79 @@
 - [x] `/components/dashboard/volunteers/volunteers-client.tsx`
 - [x] `/app/church/[slug]/admin/volunteer/page.tsx`
 
-### 🔲 Create Volunteer Form (NEXT)
+### ✅ Create Volunteer Form (COMPLETE)
 
-- [ ] `/components/dashboard/volunteers/volunteer-form.tsx`
+- [x] `/components/dashboard/volunteers/volunteer-form.tsx` - Full form with all fields (18KB)
 
-  - Church member selection (dropdown from existing members)
+  - Church member selection dropdown
   - Status selection (Active, On Break, Inactive, Pending)
-  - Start date picker
+  - Start date picker with conditional end date
   - Emergency contact fields (name, phone)
-  - Background check status dropdown
-  - Notes textarea
+  - Background check status with conditional dates
+  - Notes textarea with validation
   - Submit button calling `createVolunteer()` server action
   - Toast notifications for success/error
   - Form validation with Zod schema
 
-- [ ] `/components/dashboard/volunteers/create-volunteer-dialog.tsx`
+- [x] `/components/dashboard/volunteers/create-volunteer-dialog.tsx` - Dialog wrapper (2KB)
 
-  - Dialog wrapper with trigger button
+  - Dialog wrapper with "New Volunteer" button trigger
   - Contains VolunteerForm
   - Handles dialog open/close state
-  - Refreshes table on success
+  - Refreshes table on success (router.refresh)
 
-- [ ] Update `/components/dashboard/volunteers/volunteers-client.tsx`
-  - Add "New Volunteer" button in header
-  - Wire up CreateVolunteerDialog
+- [x] Updated `/components/dashboard/volunteers/volunteers-client.tsx`
+  - "New Volunteer" button in header (line 125-131)
+  - CreateVolunteerDialog fully wired up
 
-### 🔲 Volunteer Detail Page
+### ✅ Volunteer Detail Page (COMPLETE - PR #24)
 
-- [ ] `/app/church/[slug]/admin/volunteer/[id]/page.tsx`
+- [x] `/app/church/[slug]/admin/volunteer/[id]/page.tsx` (41 lines)
 
   - Fetch volunteer by ID with `getVolunteerById()`
-  - Server component layout with tabs
+  - Server component with multi-tenant isolation
+  - PageContainer with tabs variant
 
-- [ ] `/components/dashboard/volunteers/volunteer-detail-client.tsx`
+- [x] `/components/dashboard/volunteers/volunteer-detail-client.tsx` (176 lines)
 
-  - Client component with tabs
-  - Tab 1: Overview (profile info, edit button)
-  - Tab 2: Skills & Certifications
-  - Tab 3: Availability & Schedule
-  - Tab 4: Shift History
-  - Tab 5: Notes
+  - Client component with controlled tabs
+  - 5 tabs: Overview, Skills, Availability, Shifts, Notes
+  - Tab counts (skills.length, shifts.length)
+  - Uses Tabler icons
 
-- [ ] `/components/dashboard/volunteers/volunteer-overview-tab.tsx`
+- [x] `/components/dashboard/volunteers/volunteer-overview-tab.tsx` (254 lines)
 
-  - Display volunteer info (read-only)
+  - 4 cards: Profile Info, Background Check, Emergency Contact, Contact Info
   - Edit button opens EditVolunteerDialog
-  - Background check status badge
-  - Emergency contact display
+  - Background check status badges with color coding
+  - Emergency contact display with icons
+  - Notes section (full-width card)
 
-- [ ] `/components/dashboard/volunteers/edit-volunteer-dialog.tsx`
-  - Same as create form but with pre-filled data
-  - Uses `updateVolunteer()` with optimistic locking
+- [x] `/components/dashboard/volunteers/edit-volunteer-dialog.tsx` (514 lines)
+  - Pre-filled form with current volunteer data
+  - Uses `updateVolunteer()` with optimistic locking (version field)
   - Handles version mismatch errors
+  - Conditional fields (status-based, background check-based)
+  - Scrollable dialog with max-height
 
-### 🔲 Skills Management UI
+### 🔲 Skills Management UI (NEXT)
 
 - [ ] `/components/dashboard/volunteers/skills-tab.tsx`
 
-  - List of current skills with badges
+  - List of current skills with badges (skillName + proficiency)
   - Remove skill button (calls `deleteVolunteerSkill()`)
   - Add skill button opens AddSkillDialog
+  - Skills displayed in card layout with verification status
+  - Shows verification date and expiry date if applicable
 
 - [ ] `/components/dashboard/volunteers/add-skill-dialog.tsx`
-  - Skill name input (combobox with suggestions)
-  - Proficiency level dropdown (Beginner, Intermediate, Advanced)
-  - Verified checkbox
-  - Verification date picker
-  - Expiry date picker
-  - Submit calls `addVolunteerSkill()`
+  - Skill name input (combobox with suggestions from existing skills)
+  - Proficiency level dropdown (Beginner, Intermediate, Advanced, Expert)
+  - Verified checkbox (isVerified)
+  - Verification date picker (conditional on isVerified)
+  - Expiry date picker (conditional on isVerified)
+  - Submit calls `addVolunteerSkill()` server action
+  - Toast notifications and dialog close on success
 
 ### 🔲 Availability Management UI
 

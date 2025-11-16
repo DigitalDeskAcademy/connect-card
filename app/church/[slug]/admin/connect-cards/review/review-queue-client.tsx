@@ -50,16 +50,24 @@ import {
   VOLUNTEER_CATEGORY_OPTIONS,
 } from "@/lib/types/connect-card";
 
+interface VolunteerLeader {
+  id: string;
+  name: string;
+  volunteerCategories: string[];
+}
+
 interface ReviewQueueClientProps {
   cards: ConnectCardForReview[];
   slug: string;
   batchName: string;
+  volunteerLeaders: VolunteerLeader[];
 }
 
 export function ReviewQueueClient({
   cards,
   slug,
   batchName,
+  volunteerLeaders,
 }: ReviewQueueClientProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -85,6 +93,8 @@ export function ReviewQueueClient({
       volunteerCategory: "",
       prayerRequest: currentCard.prayerRequest || "",
       isExistingMember: false,
+      assignedLeaderId: "",
+      smsAutomationEnabled: false,
     };
   });
 
@@ -172,6 +182,8 @@ export function ReviewQueueClient({
       volunteerCategory: "",
       prayerRequest: card.prayerRequest || "",
       isExistingMember: false,
+      assignedLeaderId: "",
+      smsAutomationEnabled: false,
     });
     setImageError(false); // Reset image error state for new card
     setValidationErrors({}); // Clear validation errors for new card
@@ -218,6 +230,8 @@ export function ReviewQueueClient({
           interests: formData.interests,
           volunteerCategory: formData.volunteerCategory || null,
           prayerRequest: formData.prayerRequest || null,
+          assignedLeaderId: formData.assignedLeaderId || null,
+          smsAutomationEnabled: formData.smsAutomationEnabled,
         });
 
         if (result.status === "success") {
@@ -733,6 +747,102 @@ export function ReviewQueueClient({
                 )}
               </div>
             )}
+
+            {/* Volunteer Assignment Workflow - Only show for non-General categories */}
+            {formData.interests.includes("Volunteering") &&
+              formData.volunteerCategory &&
+              formData.volunteerCategory !== "General" && (
+                <div className="border-t pt-4 space-y-4">
+                  <div>
+                    <h3 className="text-sm font-semibold mb-1">
+                      Volunteer Assignment
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Assign this volunteer to a category leader and optionally
+                      enable SMS workflow
+                    </p>
+                  </div>
+
+                  {/* Assigned Leader Dropdown */}
+                  <div className="space-y-2">
+                    <Label htmlFor="assignedLeader">
+                      Assigned Leader (Optional)
+                    </Label>
+                    <Select
+                      value={formData.assignedLeaderId}
+                      onValueChange={value =>
+                        setFormData({ ...formData, assignedLeaderId: value })
+                      }
+                      disabled={isPending}
+                    >
+                      <SelectTrigger id="assignedLeader">
+                        <SelectValue placeholder="Select a leader..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {volunteerLeaders
+                          .filter(leader =>
+                            leader.volunteerCategories.includes(
+                              formData.volunteerCategory
+                            )
+                          )
+                          .map(leader => (
+                            <SelectItem key={leader.id} value={leader.id}>
+                              {leader.name}
+                            </SelectItem>
+                          ))}
+                        {volunteerLeaders.filter(leader =>
+                          leader.volunteerCategories.includes(
+                            formData.volunteerCategory
+                          )
+                        ).length === 0 && (
+                          <SelectItem value="none" disabled>
+                            No leaders assigned to this category
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Leaders with &quot;{formData.volunteerCategory}&quot;
+                      category.{" "}
+                      <a
+                        href={`/church/${slug}/admin/team`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        Add role to staff member →
+                      </a>
+                    </p>
+                  </div>
+
+                  {/* SMS Automation Checkbox */}
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="smsAutomation"
+                      checked={formData.smsAutomationEnabled}
+                      onCheckedChange={checked =>
+                        setFormData({
+                          ...formData,
+                          smsAutomationEnabled: Boolean(checked),
+                        })
+                      }
+                      disabled={isPending}
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor="smsAutomation"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        Enable SMS Automation
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        Send automated onboarding messages (initial info →
+                        calendar invite → reminders)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
             {/* Prayer Request */}
             <div className="space-y-2">

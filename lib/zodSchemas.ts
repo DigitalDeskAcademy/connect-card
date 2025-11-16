@@ -179,6 +179,8 @@ export const connectCardUpdateSchema = z.object({
   interests: z.array(z.string()).default([]),
   volunteerCategory: z.string().nullable().optional(),
   prayerRequest: z.string().nullable().optional(),
+  assignedLeaderId: z.string().uuid().nullable().optional(),
+  smsAutomationEnabled: z.boolean().default(false),
 });
 
 // ============================================================================
@@ -230,7 +232,24 @@ export const daysOfWeek = [0, 1, 2, 3, 4, 5, 6] as const;
 
 // Volunteer profile schema (create/update)
 export const volunteerSchema = z.object({
-  churchMemberId: z.string().uuid({ message: "Invalid member ID" }),
+  // Member information (inline creation/lookup)
+  firstName: z
+    .string()
+    .min(1, { message: "First name is required" })
+    .max(100, { message: "First name must be at most 100 characters" }),
+  lastName: z
+    .string()
+    .min(1, { message: "Last name is required" })
+    .max(100, { message: "Last name must be at most 100 characters" }),
+  email: z
+    .string()
+    .email({ message: "Invalid email address" })
+    .max(255, { message: "Email must be at most 255 characters" }),
+  phone: z
+    .string()
+    .regex(/^\+?[1-9]\d{1,14}$/, { message: "Invalid phone number" })
+    .nullable()
+    .optional(),
   organizationId: z.string().uuid({ message: "Invalid organization ID" }),
   locationId: z
     .string()
