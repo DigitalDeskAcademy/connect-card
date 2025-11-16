@@ -1,7 +1,7 @@
 # Volunteer Management - Complete Implementation Roadmap
 
-**Status:** In Progress (Phase 3 - Skills/Availability/Shifts UI)
-**Last Updated:** 2025-11-15
+**Status:** In Progress (Phase 3 - Availability/Shifts UI)
+**Last Updated:** 2025-11-16
 
 ---
 
@@ -93,17 +93,18 @@
   - Conditional fields (status-based, background check-based)
   - Scrollable dialog with max-height
 
-### 🔲 Skills Management UI (NEXT)
+### ✅ Skills Management UI (COMPLETE - PR #25)
 
-- [ ] `/components/dashboard/volunteers/skills-tab.tsx`
+- [x] `/components/dashboard/volunteers/skills-tab.tsx` (218 lines)
 
   - List of current skills with badges (skillName + proficiency)
   - Remove skill button (calls `deleteVolunteerSkill()`)
   - Add skill button opens AddSkillDialog
   - Skills displayed in card layout with verification status
   - Shows verification date and expiry date if applicable
+  - Empty state with "No skills added yet" message
 
-- [ ] `/components/dashboard/volunteers/add-skill-dialog.tsx`
+- [x] `/components/dashboard/volunteers/add-skill-dialog.tsx` (298 lines)
   - Skill name input (combobox with suggestions from existing skills)
   - Proficiency level dropdown (Beginner, Intermediate, Advanced, Expert)
   - Verified checkbox (isVerified)
@@ -111,6 +112,32 @@
   - Expiry date picker (conditional on isVerified)
   - Submit calls `addVolunteerSkill()` server action
   - Toast notifications and dialog close on success
+
+### ✅ Volunteer Assignment Workflow (COMPLETE - PR #26)
+
+- [x] **Team Member Volunteer Categories** - Added `User.volunteerCategories` field (String[])
+
+  - Updated `update-member.ts` server action to support volunteer category assignment
+  - Multi-select dropdown in Team Management edit dialog
+  - Categories: Hospitality, Worship Team, Kids Ministry, Connections, Prayer Team, Production, Admin, Outreach
+  - Enables routing connect card inquiries to appropriate volunteer leaders
+
+- [x] **Review Queue Assignment** - Added volunteer leader assignment to connect card review
+
+  - `ConnectCard.assignedLeaderId` field (nullable String)
+  - `ConnectCard.smsAutomationEnabled` field (Boolean, default false)
+  - Volunteer leader dropdown (filters team members by volunteer categories)
+  - SMS automation toggle for follow-up campaigns
+  - Updated `update-connect-card.ts` to support assignment fields
+
+- [x] **Permissions Fix** - Church admins can now manage team members
+
+  - Fixed `canManageUsers` permission (was false, now true for church_admin role)
+  - Enables church admins to assign volunteer categories without being account owner
+
+- [x] **Bug Fixes**
+  - Fixed `memberId` validation (changed UUID check to nanoid check)
+  - Fixed role mapping (church_owner → "owner" display)
 
 ### 🔲 Availability Management UI
 

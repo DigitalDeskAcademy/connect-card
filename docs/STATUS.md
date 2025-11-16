@@ -46,6 +46,8 @@
   - Batch-based navigation with human-readable batch names
   - Status workflow: EXTRACTED → REVIEWED
   - Server-side S3 signed URLs for secure image access
+  - **Volunteer Leader Assignment** - Assign connect card contacts to team members with volunteer categories
+  - **SMS Automation Toggle** - Enable automated follow-up for volunteer recruitment
 - **Batch Management** ✅ **COMPLETE** - Track upload sessions and review progress
   - Batch creation with date-based naming (e.g., "Bainbridge - Nov 4, 2025")
   - Status tracking: PENDING → COMPLETED
@@ -81,20 +83,23 @@
   - Analytics tab - Placeholder for future analytics (TanStack Table planned)
   - Single navigation item (no dropdown) - Clean, consistent UX
 - **Team Management** - Full team management with granular multi-campus permissions
-  - Active Members tab - View, edit roles/locations, remove members
+  - Active Members tab - View, edit roles/locations, remove members, **assign volunteer categories**
   - Pending Invitations tab - Send invites, resend/cancel invitations
   - Role-based permissions (Account Owner, Admin, Staff)
   - Location-based access control (multi-campus or single-campus)
+  - **Volunteer Category Assignment** - Assign team members to volunteer leadership roles (Hospitality, Worship Team, Kids Ministry, etc.)
 - **Member Management** - ChurchMember model ready (UI placeholder)
-- **Volunteer Management** ✅ **IN PROGRESS** - Phase 3 (Volunteer UI) - Directory, forms, and detail page complete
-  - ✅ Database schema (6 models, 5 enums) - Volunteer, ServingOpportunity, VolunteerShift, VolunteerSkill, VolunteerAvailability, ServingOpportunitySkill
+- **Volunteer Management** ✅ **Phase 3 COMPLETE** - Volunteer assignment workflow with N2N integration
+  - ✅ Database schema (6 models, 5 enums) + assignment fields (User.volunteerCategories, ConnectCard.assignedLeaderId, ConnectCard.smsAutomationEnabled)
   - ✅ Server actions with optimistic locking and transaction handling
   - ✅ Data access layer (`/lib/data/volunteers.ts`, serving-opportunities, shifts)
   - ✅ Volunteer directory with TanStack Table (sorting, search, filtering)
   - ✅ Create volunteer form - Full form with validation (volunteer-form.tsx 18KB + create-volunteer-dialog.tsx)
   - ✅ Volunteer detail page - Tabbed interface with overview and edit capability (PR #24 - 4 components, 985 lines)
+  - ✅ Skills Management UI - Add/remove skills with proficiency levels, verification tracking, expiration dates (PR #25 - skills-tab.tsx, add-skill-dialog.tsx)
+  - ✅ Volunteer Assignment Workflow - Team members assigned to volunteer categories, connect card routing to appropriate leaders (PR #26)
   - ✅ E2E test suite - 7 test cases covering directory, dialogs, forms, table interactions
-  - 🔄 Skills Management UI - NEXT (skills tab, add/remove skills with proficiency levels)
+  - 🔄 Serving Opportunities UI - NEXT (create/edit opportunities, required skills, shift scheduling)
   - See `/docs/volunteer-feature-roadmap.md` for complete status
 - **Prayer Requests** ✅ **COMPLETE** - Multi-tenant prayer request management with security isolation
   - ✅ Database schema (PrayerRequest model with JSONB metadata)
