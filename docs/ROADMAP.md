@@ -1,454 +1,138 @@
-# Church Connect Card - Product Roadmap
+# Product Roadmap - Church Connect Card
 
-**Current Phase**: Phase 3 In Progress (Production Launch) - Review Queue Complete
-**Product Focus**: Church visitor engagement platform with AI-powered connect card scanning
-**Target Market**: Churches (100-2000 members) seeking to improve visitor follow-up
-
----
-
-## 🎯 PRODUCT VISION
-
-### The Problem
-
-Churches manually enter connect card data (visitor info, prayer requests), which is:
-
-- **Slow**: 3-5 minutes per card
-- **Error-prone**: Typos in emails/phones prevent follow-up
-- **Inconsistent**: Cards get lost, data entry delayed weeks
-- **Poor visitor experience**: Visitors feel forgotten when follow-up is slow
-
-### The Solution
-
-**Scan → Extract → Automate**
-
-1. **Scan**: Church staff photograph connect cards with phone camera
-2. **Extract**: Claude Vision AI extracts structured data from handwriting
-3. **Automate**: SMS/email campaigns automatically follow up with visitors
-
-### Success Metrics
-
-- **90% time savings** on data entry (5 min/card → 30 sec/card)
-- **95% follow-up rate** with first-time visitors (up from ~30%)
-- **Response within 24 hours** to prayer requests
-- **50% conversion** from first-time visitor → returning visitor
+**Current Phase:** Phase 3 (Production Launch Prep)
+**Product Focus:** Church visitor engagement platform with AI-powered connect card scanning
+**Target Market:** Churches (100-2000 members) seeking to improve visitor follow-up
 
 ---
 
-## ✅ PHASE 1: FOUNDATION (COMPLETE - Oct 25, 2025)
+## 🎯 Product Vision
 
-**Goal**: Fork SideCar Platform and rebrand to Church Connect Card
+**The Problem:** Churches manually enter connect card data (3-5 minutes per card), leading to errors, lost cards, and poor visitor follow-up (only 30% of first-time visitors receive follow-up).
 
-### Completed
+**Our Solution:** Scan → Extract → Automate
 
-- [x] Forked multi-tenant SaaS boilerplate
-- [x] Renamed `/app/agency/` → `/app/church/`
-- [x] Updated database schema (Contact → ChurchMember, added ConnectCard)
-- [x] Created church-specific navigation (Dashboard, Connect Cards, Volunteer, Prayer)
-- [x] Config-based headers (eliminated Named Slots complexity)
-- [x] Standardized PageContainer pattern
-- [x] Created church seed data with realistic test users
+1. Church staff photograph connect cards with phone camera
+2. Claude Vision AI extracts structured data from handwriting (60-85% accuracy)
+3. SMS/email campaigns automatically follow up with visitors
 
-**Outcome**: Clean foundation aligned with church domain, ready for feature development
+**Success Metrics:**
 
----
-
-## ✅ PHASE 2: CONNECT CARD MVP (COMPLETE - Oct 26, 2025)
-
-**Goal**: Build AI-powered connect card scanning and data extraction
-
-### Completed
-
-- [x] Claude Vision API integration (Anthropic)
-- [x] Multi-file upload with drag-and-drop
-- [x] Mobile camera capture for phone-based scanning
-- [x] Base64 image processing (avoids S3 access issues)
-- [x] Structured data extraction (name, email, phone, prayer request, interests)
-- [x] Client-side validation (phone number digit count, email format)
-- [x] Test interface for debugging extractions
-- [x] Database storage (ConnectCard model with JSONB extractedData)
-
-### Key Learnings
-
-- AI achieves 60-85% accuracy on handwritten cards (industry standard for OCR)
-- Phone validation catches common OCR errors (9-digit vs 10-digit numbers)
-- Hybrid approach works best: AI extracts 80%, human reviews flagged 20% = 90% time savings
-- Base64 encoding required (Anthropic API can't access private S3 buckets)
-
-**Outcome**: Functional connect card scanning system, tested with handwritten samples
+- 90% time savings on data entry (5 min/card → 30 sec/card)
+- 95% follow-up rate with first-time visitors
+- Response within 24 hours to prayer requests
 
 ---
 
-## 🚀 PHASE 3: PRODUCTION LAUNCH (CURRENT - Target: Nov 2025)
+## ✅ Completed Phases
 
-**Goal**: Launch to first pilot church with 6 locations
+### Phase 1: Foundation (Oct 2025) ✅ COMPLETE
 
-### Connect Card Enhancements ✅ COMPLETE (Nov 5, 2025)
+Forked SideCar Platform → Rebranded to Church Connect Card → Multi-tenant architecture ready
 
-- [x] **Review Queue UI** - Manual correction interface with zoomable images
-- [x] **Manual Edit Interface** - Pre-populated forms with AI-extracted data
-- [x] **Pagination System** - shadcn Pagination component (3-page window with ellipsis)
-- [x] **Volunteer Categories** - Conditional dropdown for volunteer interest categorization
-- [x] **Duplicate Detection** - "Existing member" checkbox (auto-checked on match)
-- [x] **Batch Management** - Date-based batch naming and tracking
-- [x] **Upload Completion Summary** - Stats dashboard with success/warning/error counts
-- [x] **Dashboard Analytics** - TanStack Table with sorting, search, filtering, pagination
-- [x] **Status Workflow** - EXTRACTED → REVIEWED status transitions
+### Phase 2: Connect Card MVP (Oct 2025) ✅ COMPLETE
 
-### Team Management ✅ COMPLETE
+AI-powered connect card scanning with Claude Vision API → Upload, extract, review workflow
 
-- [x] **Team Management UI** - Two-tab interface for managing church staff
-  - [x] Active Members tab with edit/remove capabilities
-  - [x] Pending Invitations tab with resend/cancel actions
-  - [x] Controlled Tabs pattern matching dashboard styling
-- [x] **Multi-Campus Permissions** - Granular location-based access control
-  - [x] Account Owner (sees all locations always)
-  - [x] Multi-Campus Admin (optional all-location access via flag)
-  - [x] Campus Admin (default single-campus restriction)
-  - [x] Staff (always single-campus)
-- [x] **Role Management** - Type-safe role mapping and assignment
-  - [x] UI terminology: "Account Owner", "Admin", "Staff"
-  - [x] Database roles: `church_owner`, `church_admin`, `user`
-  - [x] Role mapping utilities with exhaustive type checking
-- [x] **Invitation System** - Email-based team invitations
-  - [x] Invite staff with role and location selection
-  - [x] Resend invitations (24-hour cooldown)
-  - [x] Cancel pending invitations
-  - [x] Rate limiting with Arcjet
-- [x] **Server Actions** - Complete CRUD with security
-  - [x] invite-staff, update-member, remove-member
-  - [x] resend-invitation, cancel-invitation
-  - [x] Multi-tenant isolation and Zod validation
-
-### Developer Tools ✅ COMPLETE
-
-- [x] **Slash Commands Library** - 11 comprehensive development workflow automation commands
-  - [x] /session-start, /commit, /add-route, /add-server-action (development workflow)
-  - [x] /check-patterns, /check-security, /check-multi-tenant, /clean (quality & safety)
-  - [x] /review-code, /update-docs, /feature-wrap-up (integration & completion)
-- [x] **Pattern Enforcement** - All commands encode multi-tenant isolation, security, PageContainer usage
-- [x] **Documentation** - 17KB comprehensive reference guide (.claude/COMMANDS.md)
-
-### Public Site Early Access Copy ✅ COMPLETE (Nov 7, 2025)
-
-- [x] **Homepage Rewrite** - Early access positioning with NewLife Church validation
-  - [x] Hero section with founding church badge (25 churches, 50% off, FREE scanner)
-  - [x] Statistics display (text-6xl) showing 500+ cards weekly, 95% accuracy, 2min avg
-  - [x] Benefits section converted to 6-card grid with icons
-  - [x] Pricing cards with FREE scanner badges on Growth and Multi-Campus tiers
-- [x] **Features Page** - Battle-tested features with real-world proof
-  - [x] All features include NewLife Church validation
-  - [x] Early access CTA replacing "Start Free Trial"
-  - [x] Founding church benefits grid
-- [x] **Pricing Page** - Founding church pricing model
-  - [x] Prices: $79/$149/$299 (50% off $158/$298/$598) with strikethrough
-  - [x] FREE scanner badges on Growth and Multi-Campus cards
-  - [x] Early access FAQ section
-- [x] **Demo Page** - Live system demonstration
-  - [x] Removed Calendly placeholder sections
-  - [x] Email booking with pre-filled template
-  - [x] NewLife Church proof points
-- [x] **Signup Page** - Early access application flow
-  - [x] Founding church benefits list (8 items)
-  - [x] NewLife Church validation box
-  - [x] Application messaging vs. trial messaging
-- [x] **Branding** - Complete "SideCar" → "Church Sync AI" rebrand
-  - [x] Updated LoginForm, Navbar, PublicHeader, PublicSidebar
-- [x] **Documentation** - Added `/docs/copywriting-public-facing.md`
-
-### Public Site Accessibility Compliance ✅ COMPLETE (Nov 7, 2025)
-
-- [x] **WCAG 2.1 Level A Compliance** - All public pages meet accessibility standards
-  - [x] Heading hierarchy fixes (removed duplicate H1s, added IDs)
-  - [x] Semantic HTML structure (article/section elements with ARIA)
-  - [x] Touch target compliance (44×44px minimum per WCAG 2.5.5)
-  - [x] All pages updated: home, features, pricing, demo, signup
-- [x] **Brand Refinement** - "Church Sync AI" → "Church Sync"
-  - [x] Removed "AI" from brand name across site
-  - [x] Softened accuracy claims (removed "95%" references)
-  - [x] Church-friendly pricing tier names
-- [x] **UX Polish** - shadcn Accordion for FAQ, button alignment
-- [x] **Documentation** - Added `/docs/technical/accessibility-modernization-plan.md`
-
-### Environment Setup
-
-- [ ] **Production Database** - Configure Neon production Postgres
-- [ ] **Environment Variables** - Set all production secrets (Anthropic, Stripe, S3, Auth)
-- [ ] **Domain & SSL** - Custom domain with HTTPS
-- [ ] **Monitoring** - Error tracking (Sentry), analytics (Vercel)
-- [ ] **Backups** - Automated database backups
-
-### Testing & Validation
-
-- [ ] **Pilot Church Testing** - Process 100+ real connect cards
-- [ ] **Mobile Testing** - Verify iOS/Android camera capture
-- [ ] **Load Testing** - Handle 500+ cards uploaded in one Sunday
-- [ ] **AI Accuracy Measurement** - Track extraction success rate on real data
-
-### Onboarding & Documentation
-
-- [ ] **Church Admin Guide** - How to scan and process connect cards
-- [ ] **Video Tutorial** - 5-minute walkthrough of full workflow
-- [ ] **Support System** - Help desk for pilot church questions
-
-**Success Criteria**:
-
-- [x] Review queue UI complete with manual correction capability
-- [ ] Pilot church processes 100+ connect cards with 90% time savings
-- [ ] Production environment configured and live
+See `/docs/features/connect-cards/vision.md` for full details.
 
 ---
 
-## 🎯 PHASE 4: MEMBER MANAGEMENT (Target: Dec 2025 - Jan 2026)
+## 🚀 Current Phase: Phase 3 (Production Launch - Nov 2025)
 
-**Goal**: Build member directory and N2N (Newcomer to Next-Step) workflow
+**Goal:** Launch to first pilot church (6 locations) with production-ready system
 
-### Member Directory
+### Active Work
 
-- [ ] **Member List** - Searchable, filterable list of all church members
-- [ ] **Member Profiles** - View individual history, notes, connect cards, attendance
-- [ ] **Member Import** - Bulk upload existing member database (CSV)
-- [ ] **Duplicate Detection** - Warn when connect card matches existing member
+- **Connect Card Enhancements** ✅ COMPLETE - Review queue, batch management, analytics
+  - See `/docs/features/connect-cards/vision.md`
+- **Team Management** ✅ COMPLETE - Multi-campus permissions, role management
+- **Environment Setup** 🔄 IN PROGRESS - Production database, domain, SSL, monitoring
+- **Pilot Church Testing** 🔄 IN PROGRESS - Process 100+ real connect cards
 
-### N2N Workflow
+### Success Criteria
 
-- [ ] **Visitor Pipeline** - First-time → returning → regular attender → member
-- [ ] **Status Tracking** - Mark members with tags (visitor, new member, volunteer, etc.)
-- [ ] **Follow-up Dashboard** - See who needs outreach this week
-- [ ] **Notes & History** - Track all interactions with each visitor/member
-
-### Data Management
-
-- [ ] **Merge Duplicates** - Combine multiple records for same person
-- [ ] **Bulk Actions** - Tag multiple members, export lists
-- [ ] **Custom Fields** - Church-specific data (small group, serving team, etc.)
-
-**Success Criteria**: Church transitions 50% of first-time visitors to returning visitors
+- [x] Review queue UI complete
+- [ ] Production environment configured
+- [ ] 100+ real connect cards processed
+- [ ] Mobile & load testing complete
 
 ---
 
-## 🎯 PHASE 5: AUTOMATED COMMUNICATION (Target: Feb 2026)
+## 📋 Next Up: Phase 4 (Member Management - Dec 2025)
 
-**Goal**: Automated SMS/email follow-up campaigns
+**Goal:** Build member directory and N2N (Newcomer to Next-Step) workflow
 
-### GHL Integration
+### Planned Features
 
-- [ ] **OAuth Connection** - Connect church's GoHighLevel account
-- [ ] **Contact Sync** - Push connect card data to GHL
-- [ ] **SMS Campaigns** - Automated welcome messages to first-time visitors
-- [ ] **Email Campaigns** - Follow-up series, event invitations
+- **Member Directory** - Searchable list, profiles, CSV import
+- **N2N Workflow** - Auto-track visitor → returning → member status
+- **Follow-up Dashboard** - See who needs outreach this week
+- **Duplicate Detection** - Merge duplicate member records
 
-### Campaign Templates
+**See `/docs/features/member-management/vision.md` for full details.**
 
-- [ ] **First-Time Visitor Welcome** - Thank you + what to expect next Sunday
-- [ ] **Prayer Request Follow-up** - Check-in on prayer needs after 1 week
-- [ ] **Returning Visitor** - Invite to coffee with pastor
-- [ ] **New Member Onboarding** - Next steps to get connected
-
-### Analytics & Reporting
-
-- [ ] **Campaign Performance** - Open rates, click rates, response rates
-- [ ] **Follow-up Effectiveness** - Track visitor retention by campaign type
-- [ ] **Response Tracking** - See who replied, needs manual outreach
-
-**Success Criteria**: 95% of first-time visitors receive follow-up within 24 hours
+**Success Criteria:** 50% first-time visitor → returning visitor conversion
 
 ---
 
-## 🎯 PHASE 6: VOLUNTEER & PRAYER MANAGEMENT (Target: Mar 2026)
+## 🔮 Future Phases
 
-### Volunteer System
+### Phase 5: Automated Communication (Feb 2026)
 
-- [ ] **Volunteer Database** - Skills, availability, preferences
-- [ ] **Serving Opportunities** - List of volunteer roles (greeters, ushers, kids ministry, etc.)
-- [ ] **Scheduling** - Assign volunteers to weekly serving schedule
-- [ ] **Check-in System** - Track volunteer attendance
-- [ ] **Reminders** - SMS reminders before serving shifts
+**GHL Integration** - SMS/email campaigns for visitor follow-up
+**See `/docs/features/communication/vision.md` (coming soon)**
 
-### Prayer Request System
+### Phase 6: Prayer & Volunteer Management (Mar 2026)
 
-**🔄 IN PROGRESS (Nov 2025)** - Prayer Management MVP (60% Complete)
+- **Prayer Requests** - See `/docs/features/prayer-management/vision.md`
+- **Volunteer Onboarding** - See `/docs/features/volunteer-management/vision.md`
 
-**✅ Completed:**
+### Phase 7: Analytics & Insights (Apr 2026)
 
-- [x] **Prayer Request Database** - Multi-tenant schema with privacy levels and status enum
-- [x] **Data Access Layer** - Multi-tenant scoped queries with privacy filtering (`/lib/data/prayer-requests.ts`)
-- [x] **TypeScript Types** - Comprehensive type definitions for all operations
-- [x] **Prayer Request Table UI** - TanStack Table with search, filter, sort, pagination
-- [x] **Auto-Categorization** - 8 categories with keyword detection (Health, Family, Salvation, etc.)
-- [x] **Sensitive Keyword Detection** - Auto-marks private based on content
-- [x] **Privacy Controls** - Staff see only public + assigned private requests
-- [x] **Multi-Tenant Security** - Organization and location-based data isolation
-- [x] **E2E Test Suite** - 10 comprehensive security and workflow tests
-- [x] **Worktree Development** - Isolated database branching (ep-long-feather-ad7s8ao0)
-- [x] **Seed Data** - 30 test prayer requests with varied statuses and categories
+**Visitor trends, retention metrics, predictive insights**
 
-**🔄 Current Work (Server Actions):**
+### Phase 8: Multi-Location & Scaling (May 2026)
 
-- [ ] **Create Prayer Request** - Manual prayer request creation with validation
-- [ ] **Update Prayer Request** - Edit text, category, privacy, urgency, status
-- [ ] **Delete/Archive** - Soft delete or archive workflow
-- [ ] **Assign to Team Member** - Assignment with status update to ASSIGNED
-- [ ] **Mark as Answered** - Capture answered date and testimony
-- [ ] **Zod Schemas** - Validation for all mutations
-
-**📋 Next Steps:**
-
-- [ ] **Detail View** - Sheet/Dialog for viewing full prayer request
-- [ ] **Edit Forms** - UI for updating requests and assignments
-- [ ] **Connect Card Integration** - Auto-create from connect card review
-
-**Future Enhancements:**
-
-- [ ] **Prayer Wall (Public Display)** - Anonymous prayer board for congregation (no personal info)
-  - Real-time feed of recent prayer requests (names removed)
-  - Display on lobby screens, church website
-  - Encourages congregation-wide prayer participation
-- [ ] **Prayer Team Dashboard** - Daily/weekly prayer list export for dedicated team
-  - Filter by date range (today, this week, last 7 days)
-  - Export to PDF/Email for team meetings
-  - Sort by location (multi-campus support)
-  - Timestamp tracking (scannedAt already implemented ✅)
-- [ ] **Prayer Teams** - Assign requests to specific prayer groups
-- [ ] **Follow-up Workflow** - Check in after 1 week, 1 month
-- [ ] **Answered Prayers** - Track and celebrate answered requests
-- [ ] **Privacy Controls** - Public vs confidential prayer requests (opt-in for wall display)
-
-**Success Criteria**: 80% of prayer requests receive follow-up within 1 week
+**Support 10+ churches with 50,000+ members total**
 
 ---
 
-## 🎯 PHASE 7: ANALYTICS & INSIGHTS (Target: Apr 2026)
+## 🚫 Out of Scope (Not Planning)
 
-### Visitor Analytics
+These features are explicitly **NOT** planned for MVP:
 
-- [ ] **First-Time Visitor Trends** - Weekly/monthly counts, seasonal patterns
-- [ ] **Retention Metrics** - How many visitors return for 2nd, 3rd, 4th visit
-- [ ] **N2N Pipeline Dashboard** - Visual funnel from visitor → member
-- [ ] **Source Tracking** - How visitors heard about the church
-
-### Engagement Metrics
-
-- [ ] **Member Activity** - Attendance trends, serving frequency
-- [ ] **Communication Effectiveness** - SMS/email open rates, response rates
-- [ ] **Prayer Request Analytics** - Response times, follow-up completion
-- [ ] **Volunteer Health** - Burnout indicators, serving frequency
-
-### Predictive Insights
-
-- [ ] **At-Risk Members** - Identify members with declining attendance
-- [ ] **High-Potential Volunteers** - Find engaged members ready to serve
-- [ ] **Growth Forecasting** - Predict membership growth based on trends
-
-**Success Criteria**: Church leadership makes data-driven decisions on outreach strategy
+- ❌ Event Management (use Planning Center, Eventbrite)
+- ❌ Giving/Donations (use Stripe, church giving platforms)
+- ❌ Livestream Integration (use YouTube, Vimeo)
+- ❌ Website Builder (focus on CRM/engagement only)
+- ❌ Accounting/Finances (use QuickBooks, FreshBooks)
 
 ---
 
-## 🎯 PHASE 8: MULTI-LOCATION & SCALING (Target: May 2026)
+## 📊 Success Metrics by Phase
 
-### Multi-Location Support
-
-- [ ] **Location Management** - Manage 6+ church campuses in one system
-- [ ] **Location-Specific Data** - Filter by campus, track per-location metrics
-- [ ] **Cross-Location Reporting** - Roll-up metrics across all campuses
-- [ ] **Location Branding** - Custom branding per campus (if needed)
-
-### White-Label Features
-
-- [ ] **Custom Domain** - church.theirurl.com
-- [ ] **Church Branding** - Logo, colors, custom styling
-- [ ] **Custom Fields** - Church-specific data fields
-- [ ] **API Access** - Integrate with other church management systems
-
-### Scaling Infrastructure
-
-- [ ] **Performance Optimization** - Handle 1000+ cards/week
-- [ ] **Mobile App** - Native iOS/Android apps for on-the-go scanning
-- [ ] **Offline Mode** - Scan cards without internet, sync later
-- [ ] **Batch Processing** - Process 100+ cards simultaneously
-
-**Success Criteria**: Support 10+ churches with 50,000+ members total
+| Phase         | Key Metric                                | Target   |
+| ------------- | ----------------------------------------- | -------- |
+| **Phase 3**   | Pilot church using system                 | 1 church |
+| **Phase 4**   | First-time → returning visitor conversion | 50%      |
+| **Phase 5**   | Follow-up rate within 24 hours            | 95%      |
+| **Phase 6**   | Prayer requests followed up within 1 week | 80%      |
+| **12 Months** | Total churches using platform             | 10+      |
+| **12 Months** | Connect cards processed                   | 50,000+  |
+| **12 Months** | Monthly Recurring Revenue                 | $10K+    |
 
 ---
 
-## 📊 SUCCESS METRICS
+## 🔄 Current Priorities (This Week)
 
-### Phase 3 (Production Launch)
-
-- 1 pilot church using system
-- 100+ connect cards processed
-- 90% time savings on data entry
-- 95% extraction accuracy (with review queue)
-
-### Phase 4 (Member Management)
-
-- 50% first-time visitor → returning visitor conversion
-- 500+ members in directory
-- 10+ follow-ups completed per week
-
-### Phase 5 (Communication)
-
-- 95% follow-up rate within 24 hours
-- 40%+ SMS open rate
-- 20%+ email open rate
-- 80% visitor satisfaction with follow-up
-
-### Phase 6 (Volunteer & Prayer)
-
-- 50+ active volunteers tracked
-- 80% prayer requests followed up within 1 week
-- 90% volunteer attendance rate
-
-### Long-Term (12 Months)
-
-- 10+ churches using platform
-- 50,000+ connect cards processed
-- 100,000+ church members in system
-- $10K+ MRR
+1. ✅ Documentation restructure (lightweight dashboards)
+2. 🔄 Production environment setup (Neon, Vercel, domain)
+3. 🔄 Deploy to production and test end-to-end workflow
+4. 🔄 Prepare pilot church onboarding materials
 
 ---
 
-## 🚫 OUT OF SCOPE (Not Planning)
-
-These features are explicitly NOT planned for MVP:
-
-- **Event Management** - Use external tools (Planning Center, Eventbrite)
-- **Giving/Donations** - Use Stripe directly or church giving platforms
-- **Livestream Integration** - Use YouTube, Vimeo, or church streaming services
-- **Website Builder** - Focus on CRM/engagement, not website hosting
-- **Accounting/Finances** - Use QuickBooks, FreshBooks, or church accounting software
-
----
-
-## 📝 NOTES
-
-- **AI Limitations**: 60-85% accuracy is industry standard for handwriting OCR. Hybrid approach (AI + human review) is the right model.
-- **GHL Dependency**: Communication features require GoHighLevel. Alternative: direct Twilio/SendGrid integration if churches don't have GHL.
-- **Mobile-First**: Many church staff use phones, not computers. Mobile camera scanning is critical feature.
-- **Privacy**: Churches handle sensitive data (prayer requests, personal info). Security and compliance are non-negotiable.
-- **LMS Position**: Training system is secondary feature for church staff onboarding, not core product.
-
----
-
-## 🔄 NEXT STEPS
-
-**Immediate** (This Week):
-
-1. Set up production environment (Neon, Vercel, domain)
-2. Configure all environment variables
-3. Test review queue with real handwritten connect cards
-4. Deploy to production and verify end-to-end flow
-
-**Short-Term** (Next 2 Weeks):
-
-1. Launch to pilot church (6 locations)
-2. Process 100+ real connect cards with review queue
-3. Measure accuracy, time savings, user satisfaction
-4. Collect feedback on review queue UX
-
-**Medium-Term** (Next 3 Months):
-
-1. Refine review queue based on pilot church feedback
-2. Build member management MVP
-3. Implement N2N workflow
-4. Connect GHL for automated follow-up
-5. Expand to 2-3 additional pilot churches
+**Last Updated:** 2025-11-16
+**See `/docs/STATUS.md` for current working/broken features**
+**See `/docs/features/{feature}/vision.md` for detailed feature planning**
