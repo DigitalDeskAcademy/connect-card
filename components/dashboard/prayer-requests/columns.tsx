@@ -5,13 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   IconArrowsSort,
   IconSortAscending,
@@ -144,63 +141,63 @@ export const prayerRequestColumns: ColumnDef<PrayerRequestListItem>[] = [
       const filterValue =
         (column.getFilterValue() as string[] | undefined) || [];
 
+      const toggleFilter = (value: string) => {
+        const newValue = filterValue.includes(value)
+          ? filterValue.filter(v => v !== value)
+          : [...filterValue, value];
+        column.setFilterValue(newValue.length > 0 ? newValue : undefined);
+      };
+
       return (
         <div className="flex items-center justify-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+          <Popover>
+            <PopoverTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <IconChevronDown
                   className={`h-4 w-4 ${filterValue.length > 0 ? "text-primary" : ""}`}
                 />
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Filter Flags</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={filterValue.includes("urgent")}
-                onCheckedChange={checked => {
-                  const newValue = checked
-                    ? [...filterValue, "urgent"]
-                    : filterValue.filter(v => v !== "urgent");
-                  column.setFilterValue(
-                    newValue.length > 0 ? newValue : undefined
-                  );
-                }}
-              >
-                <IconAlertTriangle className="mr-2 h-4 w-4 text-orange-500" />
-                Urgent
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={filterValue.includes("private")}
-                onCheckedChange={checked => {
-                  const newValue = checked
-                    ? [...filterValue, "private"]
-                    : filterValue.filter(v => v !== "private");
-                  column.setFilterValue(
-                    newValue.length > 0 ? newValue : undefined
-                  );
-                }}
-              >
-                <IconLock className="mr-2 h-4 w-4 text-muted-foreground" />
-                Private
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={filterValue.includes("none")}
-                onCheckedChange={checked => {
-                  const newValue = checked
-                    ? [...filterValue, "none"]
-                    : filterValue.filter(v => v !== "none");
-                  column.setFilterValue(
-                    newValue.length > 0 ? newValue : undefined
-                  );
-                }}
-              >
-                <span className="mr-2 text-muted-foreground text-xs">—</span>
-                No Flags
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            </PopoverTrigger>
+            <PopoverContent className="w-48 p-2" align="start">
+              <div className="space-y-1">
+                <div
+                  className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
+                  onClick={() => toggleFilter("urgent")}
+                >
+                  <Checkbox
+                    checked={filterValue.includes("urgent")}
+                    onCheckedChange={() => toggleFilter("urgent")}
+                  />
+                  <IconAlertTriangle className="h-4 w-4 text-orange-500" />
+                  <span className="text-sm">Urgent</span>
+                </div>
+                <div
+                  className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
+                  onClick={() => toggleFilter("private")}
+                >
+                  <Checkbox
+                    checked={filterValue.includes("private")}
+                    onCheckedChange={() => toggleFilter("private")}
+                  />
+                  <IconLock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">Private</span>
+                </div>
+                <div
+                  className="flex items-center gap-2 rounded-sm px-2 py-1.5 cursor-pointer hover:bg-accent"
+                  onClick={() => toggleFilter("none")}
+                >
+                  <Checkbox
+                    checked={filterValue.includes("none")}
+                    onCheckedChange={() => toggleFilter("none")}
+                  />
+                  <div className="h-4 w-4 flex items-center justify-center text-muted-foreground text-xs">
+                    —
+                  </div>
+                  <span className="text-sm">No Flags</span>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       );
     },

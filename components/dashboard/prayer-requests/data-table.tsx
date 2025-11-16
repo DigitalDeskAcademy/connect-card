@@ -202,7 +202,7 @@ export function PrayerRequestDataTable<TData, TValue>({
                         key={header.id}
                         className={
                           header.id === "select" || header.id === "flags"
-                            ? "border-r last:border-r-0 border-border px-2"
+                            ? "border-r last:border-r-0 border-border pl-2 !pr-2"
                             : "px-4 border-r last:border-r-0 border-border"
                         }
                       >
@@ -228,7 +228,7 @@ export function PrayerRequestDataTable<TData, TValue>({
                         className={
                           cell.column.id === "select" ||
                           cell.column.id === "flags"
-                            ? "border-r last:border-r-0 border-border px-2"
+                            ? "border-r last:border-r-0 border-border pl-2 !pr-2"
                             : "px-4 border-r last:border-r-0 border-border"
                         }
                       >
