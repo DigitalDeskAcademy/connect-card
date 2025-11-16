@@ -1,127 +1,96 @@
-# VS Code Workspace Settings
+# VSCode Workspace Configuration
 
-## Overview
+## Workspace Colors (Local Settings)
 
-This project uses **workspace-specific VS Code settings** to protect API keys and enable personalized configurations.
+Each worktree has distinct colors to avoid confusion when working in multiple VSCode windows.
 
-## Files
+**Note:** `.vscode/settings.json` is gitignored (industry standard practice) so colors must be set manually in each worktree.
 
-- **`settings.json`** - Your personal settings (git-ignored, not committed)
-- **`settings.template.json`** - Team template (committed to git, shows recommended settings)
-- **`README.md`** - This documentation
-
-## Setup Instructions
-
-### For New Developers
-
-1. Copy the template file:
-
-   ```bash
-   cp .vscode/settings.template.json .vscode/settings.json
-   ```
-
-2. Add your personal settings to `.vscode/settings.json`:
-
-   - Peacock colors (for worktree identification)
-   - MCP server configurations with API keys
-   - Any personal preferences
-
-3. **Never commit `settings.json`** - it's already in `.gitignore`
-
-### For Worktree Users
-
-Each worktree should have its own `.vscode/settings.json` with unique Peacock colors:
-
-- **Backend worktree**: Red (`#ff0000`)
-- **Frontend worktree**: Green (`#42b883`)
-- **Main worktree**: Blue (`#007acc`)
-
-This color coding prevents accidentally working in the wrong worktree.
-
-## Why This Approach?
-
-**Problem**: Committing `settings.json` to git causes two issues:
-
-1. **Security**: API keys get exposed in git history
-2. **Conflicts**: Personal settings (like Peacock colors) get overwritten when switching branches
-
-**Solution**: Keep `settings.json` local and git-ignored, use `settings.template.json` for team standards.
-
-## What Goes Where?
-
-### settings.template.json (Committed)
-
-- Editor formatting rules
-- ESLint configuration
-- Prettier settings
-- TypeScript preferences
-- **No API keys**
-- **No Peacock colors**
-
-### settings.json (Local Only)
-
-- Everything from template
-- **Plus**: Your API keys (MCP, Context7, etc.)
-- **Plus**: Peacock color for this worktree
-- **Plus**: Any personal preferences
-
-## Example Personal Settings
-
-Add these to your `settings.json`:
+### Volunteer Worktree (Green)
 
 ```json
 {
-  // ... all settings from template ...
-
-  // Peacock color (choose based on worktree)
-  "peacock.color": "#ff0000",
-  "peacock.remoteColor": "#ff0000",
-
-  // MCP servers with API keys
-  "mcp": {
-    "servers": {
-      "context7": {
-        "type": "stdio",
-        "command": "npx",
-        "args": ["-y", "@upstash/context7-mcp"],
-        "env": {
-          "CONTEXT7_API_KEY": "your-key-here"
-        }
-      }
-    }
+  "workbench.colorCustomizations": {
+    "activityBar.activeBorder": "#22c55e",
+    "activityBar.activeBackground": "#22c55e",
+    "activityBar.background": "#16a34a",
+    "activityBar.foreground": "#ffffff",
+    "statusBar.background": "#22c55e",
+    "statusBar.foreground": "#ffffff",
+    "titleBar.activeBackground": "#22c55e",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#16a34a",
+    "titleBar.inactiveForeground": "#ffffff"
   }
 }
 ```
 
-## Troubleshooting
+### Prayer Worktree (Blue)
 
-### Lost Peacock Colors After Branch Switch?
-
-This is normal! Since `settings.json` is git-ignored, it won't change when you switch branches. Your colors should persist.
-
-If they disappear, re-add them to `settings.json` in that worktree.
-
-### API Keys Not Working?
-
-Make sure your API keys are in `settings.json` (not `settings.template.json`). The template file doesn't contain real API keys.
-
-### Settings Keep Getting Overwritten?
-
-Check that `.vscode/settings.json` is in `.gitignore`. Run:
-
-```bash
-git check-ignore .vscode/settings.json
-# Should output: .vscode/settings.json
+```json
+{
+  "workbench.colorCustomizations": {
+    "activityBar.activeBorder": "#3b82f6",
+    "activityBar.activeBackground": "#3b82f6",
+    "activityBar.background": "#2563eb",
+    "activityBar.foreground": "#ffffff",
+    "statusBar.background": "#3b82f6",
+    "statusBar.foreground": "#ffffff",
+    "titleBar.activeBackground": "#3b82f6",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#2563eb",
+    "titleBar.inactiveForeground": "#ffffff"
+  }
+}
 ```
 
-If it's not ignored, it's being committed to git and will get overwritten.
+### Main Worktree (Red)
 
-## Security Note
+```json
+{
+  "workbench.colorCustomizations": {
+    "activityBar.activeBorder": "#ef4444",
+    "activityBar.activeBackground": "#ef4444",
+    "activityBar.background": "#dc2626",
+    "activityBar.foreground": "#ffffff",
+    "statusBar.background": "#ef4444",
+    "statusBar.foreground": "#ffffff",
+    "titleBar.activeBackground": "#ef4444",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#dc2626",
+    "titleBar.inactiveForeground": "#ffffff"
+  }
+}
+```
 
-**Never commit API keys to git!**
+## Setup Instructions
 
-If you accidentally committed `settings.json` with API keys:
+### Option 1: Manual Copy-Paste
 
-1. Rotate all exposed API keys immediately
-2. Remove the file from git history
-3. Verify `.vscode/settings.json` is in `.gitignore`
+1. Copy the JSON config for your worktree (above)
+2. Open VSCode in the worktree
+3. Cmd/Ctrl + Shift + P → "Preferences: Open Workspace Settings (JSON)"
+4. Paste the color configuration
+5. Save and reload VSCode window
+
+### Option 2: Use Peacock Extension (Recommended)
+
+1. Install [Peacock extension](https://marketplace.visualstudio.com/items?itemName=johnpapa.vscode-peacock)
+2. Cmd/Ctrl + Shift + P → "Peacock: Change to a Favorite Color"
+3. Choose green/blue/red based on worktree
+4. Peacock handles the JSON automatically
+
+## Why Gitignored?
+
+`.vscode/settings.json` is gitignored because:
+
+- ✅ Zero merge conflicts between worktrees
+- ✅ Personal preferences (colors, editor settings, extensions)
+- ✅ API keys/secrets stored in workspace settings
+- ✅ Industry standard (used by most open-source projects)
+
+**Team-shared settings** (linting, formatting) go in dedicated config files:
+
+- `.prettierrc` - Prettier formatting
+- `eslint.config.mjs` - ESLint rules
+- `tsconfig.json` - TypeScript compiler options

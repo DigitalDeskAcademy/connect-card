@@ -109,7 +109,12 @@ export function VolunteerForm({
   async function onSubmit(data: VolunteerSchemaType) {
     startTransition(async () => {
       try {
-        const result = await createVolunteer(slug, data);
+        // Convert "none" to null for locationId since Radix Select doesn't allow empty string values
+        const processedData = {
+          ...data,
+          locationId: data.locationId === "none" ? null : data.locationId,
+        };
+        const result = await createVolunteer(slug, processedData);
 
         if (result.status === "success") {
           toast.success(result.message);
@@ -179,7 +184,7 @@ export function VolunteerForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">No specific campus</SelectItem>
+                    <SelectItem value="none">No specific campus</SelectItem>
                     {locations.map(location => (
                       <SelectItem key={location.id} value={location.id}>
                         {location.name}

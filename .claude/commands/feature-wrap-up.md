@@ -1,15 +1,23 @@
 ---
-description: Complete end-to-end feature workflow from build to merge to handoff (no file creation)
+description: Complete end-to-end feature workflow - worktree-aware with conflict detection
 model: claude-sonnet-4-5-20250929
 ---
 
-# Feature Wrap-Up
+# Feature Wrap-Up (Worktree-Aware)
 
-Complete feature workflow: build → commit → PR → merge → update worktrees → handoff text (copyable, no files created).
+Complete feature workflow: build → commit → conflict forecast → PR → merge → sync worktrees → handoff.
 
-## Your Tasks:
+**Key Features:**
 
-### Stage 1: Quality Verification
+- ✅ Detects merge conflicts BEFORE creating PR
+- ✅ Syncs all worktrees after merge
+- ✅ Handles documentation conflicts intelligently
+- ✅ NO doc updates in feature branch (prevents conflicts)
+- ✅ Generates copyable handoff text
+
+---
+
+## Stage 1: Quality Verification
 
 **Step 1: Run Build**
 
@@ -19,9 +27,9 @@ pnpm build
 
 If build fails:
 
-- Report all TypeScript errors with file:line references
+- Report TypeScript errors with file:line references
 - STOP workflow
-- Ask user: "Build failed. Would you like me to help fix the errors?"
+- Ask: "Build failed. Fix errors? (yes/no)"
 
 **Step 2: Run ESLint**
 
@@ -31,23 +39,24 @@ pnpm lint
 
 If lint fails:
 
-- Report all ESLint errors/warnings
-- STOP workflow
-- Ask user: "ESLint found issues. Run \`pnpm lint --fix\` to auto-fix? (yes/no)"
+- Report errors/warnings
+- Ask: "Run `pnpm lint --fix`? (yes/no)"
 
-**Step 3: Verify No Critical Issues**
+**Step 3: Check for Critical Issues**
 
-- Check for console.log/console.error statements
-- Check for TODO/FIXME comments in critical code
-- Check for any \`.only()\` in tests (if tests exist)
+Scan for:
 
-If issues found, report them and ask user if acceptable to proceed.
+- `console.log`/`console.error` statements
+- `TODO`/`FIXME` in critical paths
+- `.only()` in test files
+
+If found, report and ask if acceptable to proceed.
 
 ---
 
-### Stage 2: Commit & Documentation
+## Stage 2: Commit Feature Code
 
-**Step 4: Check Git Status**
+**Step 4: Git Status**
 
 ```bash
 git status
@@ -56,36 +65,29 @@ git diff --stat
 
 Show user summary of changes.
 
-**Step 5: Review Changes & Draft Commit**
+**Step 5: Draft Commit Message**
 
-Analyze changes and draft commit message:
-
-- Determine type: feat/fix/refactor/docs/etc.
-- Write clear, concise summary (1-2 sentences)
-- Focus on "why" not "what"
-
-**Commit message format:**
+Analyze changes and create commit:
 
 ```
 <type>: <short summary>
 
-<optional detailed explanation>
+<optional details>
 ```
 
-**Step 6: Execute Commit**
+**NO** AI attribution (CLAUDE.md policy)
+
+**Step 6: Commit**
 
 ```bash
-# Build already passed, now commit
 git add .
 git commit -m "$(cat <<'EOF'
-<commit message here>
+<message>
 EOF
 )"
 ```
 
-**IMPORTANT:** NO "Generated with Claude Code" or "Co-Authored-By: Claude" (CLAUDE.md lines 457-463)
-
-**Step 7: Verify Commit Success**
+**Step 7: Verify**
 
 ```bash
 git log -1 --oneline
@@ -94,646 +96,605 @@ git status
 
 Should show clean working tree.
 
-**Step 8: Update Documentation**
+---
 
-Update STATUS.md and ROADMAP.md:
+## Stage 3: Conflict Forecast & Analysis
 
-- Move feature from "IN PROGRESS" to "RECENT COMPLETIONS"
-- Mark tasks as [x] complete in ROADMAP.md
-- Add completion date and details
+**CRITICAL**: This project uses git worktrees. Multiple features modify docs simultaneously.
 
-**Step 9: Commit Documentation**
+**Step 8: Analyze Potential Conflicts**
 
 ```bash
-git add docs/STATUS.md docs/ROADMAP.md
-git commit -m "docs: update STATUS and ROADMAP for <feature-name>"
+# Get files changed in current branch
+git diff main...HEAD --name-only > /tmp/current-changes.txt
+
+# Check each other worktree for overlaps
+git worktree list
 ```
+
+For each other worktree:
+
+```bash
+cd /path/to/other-worktree
+git diff main...HEAD --name-only > /tmp/other-changes.txt
+
+# Find overlaps
+comm -12 <(sort /tmp/current-changes.txt) <(sort /tmp/other-changes.txt)
+```
+
+**Step 9: Generate Conflict Forecast**
+
+Create forecast report and show to user:
+
+```
+⚠️  MERGE CONFLICT FORECAST
+
+Detected potential conflicts with other feature branches:
+
+HIGH RISK (Same files modified):
+- tests/helpers/auth.ts (also modified in: volunteer)
+  Strategy: COMBINE both changes during merge
+
+EXPECTED (Documentation):
+- docs/ROADMAP.md (also modified in: volunteer)
+  Strategy: Keep both task lists, merge sections
+- docs/STATUS.md (also modified in: volunteer)
+  Strategy: Combine completion notes from both features
+
+CLEAN (No conflicts):
+- lib/data/prayer-requests.ts (feature-specific)
+- components/dashboard/prayer-requests/* (feature-specific)
+
+RECOMMENDATION:
+These conflicts are EXPECTED in worktree workflow. During PR merge:
+1. Resolve via GitHub UI (visual diff editor)
+2. COMBINE content from both branches (don't replace)
+3. Keep all feature documentation and code changes
+
+Proceed with PR creation? (yes/no)
+```
+
+**If user says NO:**
+
+- Ask what they'd like to adjust
+- Offer to help resolve conflicts pre-merge
+- Wait for confirmation before proceeding
 
 ---
 
-### Stage 3: Pull Request
+## Stage 4: Pull Request
 
 **Step 10: Push Branch**
 
 ```bash
-git push origin <branch-name>
+git push origin <branch-name> -u
 ```
 
-If branch doesn't exist on remote, push with \`-u\` flag.
-
 **Step 11: Generate PR Description**
-
-Analyze all commits in branch:
 
 ```bash
 git log main..HEAD --oneline
 git diff main...HEAD --stat
 ```
 
-Draft PR description:
+Draft PR:
 
 ```markdown
 ## Summary
 
-<1-3 bullet points describing what was built>
+<1-3 bullets describing feature>
 
 ## Changes
 
-- <key file changes>
-- <new features>
-- <bug fixes>
+- <key files>
+- <new functionality>
 
 ## Testing
 
-<how to test this feature>
+<how to test>
+
+## Merge Conflict Notes
+
+<If conflicts detected in Stage 3>
+
+⚠️ **Expected Conflicts**
+
+This PR modifies files also changed in other feature branches:
+
+- `tests/helpers/auth.ts` (volunteer branch)
+- `docs/ROADMAP.md` (volunteer branch)
+
+**Resolution Strategy**: COMBINE changes from both branches
+
+- Auth file: Merge both improvements
+- Docs: Keep all task lists and completion notes
 
 ## Checklist
 
 - [x] Build passes
 - [x] ESLint clean
-- [x] Documentation updated
-- [x] Pattern compliance verified
-- [ ] Manual testing completed (if needed)
-
-## Screenshots (if applicable)
-
-<add screenshots if UI changes>
+- [x] Conflict forecast reviewed
+- [x] Multi-tenant isolation verified
+- [ ] Manual testing (if needed)
 ```
 
 **Step 12: Create PR**
 
-Ask user: **"Create pull request now? (yes/no)"**
-
-If yes:
-
 ```bash
-gh pr create --title "feat: <feature-name>" --body "$(cat <<'EOF'
-<PR description here>
+gh pr create --title "<type>: <feature>" --body "$(cat <<'EOF'
+<PR description>
 EOF
 )"
 ```
 
-Store PR number for later use.
+Store PR number for later.
 
 ---
 
-### Stage 4: Testing & Merge
+## Stage 5: Testing & Merge
 
-**Step 13: Ask About Testing**
+**Step 13: Manual Testing?**
 
-Ask user: **"Does this feature need manual testing before merge? (yes/no)"**
+Ask: "Need manual testing before merge? (yes/no)"
 
-**If YES:**
+If YES:
 
-1. Show testing checklist:
-   ```
-   Testing Checklist:
-   - [ ] Feature works in dev environment
-   - [ ] Mobile responsive (test phone viewport)
-   - [ ] Authentication works correctly
-   - [ ] Multi-tenant isolation verified
-   - [ ] Error handling works
-   - [ ] Loading states display correctly
-   - [ ] Empty states display correctly
-   ```
-2. Wait for user confirmation: "Testing complete, ready to merge? (yes/no)"
+- Show testing checklist
+- Wait for confirmation
 
-**If NO:**
+**Step 14: Merge PR**
 
-- Proceed to merge immediately
-
-**Step 14: Squash and Merge PR**
-
-Ask user: **"Ready to squash and merge PR? (yes/no)"**
-
-If yes:
+Ask: "Ready to squash and merge? (yes/no)"
 
 ```bash
 gh pr merge <pr-number> --squash --delete-branch
 ```
 
-This will:
-
-- Squash all commits into one
-- Merge to main
-- Delete the feature branch on remote
-
-**Step 15: Verify Merge Success**
+**Step 15: Verify Merge**
 
 ```bash
-gh pr view <pr-number>
+gh pr view <pr-number> --json state,mergedAt
 ```
 
-Should show "Merged" status.
+Should show "MERGED" with timestamp.
 
 ---
 
-### Stage 5: Cleanup & Switch to Main
+## Stage 6: Post-Merge - Update All Worktrees
 
-**Step 16: Switch to Main Branch**
+**CRITICAL**: After merging to main, ALL worktrees need the latest changes.
 
-```bash
-git checkout main
-```
-
-**Step 17: Pull Latest Changes**
+**Step 16: Update Current Worktree**
 
 ```bash
-git pull origin main
-```
-
-**Step 18: Delete Local Feature Branch**
-
-```bash
-git branch -d <feature-branch-name>
-```
-
-**Step 19: Verify Clean State**
-
-```bash
+# Current worktree was on feature branch, now sync to main
+git fetch origin main
+git reset --hard origin/main
 git status
-git log -1 --oneline
 ```
 
-Should show:
+Current worktree now has merged feature.
 
-- On branch main
-- Working tree clean
-- Latest commit includes merged feature
-
----
-
-### Stage 6: Update Other Worktrees 🆕
-
-**⚠️ WORKTREE WORKFLOW GUIDE (Hand-Holding Mode)**
-
-This project uses git worktrees. You just merged to \`main\`, but other worktrees (\`prayer\`, \`volunteer\`) need these changes too.
-
-**Step 20: List All Worktrees**
+**Step 17: Identify Other Worktrees**
 
 ```bash
 git worktree list
 ```
 
-Output will show something like:
-
-```
-/path/to/connect-card/.bare      (bare)
-/path/to/connect-card/main       abc1234 [main]  ← You are here now
-/path/to/connect-card/prayer     def5678 [feature/prayer-management]
-/path/to/connect-card/volunteer  ghi9012 [feature/volunteer-management]
-```
-
-**Step 21: Identify Current Worktree**
-
-```bash
-pwd
-git branch --show-current
-```
-
-**Step 22: For Each Other Worktree**
-
-**IMPORTANT:** We need to bring your merged changes into the other feature branches so they don't become outdated.
-
-For **EACH** worktree (prayer, volunteer) that is NOT the one you just worked in:
-
-**Step 22a: Switch to Worktree Directory**
-
-```bash
-cd /path/to/connect-card/<worktree-name>
-```
-
-Example: \`cd /home/digitaldesk/Desktop/connect-card/prayer\`
-
-**Step 22b: Check for Uncommitted Work**
-
-```bash
-git status
-```
-
-**If there are uncommitted changes:**
-
-- ⚠️ **STOP and show warning:**
-
-  ```
-  ⚠️  WARNING: This worktree has uncommitted changes!
-
-  Uncommitted files:
-  <list files>
-
-  Options:
-  1. Commit these changes first (RECOMMENDED)
-  2. Stash changes temporarily
-  3. Skip this worktree (risky - will become outdated)
-
-  What would you like to do? (1/2/3)
-  ```
-
-**If clean working tree:**
-
-**Step 22c: Show Current State**
-
-```bash
-git log -1 --oneline
-git branch --show-current
-```
-
 Show user:
 
 ```
-📍 Current location: <worktree-name>
-📌 Current branch: <branch-name>
-📝 Last commit: <commit-message>
+📋 WORKTREE SYNC REQUIRED
 
-I'm about to merge the latest changes from 'main' into this branch.
-This will bring in your just-merged feature: <feature-name>
+Detected worktrees:
+- /path/to/main (already updated ✅)
+- /path/to/volunteer (needs update)
+- /path/to/prayer (needs update)
+
+These worktrees need your merged changes to avoid falling behind.
+
+Update all worktrees now? (yes/no)
 ```
 
-**Step 22d: Merge Main into Feature Branch**
+**Step 18: Update Each Worktree**
+
+For each worktree (except current):
+
+```bash
+cd /path/to/worktree
+git status  # Check for uncommitted work
+```
+
+**If uncommitted changes found:**
+
+Show warning:
+
+```
+⚠️  UNCOMMITTED CHANGES in <worktree-name>
+
+Files:
+<list modified files>
+
+Options:
+1. Skip this worktree (you'll merge main manually later)
+2. Stash changes and merge main now
+3. Commit changes first, then merge main
+
+What would you like to do? (1/2/3)
+```
+
+Handle based on user choice.
+
+**If clean working tree:**
 
 ```bash
 git merge main --no-edit
 ```
 
-**If merge succeeds cleanly:**
+**If merge conflicts:**
 
-```bash
-✅ Merge successful! This worktree now has the latest changes from main.
-
-Updated files:
-<show git diff --stat main@{1}..HEAD>
-```
-
-**If merge has conflicts:**
+Show conflict guide:
 
 ```
-⚠️  MERGE CONFLICT DETECTED
+⚠️  MERGE CONFLICT in <worktree-name>
 
 Conflicting files:
-<list conflicted files>
+<list files>
 
-📚 BEGINNER'S GUIDE TO RESOLVING CONFLICTS:
+This is EXPECTED when multiple features update the same files.
 
-1. Open each conflicted file in your editor
-2. Look for conflict markers:
-   <<<<<<< HEAD (your changes)
-   your code here
-   =======
-   their code here (from main)
-   >>>>>>> main
+Resolution steps:
+1. Files will show conflict markers: <<<<<<< HEAD
+2. Edit files to COMBINE both changes (don't delete either)
+3. Remove conflict markers
+4. git add <files>
+5. git commit -m "merge: combine main updates with <feature>"
 
-3. Choose which version to keep (or combine both)
-4. Remove the conflict markers (<<<<<<<, =======, >>>>>>>)
-5. Save the file
+Conflicts detected. Skipping this worktree for now.
+You can resolve manually and re-run worktree update.
 
-After fixing ALL conflicts:
-
-git add <fixed-files>
-git commit -m "merge: resolve conflicts from main merge"
-
-Then re-run this command to continue updating other worktrees.
-
-For now, I'm stopping the worktree update. Fix conflicts first.
+Continue updating other worktrees? (yes/no)
 ```
 
-**If conflicts, STOP worktree updates until user resolves.**
+**Step 19: Worktree Update Summary**
 
-**Step 22e: Verify Merge**
-
-```bash
-git log --oneline -3
-git status
-```
-
-Show:
+Show results:
 
 ```
-✅ Worktree '<worktree-name>' successfully updated!
+📊 WORKTREE UPDATE COMPLETE
 
-Recent commits:
-<show last 3 commits>
+✅ main: Merged and updated
+✅ volunteer: Updated successfully
+⚠️  prayer: Skipped (uncommitted changes)
 
-Status: Clean working tree ✅
-```
+All active worktrees synchronized with your merged feature!
 
-**Step 23: Return to Main Worktree**
-
-After updating all worktrees, return to main:
-
-```bash
-cd /path/to/connect-card/main
-```
-
-**Step 24: Summary of Worktree Updates**
-
-Show user a summary:
-
-```
-📊 WORKTREE UPDATE SUMMARY
-===========================
-
-✅ main: Already up to date (this is where you merged)
-✅ prayer: Updated successfully (merged main)
-✅ volunteer: Updated successfully (merged main)
-
-All worktrees now have your merged feature: <feature-name>
-
-⚠️  IMPORTANT REMINDER:
-The next time you work in the 'prayer' or 'volunteer' worktrees,
-they will already have these changes. You won't need to merge again
-unless main gets more updates.
+Note: prayer worktree needs manual update when ready.
 ```
 
 ---
 
-### Stage 7: Next Feature Planning
+## Stage 7: Documentation Update (Main Worktree Only)
 
-**Step 25: Ask About Next Feature**
+**Step 20: Switch to Main Worktree**
 
-Ask user: **"What feature would you like to work on next?"**
+```bash
+cd /path/to/main-worktree
+git pull origin main  # Get docs commit if any
+```
 
-Wait for user input describing next feature.
+**Step 21: Update Project Documentation**
 
-**Step 26: Display Handoff Summary**
-
-Show user the handoff document as copyable text:
+Ask user:
 
 ```
+Feature merged! Update STATUS.md and ROADMAP.md now? (yes/no)
+
+This will mark your feature complete in project documentation.
+```
+
+If YES:
+
+1. Read `docs/STATUS.md` and `docs/ROADMAP.md`
+2. Analyze what was just merged (from PR description)
+3. Draft documentation updates
+4. Show user proposed changes
+5. Ask: "Apply these updates? (yes/no)"
+6. If yes:
+   ```bash
+   git add docs/STATUS.md docs/ROADMAP.md
+   git commit -m "docs: update STATUS and ROADMAP after <feature> merge"
+   git push origin main
+   ```
+
+**Step 22: Verify Final State**
+
+```bash
+git status
+git log -3 --oneline
+```
+
+Show clean state confirmation.
+
+---
+
+## Stage 8: Handoff Generation
+
+**Step 23: Ask About Next Feature**
+
+Ask: "What feature should we work on next?"
+
+Wait for user input.
+
+**Step 24: Generate Handoff Document**
+
+Create comprehensive handoff text (copyable, not saved to file):
+
+````
 Feature Wrap-Up Complete! ✅
 ============================
 
-✅ Build passed
-✅ Commits created
-✅ PR #<number> created and merged
-✅ Switched to main branch
-✅ All worktrees updated (main, prayer, volunteer)
-✅ Documentation updated
+## What Was Accomplished
 
-Next Feature: <next-feature>
-Current Worktree: main
-Current Branch: main (clean)
-Ready for: /session-start <next-feature>
+**Feature**: <feature-name>
+**PR**: #<number> - Merged to main
+**Date**: <date>
+
+**What Was Built**:
+<summary from PR>
+
+**Files Changed**:
+<key files from git diff>
+
+**Merge Conflicts Encountered**:
+<if any, how they were resolved>
+
+**All Worktrees Updated**: ✅
+- main: Latest with merged feature
+- volunteer: Synced with main
+- prayer: Synced with main
 
 ---
 
-📋 AI SESSION HANDOFF (Copy/Paste for Next Session)
-===================================================
+## 📋 AI SESSION HANDOFF
 
-Paste this into your next Claude Code session to bring AI up to speed:
+**Copy/paste this into your next Claude Code session:**
 
 ---START HANDOFF---
 
 # AI Session Handoff
 
-**Date:** <current-date>
-**Previous Feature:** <just-completed-feature>
-**Next Feature:** <user-provided-next-feature>
-**Current Worktree:** main
-**Current Branch:** main
-**Last Commit:** <git log -1 --oneline>
+**Date**: <current-date>
+**Completed Feature**: <feature-name>
+**Next Feature**: <user-provided-next>
+**Current Worktree**: <path>
+**Current Branch**: main (synced)
 
-## What We Just Completed
+## Just Completed: <feature-name>
 
-### Feature: <completed-feature-name>
-**Status:** ✅ Merged to main (PR #<number>)
+**Status**: ✅ Merged to main (PR #<number>)
 
-**What Was Built:**
-<summary of completed feature>
+**Summary**:
+<what was built>
 
-**Files Changed:**
-<list key files that were modified>
+**Key Files**:
+- <file 1>
+- <file 2>
+- <file 3>
 
-**Patterns Used:**
-- PageContainer variant: <variant>
-- Server actions: <list actions created>
-- Navigation: Updated /lib/navigation.ts
-- Multi-tenant: organizationId scoping applied
-- Security: Rate limiting and auth implemented
+**Patterns Used**:
+- Multi-tenant: organizationId scoping
+- Server actions: Rate limiting + auth
+- TanStack Table: Data display
+- <others>
 
-**Key Decisions:**
-<any important architectural decisions made>
+**Merge Conflicts Resolved**:
+<if any, document what and how>
 
-**Lessons Learned:**
-<anything notable about implementation>
+**Lessons Learned**:
+<anything notable>
 
-## Worktree Status (All Updated ✅)
+## Worktree Architecture
 
-This project uses git worktrees:
+This project uses git worktrees for parallel development:
 
-- **main**: \`/path/to/connect-card/main\` (you are here)
-- **prayer**: \`/path/to/connect-card/prayer\` (feature/prayer-management)
-- **volunteer**: \`/path/to/connect-card/volunteer\` (feature/volunteer-management)
+```
+/connect-card/.bare                    (bare repo)
+/connect-card/main                     (main branch)
+/connect-card/volunteer                (feature/volunteer-management)
+/connect-card/prayer                   (feature/prayer-management)
+```
 
-All worktrees have been updated with the merged changes from main.
+**Database Isolation**:
+- main: ep-falling-unit-adhn1juc (port 3000)
+- volunteer: ep-bitter-recipe-ad3v8ovt (port 3001)
+- prayer: ep-long-feather-ad7s8ao0 (port 3002)
 
-**What this means:**
-- All 3 worktrees now have <completed-feature>
-- Next time you switch worktrees, you won't see merge conflicts from this feature
-- Each worktree is working on a different feature but sharing the same base
+**Critical Commands**:
+```bash
+git worktree list                    # See all worktrees
+cd /path/to/worktree                # Switch context
+git merge main                      # Update feature with main changes
+DATABASE_URL="..." pnpm prisma ...  # Explicit DB for Prisma
+```
+
+**Documentation Workflow**:
+- ❌ DON'T update /docs in feature branches
+- ✅ DO update docs in main AFTER merge
+- Conflicts in docs are EXPECTED - combine, don't replace
 
 ## Current Project State
 
-### Working Features
-- Connect Card scanning with AI Vision ✅
+**Working Features**:
+- Connect Card AI Vision extraction ✅
 - Review Queue with manual correction ✅
-- Dashboard analytics with TanStack Table ✅
+- Team Management with invitations ✅
 - <just-completed-feature> ✅
 
-### In Progress (Other Worktrees)
-- Prayer Management (prayer worktree)
-- Volunteer Management (volunteer worktree)
+**In Progress** (Other Worktrees):
+- <list features in other worktrees>
 
-### Next Feature
-- <next-feature> (starting now)
+**Next Feature**:
+- <next-feature>
 
-### Known Issues
-<any known issues or tech debt>
+**Known Issues**:
+<tech debt or blockers>
 
-## Next Feature: <next-feature-name>
+## Next Feature: <next-feature>
 
-### Objective
+**Objective**:
 <what needs to be built>
 
-### Worktree Strategy
+**Recommended Approach**:
+<implementation suggestions>
 
-**Option 1: Work in 'main' worktree (quick features)**
-\`\`\`bash
-git checkout -b feature/<next-feature>
-\`\`\`
+**Worktree Strategy**:
 
-**Option 2: Create new worktree (recommended for larger features)**
-\`\`\`bash
-git worktree add ../connect-card/<feature-name> -b feature/<feature-name>
-cd ../connect-card/<feature-name>
-\`\`\`
+Option 1: Use existing worktree (if related to ongoing feature)
+```bash
+cd /path/to/existing/worktree
+git checkout -b feature/<name>
+```
 
-**Which to choose?**
-- **Main worktree**: Good for documentation, small fixes, quick features
-- **New worktree**: Better for larger features so you can switch between features easily
+Option 2: Create new worktree (for new domain)
+```bash
+cd /path/to/.bare
+git worktree add ../connect-card/<name> -b feature/<name>
+cd ../connect-card/<name>
+cp ../main/.env.local .  # Modify DATABASE_URL + PORT
+```
 
-### Approach Recommendations
-<suggested implementation approach based on project patterns>
+**Files to Review**:
+<similar existing code>
 
-### Files to Review
-<files that will likely need changes>
-
-### Patterns to Follow
-- **Route Creation:** Use \`/add-route\` command
-- **Server Actions:** Use \`/add-server-action\` command
-- **Tables:** Follow TanStack Table pattern from payments
-- **Forms:** Follow react-hook-form + Zod pattern
-- **Auth:** Use requireDashboardAccess() for church routes
-
-### Related Code to Study
-<point to similar existing features>
+**Patterns to Follow**:
+- Server actions: `/add-server-action` command
+- Multi-tenant: `requireDashboardAccess()`
+- Tables: TanStack Table pattern
+- Forms: react-hook-form + Zod
 
 ## Quick Reference
 
-**Worktree Workflow:**
-- \`git worktree list\` - See all worktrees
-- \`cd /path/to/worktree\` - Switch between worktrees
-- After merging to main: Update other worktrees with \`git merge main\`
+**Documentation**:
+- `CLAUDE.md` - Core AI instructions
+- `docs/essentials/coding-patterns.md` - Implementation guide
+- `docs/worktree-database-setup.md` - Worktree workflows
+- `docs/STATUS.md` - Current state
+- `docs/ROADMAP.md` - Feature roadmap
 
-**Branch Strategy:** feature/<feature-name>
-**Commit Style:** Conventional commits (feat/fix/refactor/docs)
-**No Attribution:** Clean commits, no AI signatures
-**Pattern Compliance:** Check coding-patterns.md before building
+**Slash Commands**:
+- `/session-start <feature>` - Initialize new feature
+- `/feature-wrap-up` - This command
+- `/add-server-action <name>` - Generate server action
+- `/review-code` - Code quality check
 
-**Key Commands:**
-- \`/session-start <feature>\` - Initialize new feature session
-- \`/add-route <path> <title>\` - Scaffold new route
-- \`/add-server-action <name> <type>\` - Create server action
-- \`/review-code\` - Code quality check
-- \`/commit\` - Complete commit workflow
-- \`/feature-wrap-up\` - This workflow
+**Worktree Workflow**:
+1. Work in dedicated worktree on feature branch
+2. Commit code (NO doc updates in branch)
+3. Run `/feature-wrap-up` (conflict detection + merge)
+4. Update docs in main AFTER merge
+5. All worktrees auto-sync with latest main
 
-**Documentation:**
-- CLAUDE.md - Core principles and patterns
-- coding-patterns.md - Technical implementation guide
-- STATUS.md - Current project state
-- ROADMAP.md - Feature roadmap and priorities
+**Never**:
+- ❌ Update /docs in feature branches
+- ❌ Skip worktree updates after merge
+- ❌ Run Prisma without explicit DATABASE_URL
+- ❌ Commit without running build first
 
-## Starting the Next Session
+**Always**:
+- ✅ Verify DATABASE_URL before Prisma ops
+- ✅ Check current worktree (`pwd`)
+- ✅ Build before commit
+- ✅ Combine docs during merge conflicts
+- ✅ Sync all worktrees after main merge
 
-**Recommended first step:**
-\`\`\`
-/session-start <next-feature-description>
-\`\`\`
+## Starting Next Session
 
-This will:
-1. Create feature branch (or new worktree)
-2. Load all project context
-3. Explore relevant code
-4. Provide implementation plan
+**First command**:
+```
+/session-start <next-feature>
+```
 
-**Good luck! The previous session completed successfully, merged to main, and updated all worktrees. Everything is clean for you.**
+This will set up branch/worktree and explore relevant code.
+
+**Good luck! Previous session completed successfully.**
 
 ---END HANDOFF---
 
-**Copy the text between the START/END markers and paste it into your next session.**
+Copy text between START/END markers for next session.
 
-Great work on <completed-feature>! 🎉
-```
+Great work on <feature-name>! 🎉
+````
 
 ---
 
 ## Error Handling
 
-**Build Failures:**
+**Build Failures**:
 
 - Stop workflow
-- Report errors with file:line references
+- Report errors with file:line
 - Offer to help fix
-- Resume from Stage 1 after fixes
+- Resume from Stage 1
 
-**Commit Failures:**
+**Merge Conflicts**:
 
-- Check for pre-commit hook changes
-- Amend if safe (same author, not pushed)
-- Otherwise create new commit
-- Resume workflow
+- Detected in Stage 3 (forecast)
+- Guided resolution in Stage 5 (merge)
+- COMBINE content strategy (don't replace)
 
-**PR Creation Failures:**
+**Worktree Update Failures**:
 
-- Check gh CLI is authenticated: \`gh auth status\`
-- Check remote exists: \`git remote -v\`
-- Provide manual PR creation instructions
-- Wait for user to create PR manually
-- Resume from merge step
+- Uncommitted changes: Offer options (skip/stash/commit)
+- Merge conflicts: Show guide, skip worktree
+- Missing worktree: Continue gracefully
 
-**Merge Failures:**
+**Documentation Conflicts (EXPECTED)**:
 
-- Check for conflicts
-- Ask user to resolve manually
-- Wait for resolution
-- Retry merge
-
-**Worktree Update Failures:**
-
-- **Uncommitted changes:** Ask user to commit or stash first
-- **Merge conflicts:** Provide beginner-friendly conflict resolution guide
-- **Missing worktree:** Skip gracefully, warn user
-- **Network errors:** Retry or continue with other worktrees
-
-**Testing Issues:**
-
-- If user reports test failures, STOP workflow
-- Help debug and fix issues
-- Resume from testing step after fixes
-
----
-
-## Important Notes
-
-**This is a COMPLETE workflow** - It takes you from "code done" to "ready for next feature" INCLUDING updating all worktrees
-
-**User Confirmations Required:**
-
-- Create PR? (yes/no)
-- Manual testing needed? (yes/no)
-- Testing complete? (yes/no) - if testing was needed
-- Ready to merge? (yes/no)
-- How to handle worktree conflicts? (1/2/3) - if conflicts exist
-- What's next feature? (text input)
-
-**Automatic Steps (No Confirmation):**
-
-- Build verification
-- ESLint check
-- Creating commits
-- Updating documentation
-- Switching branches
-- Pulling main
-- Updating other worktrees (if no conflicts)
-- Generating handoff text (no files created)
-
-**NEVER Skip:**
-
-- Build verification
-- Documentation updates
-- Worktree updates (critical for multi-worktree setup)
-- Handoff text generation
-
-**Time Estimate:**
-This workflow takes 3-7 minutes to complete (excluding manual testing time), slightly longer with worktree updates.
+- Warn in conflict forecast (Stage 3)
+- Guide manual resolution during merge
+- Emphasis: COMBINE all updates, keep everything
 
 ---
 
 ## When to Use This Command
 
-✅ **Feature is complete and tested**
-✅ **Ready to merge to main**
-✅ **Want automated wrap-up workflow**
-✅ **Need to update other worktrees**
-✅ **Need handoff to next session**
-✅ **Ending work day (create handoff for tomorrow)**
+✅ **Use when**:
 
-❌ **Don't use if:**
+- Feature complete and tested
+- Ready to merge to main
+- Need automated wrap-up workflow
+- Want conflict detection before PR
+- Need worktree synchronization
+- Need handoff for next session
 
-- Feature not complete
-- Build is broken
+❌ **Don't use if**:
+
+- Feature incomplete
+- Build broken
 - Critical bugs present
-- Conflicts with main exist (resolve first)
-- Other worktrees have uncommitted work (commit first)
+- Not working in worktree setup
 
-This command handles the **entire ceremony** from feature completion to next feature planning, INCLUDING keeping all worktrees in sync. Use it when you're truly done and ready to move on.
+---
+
+## Key Improvements Over Standard Workflow
+
+**Conflict Detection**:
+
+- Forecasts conflicts BEFORE creating PR
+- Identifies overlapping file changes across worktrees
+- Provides resolution strategy recommendations
+
+**Worktree Sync**:
+
+- Automatically updates all worktrees after merge
+- Handles uncommitted changes gracefully
+- Detects and guides through merge conflicts
+
+**Documentation Workflow**:
+
+- NO doc updates in feature branches (prevents conflicts)
+- Docs updated in main AFTER merge
+- Clear guidance on combining vs replacing content
+
+**Result**: Clean merges, synchronized codebase, comprehensive handoff documentation.
