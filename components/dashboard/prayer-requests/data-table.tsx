@@ -50,12 +50,21 @@ import {
 } from "@/components/ui/empty";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { IconSearch, IconPray } from "@tabler/icons-react";
+import { CreatePrayerRequestDialog } from "./create-prayer-request-dialog";
+import { useRouter } from "next/navigation";
+
+interface Location {
+  id: string;
+  name: string;
+}
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   title: string;
   pageSize?: number;
+  slug: string;
+  locations: Location[];
 }
 
 /**
@@ -75,12 +84,20 @@ export function PrayerRequestDataTable<TData, TValue>({
   data,
   title,
   pageSize = 10,
+  slug,
+  locations,
 }: DataTableProps<TData, TValue>) {
+  const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true }, // Newest first by default
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+
+  // Handle successful prayer request creation
+  const handlePrayerRequestCreated = () => {
+    router.refresh(); // Refresh server component data
+  };
 
   const table = useReactTable({
     data,
@@ -129,7 +146,15 @@ export function PrayerRequestDataTable<TData, TValue>({
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="flex-shrink-0 space-y-4">
-        <CardTitle>{title}</CardTitle>
+        {/* Title and Create Button */}
+        <div className="flex items-center justify-between">
+          <CardTitle>{title}</CardTitle>
+          <CreatePrayerRequestDialog
+            slug={slug}
+            locations={locations}
+            onSuccess={handlePrayerRequestCreated}
+          />
+        </div>
 
         {/* Action Bar */}
         <div className="flex flex-wrap items-center gap-2">
@@ -173,7 +198,14 @@ export function PrayerRequestDataTable<TData, TValue>({
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map(header => {
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        className={
+                          header.id === "select" || header.id === "flags"
+                            ? "border-r last:border-r-0 border-border px-2"
+                            : "px-4 border-r last:border-r-0 border-border"
+                        }
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(
@@ -191,7 +223,15 @@ export function PrayerRequestDataTable<TData, TValue>({
                 table.getRowModel().rows.map(row => (
                   <TableRow key={row.id}>
                     {row.getVisibleCells().map(cell => (
-                      <TableCell key={cell.id}>
+                      <TableCell
+                        key={cell.id}
+                        className={
+                          cell.column.id === "select" ||
+                          cell.column.id === "flags"
+                            ? "border-r last:border-r-0 border-border px-2"
+                            : "px-4 border-r last:border-r-0 border-border"
+                        }
+                      >
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()

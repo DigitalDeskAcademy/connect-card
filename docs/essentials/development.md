@@ -84,7 +84,7 @@ cp .env.example .env
 nano .env
 ```
 
-**See `/docs/worktree-setup.md` for complete worktree configuration guide.**
+**See `/.archive/docs/guides/worktree-setup.md` for complete worktree configuration guide (historical reference).**
 
 ## 👥 User Roles & Multi-Tenant Architecture
 
