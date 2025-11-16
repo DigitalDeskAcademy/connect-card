@@ -471,3 +471,139 @@ export type VolunteerAvailabilitySchemaType = z.infer<
 export type ServingOpportunitySkillSchemaType = z.infer<
   typeof servingOpportunitySkillSchema
 >;
+
+// ========================================
+// PRAYER REQUEST SCHEMAS
+// ========================================
+
+// Prayer request status enum
+export const prayerRequestStatuses = [
+  "PENDING",
+  "ASSIGNED",
+  "PRAYING",
+  "ANSWERED",
+  "ARCHIVED",
+] as const;
+
+// Prayer request categories
+export const prayerCategories = [
+  "Health",
+  "Family",
+  "Salvation",
+  "Financial",
+  "Relationships",
+  "Spiritual Growth",
+  "Work/Career",
+  "Other",
+] as const;
+
+// Privacy levels (for future enhancement - currently just boolean)
+export const privacyLevels = [
+  "PUBLIC",
+  "MEMBERS_ONLY",
+  "LEADERSHIP",
+  "PRIVATE",
+] as const;
+
+// Create prayer request schema (manual creation)
+export const createPrayerRequestSchema = z.object({
+  request: z
+    .string()
+    .min(1, { message: "Prayer request cannot be empty" })
+    .max(2000, { message: "Prayer request must be at most 2000 characters" }),
+  category: z
+    .enum(prayerCategories, { message: "Invalid category" })
+    .nullable()
+    .optional(),
+  isPrivate: z.boolean().default(false),
+  isUrgent: z.boolean().default(false),
+  locationId: z
+    .string()
+    .uuid({ message: "Invalid location ID" })
+    .nullable()
+    .optional(),
+  submittedBy: z
+    .string()
+    .max(100, { message: "Submitter name must be at most 100 characters" })
+    .nullable()
+    .optional(),
+  submitterEmail: z
+    .string()
+    .email({ message: "Invalid email address" })
+    .nullable()
+    .optional(),
+  submitterPhone: z
+    .string()
+    .max(20, { message: "Phone number must be at most 20 characters" })
+    .nullable()
+    .optional(),
+});
+
+// Update prayer request schema (partial updates)
+export const updatePrayerRequestSchema = z.object({
+  id: z.string().uuid({ message: "Invalid prayer request ID" }),
+  request: z
+    .string()
+    .min(1, { message: "Prayer request cannot be empty" })
+    .max(2000, { message: "Prayer request must be at most 2000 characters" })
+    .optional(),
+  category: z
+    .enum(prayerCategories, { message: "Invalid category" })
+    .nullable()
+    .optional(),
+  isPrivate: z.boolean().optional(),
+  isUrgent: z.boolean().optional(),
+  status: z
+    .enum(prayerRequestStatuses, { message: "Invalid status" })
+    .optional(),
+  followUpDate: z.coerce.date().nullable().optional(),
+});
+
+// Assign prayer request schema
+export const assignPrayerRequestSchema = z.object({
+  id: z.string().uuid({ message: "Invalid prayer request ID" }),
+  assignedToId: z.string().uuid({ message: "Invalid user ID" }),
+});
+
+// Mark prayer as answered schema
+export const markAnsweredSchema = z.object({
+  id: z.string().uuid({ message: "Invalid prayer request ID" }),
+  answeredDate: z.coerce.date({ message: "Answered date is required" }),
+  answeredNotes: z
+    .string()
+    .max(2000, { message: "Notes must be at most 2000 characters" })
+    .nullable()
+    .optional(),
+});
+
+// Delete/archive prayer request schema
+export const deletePrayerRequestSchema = z.object({
+  id: z.string().uuid({ message: "Invalid prayer request ID" }),
+  shouldArchive: z.boolean().default(true), // Archive by default, hard delete if false
+});
+
+// Toggle privacy schema
+export const togglePrivacySchema = z.object({
+  id: z.string().uuid({ message: "Invalid prayer request ID" }),
+  isPrivate: z.boolean(),
+  reason: z
+    .string()
+    .max(200, { message: "Reason must be at most 200 characters" })
+    .optional(), // For audit log
+});
+
+// Export types
+export type CreatePrayerRequestSchemaType = z.infer<
+  typeof createPrayerRequestSchema
+>;
+export type UpdatePrayerRequestSchemaType = z.infer<
+  typeof updatePrayerRequestSchema
+>;
+export type AssignPrayerRequestSchemaType = z.infer<
+  typeof assignPrayerRequestSchema
+>;
+export type MarkAnsweredSchemaType = z.infer<typeof markAnsweredSchema>;
+export type DeletePrayerRequestSchemaType = z.infer<
+  typeof deletePrayerRequestSchema
+>;
+export type TogglePrivacySchemaType = z.infer<typeof togglePrivacySchema>;
