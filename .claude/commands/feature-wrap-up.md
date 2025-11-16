@@ -3,17 +3,20 @@ description: Complete end-to-end feature workflow - worktree-aware with conflict
 model: claude-sonnet-4-5-20250929
 ---
 
-# Feature Wrap-Up (Worktree-Aware)
+# Feature Wrap-Up (Worktree-Aware + Documentation Enforced)
 
-Complete feature workflow: build → commit → conflict forecast → PR → merge → sync worktrees → handoff.
+Complete feature workflow: build → commit → conflict forecast → PR → merge → sync worktrees → **REQUIRED doc updates** → handoff.
 
 **Key Features:**
 
 - ✅ Detects merge conflicts BEFORE creating PR
 - ✅ Syncs all worktrees after merge
-- ✅ Handles documentation conflicts intelligently
+- ✅ **ENFORCED documentation updates** (STATUS, ROADMAP, feature visions)
+- ✅ **Validation checks** for stale content and consistency
 - ✅ NO doc updates in feature branch (prevents conflicts)
 - ✅ Generates copyable handoff text
+
+**New in v2:** Industry-standard documentation workflow prevents drift and AI confusion.
 
 ---
 
@@ -461,47 +464,314 @@ Note: prayer worktree needs manual update when ready.
 
 ---
 
-## Stage 8: Documentation Update (Main Worktree Only)
+## Stage 8: Documentation Update (REQUIRED - Industry Standard)
+
+**Purpose:** Ensure documentation ALWAYS reflects reality. Every PR must update relevant docs.
+
+**Philosophy:** Documentation drift causes AI confusion and wasted hours. Make doc updates **required, comprehensive, and validated**.
+
+---
 
 **Step 20: Switch to Main Worktree**
 
 ```bash
 cd /path/to/main-worktree
-git pull origin main  # Get docs commit if any
+git pull origin main  # Get latest merged PR
 ```
 
-**Step 21: Update Project Documentation**
-
-Ask user:
-
-```
-Feature merged! Update STATUS.md and ROADMAP.md now? (yes/no)
-
-This will mark your feature complete in project documentation.
-```
-
-If YES:
-
-1. Read `docs/STATUS.md` and `docs/ROADMAP.md`
-2. Analyze what was just merged (from PR description)
-3. Draft documentation updates
-4. Show user proposed changes
-5. Ask: "Apply these updates? (yes/no)"
-6. If yes:
-   ```bash
-   git add docs/STATUS.md docs/ROADMAP.md
-   git commit -m "docs: update STATUS and ROADMAP after <feature> merge"
-   git push origin main
-   ```
-
-**Step 22: Verify Final State**
+Verify you're on main and synced:
 
 ```bash
-git status
-git log -3 --oneline
+git branch --show-current  # Should show "main"
+git status                 # Should be clean
 ```
 
-Show clean state confirmation.
+---
+
+**Step 21: Documentation Impact Analysis**
+
+**CRITICAL:** Analyze what was built vs what was planned to identify ALL affected docs.
+
+**21.1: Read the Merged PR**
+
+```bash
+# Get PR details
+gh pr view <pr-number> --json title,body,files
+
+# See what was actually built
+git log -1 --stat
+```
+
+Extract:
+
+- Feature area (connect-cards, volunteer, prayer, member-management)
+- What was built (new components, server actions, database changes)
+- Scope changes (did direction change from original plan?)
+
+**21.2: Identify Affected Documentation**
+
+Always update:
+
+1. `docs/STATUS.md` - Health dashboard
+2. `docs/ROADMAP.md` - Priority list
+
+Conditionally update: 3. `docs/features/{feature}/vision.md` - If scope changed or feature completed 4. Remove stale content - TODOs, planning docs, outdated references
+
+**21.3: Read Current Documentation State**
+
+```bash
+# Read all potentially affected docs
+cat docs/STATUS.md | grep -A 20 "In Progress"
+cat docs/ROADMAP.md | grep -A 10 "Active Work"
+cat docs/features/<feature>/vision.md | head -50
+```
+
+Analyze:
+
+- Is feature still marked "In Progress" in STATUS.md?
+- Is feature still in "Active Work" in ROADMAP.md?
+- Does feature vision match what was actually built?
+- Are there TODOs for features just completed?
+
+---
+
+**Step 22: Generate Documentation Updates**
+
+Generate precise diffs for each affected file.
+
+**22.1: STATUS.md Updates**
+
+Rule: Move feature from "In Progress" → "Complete" with summary.
+
+Template:
+
+```markdown
+### <Feature Name> ✅ COMPLETE (<Month> <Year>)
+
+**<One-line description>**
+
+- <Key accomplishment 1>
+- <Key accomplishment 2>
+- <Key accomplishment 3>
+
+**See `/docs/features/<feature>/vision.md` for full details**
+```
+
+**22.2: ROADMAP.md Updates**
+
+Rule: Mark task/phase as ✅ COMPLETE, update "Active Work" section.
+
+If phase completed, update "Current Phase" and move to "Completed Phases" section.
+
+**22.3: Feature Vision Updates (If Scope Changed)**
+
+Only update if:
+
+- Feature direction changed during development
+- Planned features were cut or modified
+- New features were added that weren't planned
+
+Updates:
+
+1. Status header - Change from "IN PROGRESS" → "COMPLETE"
+2. Current Status section - Mark completed items with ✅
+3. Planned Features - Move completed checkboxes to done
+4. Next Steps - Remove if fully complete, update if partial
+
+**22.4: Stale Content Cleanup**
+
+Search for stale references:
+
+```bash
+# Find TODOs related to feature
+grep -r "TODO.*<feature-keyword>" docs/ --include="*.md"
+
+# Find "planned" or "in progress" references
+grep -r "planned.*<feature-keyword>\|in progress.*<feature-keyword>" docs/ --include="*.md" -i
+
+# Find outdated status markers
+grep -r "🔄.*<feature-keyword>" docs/ --include="*.md"
+```
+
+---
+
+**Step 23: Show Documentation Diff & Get Approval**
+
+Present comprehensive diff to user:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📝 DOCUMENTATION UPDATE REQUIRED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This PR completed: <Feature Name>
+PR #<number>: <PR title>
+
+The following documentation MUST be updated to reflect reality:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄 1. docs/STATUS.md
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CHANGE: Move from "In Progress" → "Complete"
+
+[Show exact diff with - and + markers]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄 2. docs/ROADMAP.md
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CHANGE: Mark task as complete
+
+[Show exact diff]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄 3. docs/features/<feature>/vision.md (if applicable)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CHANGE: Update status and mark completed features
+
+[Show exact diff]
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  Documentation updates are REQUIRED for every PR.
+    Skipping causes documentation drift and confuses future AI sessions.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTIONS:
+
+1. Apply all updates (RECOMMENDED)
+2. Let me edit the proposed changes
+3. Skip documentation update (NOT RECOMMENDED)
+
+What would you like to do? (1/2/3)
+```
+
+**Handle User Response:**
+
+**Option 1: Apply All Updates (RECOMMENDED)**
+
+```bash
+# Apply all changes
+<apply each diff to respective file>
+
+# Stage all doc changes
+git add docs/
+
+# Commit
+git commit -m "docs: update STATUS/ROADMAP/vision after <feature> merge (PR #<number>)"
+
+# Push
+git push origin main
+
+# Verify
+git log -1 --oneline
+```
+
+**Option 2: Edit Proposed Changes**
+
+Ask which file to edit, show current diff, regenerate based on feedback, confirm before applying.
+
+**Option 3: Skip Documentation Update**
+
+Show strong warning:
+
+```
+⚠️  ⚠️  ⚠️  WARNING ⚠️  ⚠️  ⚠️
+
+Skipping documentation updates is STRONGLY DISCOURAGED.
+
+CONSEQUENCES:
+- STATUS.md won't reflect current state
+- ROADMAP.md will show incorrect priorities
+- Future AI sessions will waste hours on wrong information
+- This is the ROOT CAUSE of documentation drift
+
+Are you ABSOLUTELY SURE you want to skip? (yes/no)
+```
+
+If still yes, add comment to PR and warn user.
+
+---
+
+**Step 24: Documentation Validation**
+
+After committing docs, validate they match reality:
+
+**24.1: Check for Stale References**
+
+```bash
+# Search for TODOs related to completed feature
+grep -r "TODO.*<feature-keyword>" docs/ --include="*.md"
+
+# Search for "planned" references
+grep -ri "planned.*<feature-keyword>" docs/ --include="*.md"
+
+# Search for status markers that should be updated
+grep -r "🔄.*<feature-keyword>" docs/ --include="*.md"
+```
+
+**24.2: Validate Last Updated Dates**
+
+```bash
+# Check STATUS.md and ROADMAP.md are current
+grep "Last Updated" docs/STATUS.md
+grep "Last Updated" docs/ROADMAP.md
+```
+
+**24.3: Show Validation Results**
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 DOCUMENTATION VALIDATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Stale Content Check:
+   - No stale TODOs found
+   - No "planned" references remaining
+   - No outdated status markers
+
+✅ Last Updated Dates:
+   - STATUS.md: <today's date>
+   - ROADMAP.md: <today's date>
+
+✅ Feature Status Consistency:
+   - Feature marked complete in STATUS.md ✅
+   - Feature marked complete in ROADMAP.md ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ ALL VALIDATION CHECKS PASSED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Documentation is up-to-date and consistent with codebase reality.
+Future AI sessions will have accurate context! 🎉
+```
+
+---
+
+**Step 25: Verify Final State**
+
+```bash
+git status  # Should be clean
+git log -3 --oneline  # Show recent commits
+```
+
+Show confirmation:
+
+```
+✅ DOCUMENTATION UPDATE COMPLETE
+
+Files updated:
+- docs/STATUS.md
+- docs/ROADMAP.md
+- docs/features/<feature>/vision.md
+
+Commit: docs: update STATUS/ROADMAP/vision after <feature> merge (PR #<number>)
+
+Ready to proceed to Stage 9 (Handoff Generation)
+```
 
 ---
 
