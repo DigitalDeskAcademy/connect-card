@@ -17,7 +17,62 @@ Complete feature workflow: build → commit → conflict forecast → PR → mer
 
 ---
 
-## Stage 1: Quality Verification
+## Stage 1: Schema Sync Verification
+
+**Purpose:** Prevent merge conflicts by ensuring your Prisma schema matches main before wrapping up.
+
+**Step 1: Check Schema Sync**
+
+```bash
+# Compare with main worktree schema
+MAIN_SCHEMA="../main/prisma/schema.prisma"
+
+if [ -f "$MAIN_SCHEMA" ]; then
+  if diff -q prisma/schema.prisma "$MAIN_SCHEMA" > /dev/null 2>&1; then
+    echo "✓ Schema in sync with main"
+  else
+    echo ""
+    echo "⚠️  SCHEMA DRIFT DETECTED"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Your schema differs from main branch."
+    echo "This will cause merge conflicts when creating PR."
+    echo ""
+    echo "Differences:"
+    diff prisma/schema.prisma "$MAIN_SCHEMA" | head -20
+    echo ""
+    read -p "Sync schema from main? [y/N]: " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+      echo "📋 Copying schema from main..."
+      cp "$MAIN_SCHEMA" prisma/schema.prisma
+
+      echo "🔄 Regenerating Prisma client..."
+      pnpm prisma generate > /dev/null 2>&1
+
+      echo "✅ Schema synced successfully"
+      echo ""
+    else
+      echo "⚠️  Continuing with schema drift"
+      echo "   You may encounter merge conflicts in your PR."
+      echo ""
+    fi
+  fi
+else
+  echo "⚠️  Main worktree not found at ../main"
+  echo "   Skipping schema sync check"
+fi
+```
+
+**Why This Matters:**
+
+- Schema changes in main (from other merged features) will conflict with your branch
+- Syncing now prevents PR conflicts and failed builds
+- Worktree best practice: Always sync shared infrastructure before merging
+
+---
+
+## Stage 2: Quality Verification
 
 **Step 1: Run Build**
 
@@ -54,7 +109,7 @@ If found, report and ask if acceptable to proceed.
 
 ---
 
-## Stage 2: Commit Feature Code
+## Stage 3: Commit Feature Code
 
 **Step 4: Git Status**
 
@@ -98,7 +153,7 @@ Should show clean working tree.
 
 ---
 
-## Stage 3: Conflict Forecast & Analysis
+## Stage 4: Conflict Forecast & Analysis
 
 **CRITICAL**: This project uses git worktrees. Multiple features modify docs simultaneously.
 
@@ -162,7 +217,7 @@ Proceed with PR creation? (yes/no)
 
 ---
 
-## Stage 4: Pull Request
+## Stage 5: Pull Request
 
 **Step 10: Push Branch**
 
@@ -231,7 +286,7 @@ Store PR number for later.
 
 ---
 
-## Stage 5: Testing & Merge
+## Stage 6: Testing & Merge
 
 **Step 13: Manual Testing?**
 
@@ -260,7 +315,7 @@ Should show "MERGED" with timestamp.
 
 ---
 
-## Stage 6: Post-Merge - Update All Worktrees
+## Stage 7: Post-Merge - Update All Worktrees
 
 **CRITICAL**: After merging to main, ALL worktrees need the latest changes.
 
@@ -274,6 +329,32 @@ git status
 ```
 
 Current worktree now has merged feature.
+
+**Step 16.5: Check for Schema Changes**
+
+If `prisma/schema.prisma` was modified in your feature:
+
+```bash
+# Check if schema.prisma changed
+git diff <feature-branch>...main --name-only | grep "prisma/schema.prisma"
+```
+
+If schema was modified, **you must update the database** before testing:
+
+```
+⚠️  SCHEMA CHANGES DETECTED
+
+Your PR modified prisma/schema.prisma.
+
+REQUIRED: Run database migration in main worktree:
+
+  cd ../main
+  pnpm prisma db push
+
+This adds the new columns/tables to main's database.
+
+Without this, your code will fail when it tries to use the new schema.
+```
 
 **Step 17: Identify Other Worktrees**
 
@@ -329,6 +410,12 @@ Handle based on user choice.
 
 ```bash
 git merge main --no-edit
+
+# If schema.prisma was in your feature, update database for this worktree too
+if git diff HEAD~1..HEAD --name-only | grep -q "prisma/schema.prisma"; then
+  echo "⚠️  Schema changed - running database migration..."
+  pnpm prisma db push
+fi
 ```
 
 **If merge conflicts:**
@@ -374,7 +461,7 @@ Note: prayer worktree needs manual update when ready.
 
 ---
 
-## Stage 7: Documentation Update (Main Worktree Only)
+## Stage 8: Documentation Update (Main Worktree Only)
 
 **Step 20: Switch to Main Worktree**
 
@@ -418,7 +505,7 @@ Show clean state confirmation.
 
 ---
 
-## Stage 8: Handoff Generation
+## Stage 9: Handoff Generation
 
 **Step 23: Ask About Next Feature**
 

@@ -13,12 +13,6 @@ import { Button } from "@/components/ui/button";
 import { IconPlus } from "@tabler/icons-react";
 import { VolunteerForm } from "./volunteer-form";
 
-interface ChurchMember {
-  id: string;
-  name: string;
-  email: string | null;
-}
-
 interface Location {
   id: string;
   name: string;
@@ -27,7 +21,6 @@ interface Location {
 interface CreateVolunteerDialogProps {
   slug: string;
   organizationId: string;
-  members: ChurchMember[];
   locations: Location[];
   onSuccess?: () => void;
 }
@@ -35,18 +28,18 @@ interface CreateVolunteerDialogProps {
 /**
  * Create Volunteer Dialog Component
  *
- * Dialog wrapper for the volunteer creation form.
+ * Dialog wrapper for the volunteer creation form with inline member creation.
  *
  * Features:
  * - Button trigger with plus icon
  * - Responsive dialog with scrollable content
+ * - Inline member creation (automatically creates or links to existing member)
  * - Automatic close on successful creation
  * - Refresh parent table on success
  */
 export function CreateVolunteerDialog({
   slug,
   organizationId,
-  members,
   locations,
   onSuccess,
 }: CreateVolunteerDialogProps) {
@@ -73,14 +66,13 @@ export function CreateVolunteerDialog({
         <DialogHeader>
           <DialogTitle>Create Volunteer Profile</DialogTitle>
           <DialogDescription>
-            Add a new volunteer profile for an existing church member. Fill in
-            the details below to get started.
+            Add a new volunteer profile. If the member doesn&apos;t exist in the
+            system, a new member will be created automatically.
           </DialogDescription>
         </DialogHeader>
         <VolunteerForm
           slug={slug}
           organizationId={organizationId}
-          members={members}
           locations={locations}
           onSuccess={handleSuccess}
           onCancel={handleCancel}

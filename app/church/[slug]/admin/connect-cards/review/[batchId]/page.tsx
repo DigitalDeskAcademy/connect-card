@@ -16,6 +16,7 @@ import { AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { prisma } from "@/lib/db";
 
 interface PageProps {
   params: Promise<{ slug: string; batchId: string }>;
@@ -46,6 +47,24 @@ export default async function BatchReviewPage({ params }: PageProps) {
 
   // Fetch cards needing review in this batch
   const cards = await getConnectCardsForBatchReview(batchId, organization.id);
+
+  // Fetch volunteer leaders (users with volunteer categories assigned)
+  const volunteerLeaders = await prisma.user.findMany({
+    where: {
+      organizationId: organization.id,
+      volunteerCategories: {
+        isEmpty: false, // Only users with at least one category
+      },
+    },
+    select: {
+      id: true,
+      name: true,
+      volunteerCategories: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
 
   // Empty state - all cards reviewed
   if (cards.length === 0) {
@@ -81,7 +100,12 @@ export default async function BatchReviewPage({ params }: PageProps) {
   // Render review queue interface
   return (
     <PageContainer variant="padded" as="main">
-      <ReviewQueueClient cards={cards} slug={slug} batchName={batch.name} />
+      <ReviewQueueClient
+        cards={cards}
+        slug={slug}
+        batchName={batch.name}
+        volunteerLeaders={volunteerLeaders}
+      />
     </PageContainer>
   );
 }

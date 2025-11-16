@@ -21,11 +21,12 @@ const aj = arcjet.withRule(
  * Update Member Schema
  */
 const updateMemberSchema = z.object({
-  memberId: z.string().uuid("Invalid member ID"),
+  memberId: z.string().min(1, "Invalid member ID"), // Better Auth uses nanoid, not UUID
   role: z.enum(["admin", "member"], {
     errorMap: () => ({ message: "Invalid role" }),
   }),
   locationId: z.string().uuid("Invalid location ID").nullable(),
+  volunteerCategories: z.array(z.string()).optional(),
 });
 
 type UpdateMemberInput = z.infer<typeof updateMemberSchema>;
@@ -92,7 +93,7 @@ export async function updateMember(
     };
   }
 
-  const { memberId, role, locationId } = validation.data;
+  const { memberId, role, locationId, volunteerCategories } = validation.data;
 
   try {
     // 5. Find user and verify they belong to this organization
@@ -166,6 +167,7 @@ export async function updateMember(
         data: {
           role: userRole, // Prisma enum: "church_admin" or "user"
           defaultLocationId: locationId, // Set default location for staff
+          volunteerCategories: volunteerCategories || [], // Volunteer leadership categories
         },
       }),
       // Update Member.role (organization-specific role)
@@ -186,7 +188,7 @@ export async function updateMember(
 
     return {
       status: "success",
-      message: `${user.name}'s role has been updated`,
+      message: `${user.name} has been updated successfully`,
     };
   } catch (error) {
     console.error("Failed to update member:", error);

@@ -38,12 +38,6 @@ export type VolunteerWithRelations = {
   };
 };
 
-interface ChurchMember {
-  id: string;
-  name: string;
-  email: string | null;
-}
-
 interface Location {
   id: string;
   name: string;
@@ -53,7 +47,6 @@ interface VolunteersClientProps {
   volunteers: VolunteerWithRelations[];
   slug: string;
   organizationId: string;
-  churchMembers: ChurchMember[];
   locations: Location[];
 }
 
@@ -66,13 +59,12 @@ interface VolunteersClientProps {
  * - Volunteer summary cards (Total, Active, Background Checks, Shifts)
  * - Volunteers data table with status filtering
  * - Volunteer status badges and skills display
- * - Create new volunteer dialog
+ * - Create new volunteer dialog with inline member creation
  */
 export function VolunteersClient({
   volunteers,
   slug,
   organizationId,
-  churchMembers,
   locations,
 }: VolunteersClientProps) {
   const router = useRouter();
@@ -125,7 +117,6 @@ export function VolunteersClient({
         <CreateVolunteerDialog
           slug={slug}
           organizationId={organizationId}
-          members={churchMembers}
           locations={locations}
           onSuccess={handleVolunteerCreated}
         />

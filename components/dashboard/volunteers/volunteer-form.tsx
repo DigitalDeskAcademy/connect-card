@@ -35,12 +35,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createVolunteer } from "@/actions/volunteers/volunteers";
 
-interface ChurchMember {
-  id: string;
-  name: string;
-  email: string | null;
-}
-
 interface Location {
   id: string;
   name: string;
@@ -49,7 +43,6 @@ interface Location {
 interface VolunteerFormProps {
   slug: string;
   organizationId: string;
-  members: ChurchMember[];
   locations: Location[];
   onSuccess?: () => void;
   onCancel?: () => void;
@@ -58,10 +51,11 @@ interface VolunteerFormProps {
 /**
  * Volunteer Form Component
  *
- * Form for creating a new volunteer profile from an existing church member.
+ * Form for creating a new volunteer profile with inline member creation.
  *
  * Features:
- * - Church member dropdown selection
+ * - Inline member input fields (first name, last name, email, phone)
+ * - Automatic member lookup/creation (checks if member exists by email)
  * - Status selection (Active, On Break, Inactive, Pending)
  * - Date pickers (start date, end date, background check dates)
  * - Emergency contact fields
@@ -74,7 +68,6 @@ interface VolunteerFormProps {
 export function VolunteerForm({
   slug,
   organizationId,
-  members,
   locations,
   onSuccess,
   onCancel,
@@ -85,7 +78,10 @@ export function VolunteerForm({
   const form = useForm<VolunteerSchemaType>({
     resolver: zodResolver(volunteerSchema),
     defaultValues: {
-      churchMemberId: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: null,
       organizationId,
       locationId: locations.length === 1 ? locations[0].id : null,
       status: "ACTIVE",
@@ -109,7 +105,12 @@ export function VolunteerForm({
   async function onSubmit(data: VolunteerSchemaType) {
     startTransition(async () => {
       try {
-        const result = await createVolunteer(slug, data);
+        // Convert "none" to null for locationId since Radix Select doesn't allow empty string values
+        const processedData = {
+          ...data,
+          locationId: data.locationId === "none" ? null : data.locationId,
+        };
+        const result = await createVolunteer(slug, processedData);
 
         if (result.status === "success") {
           toast.success(result.message);
@@ -127,39 +128,86 @@ export function VolunteerForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Church Member Selection */}
-        <FormField
-          control={form.control}
-          name="churchMemberId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Church Member *</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+        {/* Member Information */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium">Member Information</h3>
+          <div className="grid grid-cols-2 gap-4">
+            {/* First Name */}
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>First Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="John" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Last Name */}
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Last Name *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Doe" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Email */}
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email *</FormLabel>
                 <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a church member" />
-                  </SelectTrigger>
+                  <Input
+                    type="email"
+                    placeholder="john.doe@example.com"
+                    {...field}
+                  />
                 </FormControl>
-                <SelectContent>
-                  {members.map(member => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.name}
-                      {member.email && (
-                        <span className="text-xs text-muted-foreground ml-2">
-                          ({member.email})
-                        </span>
-                      )}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormDescription>
-                Select the church member to create a volunteer profile for
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                <FormDescription>
+                  Used to check if member already exists in the system
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Phone */}
+          <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Phone (Optional)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="tel"
+                    placeholder="+1234567890"
+                    {...field}
+                    value={field.value || ""}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Phone number in E.164 format (e.g., +1234567890)
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
 
         {/* Location Selection (if multi-campus) */}
         {locations.length > 1 && (
@@ -179,7 +227,7 @@ export function VolunteerForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="">No specific campus</SelectItem>
+                    <SelectItem value="none">No specific campus</SelectItem>
                     {locations.map(location => (
                       <SelectItem key={location.id} value={location.id}>
                         {location.name}

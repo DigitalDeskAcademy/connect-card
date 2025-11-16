@@ -143,7 +143,7 @@ export const requireDashboardAccess = cache(async (slug: string) => {
         canEditData: true,
         canDeleteData: true,
         canExportData: true,
-        canManageUsers: false, // Admins cannot manage users (only owner can)
+        canManageUsers: true, // Admins can manage users (assign roles, locations, volunteer categories)
         canSeeAllLocations: hasMultiCampusAccess, // Based on permission flag
         locationId: hasMultiCampusAccess ? null : user.defaultLocationId, // Restricted if campus-specific
       },

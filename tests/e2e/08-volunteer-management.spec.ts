@@ -19,15 +19,13 @@ import { loginWithOTP, TEST_USERS } from "../helpers/auth";
 test.describe("Volunteer Management", () => {
   test.beforeEach(async ({ page }) => {
     await loginWithOTP(page, TEST_USERS.churchOwner.email);
-    await page.goto("/church/newlife/admin/volunteer/volunteers");
+    await page.goto("/church/newlife/admin/volunteer");
     await page.waitForLoadState("networkidle");
   });
 
   test("Directory page loads correctly", async ({ page }) => {
     // Verify page loads
-    await expect(page).toHaveURL(
-      /\/church\/newlife\/admin\/volunteer\/volunteers/
-    );
+    await expect(page).toHaveURL(/\/church\/newlife\/admin\/volunteer$/);
 
     // Check for "New Volunteer" button (should always be visible)
     const newVolunteerButton = page.locator('button:has-text("New Volunteer")');
@@ -36,8 +34,10 @@ test.describe("Volunteer Management", () => {
     // Check for either empty state or table
     const pageContent = await page.textContent("body");
     const hasEmptyState =
-      pageContent?.includes("No volunteers found") ||
-      pageContent?.includes("Get started by adding your first volunteer");
+      pageContent?.includes("No volunteers yet") ||
+      pageContent?.includes(
+        "Add your first volunteer to get started with volunteer management"
+      );
     const hasTable = await page.locator('[role="table"]').isVisible();
 
     // Should have either empty state OR table (not both)
@@ -59,14 +59,19 @@ test.describe("Volunteer Management", () => {
 
     // Verify dialog title
     await expect(
-      dialog.locator('h2:has-text("Create New Volunteer")')
+      dialog.locator(
+        '[data-slot="dialog-title"]:has-text("Create Volunteer Profile")'
+      )
     ).toBeVisible();
 
     // Verify form fields are present
     await expect(
       dialog.locator('label:has-text("Church Member")')
     ).toBeVisible();
-    await expect(dialog.locator('label:has-text("Status")')).toBeVisible();
+    // Use exact text match to avoid matching "Background Check Status"
+    await expect(
+      dialog.locator("label").filter({ hasText: /^Status \*$/ })
+    ).toBeVisible();
     await expect(dialog.locator('label:has-text("Start Date")')).toBeVisible();
 
     // Close dialog by clicking cancel
@@ -124,27 +129,11 @@ test.describe("Volunteer Management", () => {
     await firstMember.click();
     console.log("✓ Selected church member");
 
-    // Select Status dropdown
-    const statusButton = dialog.locator('button:has-text("Select status")');
-    await statusButton.click();
-    await page.waitForTimeout(500);
+    // Status defaults to "Active" - no need to select
+    console.log("✓ Status defaults to Active");
 
-    // Select "Active" status
-    const activeOption = page.locator('[role="option"]:has-text("Active")');
-    await activeOption.click();
-    console.log("✓ Selected status: Active");
-
-    // Fill Start Date (click date picker and select today)
-    const datePicker = dialog.locator('button:has([aria-label*="date"])');
-    await datePicker.click();
-    await page.waitForTimeout(500);
-
-    // Click today's date (has aria-selected="true" or similar)
-    const todayButton = page
-      .locator('[role="gridcell"]:not([aria-disabled="true"])')
-      .first();
-    await todayButton.click();
-    console.log("✓ Selected start date");
+    // Start Date defaults to today - no need to select
+    console.log("✓ Start Date defaults to today");
 
     // Fill Emergency Contact Name
     const emergencyNameInput = dialog.locator(
@@ -161,10 +150,14 @@ test.describe("Volunteer Management", () => {
     console.log("✓ Filled emergency contact phone");
 
     // Select Background Check Status
-    const bgCheckButton = dialog.locator(
-      'button:has-text("Select background check status")'
+    // Find the select trigger under "Background Check Status" label
+    const bgCheckLabel = dialog.locator(
+      'label:has-text("Background Check Status")'
     );
-    await bgCheckButton.click();
+    const bgCheckSelect = bgCheckLabel
+      .locator("..")
+      .locator('[role="combobox"]');
+    await bgCheckSelect.click();
     await page.waitForTimeout(500);
 
     const notStartedOption = page.locator(
