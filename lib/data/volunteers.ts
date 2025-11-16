@@ -123,18 +123,6 @@ export async function getVolunteerById(
         },
       },
       skills: {
-        include: {
-          volunteer: {
-            select: {
-              id: true,
-              churchMember: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-        },
         orderBy: {
           skillName: "asc",
         },

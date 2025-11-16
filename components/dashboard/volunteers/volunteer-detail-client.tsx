@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VolunteerOverviewTab } from "./volunteer-overview-tab";
+import { SkillsTab } from "./skills-tab";
 import {
   IconUser,
   IconCertificate,
@@ -10,7 +11,7 @@ import {
   IconHistory,
   IconNotes,
 } from "@tabler/icons-react";
-import type { Volunteer } from "@/lib/generated/prisma";
+import type { Volunteer, VolunteerSkill } from "@/lib/generated/prisma";
 
 /**
  * Volunteer Detail Client Component
@@ -36,14 +37,7 @@ interface VolunteerDetailClientProps {
       phone: string | null;
       address: string | null;
     };
-    skills: Array<{
-      id: string;
-      skillName: string;
-      proficiency: string | null;
-      isVerified: boolean;
-      verifiedDate: Date | null;
-      expiryDate: Date | null;
-    }>;
+    skills: VolunteerSkill[];
     availability: Array<{
       id: string;
       availabilityType: string;
@@ -148,9 +142,7 @@ export function VolunteerDetailClient({
         </TabsContent>
 
         <TabsContent value="skills" className="mt-6">
-          <div className="rounded-lg border p-8 text-center text-muted-foreground">
-            Skills & Certifications tab - Coming soon
-          </div>
+          <SkillsTab volunteer={volunteer} slug={slug} />
         </TabsContent>
 
         <TabsContent value="availability" className="mt-6">

@@ -19,24 +19,25 @@ const aj = arcjet.withRule(
 /**
  * Create Volunteer Profile
  *
- * Creates a new volunteer profile linked to an existing ChurchMember.
- * One church member can have one volunteer profile (one-to-one relationship).
+ * Creates a new volunteer profile with automatic member lookup/creation.
+ * If a church member with the provided email exists, links to that member.
+ * If not, creates a new church member first, then creates the volunteer profile.
  *
  * Security:
  * - Requires admin permissions
  * - Multi-tenant data isolation via organizationId
  * - Rate limiting via Arcjet
- * - Validates church member exists and belongs to organization
  * - Prevents duplicate volunteer profiles
+ * - Transaction ensures atomic member + volunteer creation
  *
  * @param slug - Organization slug for multi-tenant context
- * @param data - Volunteer profile data
- * @returns ApiResponse with created volunteer ID
+ * @param data - Volunteer profile data with member information
+ * @returns ApiResponse with created volunteer ID and status message
  */
 export async function createVolunteer(
   slug: string,
   data: VolunteerSchemaType
-): Promise<ApiResponse<{ volunteerId: string }>> {
+): Promise<ApiResponse<{ volunteerId: string; isNewMember: boolean }>> {
   // 1. Authentication and authorization
   const { session, organization, dataScope } =
     await requireDashboardAccess(slug);
@@ -82,36 +83,7 @@ export async function createVolunteer(
   const validatedData = validation.data;
 
   try {
-    // 5. Verify church member exists and belongs to organization
-    const churchMember = await prisma.churchMember.findFirst({
-      where: {
-        id: validatedData.churchMemberId,
-        organizationId: organization.id, // Multi-tenant isolation
-      },
-    });
-
-    if (!churchMember) {
-      return {
-        status: "error",
-        message: "Church member not found",
-      };
-    }
-
-    // 6. Check if volunteer profile already exists
-    const existingVolunteer = await prisma.volunteer.findUnique({
-      where: {
-        churchMemberId: validatedData.churchMemberId,
-      },
-    });
-
-    if (existingVolunteer) {
-      return {
-        status: "error",
-        message: "This member already has a volunteer profile",
-      };
-    }
-
-    // 7. Validate location belongs to organization (if provided)
+    // 5. Validate location belongs to organization (if provided)
     if (validatedData.locationId) {
       const location = await prisma.location.findFirst({
         where: {
@@ -129,19 +101,80 @@ export async function createVolunteer(
       }
     }
 
-    // 8. Create volunteer profile
-    const volunteer = await prisma.volunteer.create({
-      data: validatedData,
+    // 6. Check if church member exists by email (case-insensitive)
+    const existingMember = await prisma.churchMember.findFirst({
+      where: {
+        email: {
+          equals: validatedData.email,
+          mode: "insensitive",
+        },
+        organizationId: organization.id, // Multi-tenant isolation
+      },
+      include: {
+        volunteer: true, // Check if they already have a volunteer profile
+      },
     });
 
-    // 9. Revalidate relevant pages
+    let churchMemberId: string;
+    let isNewMember = false;
+
+    if (existingMember) {
+      // Member exists - check if they already have a volunteer profile
+      if (existingMember.volunteer) {
+        return {
+          status: "error",
+          message: "This member already has a volunteer profile",
+        };
+      }
+      churchMemberId = existingMember.id;
+    } else {
+      // Member doesn't exist - create new member first
+      const fullName =
+        `${validatedData.firstName} ${validatedData.lastName}`.trim();
+      const newMember = await prisma.churchMember.create({
+        data: {
+          organizationId: organization.id,
+          name: fullName,
+          email: validatedData.email,
+          phone: validatedData.phone,
+          memberType: "VOLUNTEER",
+        },
+      });
+      churchMemberId = newMember.id;
+      isNewMember = true;
+    }
+
+    // 7. Create volunteer profile
+    const volunteer = await prisma.volunteer.create({
+      data: {
+        churchMemberId,
+        organizationId: validatedData.organizationId,
+        locationId: validatedData.locationId,
+        status: validatedData.status,
+        startDate: validatedData.startDate,
+        endDate: validatedData.endDate,
+        inactiveReason: validatedData.inactiveReason,
+        emergencyContactName: validatedData.emergencyContactName,
+        emergencyContactPhone: validatedData.emergencyContactPhone,
+        backgroundCheckStatus: validatedData.backgroundCheckStatus,
+        backgroundCheckDate: validatedData.backgroundCheckDate,
+        backgroundCheckExpiry: validatedData.backgroundCheckExpiry,
+        notes: validatedData.notes,
+      },
+    });
+
+    // 8. Revalidate relevant pages
     revalidatePath(`/church/${slug}/admin/volunteers`);
     revalidatePath(`/church/${slug}/admin/volunteers/${volunteer.id}`);
 
+    const message = isNewMember
+      ? "Volunteer profile created successfully (new member created)"
+      : "Volunteer profile created successfully (linked to existing member)";
+
     return {
       status: "success",
-      message: "Volunteer profile created successfully",
-      data: { volunteerId: volunteer.id },
+      message,
+      data: { volunteerId: volunteer.id, isNewMember },
     };
   } catch (error) {
     return {
