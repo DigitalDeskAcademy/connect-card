@@ -17,7 +17,202 @@ Complete feature workflow: build → commit → conflict forecast → PR → mer
 
 ---
 
-## Stage 1: Schema Sync Verification
+## Stage 1: Schema Deployment Strategy
+
+**Purpose:** Safely deploy schema changes to production database before code changes.
+
+**Step 1: Detect Schema Changes**
+
+```bash
+git diff main...HEAD --name-only | grep "prisma/schema.prisma"
+```
+
+If schema.prisma is modified, ask user:
+
+```
+⚠️  SCHEMA CHANGES DETECTED
+
+Your branch has modified prisma/schema.prisma.
+
+For production safety, we recommend 2-phase deployment:
+
+Phase 1: Deploy schema to main database FIRST
+Phase 2: Deploy code that uses new schema AFTER
+
+Use 2-phase schema deployment? (yes/no)
+```
+
+**If user says YES → Proceed to Phase 1 (Schema Only)**
+
+**If user says NO → Skip to Stage 2 (Quality Verification)**
+
+---
+
+### Phase 1: Schema-Only Deployment
+
+**Step 2: Commit Schema Only**
+
+```bash
+git status
+git diff --stat prisma/schema.prisma
+```
+
+Show user the schema changes and ask for confirmation:
+
+```
+📋 SCHEMA CHANGES TO DEPLOY
+
+<show diff output>
+
+Commit schema only? (yes/no)
+```
+
+If YES:
+
+```bash
+# Stage only schema file
+git add prisma/schema.prisma
+
+# Commit with descriptive message
+git commit -m "schema: <describe-schema-changes>"
+
+# Example: "schema: add volunteer assignment fields to User and ConnectCard"
+```
+
+**Step 3: Push Schema Branch**
+
+```bash
+# Push to remote
+git push origin <current-branch> -u
+```
+
+**Step 4: Create Schema-Only PR**
+
+```bash
+git log main..HEAD --oneline
+git diff main...HEAD --stat
+```
+
+Generate PR description:
+
+```markdown
+## Schema Migration
+
+**Type:** Schema-only (Phase 1 of 2)
+
+## Changes
+
+- <list schema changes>
+
+## Database Migration
+
+This PR contains ONLY schema changes. After merge:
+
+1. Schema will be pushed to main database via `pnpm prisma db push`
+2. Code changes will follow in Phase 2 PR
+
+## Deployment Order
+
+✅ **This PR (Phase 1)**: Schema changes
+⏳ **Next PR (Phase 2)**: Code that uses new schema
+
+## Checklist
+
+- [x] Schema changes only (no code changes)
+- [ ] Schema deployed to main database after merge
+- [ ] Phase 2 PR ready to follow
+```
+
+Create PR:
+
+```bash
+gh pr create --title "schema: <description>" --body "$(cat <<'EOF'
+<PR description>
+EOF
+)"
+```
+
+Store PR number.
+
+**Step 5: Merge Schema PR**
+
+Ask user: "Ready to merge schema PR? (yes/no)"
+
+```bash
+gh pr merge <pr-number> --squash --delete-branch
+```
+
+**Step 6: Deploy Schema to Main Database**
+
+```bash
+# Get main worktree path
+MAIN_WORKTREE="../main"
+
+# Check if main worktree exists
+if [ -d "$MAIN_WORKTREE" ]; then
+  echo "📂 Switching to main worktree..."
+  cd "$MAIN_WORKTREE"
+
+  # Pull merged schema
+  git pull origin main
+
+  echo "🗄️  Deploying schema to main database..."
+  echo ""
+  echo "⚠️  IMPORTANT: This will modify the MAIN/PRODUCTION database"
+  echo ""
+  read -p "Deploy schema to main database now? [y/N]: " -n 1 -r
+  echo
+
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    pnpm prisma db push
+    echo "✅ Schema deployed to main database"
+  else
+    echo "⚠️  Schema NOT deployed. You must run 'pnpm prisma db push' manually in main worktree."
+  fi
+else
+  echo "⚠️  Main worktree not found at $MAIN_WORKTREE"
+  echo "   You must manually deploy schema to main database:"
+  echo "   1. Switch to main branch"
+  echo "   2. Pull latest changes"
+  echo "   3. Run: pnpm prisma db push"
+fi
+```
+
+**Step 7: Return to Feature Worktree & Pull Schema**
+
+```bash
+# Return to feature worktree
+cd <original-worktree-path>
+
+# Pull merged schema from main
+git fetch origin main
+git merge main --no-edit
+
+echo "✅ Schema merged back to feature branch"
+echo ""
+echo "📋 SCHEMA PHASE COMPLETE"
+echo ""
+echo "Next: Commit code changes that use the new schema"
+echo ""
+```
+
+**Step 8: Verify Clean State for Phase 2**
+
+```bash
+git status
+```
+
+Should show uncommitted code changes (everything except schema.prisma).
+
+---
+
+### Phase 2: Code Deployment
+
+Now proceed with normal feature wrap-up workflow starting from Stage 2.
+
+---
+
+## Stage 2: Schema Sync Verification (Skip if 2-Phase Used)
 
 **Purpose:** Prevent merge conflicts by ensuring your Prisma schema matches main before wrapping up.
 
@@ -72,7 +267,7 @@ fi
 
 ---
 
-## Stage 2: Quality Verification
+## Stage 3: Quality Verification
 
 **Step 1: Run Build**
 
@@ -109,7 +304,7 @@ If found, report and ask if acceptable to proceed.
 
 ---
 
-## Stage 3: Commit Feature Code
+## Stage 4: Commit Feature Code
 
 **Step 4: Git Status**
 
@@ -153,7 +348,7 @@ Should show clean working tree.
 
 ---
 
-## Stage 4: Conflict Forecast & Analysis
+## Stage 5: Conflict Forecast & Analysis
 
 **CRITICAL**: This project uses git worktrees. Multiple features modify docs simultaneously.
 
@@ -217,7 +412,7 @@ Proceed with PR creation? (yes/no)
 
 ---
 
-## Stage 5: Pull Request
+## Stage 6: Pull Request
 
 **Step 10: Push Branch**
 
@@ -250,7 +445,7 @@ Draft PR:
 
 ## Merge Conflict Notes
 
-<If conflicts detected in Stage 3>
+<If conflicts detected in Stage 5>
 
 ⚠️ **Expected Conflicts**
 
@@ -286,7 +481,7 @@ Store PR number for later.
 
 ---
 
-## Stage 6: Testing & Merge
+## Stage 7: Testing & Merge
 
 **Step 13: Manual Testing?**
 
@@ -315,7 +510,7 @@ Should show "MERGED" with timestamp.
 
 ---
 
-## Stage 7: Post-Merge - Update All Worktrees
+## Stage 8: Post-Merge - Update All Worktrees
 
 **CRITICAL**: After merging to main, ALL worktrees need the latest changes.
 
@@ -429,7 +624,7 @@ Note: prayer worktree needs manual update when ready.
 
 ---
 
-## Stage 8: Documentation Update (Main Worktree Only)
+## Stage 9: Documentation Update (Main Worktree Only)
 
 **Step 20: Switch to Main Worktree**
 
@@ -473,7 +668,7 @@ Show clean state confirmation.
 
 ---
 
-## Stage 9: Handoff Generation
+## Stage 10: Handoff Generation
 
 **Step 23: Ask About Next Feature**
 
@@ -694,8 +889,8 @@ Great work on <feature-name>! 🎉
 
 **Merge Conflicts**:
 
-- Detected in Stage 3 (forecast)
-- Guided resolution in Stage 5 (merge)
+- Detected in Stage 5 (forecast)
+- Guided resolution in Stage 7 (merge)
 - COMBINE content strategy (don't replace)
 
 **Worktree Update Failures**:
