@@ -48,15 +48,18 @@
 
 **See `/docs/features/prayer-management/vision.md` for full details**
 
-### Volunteer Onboarding ✅ COMPLETE (Nov 2025)
+### Volunteer Onboarding Pipeline ✅ PHASE 1 COMPLETE (Nov 2025)
 
-**Automated volunteer intake from connect cards**
+**Automated volunteer inquiry routing (bridges connect cards → Planning Center)**
 
-- Volunteer directory with TanStack Table
-- Skills management with certifications and expiration tracking
-- Assignment workflow (route inquiries to ministry leaders)
-- Background check tracking
-- NOT a scheduling system (churches use Planning Center)
+- Connect card volunteer interest extraction (AI Vision)
+- Assignment workflow (route inquiries to ministry leaders by category)
+- SMS automation toggle for onboarding kickoff
+- Team volunteer category assignments (Hospitality, Kids, Worship, etc.)
+- NOT a volunteer management system (churches use Planning Center for that)
+- Onboarding pipeline dashboard (in progress)
+
+**Strategic Position:** Feed Planning Center, don't replace it
 
 **See `/docs/features/volunteer-management/vision.md` for full details**
 
