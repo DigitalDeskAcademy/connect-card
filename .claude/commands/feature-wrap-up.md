@@ -3,15 +3,16 @@ description: Complete end-to-end feature workflow - worktree-aware with conflict
 model: claude-sonnet-4-5-20250929
 ---
 
-# Feature Wrap-Up (Worktree-Aware)
+# Feature Wrap-Up (Worktree-Aware + Optional Sync)
 
-Complete feature workflow: build → commit → conflict forecast → PR → merge → update main only → handoff.
+Complete feature workflow: build → commit → conflict forecast → PR → merge → sync worktrees → handoff.
 
 **Key Features:**
 
 - ✅ Detects merge conflicts BEFORE creating PR
-- ✅ Updates ONLY main worktree after merge (safe)
-- ✅ Skips other feature worktrees (prevents data loss)
+- ✅ Updates main worktree after merge (always)
+- ✅ **NEW:** Optional sync of other worktrees (safety-first with smart detection)
+- ✅ Warns about active worktrees (uncommitted changes)
 - ✅ NO doc updates in feature branch (prevents conflicts)
 - ✅ Generates copyable handoff text
 
@@ -393,6 +394,184 @@ If you need to update another worktree with main changes:
 4. Resolve any conflicts manually
 
 This prevents accidentally overwriting work in progress.
+```
+
+---
+
+## Stage 7.5: Sync Other Worktrees (Optional - Safety First)
+
+**Purpose:** Give user the option to update other worktrees with latest main, but with strong safety checks.
+
+**Step 19: Detect Other Worktrees**
+
+```bash
+git worktree list | grep -v "$(pwd)" | grep -v "/main"
+```
+
+If no other worktrees found, skip to Stage 8.
+
+**Step 19.5: Analyze Each Worktree Status**
+
+For each worktree, check:
+
+```bash
+cd /path/to/other-worktree
+
+# Get branch name
+BRANCH=$(git branch --show-current)
+
+# Count uncommitted files
+UNCOMMITTED=$(git status --short | wc -l)
+
+# Check if behind main
+BEHIND=$(git rev-list HEAD..main --count 2>/dev/null || echo "0")
+
+# Store results
+echo "$WORKTREE_NAME|$BRANCH|$UNCOMMITTED|$BEHIND"
+```
+
+**Step 20: Present Options to User**
+
+Show user the worktree status table:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 OTHER WORKTREES STATUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Worktree: volunteer
+├─ Branch: feature/volunteer-management
+├─ Uncommitted: 5 files ⚠️  ACTIVE - DO NOT UPDATE
+└─ Behind main: 3 commits
+
+Worktree: prayer
+├─ Branch: feature/prayer-management
+├─ Uncommitted: 0 files ✅ CLEAN - Safe to update
+└─ Behind main: 2 commits
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚠️  IMPORTANT: Only update worktrees that are CLEAN (no uncommitted work)
+
+Updating an active worktree can:
+- Cause merge conflicts
+- Interrupt your work
+- Require manual conflict resolution
+
+SAFE PRACTICE:
+- ✅ Update CLEAN/IDLE worktrees now
+- ❌ Skip ACTIVE worktrees (you'll sync them manually later)
+
+Options:
+1. Update all CLEAN worktrees (skip active ones) - RECOMMENDED
+2. Ask me for each worktree individually
+3. Skip all (I'll sync manually later)
+
+What would you like to do? (1/2/3)
+```
+
+**Step 21: Handle User Choice**
+
+**If Option 1 (Update all clean):**
+
+```bash
+for worktree in <list>; do
+  cd /path/to/worktree
+
+  # Check if clean
+  if [ "$(git status --short | wc -l)" = "0" ]; then
+    echo "🔄 Updating $worktree..."
+    git merge main --no-edit
+
+    if [ $? -ne 0 ]; then
+      echo "⚠️  Merge conflict in $worktree - skipping"
+      echo "   Resolve manually later with:"
+      echo "   cd /path/to/worktree && git merge main"
+      git merge --abort
+    else
+      echo "✅ $worktree updated successfully"
+    fi
+  else
+    echo "⏭️  Skipping $worktree (has uncommitted changes)"
+  fi
+done
+```
+
+**If Option 2 (Ask each):**
+
+For each worktree:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Worktree: volunteer
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Branch: feature/volunteer-management
+Uncommitted files: 5
+
+⚠️  WARNING: This worktree has UNCOMMITTED changes!
+
+Uncommitted files:
+- actions/volunteers/volunteers.ts (modified)
+- components/dashboard/volunteers/... (modified)
+- app/church/[slug]/admin/volunteer/page.tsx (modified)
+- public/test-image.png (untracked)
+- .env.local (modified)
+
+Merging main now will:
+- Require resolving merge conflicts (if any)
+- Mix your uncommitted work with main's changes
+- Potentially break your current work-in-progress
+
+RECOMMENDATION: Skip this worktree and sync manually when ready.
+
+Update this worktree? (yes/no/skip) [default: skip]
+```
+
+Wait for user response. If yes, attempt merge. If no/skip, move to next.
+
+**If Option 3 (Skip all):**
+
+Show instructions:
+
+```
+✅ Skipped all worktrees
+
+When you're ready to sync a worktree manually:
+
+1. Finish your work and commit changes:
+   cd /path/to/worktree
+   git add .
+   git commit -m "your message"
+
+2. Merge latest main:
+   git merge main
+
+3. Resolve any conflicts if they occur
+
+4. Continue working with latest code
+
+This gives you full control over WHEN to integrate main's changes.
+```
+
+**Step 22: Summary Report**
+
+After processing, show final status:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 WORKTREE SYNC SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ main: Updated with your merged feature
+✅ prayer: Updated successfully (merged main)
+⏭️  volunteer: Skipped (5 uncommitted files - active work)
+
+Manual sync needed:
+- volunteer: cd /home/.../volunteer && git merge main (when ready)
+
+All critical worktrees are synced or have instructions!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ---
