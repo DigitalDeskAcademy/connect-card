@@ -482,7 +482,8 @@ async function main() {
     },
     {
       requesterName: "Michael Chen",
-      request: "Lost my job last week, praying for provision and new opportunity",
+      request:
+        "Lost my job last week, praying for provision and new opportunity",
       privacyLevel: "PUBLIC",
       category: "PROVISION",
       status: "PENDING",
@@ -608,20 +609,32 @@ async function main() {
   console.log("      - 8 reviewed");
   console.log("      - 2 with volunteer onboarding");
   console.log("   👔 Volunteer Pipeline: 2 volunteers in onboarding");
-  console.log("   🙏 Prayer Requests: 12 (4 pending, 5 in progress, 3 answered)\n");
+  console.log(
+    "   🙏 Prayer Requests: 12 (4 pending, 5 in progress, 3 answered)\n"
+  );
 
   console.log("🔐 Test Credentials (Email OTP):");
   console.log("   platform@test.com       (platform_admin)");
   console.log("   test@playwright.dev     (church_owner)");
-  console.log("   admin@newlife.test      (church_admin - Kids Ministry, Hospitality)");
+  console.log(
+    "   admin@newlife.test      (church_admin - Kids Ministry, Hospitality)"
+  );
   console.log("   staff@newlife.test      (staff - Worship)\n");
 
   console.log("🌐 Quick Access URLs:");
   const port = process.env.PORT || 3002;
-  console.log(`   Dashboard:       http://localhost:${port}/church/newlife/admin`);
-  console.log(`   Connect Cards:   http://localhost:${port}/church/newlife/admin/connect-cards`);
-  console.log(`   Prayer Requests: http://localhost:${port}/church/newlife/admin/prayer`);
-  console.log(`   Team:            http://localhost:${port}/church/newlife/admin/team\n`);
+  console.log(
+    `   Dashboard:       http://localhost:${port}/church/newlife/admin`
+  );
+  console.log(
+    `   Connect Cards:   http://localhost:${port}/church/newlife/admin/connect-cards`
+  );
+  console.log(
+    `   Prayer Requests: http://localhost:${port}/church/newlife/admin/prayer`
+  );
+  console.log(
+    `   Team:            http://localhost:${port}/church/newlife/admin/team\n`
+  );
 
   console.log("💡 Known Test Data:");
   console.log("   - John Smith: Hospitality volunteer (awaiting review)");
@@ -631,7 +644,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error("❌ Error running demo seed:", e);
     process.exit(1);
   })
