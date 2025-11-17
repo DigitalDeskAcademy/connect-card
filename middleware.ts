@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
-import arcjet, { createMiddleware, detectBot } from "@arcjet/next";
+import arcjet, { createMiddleware, detectBot, fixedWindow } from "@arcjet/next";
 import { isValidSlug } from "./lib/tenant-utils";
 
-// Configure Arcjet
+// Configure Arcjet with bot detection and rate limiting
 const aj = arcjet({
   key: process.env.ARCJET_KEY!, // Get your site key from https://app.arcjet.com
   rules: [
+    // Bot detection - block malicious bots, allow legitimate crawlers
     detectBot({
       mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
-      // Block all bots except the following
       allow: [
-        "CATEGORY:SEARCH_ENGINE",
-        "CATEGORY:MONITOR",
-        "CATEGORY:PREVIEW",
-        "STRIPE_WEBHOOK",
-
-        // Google, Bing, etc
-        // Uncomment to allow these other common bot categories
-        // See the full list at https://arcjet.com/bot-list
-        //"CATEGORY:MONITOR", // Uptime monitoring services
-        //"CATEGORY:PREVIEW", // Link previews e.g. Slack, Discord
+        "CATEGORY:SEARCH_ENGINE", // Google, Bing, DuckDuckGo
+        "CATEGORY:MONITOR", // Uptime monitoring services
+        "CATEGORY:PREVIEW", // Link previews (Slack, Discord, etc.)
+        "STRIPE_WEBHOOK", // Stripe webhook requests
       ],
+    }),
+    // Rate limiting - prevent API abuse on church admin routes
+    // Middleware auto-tracks by IP address (no manual characteristics needed)
+    fixedWindow({
+      mode: "LIVE",
+      window: "60s", // 60 second sliding window
+      max: 100, // Max 100 requests per minute per IP
     }),
   ],
 });
@@ -50,10 +51,10 @@ export default createMiddleware(aj, async (request: NextRequest) => {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-pathname", pathname);
 
-  // Extract and validate org slug if in agency route
-  const agencyMatch = pathname.match(/^\/agency\/([^\/]+)/);
-  if (agencyMatch) {
-    const orgSlug = agencyMatch[1];
+  // Extract and validate org slug if in church route
+  const churchMatch = pathname.match(/^\/church\/([^\/]+)/);
+  if (churchMatch) {
+    const orgSlug = churchMatch[1];
     // Only add header if slug passes validation
     if (isValidSlug(orgSlug)) {
       requestHeaders.set("x-org-slug", orgSlug);
