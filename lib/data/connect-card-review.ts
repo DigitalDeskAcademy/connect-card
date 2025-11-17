@@ -6,6 +6,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "@/lib/env";
 import type { ExtractedData } from "@/lib/types/connect-card";
+import type { VolunteerOnboardingStatus } from "@/lib/generated/prisma";
 
 /**
  * Connect card for review with image URL
@@ -22,6 +23,11 @@ export interface ConnectCardForReview {
   visitType: string | null;
   interests: string[];
   scannedAt: Date;
+  // Volunteer onboarding fields
+  volunteerOnboardingStatus: VolunteerOnboardingStatus | null;
+  volunteerDocumentsSent: unknown;
+  volunteerOrientationDate: Date | null;
+  volunteerOnboardingNotes: string | null;
 }
 
 /**
@@ -57,6 +63,10 @@ export async function getConnectCardsForReview(
       visitType: true,
       interests: true,
       scannedAt: true,
+      volunteerOnboardingStatus: true,
+      volunteerDocumentsSent: true,
+      volunteerOrientationDate: true,
+      volunteerOnboardingNotes: true,
     },
   });
 
@@ -106,6 +116,10 @@ export async function getConnectCardForReview(
       visitType: true,
       interests: true,
       scannedAt: true,
+      volunteerOnboardingStatus: true,
+      volunteerDocumentsSent: true,
+      volunteerOrientationDate: true,
+      volunteerOnboardingNotes: true,
     },
   });
 
@@ -202,6 +216,10 @@ export async function getConnectCardsForBatchReview(
       visitType: true,
       interests: true,
       scannedAt: true,
+      volunteerOnboardingStatus: true,
+      volunteerDocumentsSent: true,
+      volunteerOrientationDate: true,
+      volunteerOnboardingNotes: true,
     },
   });
 

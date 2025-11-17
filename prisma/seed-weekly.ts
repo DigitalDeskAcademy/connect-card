@@ -143,6 +143,17 @@ const INTERESTS = [
   "Counseling Ministry",
 ];
 
+const VOLUNTEER_CATEGORIES = [
+  "Hospitality",
+  "Worship",
+  "Kids Ministry",
+  "Youth",
+  "First Impressions",
+  "Production",
+  "Prayer",
+  "Outreach",
+];
+
 const VISIT_TYPES = [
   "First Time Guest",
   "First Time Guest",
@@ -365,14 +376,72 @@ async function main() {
 
       // Volunteer interest (25% chance)
       const interests: string[] = [];
+      let volunteerCategory = null;
+      let volunteerOnboardingStatus = null;
+      let volunteerDocumentsSent = null;
+      let volunteerOrientationDate = null;
+      let volunteerOnboardingNotes = null;
+
       if (shouldHaveVolunteerInterest()) {
-        const numInterests = Math.floor(Math.random() * 2) + 1; // 1-2 interests
-        const availableInterests = [...INTERESTS];
-        for (let j = 0; j < numInterests; j++) {
+        // Always include "Volunteering" interest
+        interests.push("Volunteering");
+
+        // Add 0-1 additional interests
+        const numAdditionalInterests = Math.floor(Math.random() * 2); // 0-1 additional
+        const availableInterests = INTERESTS.filter(i => i !== "Volunteering");
+        for (let j = 0; j < numAdditionalInterests; j++) {
           const idx = Math.floor(Math.random() * availableInterests.length);
           interests.push(availableInterests[idx]);
           availableInterests.splice(idx, 1);
         }
+
+        // Assign volunteer category
+        volunteerCategory =
+          VOLUNTEER_CATEGORIES[
+            Math.floor(Math.random() * VOLUNTEER_CATEGORIES.length)
+          ];
+
+        // Assign onboarding status (weighted distribution for demo)
+        const statusChance = Math.random();
+        if (statusChance < 0.5) {
+          volunteerOnboardingStatus = "INQUIRY"; // 50% still at inquiry
+        } else if (statusChance < 0.7) {
+          volunteerOnboardingStatus = "WELCOME_SENT"; // 20% at welcome sent
+          volunteerOnboardingNotes = "Welcome message sent automatically";
+        } else if (statusChance < 0.85) {
+          volunteerOnboardingStatus = "DOCUMENTS_SHARED"; // 15% at documents shared
+          volunteerDocumentsSent = {
+            "Welcome Email": true,
+            "Leader Introduction": true,
+            "Background Check Form": volunteerCategory === "Kids Ministry",
+            "Volunteer Waiver": volunteerCategory !== "Kids Ministry",
+          };
+          volunteerOnboardingNotes = "Documents sent via email";
+        } else if (statusChance < 0.95) {
+          volunteerOnboardingStatus = "LEADER_CONNECTED"; // 10% at leader connected
+          volunteerDocumentsSent = {
+            "Welcome Email": true,
+            "Leader Introduction": true,
+            "Background Check Form": volunteerCategory === "Kids Ministry",
+          };
+          volunteerOnboardingNotes = "Connected with ministry leader";
+        } else {
+          volunteerOnboardingStatus = "ORIENTATION_SET"; // 5% at orientation scheduled
+          volunteerDocumentsSent = {
+            "Welcome Email": true,
+            "Leader Introduction": true,
+            "Background Check Form": true,
+            "Orientation Calendar": true,
+          };
+          // Set orientation date 1-2 weeks from scan date
+          const daysUntilOrientation = Math.floor(Math.random() * 7) + 7; // 7-14 days
+          volunteerOrientationDate = new Date(scanTimestamp);
+          volunteerOrientationDate.setDate(
+            volunteerOrientationDate.getDate() + daysUntilOrientation
+          );
+          volunteerOnboardingNotes = `Orientation scheduled for ${volunteerOrientationDate.toLocaleDateString()}`;
+        }
+
         volunteerSignups++;
       }
 
@@ -388,8 +457,14 @@ async function main() {
           visitType,
           prayerRequest,
           interests,
+          volunteerCategory,
           status: "EXTRACTED",
           scannedAt: scanTimestamp,
+          // Volunteer onboarding fields
+          volunteerOnboardingStatus,
+          volunteerDocumentsSent,
+          volunteerOrientationDate,
+          volunteerOnboardingNotes,
           extractedData: {
             firstName: name.first,
             lastName: name.last,
@@ -400,6 +475,7 @@ async function main() {
             interests,
             prayerCategory,
             prayerSeverity,
+            volunteerCategory,
           },
           createdAt: scanTimestamp,
           updatedAt: scanTimestamp,

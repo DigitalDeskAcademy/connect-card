@@ -49,6 +49,7 @@ import {
   INTEREST_OPTIONS,
   VOLUNTEER_CATEGORY_OPTIONS,
 } from "@/lib/types/connect-card";
+import { VolunteerOnboardingChecklist } from "@/components/dashboard/connect-cards/volunteer-onboarding-checklist";
 
 interface VolunteerLeader {
   id: string;
@@ -902,6 +903,33 @@ export function ReviewQueueClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* Volunteer Onboarding Pipeline Preview - Show when volunteering selected */}
+      {formData.interests.includes("Volunteering") &&
+        formData.volunteerCategory && (
+          <div className="mt-4">
+            <VolunteerOnboardingChecklist
+              volunteerCategory={formData.volunteerCategory}
+              assignedLeaderName={
+                formData.assignedLeaderId
+                  ? volunteerLeaders.find(
+                      l => l.id === formData.assignedLeaderId
+                    )?.name
+                  : undefined
+              }
+              smsAutomationEnabled={formData.smsAutomationEnabled}
+              onboardingStatus={
+                currentCard.volunteerOnboardingStatus || "INQUIRY"
+              }
+              orientationDate={
+                currentCard.volunteerOrientationDate
+                  ? new Date(currentCard.volunteerOrientationDate)
+                  : null
+              }
+              onboardingNotes={currentCard.volunteerOnboardingNotes}
+            />
+          </div>
+        )}
     </div>
   );
 }

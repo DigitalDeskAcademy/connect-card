@@ -5,7 +5,7 @@ import {
   IconUsers,
   IconUserCheck,
   IconAlertCircle,
-  IconCalendarEvent,
+  IconUserPlus,
 } from "@tabler/icons-react";
 import { VolunteersTable } from "./volunteers-table";
 import { CreateVolunteerDialog } from "./create-volunteer-dialog";
@@ -73,6 +73,7 @@ export function VolunteersClient({
   const totalVolunteers = volunteers.length;
   const activeVolunteers = volunteers.filter(v => v.status === "ACTIVE").length;
 
+  // Background checks needing attention (not started, in progress, or expired)
   const needingBackgroundCheck = volunteers.filter(
     v =>
       v.status === "ACTIVE" &&
@@ -81,10 +82,12 @@ export function VolunteersClient({
         v.backgroundCheckStatus === "IN_PROGRESS")
   ).length;
 
-  const upcomingShifts = volunteers.reduce(
-    (sum, v) => sum + (v._count?.shifts || 0),
-    0
-  );
+  // New volunteers this month
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const newThisMonth = volunteers.filter(
+    v => new Date(v.startDate) >= thirtyDaysAgo
+  ).length;
 
   // Refresh data after volunteer creation
   const handleVolunteerCreated = () => {
@@ -186,14 +189,14 @@ export function VolunteersClient({
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Upcoming Shifts
+              New This Month
             </CardTitle>
-            <IconCalendarEvent className="h-4 w-4 text-muted-foreground" />
+            <IconUserPlus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{upcomingShifts}</div>
+            <div className="text-2xl font-bold">{newThisMonth}</div>
             <p className="text-xs text-muted-foreground">
-              {upcomingShifts === 1 ? "shift" : "shifts"} scheduled
+              {newThisMonth === 1 ? "volunteer" : "volunteers"} joined recently
             </p>
           </CardContent>
         </Card>
