@@ -496,13 +496,13 @@ async function main() {
       status: "PENDING",
     },
 
-    // IN_PROGRESS (5 requests)
+    // PRAYING (5 requests)
     {
       submittedBy: "David Martinez",
       request: "Marriage going through difficult season, pray for restoration",
       isPrivate: true,
       category: "FAMILY",
-      status: "IN_PROGRESS",
+      status: "PRAYING",
       assignedTo: churchAdmin,
     },
     {
@@ -510,7 +510,7 @@ async function main() {
       request: "Upcoming surgery next week, pray for successful outcome",
       isPrivate: true,
       category: "HEALING",
-      status: "IN_PROGRESS",
+      status: "PRAYING",
       assignedTo: churchAdmin,
     },
     {
@@ -518,7 +518,7 @@ async function main() {
       request: "Son away at college making poor choices, pray for wisdom",
       isPrivate: true,
       category: "FAMILY",
-      status: "IN_PROGRESS",
+      status: "PRAYING",
       assignedTo: churchStaff,
     },
     {
@@ -526,7 +526,7 @@ async function main() {
       request: "New job opportunity, pray for God's direction",
       isPrivate: false,
       category: "GUIDANCE",
-      status: "IN_PROGRESS",
+      status: "PRAYING",
       assignedTo: churchStaff,
     },
     {
@@ -534,7 +534,7 @@ async function main() {
       request: "Struggling with addiction, need freedom and accountability",
       isPrivate: true,
       category: "MENTAL_HEALTH",
-      status: "IN_PROGRESS",
+      status: "PRAYING",
       assignedTo: churchAdmin,
     },
 
@@ -569,7 +569,7 @@ async function main() {
     const createdAt = new Date(lastSunday);
     if (prayer.status === "ANSWERED") {
       createdAt.setDate(lastSunday.getDate() - 14); // 2 weeks ago
-    } else if (prayer.status === "IN_PROGRESS") {
+    } else if (prayer.status === "PRAYING") {
       createdAt.setDate(lastSunday.getDate() - 7); // 1 week ago
     }
 
@@ -590,7 +590,7 @@ async function main() {
 
   console.log(`   ✅ 12 prayer requests created`);
   console.log(`      - 4 pending (unassigned)`);
-  console.log(`      - 5 in progress (assigned)`);
+  console.log(`      - 5 praying (assigned)`);
   console.log(`      - 3 answered (completed)\n`);
 
   // ========================================
@@ -609,9 +609,7 @@ async function main() {
   console.log("      - 8 reviewed");
   console.log("      - 2 with volunteer onboarding");
   console.log("   👔 Volunteer Pipeline: 2 volunteers in onboarding");
-  console.log(
-    "   🙏 Prayer Requests: 12 (4 pending, 5 in progress, 3 answered)\n"
-  );
+  console.log("   🙏 Prayer Requests: 12 (4 pending, 5 praying, 3 answered)\n");
 
   console.log("🔐 Test Credentials (Email OTP):");
   console.log("   platform@test.com       (platform_admin)");
