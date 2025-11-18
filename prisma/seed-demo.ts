@@ -467,72 +467,72 @@ async function main() {
   const prayerRequests = [
     // PENDING (4 requests)
     {
-      requesterName: "John Smith",
+      submittedBy: "John Smith",
       request: "Pray for wisdom in a major life decision",
-      privacyLevel: "PUBLIC",
+      isPrivate: false,
       category: "GUIDANCE",
       status: "PENDING",
     },
     {
-      requesterName: "Sarah Johnson",
+      submittedBy: "Sarah Johnson",
       request: "My father was diagnosed with cancer, need healing prayers",
-      privacyLevel: "MEMBERS_ONLY",
+      isPrivate: true,
       category: "HEALING",
       status: "PENDING",
     },
     {
-      requesterName: "Michael Chen",
+      submittedBy: "Michael Chen",
       request:
         "Lost my job last week, praying for provision and new opportunity",
-      privacyLevel: "PUBLIC",
+      isPrivate: false,
       category: "PROVISION",
       status: "PENDING",
     },
     {
-      requesterName: "Emily Rodriguez",
+      submittedBy: "Emily Rodriguez",
       request: "Struggling with anxiety and depression, need peace",
-      privacyLevel: "LEADERSHIP",
+      isPrivate: true,
       category: "MENTAL_HEALTH",
       status: "PENDING",
     },
 
     // IN_PROGRESS (5 requests)
     {
-      requesterName: "David Martinez",
+      submittedBy: "David Martinez",
       request: "Marriage going through difficult season, pray for restoration",
-      privacyLevel: "LEADERSHIP",
+      isPrivate: true,
       category: "FAMILY",
       status: "IN_PROGRESS",
       assignedTo: churchAdmin,
     },
     {
-      requesterName: "Lisa Anderson",
+      submittedBy: "Lisa Anderson",
       request: "Upcoming surgery next week, pray for successful outcome",
-      privacyLevel: "MEMBERS_ONLY",
+      isPrivate: true,
       category: "HEALING",
       status: "IN_PROGRESS",
       assignedTo: churchAdmin,
     },
     {
-      requesterName: "Robert Taylor",
+      submittedBy: "Robert Taylor",
       request: "Son away at college making poor choices, pray for wisdom",
-      privacyLevel: "PRIVATE",
+      isPrivate: true,
       category: "FAMILY",
       status: "IN_PROGRESS",
       assignedTo: churchStaff,
     },
     {
-      requesterName: "Jennifer Lee",
+      submittedBy: "Jennifer Lee",
       request: "New job opportunity, pray for God's direction",
-      privacyLevel: "PUBLIC",
+      isPrivate: false,
       category: "GUIDANCE",
       status: "IN_PROGRESS",
       assignedTo: churchStaff,
     },
     {
-      requesterName: "Christopher Wilson",
+      submittedBy: "Christopher Wilson",
       request: "Struggling with addiction, need freedom and accountability",
-      privacyLevel: "LEADERSHIP",
+      isPrivate: true,
       category: "MENTAL_HEALTH",
       status: "IN_PROGRESS",
       assignedTo: churchAdmin,
@@ -540,25 +540,25 @@ async function main() {
 
     // ANSWERED (3 requests)
     {
-      requesterName: "Amanda Brown",
+      submittedBy: "Amanda Brown",
       request: "Needed provision for medical bills - God provided!",
-      privacyLevel: "PUBLIC",
+      isPrivate: false,
       category: "PROVISION",
       status: "ANSWERED",
       assignedTo: churchAdmin,
     },
     {
-      requesterName: "Daniel Garcia",
+      submittedBy: "Daniel Garcia",
       request: "Daughter's health improving after prayer - thank you!",
-      privacyLevel: "MEMBERS_ONLY",
+      isPrivate: true,
       category: "HEALING",
       status: "ANSWERED",
       assignedTo: churchStaff,
     },
     {
-      requesterName: "Michelle Thompson",
+      submittedBy: "Michelle Thompson",
       request: "Found new job, God's timing was perfect",
-      privacyLevel: "PUBLIC",
+      isPrivate: false,
       category: "PROVISION",
       status: "ANSWERED",
       assignedTo: churchAdmin,
@@ -566,24 +566,24 @@ async function main() {
   ];
 
   for (const prayer of prayerRequests) {
-    const requestDate = new Date(lastSunday);
+    const createdAt = new Date(lastSunday);
     if (prayer.status === "ANSWERED") {
-      requestDate.setDate(lastSunday.getDate() - 14); // 2 weeks ago
+      createdAt.setDate(lastSunday.getDate() - 14); // 2 weeks ago
     } else if (prayer.status === "IN_PROGRESS") {
-      requestDate.setDate(lastSunday.getDate() - 7); // 1 week ago
+      createdAt.setDate(lastSunday.getDate() - 7); // 1 week ago
     }
 
     await prisma.prayerRequest.create({
       data: {
         organizationId: newlifeOrg.id,
         locationId: bainbridgeLocation.id,
-        requesterName: prayer.requesterName,
+        submittedBy: prayer.submittedBy,
         request: prayer.request,
-        privacyLevel: prayer.privacyLevel,
+        isPrivate: prayer.isPrivate,
         category: prayer.category,
         status: prayer.status,
         assignedToId: prayer.assignedTo?.id || null,
-        requestDate,
+        createdAt,
       },
     });
   }
