@@ -2,7 +2,7 @@
 
 **Current Phase:** Phase 3 (Production Launch Prep)
 **Production Ready:** ⚠️ NO - Review queue complete, needs production environment setup
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-11-20
 
 > 🎯 **PROJECT ORIGIN**: Forked from SideCar Platform (IV therapy clinic SaaS) → Rebranded to Church Connect Card
 > **Core Product:** Church visitor engagement platform with AI-powered connect card scanning
@@ -48,18 +48,20 @@
 
 **See `/docs/features/prayer-management/vision.md` for full details**
 
-### Volunteer Onboarding Pipeline ✅ PHASE 1 COMPLETE (Nov 2025)
+### Volunteer Onboarding Pipeline ✅ COMPLETE (Nov 2025)
 
 **Automated volunteer inquiry routing (bridges connect cards → Planning Center)**
 
-- Connect card volunteer interest extraction (AI Vision)
-- Assignment workflow (route inquiries to ministry leaders by category)
-- SMS automation toggle for onboarding kickoff
-- Team volunteer category assignments (Hospitality, Kids, Worship, etc.)
-- NOT a volunteer management system (churches use Planning Center for that)
-- Onboarding pipeline dashboard (in progress)
+- Connect card volunteer interest extraction (AI Vision) ✅
+- Assignment workflow (route inquiries to ministry leaders by category) ✅
+- SMS automation toggle for onboarding kickoff ✅
+- Team volunteer category assignments (Hospitality, Kids, Worship, etc.) ✅
+- Volunteer directory with TanStack Table UI ✅
+- Skills management (certifications, verification dates) ✅
+- E2E test suite (8 tests passing) ✅
+- ⚠️ **Known Issue:** EditVolunteerDialog temporarily disabled (TypeScript fix pending)
 
-**Strategic Position:** Feed Planning Center, don't replace it
+**Strategic Position:** Feed Planning Center, don't replace it (NOT a volunteer management system)
 
 **See `/docs/features/volunteer-management/vision.md` for full details**
 
@@ -142,19 +144,31 @@
 
 - ⚠️ Using `prisma db push` for development (need proper migrations for production)
 - ⚠️ Limited inline code documentation (acceptable for MVP)
+- ⚠️ **EditVolunteerDialog disabled** - TypeScript type inference issue with Zod + React Hook Form
+  - Schema: `categories` field changed from `.default([])` to required to fix inference
+  - CREATE form works, EDIT form has unresolved type error
+  - Edit button disabled until fix implemented
+  - Follow-up PR needed
 
 ---
 
 ## 🎯 Recent Completions (Last 30 Days)
 
-### Volunteer Assignment Workflow ✅ COMPLETED (Nov 15, 2025)
+### Volunteer Onboarding Pipeline ✅ COMPLETED (Nov 20, 2025)
 
-- Connect card volunteer routing to ministry leaders
-- Skills management UI with certification tracking
-- Assignment workflow with automated onboarding kickoff
-- E2E test suite (7 test cases passing)
+**Complete volunteer inquiry routing system integrated with connect cards**
 
-**PR #26** - `feat: volunteer assignment workflow with category management`
+- Connect card volunteer interest extraction (AI Vision)
+- Assignment workflow (route inquiries to ministry leaders by category)
+- Volunteer directory with TanStack Table UI (search, filter, sort, pagination)
+- Skills management (certifications, verification dates, expiration tracking)
+- SMS automation toggle for onboarding kickoff
+- E2E test suite (8 tests passing)
+- Multi-tenant security verified with location-based filtering
+- ⚠️ Known Issue: EditVolunteerDialog temporarily disabled (TypeScript fix pending)
+
+**PR #29** - `feat: volunteer onboarding pipeline`
+**Merged:** Nov 20, 2025 (squash merge)
 
 ### Prayer Management MVP ✅ COMPLETED (Nov 14, 2025)
 
