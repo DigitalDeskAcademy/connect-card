@@ -23,10 +23,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 
 /**
- * SideCarAISidebar - Always-available AI assistant sidebar
+ * ChurchConnectAISidebar - Always-available AI assistant sidebar
  *
  * Features:
- * - AI chat interface for customer data queries
+ * - AI chat interface for member data queries
  * - Contact details view
  * - Tasks/workflow management
  * - Analytics insights
@@ -86,40 +86,40 @@ const mockChatMessages = [
   {
     id: "1",
     sender: "user",
-    content: "Can you tell me about Sarah Martinez's last booking?",
+    content: "How many volunteers signed up for Kids Camp so far?",
     timestamp: "10:32 AM",
   },
   {
     id: "2",
-    sender: "sc",
+    sender: "cc",
     content:
-      "Sarah Martinez last booked an appointment on March 15, 2025 at 2:30 PM. She ordered the **Myers' Cocktail IV Therapy** package, which includes Vitamin C, B-Complex vitamins, Calcium, and Magnesium. The session was completed successfully, and she rated it 5 stars.",
+      "You currently have **18 volunteers** signed up for Kids Camp. That includes **8 for nursery**, **6 for elementary**, and **4 for check-in**. You still need **3 more volunteers** for the preschool room to meet your required ratios.",
     timestamp: "10:32 AM",
   },
   {
     id: "3",
     sender: "user",
-    content: "What was the total amount for that treatment?",
+    content: "Did all the connect cards from this weekend get reviewed?",
     timestamp: "10:33 AM",
   },
   {
     id: "4",
-    sender: "sc",
+    sender: "cc",
     content:
-      "The Myers' Cocktail IV Therapy was priced at **$175**. Sarah used a 10% loyalty discount, bringing her final total to **$157.50**. Payment was processed via credit card ending in 4892.",
+      "You processed **47 connect cards** this weekend. **42 have been reviewed and approved**, but **5 are still pending** in the review queue. 3 of those have low confidence scores and need manual verification of phone numbers.",
     timestamp: "10:33 AM",
   },
   {
     id: "5",
     sender: "user",
-    content: "Has she scheduled any follow-up appointments?",
+    content: "How many first-time visitors did we have this month?",
     timestamp: "10:34 AM",
   },
   {
     id: "6",
-    sender: "sc",
+    sender: "cc",
     content:
-      "Yes! Sarah has a follow-up appointment scheduled for **March 29, 2025 at 3:00 PM** for the same treatment. She also inquired about adding the **Immunity Boost add-on** (+$50) to her next session.",
+      "This month you&apos;ve had **23 first-time visitors** across all services. **14 have returned** for a second visit (61% return rate), and **8 have submitted prayer requests**. The most common interest areas are **small groups** and **kids ministry**.",
     timestamp: "10:34 AM",
   },
 ];
@@ -164,7 +164,7 @@ export function SideCarAISidebar({
         <div className="flex h-full flex-col w-80 min-w-[320px]">
           {/* Header - matches SiteHeader height and styling */}
           <div className="flex h-12 shrink-0 items-center justify-between gap-2 border-b px-4 whitespace-nowrap">
-            <h2 className="text-lg font-semibold">SideCar AI</h2>
+            <h2 className="text-lg font-semibold">Church Connect AI</h2>
             <Button
               variant="ghost"
               size="icon"
@@ -215,12 +215,12 @@ export function SideCarAISidebar({
                       <Avatar className="h-8 w-8 shrink-0">
                         <AvatarFallback
                           className={cn(
-                            message.sender === "sc"
+                            message.sender === "cc"
                               ? "bg-primary text-primary-foreground"
                               : "bg-muted"
                           )}
                         >
-                          {message.sender === "sc" ? "SC" : "U"}
+                          {message.sender === "cc" ? "CC" : "U"}
                         </AvatarFallback>
                       </Avatar>
                       <div
@@ -232,7 +232,7 @@ export function SideCarAISidebar({
                         <div
                           className={cn(
                             "rounded-lg px-3 py-2 text-sm",
-                            message.sender === "sc"
+                            message.sender === "cc"
                               ? "bg-muted"
                               : "bg-primary text-primary-foreground"
                           )}
@@ -251,7 +251,7 @@ export function SideCarAISidebar({
                 <div className="border-t p-4">
                   <div className="flex gap-2">
                     <Input
-                      placeholder="Ask about customer data..."
+                      placeholder="Ask about members, visitors, volunteers..."
                       value={chatInput}
                       onChange={e => setChatInput(e.target.value)}
                       className="flex-1"
@@ -261,7 +261,7 @@ export function SideCarAISidebar({
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    AI assistant for customer insights and data
+                    AI assistant for church data and insights
                   </p>
                 </div>
               </div>
@@ -419,13 +419,13 @@ export function SideCarAISidebar({
                       <div className="flex items-start gap-2 p-2 rounded hover:bg-accent">
                         <input type="checkbox" className="mt-1" id="task1" />
                         <label htmlFor="task1" className="text-sm flex-1">
-                          Follow up with Sarah Martinez about next appointment
+                          Review 5 pending connect cards from Sunday
                         </label>
                       </div>
                       <div className="flex items-start gap-2 p-2 rounded hover:bg-accent">
                         <input type="checkbox" className="mt-1" id="task2" />
                         <label htmlFor="task2" className="text-sm flex-1">
-                          Review inventory for Myers&apos; Cocktail supplies
+                          Follow up with first-time visitors from last week
                         </label>
                       </div>
                       <div className="flex items-start gap-2 p-2 rounded hover:bg-accent">
@@ -439,7 +439,7 @@ export function SideCarAISidebar({
                           htmlFor="task3"
                           className="text-sm flex-1 line-through text-muted-foreground"
                         >
-                          Send monthly newsletter to active customers
+                          Assign prayer requests to pastoral team
                         </label>
                       </div>
                     </div>
@@ -451,15 +451,15 @@ export function SideCarAISidebar({
                     </h3>
                     <div className="space-y-2">
                       <div className="p-2 rounded bg-muted/50 text-sm">
-                        <p className="font-medium">Appointment Reminder</p>
+                        <p className="font-medium">Visitor Follow-up</p>
                         <p className="text-xs text-muted-foreground">
-                          Triggers 24 hours before appointment
+                          Sends welcome SMS 24 hours after first visit
                         </p>
                       </div>
                       <div className="p-2 rounded bg-muted/50 text-sm">
-                        <p className="font-medium">Birthday Discount</p>
+                        <p className="font-medium">Prayer Request Check-in</p>
                         <p className="text-xs text-muted-foreground">
-                          Sends 20% off code on customer birthdays
+                          Follows up on prayer requests after 7 days
                         </p>
                       </div>
                     </div>
@@ -476,27 +476,27 @@ export function SideCarAISidebar({
                     <h3 className="font-semibold text-sm mb-3">Quick Stats</h3>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-2xl font-bold">127</p>
+                        <p className="text-2xl font-bold">342</p>
                         <p className="text-xs text-muted-foreground">
-                          Total Customers
+                          Total Members
                         </p>
                       </div>
                       <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-2xl font-bold">43</p>
+                        <p className="text-2xl font-bold">23</p>
                         <p className="text-xs text-muted-foreground">
-                          This Month
+                          New Visitors
                         </p>
                       </div>
                       <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-2xl font-bold">$18.2K</p>
+                        <p className="text-2xl font-bold">156</p>
                         <p className="text-xs text-muted-foreground">
-                          Monthly Revenue
+                          Cards Processed
                         </p>
                       </div>
                       <div className="p-3 rounded-lg bg-muted/50">
-                        <p className="text-2xl font-bold">4.8</p>
+                        <p className="text-2xl font-bold">61%</p>
                         <p className="text-xs text-muted-foreground">
-                          Avg Rating
+                          Return Rate
                         </p>
                       </div>
                     </div>
@@ -504,20 +504,26 @@ export function SideCarAISidebar({
 
                   <div>
                     <h3 className="font-semibold text-sm mb-3">
-                      Popular Treatments
+                      Volunteer Teams
                     </h3>
                     <div className="space-y-2">
                       <div className="flex justify-between items-center p-2 rounded hover:bg-accent">
-                        <span className="text-sm">Myers&apos; Cocktail</span>
-                        <span className="text-sm font-medium">38 bookings</span>
+                        <span className="text-sm">Kids Ministry</span>
+                        <span className="text-sm font-medium">
+                          24 volunteers
+                        </span>
                       </div>
                       <div className="flex justify-between items-center p-2 rounded hover:bg-accent">
-                        <span className="text-sm">Hydration Therapy</span>
-                        <span className="text-sm font-medium">29 bookings</span>
+                        <span className="text-sm">Hospitality</span>
+                        <span className="text-sm font-medium">
+                          18 volunteers
+                        </span>
                       </div>
                       <div className="flex justify-between items-center p-2 rounded hover:bg-accent">
-                        <span className="text-sm">Immunity Boost</span>
-                        <span className="text-sm font-medium">21 bookings</span>
+                        <span className="text-sm">Worship Team</span>
+                        <span className="text-sm font-medium">
+                          12 volunteers
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -528,21 +534,21 @@ export function SideCarAISidebar({
                     </h3>
                     <div className="space-y-2 text-sm">
                       <div className="p-2 rounded bg-muted/30">
-                        <p className="font-medium">New booking</p>
+                        <p className="font-medium">Connect card processed</p>
                         <p className="text-xs text-muted-foreground">
-                          John Doe - 2 hours ago
+                          Maria Garcia - 2 hours ago
                         </p>
                       </div>
                       <div className="p-2 rounded bg-muted/30">
-                        <p className="font-medium">Payment received</p>
+                        <p className="font-medium">Prayer request submitted</p>
                         <p className="text-xs text-muted-foreground">
-                          $175 - 3 hours ago
+                          Anonymous - 3 hours ago
                         </p>
                       </div>
                       <div className="p-2 rounded bg-muted/30">
-                        <p className="font-medium">5-star review</p>
+                        <p className="font-medium">Volunteer signup</p>
                         <p className="text-xs text-muted-foreground">
-                          Sarah Martinez - 5 hours ago
+                          James Wilson - Kids Camp
                         </p>
                       </div>
                     </div>

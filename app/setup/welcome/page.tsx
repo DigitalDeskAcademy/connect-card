@@ -46,7 +46,9 @@ export default async function WelcomePage() {
     <div className="flex min-h-screen flex-col">
       {/* Logo/Brand at top */}
       <div className="pt-12 text-center">
-        <h1 className="text-3xl font-semibold text-foreground">SideCar.</h1>
+        <h1 className="text-3xl font-semibold text-foreground">
+          Church Connect
+        </h1>
       </div>
 
       {/* Main content centered */}

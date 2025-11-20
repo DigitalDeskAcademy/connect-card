@@ -60,10 +60,10 @@ export default async function OrganizationSetupPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold mb-2">
-            Welcome to Sidecar Platform!
+            Welcome to Church Connect!
           </h1>
           <p className="text-muted-foreground">
-            Let&apos;s set up your agency to get started
+            Let&apos;s set up your church to get started
           </p>
         </div>
         <OrganizationSetupForm

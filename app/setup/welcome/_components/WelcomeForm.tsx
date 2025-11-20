@@ -41,7 +41,7 @@ export function WelcomeForm() {
             htmlFor="terms"
             className="text-sm leading-relaxed cursor-pointer text-muted-foreground"
           >
-            I agree to SideCar&apos;s{" "}
+            I agree to Church Connect&apos;s{" "}
             <Link
               href="/terms"
               className="underline hover:text-primary"

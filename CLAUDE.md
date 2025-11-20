@@ -228,29 +228,14 @@ Wait for user to say "commit this" or "ready to commit".
 
 ---
 
-## Git Workflow (Only When User Says "Commit This")
+## Git Workflow
 
-```bash
-# Step 1: Check what changed
-git status
+**For worktree integration:** Use `/plan-integration` command - handles Step 0 (clean main), formatting, building, and staging automatically.
 
-# Step 2: Build to verify
-pnpm build  # MUST pass - verifies all imports exist
+**For regular commits:** Only when user explicitly says "commit this":
 
-# Step 3: Stage EVERYTHING (critical for Vercel)
-git add .
-
-# Step 4: Verify staging
-git status
-
-# Step 5: Commit (pre-commit hook runs format/lint)
-git commit -m "feat: add volunteer creation form"
-
-# Step 6: Push (only if user explicitly asks)
-git push origin branch
-```
-
-**Why `git add .` is critical:** Local build uses uncommitted files, but Vercel only gets committed files. Missing files = production build fails.
+1. Format → Build → Stage → Commit → Push
+2. Always `git add .` (Vercel only sees committed files)
 
 ---
 

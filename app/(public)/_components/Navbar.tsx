@@ -138,12 +138,12 @@ export function Navbar() {
             // This will redirect them to their appropriate dashboard
             { name: "Home", href: "/home" },
             { name: "Features", href: "/features" },
-            { name: "Pricing", href: "/pricing" },
+            // { name: "Pricing", href: "/pricing" }, // Hidden for demo
           ]
         : [
             { name: "Home", href: "/" },
             { name: "Features", href: "/features" },
-            { name: "Pricing", href: "/pricing" },
+            // { name: "Pricing", href: "/pricing" }, // Hidden for demo
           ];
 
   // Filter out Pricing on agency pages for unauthenticated users

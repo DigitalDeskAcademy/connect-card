@@ -51,8 +51,8 @@ export default async function AdminLayout({
   // Enforce admin authentication for all admin routes
   await requireAdmin();
 
-  // Platform admin always sees "SideCar." branding (with period)
-  const brandName = "SideCar.";
+  // Platform admin always sees "Church Connect" branding
+  const brandName = "Church Connect";
 
   return (
     <SidebarProvider

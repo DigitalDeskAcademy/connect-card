@@ -49,10 +49,10 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       <div className="flex w-full max-w-sm flex-col gap-6">
         <Link
-          className="flex items-center gap-2 self-center font-medium text-3xl"
+          className="flex items-center gap-2 self-center font-medium text-2xl"
           href="/"
         >
-          SideCar.
+          Church Connect
         </Link>
         {children}
 

@@ -129,12 +129,12 @@ export const auth = betterAuth({
         try {
           const fromEmail =
             process.env.RESEND_FROM_EMAIL ||
-            "Sidecar Platform <onboarding@resend.dev>";
+            "Church Connect Card <onboarding@resend.dev>";
 
           const result = await resend.emails.send({
             from: fromEmail,
             to: [email],
-            subject: "Sidecar Platform - Verify your email",
+            subject: "Church Connect Card - Verify your email",
             html: `
               <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                 <h2>Verify your email</h2>
