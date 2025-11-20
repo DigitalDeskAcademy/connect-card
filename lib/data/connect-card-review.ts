@@ -6,6 +6,7 @@ import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { env } from "@/lib/env";
 import type { ExtractedData } from "@/lib/types/connect-card";
+import type { VolunteerOnboardingStatus } from "@/lib/generated/prisma";
 
 /**
  * Connect card for review with image URL
@@ -21,7 +22,15 @@ export interface ConnectCardForReview {
   prayerRequest: string | null;
   visitType: string | null;
   interests: string[];
+  volunteerCategory: string | null;
+  assignedLeaderId: string | null;
+  smsAutomationEnabled: boolean;
   scannedAt: Date;
+  // Volunteer onboarding fields
+  volunteerOnboardingStatus: VolunteerOnboardingStatus | null;
+  volunteerDocumentsSent: unknown;
+  volunteerOrientationDate: Date | null;
+  volunteerOnboardingNotes: string | null;
 }
 
 /**
@@ -56,7 +65,14 @@ export async function getConnectCardsForReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      volunteerCategory: true,
+      assignedLeaderId: true,
+      smsAutomationEnabled: true,
       scannedAt: true,
+      volunteerOnboardingStatus: true,
+      volunteerDocumentsSent: true,
+      volunteerOrientationDate: true,
+      volunteerOnboardingNotes: true,
     },
   });
 
@@ -105,7 +121,14 @@ export async function getConnectCardForReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      volunteerCategory: true,
+      assignedLeaderId: true,
+      smsAutomationEnabled: true,
       scannedAt: true,
+      volunteerOnboardingStatus: true,
+      volunteerDocumentsSent: true,
+      volunteerOrientationDate: true,
+      volunteerOnboardingNotes: true,
     },
   });
 
@@ -201,7 +224,14 @@ export async function getConnectCardsForBatchReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      volunteerCategory: true,
+      assignedLeaderId: true,
+      smsAutomationEnabled: true,
       scannedAt: true,
+      volunteerOnboardingStatus: true,
+      volunteerDocumentsSent: true,
+      volunteerOrientationDate: true,
+      volunteerOnboardingNotes: true,
     },
   });
 

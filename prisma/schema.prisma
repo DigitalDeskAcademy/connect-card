@@ -49,6 +49,7 @@ model Organization {
   connectCardBatches    ConnectCardBatch[]
   locations             Location[]
   prayerRequests        PrayerRequest[]
+  volunteerCategories   VolunteerCategory[]
 
   @@map("organization")
 }
@@ -484,6 +485,14 @@ model ConnectCard {
   assignedLeaderId  String?
   /// SMS automation workflow enabled for volunteer onboarding
   smsAutomationEnabled Boolean @default(false)
+  /// Volunteer onboarding pipeline status (Inquiry → Planning Center Ready)
+  volunteerOnboardingStatus VolunteerOnboardingStatus?
+  /// Tracking which documents were sent (background check, policies, forms)
+  volunteerDocumentsSent    Json?
+  /// Scheduled orientation date for volunteer
+  volunteerOrientationDate  DateTime?
+  /// Timeline notes for volunteer onboarding process
+  volunteerOnboardingNotes  String?
   /// Processing status of the card
   status           ConnectCardStatus  @default(PENDING)
   /// Validation issues found during quality check (JSON array)
@@ -775,6 +784,7 @@ model Volunteer {
   updatedAt             DateTime                   @updatedAt
   /// Relations
   churchMember          ChurchMember               @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
+  categories            VolunteerCategory[]
   skills                VolunteerSkill[]
   availability          VolunteerAvailability[]
   shifts                VolunteerShift[]
@@ -784,6 +794,37 @@ model Volunteer {
   @@index([organizationId, locationId])
   @@index([backgroundCheckStatus])
   @@map("volunteer")
+}
+
+/// Volunteer category assignments - many-to-many relationship
+/// Allows volunteers to serve in multiple ministry areas
+/// Used to route connect card inquiries to appropriate ministry leaders
+model VolunteerCategory {
+  id             String                @id @default(uuid())
+  /// Reference to volunteer this category assignment belongs to
+  volunteerId    String
+  /// Organization for multi-tenant isolation
+  organizationId String
+  /// Category type (greeter, usher, kids ministry, etc.)
+  category       VolunteerCategoryType
+  /// When this category was assigned
+  assignedAt     DateTime              @default(now())
+  /// User who assigned this category (if tracked)
+  assignedBy     String?
+  /// Notes about this specific category assignment
+  notes          String?
+  /// Creation timestamp
+  createdAt      DateTime              @default(now())
+  /// Last update timestamp
+  updatedAt      DateTime              @updatedAt
+  /// Relations
+  volunteer      Volunteer             @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([volunteerId, category])
+  @@index([volunteerId])
+  @@index([organizationId, category])
+  @@map("volunteer_category")
 }
 
 /// Serving opportunities - ministry roles that need volunteers
@@ -998,6 +1039,48 @@ enum BackgroundCheckStatus {
   FLAGGED
   /// Background check expired and needs renewal
   EXPIRED
+}
+
+/// Volunteer onboarding pipeline status
+/// Tracks progress from inquiry to Planning Center ready
+enum VolunteerOnboardingStatus {
+  /// Initial volunteer interest expressed
+  INQUIRY
+  /// Welcome message sent to volunteer
+  WELCOME_SENT
+  /// Ministry documents shared (background check, policies, forms)
+  DOCUMENTS_SHARED
+  /// Introduced to volunteer leader
+  LEADER_CONNECTED
+  /// Orientation scheduled
+  ORIENTATION_SET
+  /// Ready to be added to Planning Center
+  READY
+  /// Exported to Planning Center (final state)
+  ADDED_TO_PCO
+}
+
+/// Volunteer category types for ministry assignment routing
+/// Used to route connect card inquiries to appropriate ministry leaders
+enum VolunteerCategoryType {
+  /// Sunday morning greeter
+  GREETER
+  /// Usher for seating and offering
+  USHER
+  /// Kids ministry volunteer (requires background check)
+  KIDS_MINISTRY
+  /// Worship team musician or vocalist
+  WORSHIP_TEAM
+  /// Parking lot attendant
+  PARKING
+  /// Coffee and hospitality
+  HOSPITALITY
+  /// Audio/visual technician
+  AV_TECH
+  /// Prayer team member
+  PRAYER_TEAM
+  /// Other ministry not listed above
+  OTHER
 }
 
 /// Availability type for scheduling

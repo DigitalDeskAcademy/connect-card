@@ -49,6 +49,7 @@ import {
   INTEREST_OPTIONS,
   VOLUNTEER_CATEGORY_OPTIONS,
 } from "@/lib/types/connect-card";
+import { VolunteerOnboardingChecklist } from "@/components/dashboard/connect-cards/volunteer-onboarding-checklist";
 
 interface VolunteerLeader {
   id: string;
@@ -84,17 +85,25 @@ export function ReviewQueueClient({
       normalizedVisitType = "First Visit";
     }
 
+    // Determine volunteer category - use existing, or default to "General" if Volunteering is selected
+    const interests = currentCard.interests || [];
+    const hasVolunteering = interests.includes("Volunteering");
+    let volunteerCategory = currentCard.volunteerCategory || "";
+    if (hasVolunteering && !volunteerCategory) {
+      volunteerCategory = "General";
+    }
+
     return {
       name: currentCard.name || "",
       email: currentCard.email || "",
       phone: currentCard.phone || "",
       visitType: normalizedVisitType,
-      interests: currentCard.interests || [],
-      volunteerCategory: "",
+      interests: interests,
+      volunteerCategory: volunteerCategory,
       prayerRequest: currentCard.prayerRequest || "",
       isExistingMember: false,
-      assignedLeaderId: "",
-      smsAutomationEnabled: false,
+      assignedLeaderId: currentCard.assignedLeaderId || "",
+      smsAutomationEnabled: currentCard.smsAutomationEnabled || false,
     };
   });
 
@@ -173,17 +182,25 @@ export function ReviewQueueClient({
       normalizedVisitType = "First Visit";
     }
 
+    // Determine volunteer category - use existing, or default to "General" if Volunteering is selected
+    const interests = card.interests || [];
+    const hasVolunteering = interests.includes("Volunteering");
+    let volunteerCategory = card.volunteerCategory || "";
+    if (hasVolunteering && !volunteerCategory) {
+      volunteerCategory = "General";
+    }
+
     setFormData({
       name: card.name || "",
       email: card.email || "",
       phone: card.phone || "",
       visitType: normalizedVisitType,
-      interests: card.interests || [],
-      volunteerCategory: "",
+      interests: interests,
+      volunteerCategory: volunteerCategory,
       prayerRequest: card.prayerRequest || "",
       isExistingMember: false,
-      assignedLeaderId: "",
-      smsAutomationEnabled: false,
+      assignedLeaderId: card.assignedLeaderId || "",
+      smsAutomationEnabled: card.smsAutomationEnabled || false,
     });
     setImageError(false); // Reset image error state for new card
     setValidationErrors({}); // Clear validation errors for new card
@@ -268,10 +285,10 @@ export function ReviewQueueClient({
     setFormData({
       ...formData,
       interests: newInterests,
-      // When checking "Volunteering", default to "general" category
+      // When checking "Volunteering", default to "General" category
       volunteerCategory:
         interest === "Volunteering" && !isCurrentlyChecked
-          ? "general"
+          ? "General"
           : formData.volunteerCategory,
     });
 
@@ -338,7 +355,7 @@ export function ReviewQueueClient({
             resetFormForCard(prevCard);
           } else {
             // This was the only card - navigate back to batches
-            router.push(`/church/${slug}/admin/connect-cards/batches`);
+            router.push(`/church/${slug}/admin/connect-cards?tab=batches`);
           }
 
           // Refresh to update the queue
@@ -402,7 +419,7 @@ export function ReviewQueueClient({
         {/* Back Button */}
         <Button
           onClick={() =>
-            router.push(`/church/${slug}/admin/connect-cards/batches`)
+            router.push(`/church/${slug}/admin/connect-cards?tab=batches`)
           }
           variant="outline"
           size="lg"
@@ -902,6 +919,33 @@ export function ReviewQueueClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* Volunteer Onboarding Pipeline Preview - Show when volunteering selected */}
+      {formData.interests.includes("Volunteering") &&
+        formData.volunteerCategory && (
+          <div className="mt-4">
+            <VolunteerOnboardingChecklist
+              volunteerCategory={formData.volunteerCategory}
+              assignedLeaderName={
+                formData.assignedLeaderId
+                  ? volunteerLeaders.find(
+                      l => l.id === formData.assignedLeaderId
+                    )?.name
+                  : undefined
+              }
+              smsAutomationEnabled={formData.smsAutomationEnabled}
+              onboardingStatus={
+                currentCard.volunteerOnboardingStatus || "INQUIRY"
+              }
+              orientationDate={
+                currentCard.volunteerOrientationDate
+                  ? new Date(currentCard.volunteerOrientationDate)
+                  : null
+              }
+              onboardingNotes={currentCard.volunteerOnboardingNotes}
+            />
+          </div>
+        )}
     </div>
   );
 }

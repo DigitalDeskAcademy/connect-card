@@ -3,7 +3,11 @@
 import { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { volunteerSchema, type VolunteerSchemaType } from "@/lib/zodSchemas";
+import {
+  volunteerSchema,
+  type VolunteerSchemaType,
+  volunteerCategoryTypes,
+} from "@/lib/zodSchemas";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,8 +33,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { IconCalendar, IconLoader2 } from "@tabler/icons-react";
+import {
+  IconCalendar,
+  IconCheck,
+  IconLoader2,
+  IconX,
+} from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { createVolunteer } from "@/actions/volunteers/volunteers";
@@ -85,6 +102,7 @@ export function VolunteerForm({
       organizationId,
       locationId: locations.length === 1 ? locations[0].id : null,
       status: "ACTIVE",
+      categories: [],
       startDate: new Date(),
       endDate: null,
       inactiveReason: null,
@@ -100,6 +118,14 @@ export function VolunteerForm({
   // Watch status field to conditionally show fields
   const selectedStatus = form.watch("status");
   const selectedBackgroundCheckStatus = form.watch("backgroundCheckStatus");
+
+  // Helper function to format category names for display
+  const formatCategoryLabel = (category: string): string => {
+    return category
+      .split("_")
+      .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+      .join(" ");
+  };
 
   // Form submission handler
   async function onSubmit(data: VolunteerSchemaType) {
@@ -266,6 +292,93 @@ export function VolunteerForm({
                   </SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        {/* Ministry Categories (Multi-Select) */}
+        <FormField
+          control={form.control}
+          name="categories"
+          render={({ field }) => (
+            <FormItem className="flex flex-col">
+              <FormLabel>Ministry Categories</FormLabel>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <FormControl>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className={cn(
+                        "w-full justify-between",
+                        !field.value?.length && "text-muted-foreground"
+                      )}
+                    >
+                      {field.value?.length
+                        ? `${field.value.length} ${field.value.length === 1 ? "category" : "categories"} selected`
+                        : "Select ministry categories"}
+                      <IconCalendar className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </FormControl>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search categories..." />
+                    <CommandEmpty>No category found.</CommandEmpty>
+                    <CommandGroup className="max-h-64 overflow-auto">
+                      {volunteerCategoryTypes.map(category => (
+                        <CommandItem
+                          key={category}
+                          value={category}
+                          onSelect={() => {
+                            const currentValue = field.value || [];
+                            const newValue = currentValue.includes(category)
+                              ? currentValue.filter(val => val !== category)
+                              : [...currentValue, category];
+                            field.onChange(newValue);
+                          }}
+                        >
+                          <div
+                            className={cn(
+                              "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                              field.value?.includes(category)
+                                ? "bg-primary text-primary-foreground"
+                                : "opacity-50 [&_svg]:invisible"
+                            )}
+                          >
+                            <IconCheck className="h-4 w-4" />
+                          </div>
+                          {formatCategoryLabel(category)}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <FormDescription>
+                Select ministry areas this volunteer can serve in
+              </FormDescription>
+              {field.value && field.value.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {field.value.map(category => (
+                    <Badge
+                      key={category}
+                      variant="secondary"
+                      className="cursor-pointer"
+                      onClick={() => {
+                        const newValue = field.value?.filter(
+                          val => val !== category
+                        );
+                        field.onChange(newValue);
+                      }}
+                    >
+                      {formatCategoryLabel(category)}
+                      <IconX className="ml-1 h-3 w-3" />
+                    </Badge>
+                  ))}
+                </div>
+              )}
               <FormMessage />
             </FormItem>
           )}

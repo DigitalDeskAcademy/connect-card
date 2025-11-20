@@ -11,6 +11,7 @@ import {
 import { request } from "@arcjet/next";
 import { formatPhoneNumber } from "@/lib/utils";
 import { createPrayerRequestFromConnectCard } from "@/lib/data/prayer-requests";
+import { updateBatchStatus } from "@/lib/data/connect-card-batch";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -158,6 +159,36 @@ export async function updateConnectCard(
             error
           );
         }
+      }
+    }
+
+    // 7. Auto-complete batch if all cards are now reviewed
+    // This keeps batch as a historical record while indicating review is complete
+    if (existingCard.batchId) {
+      try {
+        const batch = await prisma.connectCardBatch.findUnique({
+          where: { id: existingCard.batchId },
+          include: {
+            cards: { select: { status: true } },
+          },
+        });
+
+        if (batch) {
+          const allReviewed = batch.cards.every(
+            card => card.status === "REVIEWED"
+          );
+
+          // Auto-complete batch when all cards are reviewed
+          if (allReviewed && batch.status !== "COMPLETED") {
+            await updateBatchStatus(batch.id, "COMPLETED");
+            console.log(
+              `[Batch Auto-Completed] All ${batch.cards.length} cards reviewed in batch: ${batch.id}`
+            );
+          }
+        }
+      } catch (error) {
+        // Log error but don't fail the card update
+        console.error("[Batch Auto-Complete Failed]:", error);
       }
     }
 

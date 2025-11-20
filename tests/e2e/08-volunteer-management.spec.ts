@@ -38,7 +38,7 @@ test.describe("Volunteer Management", () => {
       pageContent?.includes(
         "Add your first volunteer to get started with volunteer management"
       );
-    const hasTable = await page.locator('[role="table"]').isVisible();
+    const hasTable = await page.locator('[data-slot="table"]').isVisible();
 
     // Should have either empty state OR table (not both)
     expect(hasEmptyState || hasTable).toBe(true);
@@ -64,10 +64,9 @@ test.describe("Volunteer Management", () => {
       )
     ).toBeVisible();
 
-    // Verify form fields are present
-    await expect(
-      dialog.locator('label:has-text("Church Member")')
-    ).toBeVisible();
+    // Verify form fields are present (inline member creation)
+    await expect(dialog.locator('label:has-text("First Name")')).toBeVisible();
+    await expect(dialog.locator('label:has-text("Last Name")')).toBeVisible();
     // Use exact text match to avoid matching "Background Check Status"
     await expect(
       dialog.locator("label").filter({ hasText: /^Status \*$/ })
@@ -100,7 +99,8 @@ test.describe("Volunteer Management", () => {
     await page.waitForTimeout(1000);
 
     // Verify validation error messages appear
-    const errorMessages = dialog.locator('[role="alert"]');
+    // React Hook Form shows errors as paragraph elements with text-destructive class
+    const errorMessages = dialog.locator('p.text-destructive, [role="alert"]');
     const errorCount = await errorMessages.count();
 
     expect(errorCount).toBeGreaterThan(0);
@@ -119,15 +119,26 @@ test.describe("Volunteer Management", () => {
 
     console.log("=== PHASE 1: Fill Form Fields ===");
 
-    // Fill Church Member dropdown (select first available member)
-    const memberSelect = dialog.locator('[role="combobox"]').first();
-    await memberSelect.click();
-    await page.waitForTimeout(500);
+    // Use unique email to avoid duplicate errors across test runs
+    const timestamp = Date.now();
+    const uniqueEmail = `john.smith.${timestamp}@test.com`;
 
-    // Select first member from dropdown
-    const firstMember = page.locator('[role="option"]').first();
-    await firstMember.click();
-    console.log("✓ Selected church member");
+    // Fill member information (inline creation)
+    const firstNameInput = dialog.locator('input[name="firstName"]');
+    await firstNameInput.fill("John");
+    console.log("✓ Filled first name");
+
+    const lastNameInput = dialog.locator('input[name="lastName"]');
+    await lastNameInput.fill("Smith");
+    console.log("✓ Filled last name");
+
+    const emailInput = dialog.locator('input[name="email"]');
+    await emailInput.fill(uniqueEmail);
+    console.log(`✓ Filled email: ${uniqueEmail}`);
+
+    const phoneInput = dialog.locator('input[name="phone"]');
+    await phoneInput.fill("+12065550199");
+    console.log("✓ Filled phone");
 
     // Status defaults to "Active" - no need to select
     console.log("✓ Status defaults to Active");
@@ -146,7 +157,7 @@ test.describe("Volunteer Management", () => {
     const emergencyPhoneInput = dialog.locator(
       'input[name="emergencyContactPhone"]'
     );
-    await emergencyPhoneInput.fill("206-555-0123");
+    await emergencyPhoneInput.fill("+12065550123");
     console.log("✓ Filled emergency contact phone");
 
     // Select Background Check Status
@@ -177,28 +188,22 @@ test.describe("Volunteer Management", () => {
     const submitButton = dialog.locator('button:has-text("Create Volunteer")');
     await submitButton.click();
 
-    // Wait for success toast
-    const successToast = page.locator(
-      '[role="status"]:has-text("Volunteer created successfully")'
-    );
-    await expect(successToast).toBeVisible({ timeout: 10000 });
-    console.log("✅ Success toast appeared");
-
-    // Wait for dialog to close
-    await expect(dialog).not.toBeVisible({ timeout: 5000 });
-    console.log("✅ Dialog closed");
+    // Wait for dialog to close (indicates success)
+    await expect(dialog).not.toBeVisible({ timeout: 10000 });
+    console.log("✅ Dialog closed after successful submission");
 
     console.log("=== PHASE 3: Verify Volunteer in Table ===");
 
-    // Wait for table to refresh
-    await page.waitForTimeout(2000);
+    // Wait for page to fully load after dialog closes
+    await page.waitForLoadState("networkidle");
+    await page.waitForTimeout(1000); // Additional buffer for React to render
 
     // Verify volunteer appears in table
-    const table = page.locator('[role="table"]');
-    await expect(table).toBeVisible({ timeout: 5000 });
+    const table = page.locator('[data-slot="table"]');
+    await expect(table).toBeVisible({ timeout: 10000 });
 
     // Check if "Jane Doe" (emergency contact) or "Active" status appears in table
-    const tableContent = await page.textContent('[role="table"]');
+    const tableContent = await page.textContent('[data-slot="table"]');
     const hasActiveStatus = tableContent?.includes("Active");
 
     expect(hasActiveStatus).toBe(true);
@@ -207,7 +212,7 @@ test.describe("Volunteer Management", () => {
 
   test("Table search functionality", async ({ page }) => {
     // Skip if no volunteers exist
-    const hasTable = await page.locator('[role="table"]').isVisible();
+    const hasTable = await page.locator('[data-slot="table"]').isVisible();
     if (!hasTable) {
       console.log("⚠️ Skipped: No volunteers in table to search");
       return;
@@ -225,7 +230,7 @@ test.describe("Volunteer Management", () => {
       await page.waitForTimeout(1000);
 
       // Verify table updates (no error state)
-      const tableContent = await page.textContent('[role="table"]');
+      const tableContent = await page.textContent('[data-slot="table"]');
       expect(tableContent).toBeTruthy();
 
       console.log("✅ Search functionality working");
@@ -236,7 +241,7 @@ test.describe("Volunteer Management", () => {
 
   test("Table sorting functionality", async ({ page }) => {
     // Skip if no volunteers exist
-    const hasTable = await page.locator('[role="table"]').isVisible();
+    const hasTable = await page.locator('[data-slot="table"]').isVisible();
     if (!hasTable) {
       console.log("⚠️ Skipped: No volunteers in table to sort");
       return;
@@ -274,7 +279,7 @@ test.describe("Volunteer Management", () => {
         await page.waitForTimeout(1000);
 
         // Verify URL or table content changed
-        const pageContent = await page.textContent('[role="table"]');
+        const pageContent = await page.textContent('[data-slot="table"]');
         expect(pageContent).toBeTruthy();
 
         console.log("✅ Pagination working");

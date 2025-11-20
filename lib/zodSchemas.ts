@@ -204,6 +204,19 @@ export const backgroundCheckStatuses = [
   "EXPIRED",
 ] as const;
 
+// Volunteer category types enum
+export const volunteerCategoryTypes = [
+  "GREETER",
+  "USHER",
+  "KIDS_MINISTRY",
+  "WORSHIP_TEAM",
+  "PARKING",
+  "HOSPITALITY",
+  "AV_TECH",
+  "PRAYER_TEAM",
+  "OTHER",
+] as const;
+
 // Availability type enum
 export const availabilityTypes = ["RECURRING", "BLACKOUT", "ONE_TIME"] as const;
 
@@ -281,6 +294,8 @@ export const volunteerSchema = z.object({
     .max(1000, { message: "Notes too long" })
     .nullable()
     .optional(),
+  // Categories is required but can be empty array - defaults provided in forms
+  categories: z.array(z.enum(volunteerCategoryTypes)),
 });
 
 // Serving opportunity schema (create/update)
