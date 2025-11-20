@@ -12,6 +12,17 @@ import { format } from "date-fns";
 import type { VolunteerWithRelations } from "./volunteers-client";
 
 /**
+ * Format category name for display
+ * Converts "KIDS_MINISTRY" → "Kids Ministry"
+ */
+function formatCategoryLabel(category: string): string {
+  return category
+    .split("_")
+    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+    .join(" ");
+}
+
+/**
  * Volunteer Status Badge Component
  *
  * Displays a color-coded badge based on volunteer status
@@ -144,38 +155,42 @@ export const volunteerColumns: ColumnDef<VolunteerWithRelations>[] = [
     },
   },
   {
-    id: "skills",
-    header: "Skills",
-    cell: ({ row }) => {
-      const volunteer = row.original;
-      const skillCount = volunteer.skills?.length || 0;
-
-      if (skillCount === 0) {
-        return <span className="text-muted-foreground">—</span>;
-      }
-
-      return (
-        <div className="flex flex-wrap gap-1">
-          {volunteer.skills?.slice(0, 2).map(skill => (
-            <Badge key={skill.id} variant="outline" className="text-xs">
-              {skill.skillName}
-            </Badge>
-          ))}
-          {skillCount > 2 && (
-            <Badge variant="outline" className="text-xs">
-              +{skillCount - 2}
-            </Badge>
-          )}
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: "backgroundCheckStatus",
     header: "Background Check",
     cell: ({ row }) => {
       const status = row.getValue("backgroundCheckStatus") as string;
       return <BackgroundCheckBadge status={status} />;
+    },
+  },
+  {
+    id: "categories",
+    header: "Ministry Categories",
+    cell: ({ row }) => {
+      const volunteer = row.original;
+      const categories = volunteer.categories || [];
+
+      if (categories.length === 0) {
+        return <span className="text-muted-foreground text-sm">—</span>;
+      }
+
+      // Show first 2 categories + count of remaining
+      const displayCategories = categories.slice(0, 2);
+      const remainingCount = categories.length - 2;
+
+      return (
+        <div className="flex flex-wrap gap-1">
+          {displayCategories.map(cat => (
+            <Badge key={cat.id} variant="outline" className="text-xs">
+              {formatCategoryLabel(cat.category)}
+            </Badge>
+          ))}
+          {remainingCount > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              +{remainingCount}
+            </Badge>
+          )}
+        </div>
+      );
     },
   },
   {

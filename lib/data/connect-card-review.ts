@@ -22,6 +22,9 @@ export interface ConnectCardForReview {
   prayerRequest: string | null;
   visitType: string | null;
   interests: string[];
+  volunteerCategory: string | null;
+  assignedLeaderId: string | null;
+  smsAutomationEnabled: boolean;
   scannedAt: Date;
   // Volunteer onboarding fields
   volunteerOnboardingStatus: VolunteerOnboardingStatus | null;
@@ -62,6 +65,9 @@ export async function getConnectCardsForReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      volunteerCategory: true,
+      assignedLeaderId: true,
+      smsAutomationEnabled: true,
       scannedAt: true,
       volunteerOnboardingStatus: true,
       volunteerDocumentsSent: true,
@@ -115,6 +121,9 @@ export async function getConnectCardForReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      volunteerCategory: true,
+      assignedLeaderId: true,
+      smsAutomationEnabled: true,
       scannedAt: true,
       volunteerOnboardingStatus: true,
       volunteerDocumentsSent: true,
@@ -215,6 +224,9 @@ export async function getConnectCardsForBatchReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      volunteerCategory: true,
+      assignedLeaderId: true,
+      smsAutomationEnabled: true,
       scannedAt: true,
       volunteerOnboardingStatus: true,
       volunteerDocumentsSent: true,

@@ -144,23 +144,39 @@ export async function createVolunteer(
       isNewMember = true;
     }
 
-    // 7. Create volunteer profile
-    const volunteer = await prisma.volunteer.create({
-      data: {
-        churchMemberId,
-        organizationId: validatedData.organizationId,
-        locationId: validatedData.locationId,
-        status: validatedData.status,
-        startDate: validatedData.startDate,
-        endDate: validatedData.endDate,
-        inactiveReason: validatedData.inactiveReason,
-        emergencyContactName: validatedData.emergencyContactName,
-        emergencyContactPhone: validatedData.emergencyContactPhone,
-        backgroundCheckStatus: validatedData.backgroundCheckStatus,
-        backgroundCheckDate: validatedData.backgroundCheckDate,
-        backgroundCheckExpiry: validatedData.backgroundCheckExpiry,
-        notes: validatedData.notes,
-      },
+    // 7. Create volunteer profile and category assignments in transaction
+    const volunteer = await prisma.$transaction(async tx => {
+      // Create volunteer profile
+      const newVolunteer = await tx.volunteer.create({
+        data: {
+          churchMemberId,
+          organizationId: validatedData.organizationId,
+          locationId: validatedData.locationId,
+          status: validatedData.status,
+          startDate: validatedData.startDate,
+          endDate: validatedData.endDate,
+          inactiveReason: validatedData.inactiveReason,
+          emergencyContactName: validatedData.emergencyContactName,
+          emergencyContactPhone: validatedData.emergencyContactPhone,
+          backgroundCheckStatus: validatedData.backgroundCheckStatus,
+          backgroundCheckDate: validatedData.backgroundCheckDate,
+          backgroundCheckExpiry: validatedData.backgroundCheckExpiry,
+          notes: validatedData.notes,
+        },
+      });
+
+      // Create category assignments if provided
+      if (validatedData.categories && validatedData.categories.length > 0) {
+        await tx.volunteerCategory.createMany({
+          data: validatedData.categories.map(category => ({
+            volunteerId: newVolunteer.id,
+            organizationId: organization.id,
+            category: category,
+          })),
+        });
+      }
+
+      return newVolunteer;
     });
 
     // 8. Revalidate relevant pages

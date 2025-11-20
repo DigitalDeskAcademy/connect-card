@@ -26,6 +26,10 @@ export type VolunteerWithRelations = {
     email: string | null;
     phone: string | null;
   } | null;
+  categories?: Array<{
+    id: string;
+    category: string;
+  }>;
   skills?: Array<{
     id: string;
     skillName: string;

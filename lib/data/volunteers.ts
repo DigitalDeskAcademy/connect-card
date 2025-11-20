@@ -49,6 +49,15 @@ export async function getVolunteersForScope(
           phone: true,
         },
       },
+      categories: {
+        select: {
+          id: true,
+          category: true,
+        },
+        orderBy: {
+          category: "asc",
+        },
+      },
       skills: {
         select: {
           id: true,
