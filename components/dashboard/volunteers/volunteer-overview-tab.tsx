@@ -1,10 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-// TEMPORARY: Disabled due to TypeScript error - will fix in follow-up
-// import { EditVolunteerDialog } from "./edit-volunteer-dialog";
+import { EditVolunteerDialog } from "./edit-volunteer-dialog";
 import { IconEdit, IconPhone, IconMail, IconMapPin } from "@tabler/icons-react";
 import { format } from "date-fns";
 import type { Volunteer } from "@/lib/generated/prisma";
@@ -38,10 +38,9 @@ interface VolunteerOverviewTabProps {
 
 export function VolunteerOverviewTab({
   volunteer,
-  slug, // eslint-disable-line @typescript-eslint/no-unused-vars -- Used by EditVolunteerDialog when re-enabled
+  slug,
 }: VolunteerOverviewTabProps) {
-  // TEMPORARY: Disabled while EditVolunteerDialog has TypeScript issues
-  // const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Background check status color mapping
   const bgCheckStatusColor = {
@@ -65,8 +64,7 @@ export function VolunteerOverviewTab({
           <Button
             variant="outline"
             size="sm"
-            disabled
-            title="Edit functionality temporarily disabled"
+            onClick={() => setIsEditDialogOpen(true)}
           >
             <IconEdit className="mr-2 h-4 w-4" />
             Edit
@@ -244,13 +242,13 @@ export function VolunteerOverviewTab({
         </Card>
       )}
 
-      {/* Edit Dialog - TEMPORARY: Disabled due to TypeScript error */}
-      {/* <EditVolunteerDialog
+      {/* Edit Dialog */}
+      <EditVolunteerDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         volunteer={volunteer}
         slug={slug}
-      /> */}
+      />
     </div>
   );
 }

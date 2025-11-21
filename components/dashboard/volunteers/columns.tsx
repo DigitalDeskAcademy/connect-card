@@ -3,54 +3,13 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   IconArrowsSort,
   IconSortAscending,
   IconSortDescending,
 } from "@tabler/icons-react";
-import { format } from "date-fns";
 import type { VolunteerWithRelations } from "./volunteers-client";
-
-/**
- * Format category name for display
- * Converts "KIDS_MINISTRY" → "Kids Ministry"
- */
-function formatCategoryLabel(category: string): string {
-  return category
-    .split("_")
-    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ");
-}
-
-/**
- * Volunteer Status Badge Component
- *
- * Displays a color-coded badge based on volunteer status
- */
-function VolunteerStatusBadge({ status }: { status: string }) {
-  const variants: Record<
-    string,
-    "default" | "secondary" | "destructive" | "outline"
-  > = {
-    ACTIVE: "default",
-    ON_BREAK: "secondary",
-    INACTIVE: "outline",
-    PENDING_APPROVAL: "secondary",
-  };
-
-  const labels: Record<string, string> = {
-    ACTIVE: "Active",
-    ON_BREAK: "On Break",
-    INACTIVE: "Inactive",
-    PENDING_APPROVAL: "Pending",
-  };
-
-  return (
-    <Badge variant={variants[status] || "outline"}>
-      {labels[status] || status}
-    </Badge>
-  );
-}
 
 /**
  * Background Check Badge Component
@@ -87,10 +46,36 @@ function BackgroundCheckBadge({ status }: { status: string }) {
 /**
  * Volunteer Columns Definition
  *
- * TanStack Table column definitions for volunteer directory
- * Includes sorting, custom rendering, and formatting
+ * Simplified table for volunteer processing workflow
+ * Focus on name, contact info, and background check status
  */
 export const volunteerColumns: ColumnDef<VolunteerWithRelations>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <div className="flex justify-center">
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex justify-center">
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={value => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      </div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "churchMember.name",
     id: "name",
@@ -130,70 +115,6 @@ export const volunteerColumns: ColumnDef<VolunteerWithRelations>[] = [
     },
   },
   {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4" />
-          )}
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return <VolunteerStatusBadge status={row.getValue("status")} />;
-    },
-  },
-  {
-    accessorKey: "backgroundCheckStatus",
-    header: "Background Check",
-    cell: ({ row }) => {
-      const status = row.getValue("backgroundCheckStatus") as string;
-      return <BackgroundCheckBadge status={status} />;
-    },
-  },
-  {
-    id: "categories",
-    header: "Ministry Categories",
-    cell: ({ row }) => {
-      const volunteer = row.original;
-      const categories = volunteer.categories || [];
-
-      if (categories.length === 0) {
-        return <span className="text-muted-foreground text-sm">—</span>;
-      }
-
-      // Show first 2 categories + count of remaining
-      const displayCategories = categories.slice(0, 2);
-      const remainingCount = categories.length - 2;
-
-      return (
-        <div className="flex flex-wrap gap-1">
-          {displayCategories.map(cat => (
-            <Badge key={cat.id} variant="outline" className="text-xs">
-              {formatCategoryLabel(cat.category)}
-            </Badge>
-          ))}
-          {remainingCount > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              +{remainingCount}
-            </Badge>
-          )}
-        </div>
-      );
-    },
-  },
-  {
     id: "phone",
     accessorFn: row => row.churchMember?.phone,
     header: "Phone",
@@ -207,52 +128,11 @@ export const volunteerColumns: ColumnDef<VolunteerWithRelations>[] = [
     },
   },
   {
-    id: "startDate",
-    accessorKey: "startDate",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Start Date
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4" />
-          )}
-        </Button>
-      );
-    },
+    accessorKey: "backgroundCheckStatus",
+    header: "Background Check",
     cell: ({ row }) => {
-      const date = row.getValue("startDate") as Date;
-      return date ? (
-        <div className="text-sm text-muted-foreground">
-          {format(new Date(date), "MMM d, yyyy")}
-        </div>
-      ) : (
-        <span className="text-muted-foreground">—</span>
-      );
-    },
-  },
-  {
-    id: "shiftsCount",
-    header: "Shifts",
-    cell: ({ row }) => {
-      const volunteer = row.original;
-      const count = volunteer._count?.shifts || 0;
-      return (
-        <div className="text-sm">
-          <span className="font-medium">{count}</span>
-          <span className="text-muted-foreground ml-1">
-            {count === 1 ? "shift" : "shifts"}
-          </span>
-        </div>
-      );
+      const status = row.getValue("backgroundCheckStatus") as string;
+      return <BackgroundCheckBadge status={status} />;
     },
   },
 ];

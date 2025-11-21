@@ -71,6 +71,7 @@ interface EditVolunteerDialogProps {
       id: string;
       name: string | null;
     };
+    categories?: Array<{ id: string; category: string }>;
   };
   slug: string;
 }
@@ -115,7 +116,7 @@ export function EditVolunteerDialog({
         ? new Date(volunteer.backgroundCheckExpiry)
         : null,
       notes: volunteer.notes,
-      categories: volunteer.categories?.map(c => c.category) ?? [],
+      categories: (volunteer.categories?.map(c => c.category) ?? []) as VolunteerSchemaType["categories"],
     },
   });
 
