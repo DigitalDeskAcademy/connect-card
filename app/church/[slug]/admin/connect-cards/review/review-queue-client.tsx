@@ -48,6 +48,7 @@ import {
   VISIT_STATUS_OPTIONS,
   INTEREST_OPTIONS,
   VOLUNTEER_CATEGORY_OPTIONS,
+  formatVolunteerCategoryLabel,
 } from "@/lib/types/connect-card";
 import { VolunteerOnboardingChecklist } from "@/components/dashboard/connect-cards/volunteer-onboarding-checklist";
 
@@ -85,12 +86,12 @@ export function ReviewQueueClient({
       normalizedVisitType = "First Visit";
     }
 
-    // Determine volunteer category - use existing, or default to "General" if Volunteering is selected
+    // Determine volunteer category - use existing, or default to "GENERAL" if Volunteering is selected
     const interests = currentCard.interests || [];
     const hasVolunteering = interests.includes("Volunteering");
     let volunteerCategory = currentCard.volunteerCategory || "";
     if (hasVolunteering && !volunteerCategory) {
-      volunteerCategory = "General";
+      volunteerCategory = "GENERAL"; // Use enum value from volunteerCategoryTypes
     }
 
     return {
@@ -752,7 +753,7 @@ export function ReviewQueueClient({
                   <SelectContent>
                     {VOLUNTEER_CATEGORY_OPTIONS.map(category => (
                       <SelectItem key={category} value={category}>
-                        {category}
+                        {formatVolunteerCategoryLabel(category)}
                       </SelectItem>
                     ))}
                   </SelectContent>
