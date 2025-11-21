@@ -78,6 +78,7 @@ interface DataTableProps<TData, TValue> {
  * - Pagination (10 items per page)
  * - Empty state
  * - Row selection for bulk operations
+ * - Row click navigation to volunteer detail page
  *
  * Built with TanStack Table v8 and shadcn/ui components
  */
@@ -225,7 +226,25 @@ export function VolunteerDataTable<TData, TValue>({
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map(row => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={e => {
+                      // Don't navigate if clicking checkbox
+                      const target = e.target as HTMLElement;
+                      if (
+                        target.closest('[role="checkbox"]') ||
+                        target.closest("button")
+                      ) {
+                        return;
+                      }
+                      // Navigate to volunteer detail page
+                      const volunteer = row.original as { id: string };
+                      router.push(
+                        `/church/${slug}/admin/volunteer/${volunteer.id}`
+                      );
+                    }}
+                  >
                     {row.getVisibleCells().map(cell => (
                       <TableCell
                         key={cell.id}
