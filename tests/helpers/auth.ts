@@ -129,6 +129,7 @@ export async function logout(page: Page): Promise<void> {
   if (await userMenu.isVisible()) {
     await userMenu.click();
     await page.click('text="Sign out"');
+    // Wait for redirect to root page after successful logout (production behavior)
     await page.waitForURL("/");
   }
 }

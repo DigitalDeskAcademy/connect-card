@@ -58,6 +58,12 @@ interface Location {
   name: string;
 }
 
+interface TeamMember {
+  id: string;
+  name: string;
+  email: string;
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -65,10 +71,14 @@ interface DataTableProps<TData, TValue> {
   pageSize?: number;
   slug: string;
   locations: Location[];
+  teamMembers: TeamMember[];
 }
 
 /**
  * Prayer Request Data Table Component
+ *
+ * Simple table for viewing prayer requests.
+ * Used in prayer batch detail pages.
  *
  * Features:
  * - Sorting (click column headers)
