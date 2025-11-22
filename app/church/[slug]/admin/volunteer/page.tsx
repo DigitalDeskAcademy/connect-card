@@ -20,10 +20,15 @@ import { prisma } from "@/lib/db";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function ChurchVolunteersPage({ params }: PageProps) {
+export default async function ChurchVolunteersPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params;
+  const { tab } = await searchParams;
 
   // Universal access control - handles all user roles with proper data scoping
   const { dataScope, organization } = await requireDashboardAccess(slug);
@@ -46,18 +51,40 @@ export default async function ChurchVolunteersPage({ params }: PageProps) {
     },
   });
 
+  // Calculate tab counts
+  const pendingCount = volunteers.filter((v) => v.status === "PENDING").length;
+  const allCount = volunteers.filter((v) =>
+    ["ACTIVE", "INACTIVE"].includes(v.status)
+  ).length;
+
+  // Determine active tab (default to "all")
+  const activeTab =
+    typeof tab === "string" && ["all", "pending"].includes(tab)
+      ? tab
+      : "all";
+
   // Note: Data is automatically filtered based on dataScope:
   // - Church admins see all volunteers in their organization
   // - Location staff see only volunteers at their assigned location
   // - Platform admins see all (but shouldn't access this route directly)
 
   return (
-    <PageContainer variant="none">
+    <PageContainer
+      variant="tabs"
+      as="main"
+      backButton={{
+        href: `/church/${slug}/admin`,
+        label: "Back",
+      }}
+    >
       <VolunteersClient
         volunteers={volunteers}
         slug={slug}
         organizationId={organization.id}
         locations={locations}
+        activeTab={activeTab}
+        tabCounts={{ all: allCount, pending: pendingCount }}
+        canDelete={dataScope.filters.canDeleteData}
       />
     </PageContainer>
   );

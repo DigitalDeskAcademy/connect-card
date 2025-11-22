@@ -21,6 +21,22 @@ Multi-tenant authentication, database, and AI Vision extraction are complete. Me
 
 ---
 
+## 🤖 AI Development Handoff
+
+**Active Feature:** Volunteer Management (Phase 2 - In Progress)
+
+📋 **Start Here:** [`/docs/AI_HANDOFF.md`](/docs/AI_HANDOFF.md)
+
+This document contains:
+- Current implementation status
+- Remaining tasks with priority order
+- Technical implementation guidance
+- References to key documentation
+
+For detailed feature requirements, see [`/docs/volunteer-feature-vision.md`](/docs/volunteer-feature-vision.md)
+
+---
+
 ## Technology Stack
 
 ### Core Framework

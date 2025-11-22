@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+import { NavTabs } from "@/components/layout/nav-tabs";
 import { VolunteersTable } from "./volunteers-table";
 
 /**
@@ -43,6 +45,9 @@ interface VolunteersClientProps {
   slug: string;
   organizationId: string;
   locations: Location[];
+  activeTab: string;
+  tabCounts: { all: number; pending: number };
+  canDelete: boolean;
 }
 
 /**
@@ -51,6 +56,7 @@ interface VolunteersClientProps {
  * Process new volunteers and manage volunteer assignments.
  *
  * Features:
+ * - Two-tab navigation: "All Volunteers" / "Pending Volunteers"
  * - Volunteers data table with status filtering
  * - Volunteer status badges and skills display
  * - Create new volunteer dialog with inline member creation
@@ -62,38 +68,51 @@ export function VolunteersClient({
   slug,
   organizationId,
   locations,
+  activeTab,
+  tabCounts,
+  canDelete,
 }: VolunteersClientProps) {
+  // Filter volunteers based on active tab
+  const filteredVolunteers = useMemo(() => {
+    if (activeTab === "pending") {
+      return volunteers.filter((v) => v.status === "PENDING");
+    }
+    // "all" tab shows ACTIVE and INACTIVE volunteers (not PENDING)
+    return volunteers.filter((v) =>
+      ["ACTIVE", "INACTIVE"].includes(v.status)
+    );
+  }, [volunteers, activeTab]);
+
   /**
-   * Layout: Canvas Pattern (Full-Height Component)
+   * Layout: Simplified with PageContainer variant="tabs"
    *
-   * Uses `flex-1` instead of `h-full` because parent is `flex flex-col`.
-   * In flexbox columns, children need flex-1 to consume available space.
-   *
-   * Structure:
-   * - Page header with description: flex-shrink-0 (fixed height)
-   * - Table wrapper: flex-1 min-h-0 (fills remaining space, scrollable)
+   * PageContainer handles:
+   * - Responsive padding (p-4 md:p-6)
+   * - Flex column layout
+   * - Gap-0 (prevents double-spacing with NavTabs)
    */
   return (
-    <div className="flex-1 p-6 flex flex-col gap-6">
-      {/* Page Header */}
-      <div className="flex-shrink-0">
-        <h1 className="text-2xl font-bold tracking-tight">
-          Volunteer Directory
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Process new volunteers, route to ministry leaders, and start onboarding workflows
-        </p>
-      </div>
+    <>
+      <NavTabs
+        baseUrl={`/church/${slug}/admin/volunteer`}
+        tabs={[
+          { label: "All Volunteers", value: "all", count: tabCounts.all },
+          {
+            label: "Pending Volunteers",
+            value: "pending",
+            count: tabCounts.pending,
+          },
+        ]}
+      />
 
-      {/* Volunteers Table (includes integrated create button) */}
-      <div className="flex-1 min-h-0">
-        <VolunteersTable
-          volunteers={volunteers}
-          slug={slug}
-          organizationId={organizationId}
-          locations={locations}
-        />
-      </div>
-    </div>
+      <VolunteersTable
+        volunteers={filteredVolunteers}
+        slug={slug}
+        organizationId={organizationId}
+        locations={locations}
+        activeTab={activeTab}
+        canDelete={canDelete}
+      />
+    </>
   );
 }

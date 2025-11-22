@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EditVolunteerDialog } from "./edit-volunteer-dialog";
-import { IconEdit, IconPhone, IconMail, IconMapPin } from "@tabler/icons-react";
+import { IconEdit, IconPhone, IconMail, IconMapPin, IconSend } from "@tabler/icons-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 import type { Volunteer } from "@/lib/generated/prisma";
 
 /**
@@ -15,12 +16,16 @@ import type { Volunteer } from "@/lib/generated/prisma";
  * Displays volunteer profile information in read-only cards with edit capability.
  *
  * Sections:
- * - Profile Info: Status, start date, church member link
- * - Background Check: Status badge with verification details
+ * - Profile Info: Status, start date, church member link (with Edit button)
+ * - Background Check: Status badge with verification details (with Start Background Check button)
  * - Emergency Contact: Name and phone
  * - Contact Info: From church member record
  *
- * Edit button opens EditVolunteerDialog with optimistic locking.
+ * Actions:
+ * - Edit button: Opens EditVolunteerDialog with optimistic locking
+ * - Start Background Check button: Triggers automated background check workflow (placeholder)
+ *   - Will send SMS to volunteer with required documents and instructions
+ *   - Tracks status updates throughout the process
  */
 
 interface VolunteerOverviewTabProps {
@@ -52,6 +57,18 @@ export function VolunteerOverviewTab({
   } as const;
 
   const statusColor = bgCheckStatusColor[volunteer.backgroundCheckStatus];
+
+  // Placeholder function for starting background check process
+  const handleStartBackgroundCheck = () => {
+    toast.info(
+      "Background check automation coming soon! This will send SMS to member with links to required documents and information."
+    );
+    // TODO: Implement background check automation workflow
+    // - Send SMS to volunteer with background check instructions
+    // - Include links to required documents
+    // - Track status updates
+    // - Send reminders if not completed
+  };
 
   return (
     <div className="grid gap-6 md:grid-cols-2">
@@ -104,13 +121,13 @@ export function VolunteerOverviewTab({
       </Card>
 
       {/* Background Check Card */}
-      <Card>
+      <Card className="flex flex-col">
         <CardHeader>
           <CardTitle className="text-base font-medium">
             Background Check
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="flex-1 space-y-4">
           <div>
             <p className="text-sm text-muted-foreground">Status</p>
             <Badge variant={statusColor} className="mt-1">
@@ -118,30 +135,48 @@ export function VolunteerOverviewTab({
             </Badge>
           </div>
 
-          {volunteer.backgroundCheckDate && (
-            <div>
-              <p className="text-sm text-muted-foreground">Check Date</p>
+          <div>
+            <p className="text-sm text-muted-foreground">Completed Date</p>
+            {volunteer.backgroundCheckDate ? (
               <p className="text-sm font-medium">
                 {format(
                   new Date(volunteer.backgroundCheckDate),
                   "MMMM d, yyyy"
                 )}
               </p>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                Not yet completed
+              </p>
+            )}
+          </div>
 
-          {volunteer.backgroundCheckExpiry && (
-            <div>
-              <p className="text-sm text-muted-foreground">Expiry Date</p>
+          <div>
+            <p className="text-sm text-muted-foreground">Expiration Date</p>
+            {volunteer.backgroundCheckExpiry ? (
               <p className="text-sm font-medium">
                 {format(
                   new Date(volunteer.backgroundCheckExpiry),
                   "MMMM d, yyyy"
                 )}
               </p>
-            </div>
-          )}
+            ) : (
+              <p className="text-sm text-muted-foreground italic">
+                No expiration set
+              </p>
+            )}
+          </div>
         </CardContent>
+        <CardFooter>
+          <Button
+            variant="default"
+            className="w-full"
+            onClick={handleStartBackgroundCheck}
+          >
+            <IconSend className="mr-2 h-4 w-4" />
+            Start Background Check
+          </Button>
+        </CardFooter>
       </Card>
 
       {/* Emergency Contact Card */}

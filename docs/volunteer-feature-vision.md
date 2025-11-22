@@ -1,8 +1,10 @@
 # Volunteer Management Feature - Vision & Roadmap
 
-**Last Updated:** 2025-11-20
-**Status:** In Development
+**Last Updated:** 2025-11-21
+**Status:** Phase 2 In Progress (50% complete)
 **Owner:** Church Connect Card Team
+
+**📋 AI Session Handoff:** See `/docs/AI_HANDOFF.md` for current implementation status and next steps
 
 ---
 
@@ -13,6 +15,7 @@
 ### The Problem
 
 Churches struggle with volunteer onboarding:
+
 - Paper connect cards with "I want to volunteer" checked sit in piles for weeks
 - Staff manually email volunteers with background check forms
 - Volunteers get lost in the shuffle between sign-up and first shift
@@ -28,6 +31,7 @@ Churches struggle with volunteer onboarding:
 ## 🚀 The Workflow (Core User Journey)
 
 ### Step 1: Volunteer Signs Up (Automated)
+
 1. Person fills out **paper connect card** at church
 2. Checks box: "I want to volunteer in: [Kids Camp / Greeter / Worship Team]"
 3. Staff scans connect card with phone camera
@@ -37,6 +41,7 @@ Churches struggle with volunteer onboarding:
    - Ministry categories checked
 
 ### Step 2: Shows in "Pending Volunteers" Tab (Staff Workflow)
+
 - New volunteer appears in **"Pending Volunteers"** tab
 - Staff sees: Name, Contact Info, Requested Categories, Date Submitted
 - **Action buttons:**
@@ -45,7 +50,9 @@ Churches struggle with volunteer onboarding:
   - "Send Onboarding Package" - Triggers automation
 
 ### Step 3: Automated Onboarding (The Magic)
+
 When staff clicks "Send Onboarding Package", system automatically:
+
 1. **Sends email with:**
    - Welcome message personalized to their ministry
    - Background check form link (if required for that ministry)
@@ -56,6 +63,7 @@ When staff clicks "Send Onboarding Package", system automatically:
 4. **Moves volunteer** to "All Volunteers" directory
 
 ### Step 4: Background Check Tracking
+
 - Status automatically updates when background check submitted
 - Expiration reminders (background checks expire after 2-3 years)
 - Flagged checks alert ministry leaders
@@ -71,6 +79,7 @@ When staff clicks "Send Onboarding Package", system automatically:
 **Solution:** Create reusable `MemberDataTable` component (similar to prayer table pattern).
 
 **Shared Features Across All Three:**
+
 - Search by name/email
 - Checkbox selection
 - Export to CSV (PCO/Breeze format)
@@ -80,6 +89,7 @@ When staff clicks "Send Onboarding Package", system automatically:
 - Row click → Detail page
 
 **Component Locations:**
+
 ```
 /components/dashboard/shared/
 ├── member-data-table.tsx       # Reusable table (Members, Staff, Volunteers)
@@ -88,6 +98,7 @@ When staff clicks "Send Onboarding Package", system automatically:
 ```
 
 **Usage:**
+
 ```typescript
 // Members view
 <MemberDataTable
@@ -112,6 +123,7 @@ When staff clicks "Send Onboarding Package", system automatically:
 ```
 
 **Benefits:**
+
 - ✅ Write table logic once, use 3 times
 - ✅ Consistent UX across all member views
 - ✅ Export functionality shared
@@ -125,9 +137,11 @@ When staff clicks "Send Onboarding Package", system automatically:
 ### Two-Tab Structure
 
 #### Tab 1: "Pending Volunteers" (The Differentiator)
+
 **Purpose:** Process new volunteer signups from connect cards
 
 **Table Columns:**
+
 - [ ] Checkbox (bulk selection)
 - Name + Email
 - Phone
@@ -136,6 +150,7 @@ When staff clicks "Send Onboarding Package", system automatically:
 - Actions: "Process" button
 
 **Features:**
+
 - ✅ Clean, focused workflow for processing
 - ✅ Bulk actions: "Process Selected" (assign category + send package to multiple)
 - ✅ Filter by requested category
@@ -147,9 +162,11 @@ When staff clicks "Send Onboarding Package", system automatically:
 ---
 
 #### Tab 2: "All Volunteers" (Directory)
+
 **Purpose:** Searchable directory of all processed volunteers
 
 **Table Columns:**
+
 - [ ] Checkbox (bulk selection)
 - Name + Email
 - Phone
@@ -158,6 +175,7 @@ When staff clicks "Send Onboarding Package", system automatically:
 - Last Served (Date)
 
 **Features:**
+
 - ✅ Search by name
 - ✅ Filter by category (multi-select dropdown)
 - ✅ Filter by background check status
@@ -166,6 +184,7 @@ When staff clicks "Send Onboarding Package", system automatically:
 - ✅ Click row → Volunteer detail page
 
 **Export Format (CSV - Industry Standard):**
+
 ```csv
 First Name, Last Name, Email, Phone, Background Check Status, Background Check Date, Background Check Expiration, Categories, Start Date, Emergency Contact Name, Emergency Contact Phone
 ```
@@ -179,6 +198,7 @@ Matches Planning Center Online and Breeze ChMS import format.
 **Industry Research:** Checkr, Sterling, Planning Center Services
 
 ### Status Flow
+
 ```
 NOT_STARTED → (staff clicks "Send Info") → IN_PROGRESS → CLEARED
                                                 ↓
@@ -192,6 +212,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 **When:** Staff clicks button in NOT_STARTED or EXPIRED status
 
 **What Happens:**
+
 1. System sends **automated email** to volunteer:
    - Instructions on how to submit background check
    - Link to background check provider (church-specific)
@@ -201,6 +222,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 3. Volunteer receives follow-up reminder after 3 days if not submitted
 
 **Future Enhancement (Phase 2):**
+
 - Integration with Checkr/Sterling API
 - Automatic status updates via webhook
 - Background check costs tracked in billing
@@ -210,6 +232,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 ## 🎨 UI/UX Standards
 
 ### Visual Design
+
 - **Match prayer table pattern**: Clean card layout, integrated create button, checkbox selection
 - **Bottom border on table**: Prevents "open" look on last row
 - **Horizontal scroll**: When columns overflow (responsive design)
@@ -221,6 +244,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
   - EXPIRED: Orange
 
 ### Industry Patterns We Follow
+
 - **Planning Center Online**: Tab-based navigation, clean table design
 - **Breeze ChMS**: Simple bulk actions, CSV export
 - **Church Community Builder**: Category filtering, status badges
@@ -232,12 +256,14 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 **Phase 1 (Current):** Manual "Send Onboarding Package" button
 
 **Phase 2 (Planned - GHL Integration):**
+
 - Auto-send onboarding email 1 hour after connect card scan
 - Send reminder if volunteer doesn't respond in 48 hours
 - Auto-invite to calendar events based on availability
 - SMS check-in before first shift
 
 **Phase 3 (Planned - AI Matching):**
+
 - AI suggests best ministry fit based on skills/experience
 - Predict volunteer burnout risk
 - Auto-schedule based on availability + team needs
@@ -247,12 +273,14 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 ## 📊 Success Metrics
 
 ### Phase 1 Goals (MVP)
+
 - [ ] 90% of connect card volunteers processed within 24 hours
 - [ ] 80% of volunteers receive onboarding package automatically
 - [ ] 50% reduction in staff time spent on volunteer coordination
 - [ ] Background check tracking for 100% of volunteers
 
 ### Phase 2 Goals (Automation)
+
 - [ ] 95% of volunteers auto-onboarded (no manual trigger)
 - [ ] 70% background check completion rate (vs 30% industry average)
 - [ ] 60% volunteer retention at 6 months (vs 40% industry average)
@@ -262,6 +290,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 ## 🚧 Development Phases
 
 ### ✅ Phase 1: Foundation (COMPLETE)
+
 - [x] Database schema (Volunteer, Category, Skills tables)
 - [x] Prayer table UI pattern adopted
 - [x] Basic table with name, email, phone, background check
@@ -269,6 +298,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 - [x] Create volunteer dialog
 
 ### 🔄 Phase 2: Two-Tab Structure (IN PROGRESS)
+
 - [ ] Add tab navigation (Pending / All Volunteers)
 - [ ] Pending Volunteers tab with "Process" workflow
 - [ ] Category filtering (multi-select dropdown)
@@ -277,6 +307,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 - [ ] Bottom border + horizontal scroll fix
 
 ### 📅 Phase 3: Automated Onboarding (PLANNED)
+
 - [ ] "Send Onboarding Package" action
 - [ ] Email templates (background check, calendar invite, welcome)
 - [ ] Background check form integration
@@ -284,6 +315,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 - [ ] Status workflow automation
 
 ### 📅 Phase 4: Detail Pages (PLANNED)
+
 - [ ] Volunteer profile page (click row → detail view)
 - [ ] Edit volunteer information
 - [ ] View serving history
@@ -291,6 +323,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 - [ ] Emergency contact management
 
 ### 📅 Phase 5: GHL Integration (PLANNED - Feb 2026)
+
 - [ ] Auto-send onboarding emails via GHL
 - [ ] SMS reminders for shifts
 - [ ] Campaign templates for volunteer engagement
@@ -300,15 +333,15 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 
 ## 🎯 Key Differentiators vs Competition
 
-| Feature | Planning Center | Breeze ChMS | Church Connect Card |
-|---------|----------------|-------------|---------------------|
-| Connect card AI scanning | ❌ Manual entry | ❌ Manual entry | ✅ Automated |
-| Automated onboarding | ❌ Manual | ❌ Manual | ✅ One-click |
-| Background check tracking | ✅ Yes | ✅ Yes | ✅ Yes + Auto-expire |
-| Category filtering | ✅ Yes | ✅ Yes | ✅ Yes |
-| CSV export | ✅ Yes | ✅ Yes | ✅ Yes (compatible) |
-| Processing workflow | ❌ No | ❌ No | ✅ Pending → Processed |
-| Calendar integration | ⚠️ Manual | ⚠️ Manual | ✅ Auto-invite |
+| Feature                   | Planning Center | Breeze ChMS     | Church Connect Card    |
+| ------------------------- | --------------- | --------------- | ---------------------- |
+| Connect card AI scanning  | ❌ Manual entry | ❌ Manual entry | ✅ Automated           |
+| Automated onboarding      | ❌ Manual       | ❌ Manual       | ✅ One-click           |
+| Background check tracking | ✅ Yes          | ✅ Yes          | ✅ Yes + Auto-expire   |
+| Category filtering        | ✅ Yes          | ✅ Yes          | ✅ Yes                 |
+| CSV export                | ✅ Yes          | ✅ Yes          | ✅ Yes (compatible)    |
+| Processing workflow       | ❌ No           | ❌ No           | ✅ Pending → Processed |
+| Calendar integration      | ⚠️ Manual       | ⚠️ Manual       | ✅ Auto-invite         |
 
 **Our Edge:** Connect Card → Onboarding happens in minutes, not weeks.
 
@@ -321,6 +354,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 ### How It Works
 
 **1. Connect Card Processing (Primary Entry Point):**
+
 - Staff reviews connect card in Connect Cards feature
 - Assigns volunteer categories during review
 - Clicks "Save & Close"
@@ -330,6 +364,7 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
   - **Adds to "Pending Export" queue** (new flag or table)
 
 **2. Export Dashboard (in Connect Cards feature):**
+
 - Badge shows count: "23 members pending export"
 - Click "Review Pending Exports" button
 - Table shows all members waiting to be exported
@@ -341,22 +376,26 @@ CLEARED → (2 years later) → EXPIRED → (send renewal) → IN_PROGRESS
 - **Marks exported members** (prevents re-export)
 
 **3. CSV Format (PCO/Breeze Compatible):**
+
 ```csv
 First Name, Last Name, Email, Phone, Member Type, Background Check Status, Background Check Date, Background Check Expiration, Volunteer Categories, Start Date, Emergency Contact Name, Emergency Contact Phone, Address, Notes
 ```
 
 **4. Re-export Protection:**
+
 - Track `lastExportedAt` timestamp on ChurchMember
 - Don't include already-exported members in queue
 - Staff can "Force Re-export" if needed (checkbox option)
 
 **5. Duplicate Detection:**
+
 - When creating ChurchMember from connect card, check for existing by email/phone
 - If found → **Update** existing record (don't create duplicate)
 - If not found → Create new record
 - Always add to export queue (even if updated)
 
 **Benefits:**
+
 - ✅ Staff reviews batch before sending (catch errors)
 - ✅ Efficient: Process 50 cards, export once
 - ✅ Flexible timing: Daily, weekly, or on-demand
@@ -378,6 +417,7 @@ First Name, Last Name, Email, Phone, Member Type, Background Check Status, Backg
 ## 📚 References
 
 **Industry Research:**
+
 - Planning Center Services: Volunteer scheduling model
 - Breeze ChMS: CSV export format
 - Church Community Builder: Category management
@@ -385,6 +425,7 @@ First Name, Last Name, Email, Phone, Member Type, Background Check Status, Backg
 - Sterling: Church background check best practices
 
 **Related Docs:**
+
 - `/docs/features/connect-cards/vision.md` - Connect card AI extraction
 - `/docs/features/member-management/vision.md` - Member directory (similar pattern)
 - `/docs/ROADMAP.md` - Overall product roadmap
@@ -392,6 +433,7 @@ First Name, Last Name, Email, Phone, Member Type, Background Check Status, Backg
 ---
 
 **Next Steps:**
+
 1. Answer open questions with user
 2. Build two-tab structure with URL-based navigation
 3. Implement Pending Volunteers workflow

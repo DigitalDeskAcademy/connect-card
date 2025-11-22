@@ -116,7 +116,8 @@ export function EditVolunteerDialog({
         ? new Date(volunteer.backgroundCheckExpiry)
         : null,
       notes: volunteer.notes,
-      categories: (volunteer.categories?.map(c => c.category) ?? []) as VolunteerSchemaType["categories"],
+      categories: (volunteer.categories?.map(c => c.category) ??
+        []) as VolunteerSchemaType["categories"],
     },
   });
 

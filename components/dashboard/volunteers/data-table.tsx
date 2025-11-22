@@ -49,9 +49,15 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { IconSearch, IconUserPlus } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { IconSearch, IconUserPlus, IconUserCheck, IconMessageCircle } from "@tabler/icons-react";
 import { CreateVolunteerDialog } from "./create-volunteer-dialog";
+import { ProcessVolunteerDialog } from "./process-volunteer-dialog";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import type { VolunteerWithRelations } from "./volunteers-client";
+import { volunteerCategoryTypes } from "@/lib/zodSchemas";
+import { formatVolunteerCategoryLabel } from "@/lib/types/connect-card";
 
 interface Location {
   id: string;
@@ -66,6 +72,7 @@ interface DataTableProps<TData, TValue> {
   slug: string;
   organizationId: string;
   locations: Location[];
+  activeTab: string;
 }
 
 /**
@@ -90,17 +97,49 @@ export function VolunteerDataTable<TData, TValue>({
   slug,
   organizationId,
   locations,
+  activeTab,
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([
     { id: "name", desc: false }, // Alphabetical by default
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [processDialogOpen, setProcessDialogOpen] = useState(false);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<VolunteerWithRelations | null>(null);
 
   // Handle successful volunteer creation
   const handleVolunteerCreated = () => {
     router.refresh(); // Refresh server component data
+  };
+
+  // Handle process volunteer dialog opening
+  const handleProcessVolunteer = (volunteer: VolunteerWithRelations) => {
+    setSelectedVolunteer(volunteer);
+    setProcessDialogOpen(true);
+  };
+
+  // Handle processing first selected volunteer (bulk action)
+  const handleProcessSelected = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    if (selectedRows.length > 0) {
+      const firstSelected = selectedRows[0].original as VolunteerWithRelations;
+      handleProcessVolunteer(firstSelected);
+    }
+  };
+
+  // Handle bulk SMS (placeholder for future implementation)
+  const handleBulkSMS = () => {
+    const selectedCount = table.getFilteredSelectedRowModel().rows.length;
+
+    if (selectedCount < 2) {
+      toast.error("Please select at least 2 volunteers to send bulk SMS.");
+      return;
+    }
+
+    toast.info(
+      `Bulk SMS automation will be implemented in a future update. ${selectedCount} volunteer${selectedCount === 1 ? "" : "s"} selected.`
+    );
   };
 
   const table = useReactTable({
@@ -115,6 +154,19 @@ export function VolunteerDataTable<TData, TValue>({
     state: {
       sorting,
       columnFilters,
+      globalFilter: categoryFilter === "ALL" ? undefined : categoryFilter,
+    },
+    globalFilterFn: (row, columnId, filterValue) => {
+      // Custom filter function for categories (OR logic)
+      const volunteer = row.original as VolunteerWithRelations;
+      const categories = volunteer.categories || [];
+
+      if (!filterValue || filterValue === "ALL") {
+        return true;
+      }
+
+      // Check if ANY category matches the filter (OR logic)
+      return categories.some(cat => cat.category === filterValue);
     },
     initialState: {
       pagination: {
@@ -128,14 +180,9 @@ export function VolunteerDataTable<TData, TValue>({
     table.getColumn("name")?.setFilterValue(value);
   };
 
-  // Handle status filter change
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    if (value === "ALL") {
-      table.getColumn("backgroundCheckStatus")?.setFilterValue(undefined);
-    } else {
-      table.getColumn("backgroundCheckStatus")?.setFilterValue(value);
-    }
+  // Handle category filter change
+  const handleCategoryFilterChange = (value: string) => {
+    setCategoryFilter(value);
   };
 
   // Calculate pagination details
@@ -150,15 +197,25 @@ export function VolunteerDataTable<TData, TValue>({
   return (
     <Card className="flex flex-col h-full">
       <CardHeader className="flex-shrink-0 space-y-4">
-        {/* Title and Create Button */}
+        {/* Title and Action Buttons */}
         <div className="flex items-center justify-between">
           <CardTitle>{title}</CardTitle>
-          <CreateVolunteerDialog
-            slug={slug}
-            organizationId={organizationId}
-            locations={locations}
-            onSuccess={handleVolunteerCreated}
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleBulkSMS}
+              variant="outline"
+              className="gap-2"
+            >
+              <IconMessageCircle className="h-4 w-4" />
+              Bulk SMS
+            </Button>
+            <CreateVolunteerDialog
+              slug={slug}
+              organizationId={organizationId}
+              locations={locations}
+              onSuccess={handleVolunteerCreated}
+            />
+          </div>
         </div>
 
         {/* Action Bar */}
@@ -177,20 +234,34 @@ export function VolunteerDataTable<TData, TValue>({
             />
           </InputGroup>
 
-          {/* Background Check Status Filter */}
-          <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-            <SelectTrigger className="w-full sm:w-[180px] flex-shrink-0">
-              <SelectValue placeholder="Filter by status" />
+          {/* Category Filter */}
+          <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>
+            <SelectTrigger className="w-full sm:w-[200px] flex-shrink-0">
+              <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Status</SelectItem>
-              <SelectItem value="NOT_STARTED">Not Started</SelectItem>
-              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-              <SelectItem value="CLEARED">Cleared</SelectItem>
-              <SelectItem value="FLAGGED">Flagged</SelectItem>
-              <SelectItem value="EXPIRED">Expired</SelectItem>
+              <SelectItem value="ALL">All Categories</SelectItem>
+              {volunteerCategoryTypes.map(category => (
+                <SelectItem key={category} value={category}>
+                  {formatVolunteerCategoryLabel(category)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+
+          {/* Process Selected Button (Pending Tab Only) */}
+          {activeTab === "pending" &&
+            table.getFilteredSelectedRowModel().rows.length > 0 && (
+              <Button
+                onClick={handleProcessSelected}
+                variant="default"
+                size="sm"
+                className="gap-2"
+              >
+                <IconUserCheck className="h-4 w-4" />
+                Process Selected ({table.getFilteredSelectedRowModel().rows.length})
+              </Button>
+            )}
         </div>
       </CardHeader>
 
@@ -223,18 +294,20 @@ export function VolunteerDataTable<TData, TValue>({
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody>
+            <TableBody className="[&_tr:last-child]:border-b">
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map(row => (
                   <TableRow
                     key={row.id}
                     className="cursor-pointer hover:bg-muted/50 transition-colors"
                     onClick={e => {
-                      // Don't navigate if clicking checkbox
+                      // Don't navigate if clicking interactive elements
                       const target = e.target as HTMLElement;
                       if (
                         target.closest('[role="checkbox"]') ||
-                        target.closest("button")
+                        target.closest("button") ||
+                        target.closest('[role="menuitem"]') ||
+                        target.closest('[role="menu"]')
                       ) {
                         return;
                       }
@@ -370,6 +443,16 @@ export function VolunteerDataTable<TData, TValue>({
           </div>
         )}
       </CardContent>
+
+      {/* Process Volunteer Dialog */}
+      {selectedVolunteer && (
+        <ProcessVolunteerDialog
+          open={processDialogOpen}
+          onOpenChange={setProcessDialogOpen}
+          volunteer={selectedVolunteer}
+          slug={slug}
+        />
+      )}
     </Card>
   );
 }
