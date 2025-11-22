@@ -90,7 +90,54 @@ git worktree list
 ls /home/digitaldesk/Desktop/connect-card/FEATURE_NAME/
 ```
 
-**Once created, proceed to Step 4.**
+**Once created, add to pnpm workspace.**
+
+---
+
+### Step 3.5: Add Worktree to pnpm Workspace
+
+**CRITICAL:** All worktrees must be registered in the pnpm workspace to share dependencies and prevent drift.
+
+```bash
+# Navigate to repo root
+cd /home/digitaldesk/Desktop/connect-card
+
+# Edit pnpm-workspace.yaml
+```
+
+**Add the new worktree to the packages list:**
+
+```yaml
+packages:
+  - "main"
+  - "prayer"
+  - "volunteer"
+  - "tech-debt"
+  - "FEATURE_NAME" # ← Add this line
+```
+
+**Run pnpm install to register the workspace:**
+
+```bash
+cd /home/digitaldesk/Desktop/connect-card
+pnpm install
+```
+
+**Why This Matters:**
+
+- ✅ All worktrees share the same `node_modules` at repo root
+- ✅ Zero dependency drift between worktrees
+- ✅ One `pnpm install` updates all worktrees
+- ✅ Industry-standard pattern (Vercel, Turborepo)
+
+**Verify:**
+
+```bash
+# Check that shared node_modules exists
+ls /home/digitaldesk/Desktop/connect-card/node_modules
+```
+
+**Once added to workspace, proceed to Step 4.**
 
 ---
 
