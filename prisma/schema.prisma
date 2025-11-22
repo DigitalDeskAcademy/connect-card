@@ -1066,6 +1066,8 @@ enum VolunteerOnboardingStatus {
 /// Volunteer category types for ministry assignment routing
 /// Used to route connect card inquiries to appropriate ministry leaders
 enum VolunteerCategoryType {
+  /// General volunteer (default category for new volunteers)
+  GENERAL
   /// Sunday morning greeter
   GREETER
   /// Usher for seating and offering

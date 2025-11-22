@@ -102,7 +102,7 @@ export function VolunteerForm({
       organizationId,
       locationId: locations.length === 1 ? locations[0].id : null,
       status: "ACTIVE",
-      categories: ["GENERAL"], // Default: all volunteers start in GENERAL category
+      categories: ["OTHER"], // Default: all volunteers start in OTHER category until assigned specific roles
       startDate: new Date(),
       endDate: null,
       inactiveReason: null,

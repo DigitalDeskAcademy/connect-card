@@ -68,32 +68,21 @@ export type InterestOption = (typeof INTEREST_OPTIONS)[number];
 /**
  * Volunteer category options
  *
- * IMPORTANT: This imports from the volunteer management schema (zodSchemas.ts)
- * to maintain a single source of truth across the application.
- *
- * The enum values (e.g., "GENERAL", "KIDS_MINISTRY") are formatted for display
- * using the formatVolunteerCategoryLabel() helper function below.
+ * Used when "Volunteering" interest is selected to categorize specific volunteer roles.
+ * IMPORTANT: Must match Prisma VolunteerCategoryType enum exactly (SSOT).
+ * Categories are ordered by popularity/frequency of need.
  */
-import { volunteerCategoryTypes } from "@/lib/zodSchemas";
-
-export const VOLUNTEER_CATEGORY_OPTIONS = volunteerCategoryTypes;
+export const VOLUNTEER_CATEGORY_OPTIONS = [
+  "GENERAL",
+  "GREETER",
+  "USHER",
+  "KIDS_MINISTRY",
+  "WORSHIP_TEAM",
+  "PARKING",
+  "HOSPITALITY",
+  "AV_TECH",
+  "PRAYER_TEAM",
+  "OTHER",
+] as const;
 
 export type VolunteerCategory = (typeof VOLUNTEER_CATEGORY_OPTIONS)[number];
-
-/**
- * Format volunteer category enum for display
- *
- * Converts database enum format to human-readable labels:
- * - GENERAL → General
- * - KIDS_MINISTRY → Kids Ministry
- * - AV_TECH → AV Tech
- *
- * @param category - Enum value from VOLUNTEER_CATEGORY_OPTIONS
- * @returns Formatted display label
- */
-export function formatVolunteerCategoryLabel(category: string): string {
-  return category
-    .split("_")
-    .map(word => word.charAt(0) + word.slice(1).toLowerCase())
-    .join(" ");
-}

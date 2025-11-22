@@ -60,12 +60,10 @@ interface VolunteerDetailClientProps {
       };
     }>;
   };
-  slug: string;
 }
 
 export function VolunteerDetailClient({
   volunteer,
-  slug,
 }: VolunteerDetailClientProps) {
   const [selectedTab, setSelectedTab] = useState("overview");
 
@@ -109,7 +107,7 @@ export function VolunteerDetailClient({
 
         {/* Tab content */}
         <TabsContent value="overview" className="mt-6">
-          <VolunteerOverviewTab volunteer={volunteer} slug={slug} />
+          <VolunteerOverviewTab volunteer={volunteer} />
         </TabsContent>
 
         <TabsContent value="shifts" className="mt-6">

@@ -52,7 +52,7 @@ export default async function ChurchVolunteersPage({
   });
 
   // Calculate tab counts
-  const pendingCount = volunteers.filter((v) => v.status === "PENDING").length;
+  const pendingCount = volunteers.filter((v) => v.status === "PENDING_APPROVAL").length;
   const allCount = volunteers.filter((v) =>
     ["ACTIVE", "INACTIVE"].includes(v.status)
   ).length;

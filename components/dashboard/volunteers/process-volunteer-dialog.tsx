@@ -64,7 +64,7 @@ interface ProcessVolunteerDialogProps {
       name: string;
       email: string | null;
       phone: string | null;
-    };
+    } | null;
   };
   slug: string;
 }
@@ -144,16 +144,16 @@ export function ProcessVolunteerDialog({
               <div>
                 <Label className="text-xs text-muted-foreground">Name</Label>
                 <p className="text-sm font-medium">
-                  {volunteer.churchMember.name}
+                  {volunteer.churchMember?.name || "No name"}
                 </p>
               </div>
-              {volunteer.churchMember.email && (
+              {volunteer.churchMember?.email && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Email</Label>
                   <p className="text-sm">{volunteer.churchMember.email}</p>
                 </div>
               )}
-              {volunteer.churchMember.phone && (
+              {volunteer.churchMember?.phone && (
                 <div>
                   <Label className="text-xs text-muted-foreground">Phone</Label>
                   <p className="text-sm">{volunteer.churchMember.phone}</p>

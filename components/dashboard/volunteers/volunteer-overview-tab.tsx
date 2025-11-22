@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { EditVolunteerDialog } from "./edit-volunteer-dialog";
-import { IconEdit, IconPhone, IconMail, IconMapPin, IconSend } from "@tabler/icons-react";
+import { IconPhone, IconMail, IconMapPin, IconSend } from "@tabler/icons-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import type { Volunteer } from "@/lib/generated/prisma";
@@ -38,14 +36,11 @@ interface VolunteerOverviewTabProps {
       address: string | null;
     };
   };
-  slug: string;
 }
 
 export function VolunteerOverviewTab({
   volunteer,
-  slug,
 }: VolunteerOverviewTabProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Background check status color mapping
   const bgCheckStatusColor = {
@@ -74,18 +69,10 @@ export function VolunteerOverviewTab({
     <div className="grid gap-6 md:grid-cols-2">
       {/* Profile Info Card */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+        <CardHeader>
           <CardTitle className="text-base font-medium">
             Profile Information
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsEditDialogOpen(true)}
-          >
-            <IconEdit className="mr-2 h-4 w-4" />
-            Edit
-          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
@@ -276,14 +263,6 @@ export function VolunteerOverviewTab({
           </CardContent>
         </Card>
       )}
-
-      {/* Edit Dialog */}
-      <EditVolunteerDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        volunteer={volunteer}
-        slug={slug}
-      />
     </div>
   );
 }

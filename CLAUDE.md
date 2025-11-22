@@ -22,6 +22,43 @@
 
 ---
 
+## Git Worktree Development
+
+**This project uses git worktrees for feature isolation.** Each feature (prayer, volunteer, tech-debt, etc.) has its own worktree with isolated database and git history.
+
+### Dependency Management
+
+**CRITICAL:** Each worktree maintains its own `node_modules`. Do NOT use pnpm workspaces (they break Next.js/Turbopack module resolution in sibling directories).
+
+**After merging PRs to main:**
+
+```bash
+# In the worktree where you merged changes
+pnpm install
+```
+
+**After merging main into a feature worktree:**
+
+```bash
+# In the feature worktree
+pnpm install
+```
+
+**Why independent node_modules:**
+
+- ✅ Next.js/Turbopack module resolution works correctly
+- ✅ Each worktree can have different dependency versions during development
+- ✅ Standard git worktree pattern
+- ❌ Small disk overhead (acceptable tradeoff)
+
+**Preventing dependency drift:**
+
+- Always run `pnpm install` after merging
+- Check `package.json` for changes in PR reviews
+- If TypeScript errors appear after merge, run `pnpm install`
+
+---
+
 ## Commands
 
 ```bash

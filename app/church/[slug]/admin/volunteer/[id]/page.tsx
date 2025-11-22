@@ -42,7 +42,7 @@ export default async function VolunteerDetailPage({ params }: PageProps) {
         label: "Back",
       }}
     >
-      <VolunteerDetailClient volunteer={volunteer} slug={slug} />
+      <VolunteerDetailClient volunteer={volunteer} />
     </PageContainer>
   );
 }

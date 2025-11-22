@@ -23,38 +23,6 @@ import { useRouter } from "next/navigation";
 import type { VolunteerWithRelations } from "./volunteers-client";
 
 /**
- * Background Check Badge Component
- *
- * Displays a color-coded badge based on background check status
- */
-function BackgroundCheckBadge({ status }: { status: string }) {
-  const variants: Record<
-    string,
-    "default" | "secondary" | "destructive" | "outline"
-  > = {
-    CLEARED: "default",
-    IN_PROGRESS: "secondary",
-    NOT_STARTED: "outline",
-    FLAGGED: "destructive",
-    EXPIRED: "destructive",
-  };
-
-  const labels: Record<string, string> = {
-    CLEARED: "Cleared",
-    IN_PROGRESS: "In Progress",
-    NOT_STARTED: "Not Started",
-    FLAGGED: "Flagged",
-    EXPIRED: "Expired",
-  };
-
-  return (
-    <Badge variant={variants[status] || "outline"} className="text-xs">
-      {labels[status] || status}
-    </Badge>
-  );
-}
-
-/**
  * Actions Column Component
  *
  * Renders dropdown menu with View Profile and Delete actions

@@ -7,6 +7,7 @@ import { ApiResponse } from "@/lib/types";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { volunteerSchema, type VolunteerSchemaType } from "@/lib/zodSchemas";
+import type { VolunteerStatus, BackgroundCheckStatus, VolunteerCategoryType } from "@/lib/generated/prisma";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -165,7 +166,7 @@ export async function createVolunteer(
         },
       });
 
-      // Create category assignments (always at least GENERAL due to schema default)
+      // Create category assignments (always at least OTHER due to schema default)
       await tx.volunteerCategory.createMany({
         data: validatedData.categories.map(category => ({
           volunteerId: newVolunteer.id,
@@ -585,12 +586,12 @@ export async function processVolunteer(
   }
 
   try {
-    // 5. Find volunteer and verify they belong to this organization + are PENDING
+    // 5. Find volunteer and verify they belong to this organization + are PENDING_APPROVAL
     const volunteer = await prisma.volunteer.findFirst({
       where: {
         id: volunteerId,
         organizationId: organization.id, // Multi-tenant isolation
-        status: "PENDING",
+        status: "PENDING_APPROVAL",
       },
       include: {
         churchMember: true,
@@ -608,14 +609,14 @@ export async function processVolunteer(
     await prisma.$transaction(async tx => {
       // Update volunteer status to ACTIVE
       const updateData: {
-        status: string;
-        backgroundCheckStatus?: string;
+        status: VolunteerStatus;
+        backgroundCheckStatus?: BackgroundCheckStatus;
       } = {
         status: "ACTIVE",
       };
 
       if (backgroundCheckStatus) {
-        updateData.backgroundCheckStatus = backgroundCheckStatus;
+        updateData.backgroundCheckStatus = backgroundCheckStatus as BackgroundCheckStatus;
       }
 
       await tx.volunteer.update({
@@ -636,7 +637,7 @@ export async function processVolunteer(
         data: categories.map(category => ({
           volunteerId: volunteerId,
           organizationId: organization.id,
-          category: category,
+          category: category as VolunteerCategoryType,
         })),
       });
     });

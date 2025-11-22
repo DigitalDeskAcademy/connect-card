@@ -206,7 +206,7 @@ export const backgroundCheckStatuses = [
 
 // Volunteer category types enum
 export const volunteerCategoryTypes = [
-  "GENERAL", // Default category for all volunteers (interest expressed, not yet assigned)
+  "GENERAL",
   "GREETER",
   "USHER",
   "KIDS_MINISTRY",
@@ -215,7 +215,7 @@ export const volunteerCategoryTypes = [
   "HOSPITALITY",
   "AV_TECH",
   "PRAYER_TEAM",
-  "OTHER", // Catch-all for ministries not listed above
+  "OTHER",
 ] as const;
 
 // Availability type enum
@@ -295,11 +295,8 @@ export const volunteerSchema = z.object({
     .max(1000, { message: "Notes too long" })
     .nullable()
     .optional(),
-  // Categories: At least one required (defaults to GENERAL if not specified)
-  categories: z
-    .array(z.enum(volunteerCategoryTypes))
-    .min(1, { message: "At least one category is required" })
-    .default(["GENERAL"]),
+  // Categories is required but can be empty array - defaults provided in forms
+  categories: z.array(z.enum(volunteerCategoryTypes)),
 });
 
 // Serving opportunity schema (create/update)
