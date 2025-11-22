@@ -160,6 +160,27 @@ async function generateSignedImageUrl(imageKey: string): Promise<string> {
       return "";
     }
 
+    // DEMO MODE: Serve local test images for demo/test image keys
+    // This allows testing without S3 by using local public images
+    if (imageKey.startsWith("demo/") || imageKey.startsWith("test/")) {
+      // Map demo/test keys to actual test images in /public
+      const testImages = [
+        "/connect-card-examples/Connect-Card-Test-01.png",
+        "/connect-card-examples/Connect-Card-Test-02.png",
+        "/connect-card-examples/Connect-Card-Test-03.png",
+      ];
+
+      // Cycle through test images based on key name
+      const hash = imageKey.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const imageIndex = hash % testImages.length;
+
+      console.log(
+        `[DEMO MODE] Serving local test image for key: ${imageKey} -> ${testImages[imageIndex]}`
+      );
+      return testImages[imageIndex];
+    }
+
+    // PRODUCTION MODE: Generate signed S3 URL
     const command = new GetObjectCommand({
       Bucket: env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES,
       Key: imageKey,
