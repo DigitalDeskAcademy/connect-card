@@ -78,7 +78,9 @@ test.describe("Connect Card Batches - Basic Functionality", () => {
     console.log("=== Verifying Card Assignments ===");
 
     // Navigate to Analytics tab to see card counts
-    const analyticsTab = page.locator('button[role="tab"]:has-text("Analytics")');
+    const analyticsTab = page.locator(
+      'button[role="tab"]:has-text("Analytics")'
+    );
     await analyticsTab.click();
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(2000);
@@ -110,7 +112,9 @@ test.describe("Connect Card Batches - Basic Functionality", () => {
     expect(showsCardCounts).toBe(true);
   });
 
-  test("BASIC: Verify Review Cards link exists on PENDING batches", async ({ page }) => {
+  test("BASIC: Verify Review Cards link exists on PENDING batches", async ({
+    page,
+  }) => {
     console.log("=== Verifying Review Cards Link ===");
 
     // Navigate to Batches tab
@@ -123,8 +127,12 @@ test.describe("Connect Card Batches - Basic Functionality", () => {
     const reviewLink = page.locator('a:has-text("Review Cards")');
     const viewLink = page.locator('a:has-text("View Batch")');
 
-    const hasReviewLink = await reviewLink.isVisible({ timeout: 3000 }).catch(() => false);
-    const hasViewLink = await viewLink.isVisible({ timeout: 3000 }).catch(() => false);
+    const hasReviewLink = await reviewLink
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
+    const hasViewLink = await viewLink
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
 
     console.log(`Review Cards link: ${hasReviewLink ? "✅" : "❌"}`);
     console.log(`View Batch link: ${hasViewLink ? "✅" : "❌"}`);
@@ -147,9 +155,15 @@ test.describe("Connect Card Batches - Basic Functionality", () => {
     const pendingButton = page.locator('button:has-text("Pending")');
     const completedButton = page.locator('button:has-text("Completed")');
 
-    const hasAll = await allButton.isVisible({ timeout: 3000 }).catch(() => false);
-    const hasPending = await pendingButton.isVisible({ timeout: 3000 }).catch(() => false);
-    const hasCompleted = await completedButton.isVisible({ timeout: 3000 }).catch(() => false);
+    const hasAll = await allButton
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
+    const hasPending = await pendingButton
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
+    const hasCompleted = await completedButton
+      .isVisible({ timeout: 3000 })
+      .catch(() => false);
 
     console.log(`Filter buttons:`);
     console.log(`  - All: ${hasAll ? "✅" : "❌"}`);
@@ -176,13 +190,16 @@ test.describe("Connect Card Batches - Data Integrity", () => {
     await page.waitForLoadState("networkidle");
 
     // Check Analytics for total cards
-    const analyticsTab = page.locator('button[role="tab"]:has-text("Analytics")');
+    const analyticsTab = page.locator(
+      'button[role="tab"]:has-text("Analytics")'
+    );
     await analyticsTab.click();
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(2000);
 
     const analyticsText = await page.textContent("body");
-    const hasAnalytics = analyticsText?.includes("Total") || analyticsText?.includes("cards");
+    const hasAnalytics =
+      analyticsText?.includes("Total") || analyticsText?.includes("cards");
 
     console.log(`Analytics data present: ${hasAnalytics ? "✅" : "❌"}`);
 
@@ -193,9 +210,12 @@ test.describe("Connect Card Batches - Data Integrity", () => {
     await page.waitForTimeout(1000);
 
     const batchText = await page.textContent("body");
-    const batchesShowCards = batchText?.includes("cards") || batchText?.includes("card");
+    const batchesShowCards =
+      batchText?.includes("cards") || batchText?.includes("card");
 
-    console.log(`Batches show card assignments: ${batchesShowCards ? "✅" : "❌"}`);
+    console.log(
+      `Batches show card assignments: ${batchesShowCards ? "✅" : "❌"}`
+    );
 
     // Both should show data (indicates cards are assigned)
     expect(hasAnalytics && batchesShowCards).toBe(true);

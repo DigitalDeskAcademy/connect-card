@@ -408,9 +408,7 @@ export function PrayerBatchDetailClient({
                     Assigning...
                   </>
                 ) : (
-                  <>
-                    Assign Selected ({selectedCount})
-                  </>
+                  <>Assign Selected ({selectedCount})</>
                 )}
               </Button>
 
@@ -425,9 +423,7 @@ export function PrayerBatchDetailClient({
                     Assigning...
                   </>
                 ) : (
-                  <>
-                    Assign All ({batch.prayerRequests.length})
-                  </>
+                  <>Assign All ({batch.prayerRequests.length})</>
                 )}
               </Button>
             </div>
@@ -511,7 +507,8 @@ export function PrayerBatchDetailClient({
           </div>
 
           {/* Pagination */}
-          {batch.prayerRequests.length > table.getState().pagination.pageSize && (
+          {batch.prayerRequests.length >
+            table.getState().pagination.pageSize && (
             <div className="flex items-center justify-between mt-4">
               <div className="text-sm text-muted-foreground">
                 Showing{" "}

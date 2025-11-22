@@ -4,13 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Package,
-  MapPin,
-  Calendar,
-  FileText,
-  User,
-} from "lucide-react";
+import { Package, MapPin, Calendar, FileText, User } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
@@ -133,7 +127,9 @@ export function PrayerBatchesClient({
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No prayer batches yet</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              No prayer batches yet
+            </h3>
             <p className="text-sm text-muted-foreground max-w-md">
               Prayer batches are automatically created daily when connect cards
               with prayer requests are submitted. Check back after processing

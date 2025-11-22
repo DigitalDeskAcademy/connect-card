@@ -24,45 +24,28 @@ Complete feature workflow: build → commit → conflict forecast → PR → mer
 
 **Step 1: Check Schema Sync**
 
+Check if schema differs from main, and offer to sync if needed:
+
 ```bash
-# Compare with main worktree schema
-MAIN_SCHEMA="../main/prisma/schema.prisma"
+# Check schema sync (execute step-by-step, not as single block)
+diff -q prisma/schema.prisma ../main/prisma/schema.prisma
+```
 
-if [ -f "$MAIN_SCHEMA" ]; then
-  if diff -q prisma/schema.prisma "$MAIN_SCHEMA" > /dev/null 2>&1; then
-    echo "✓ Schema in sync with main"
-  else
-    echo ""
-    echo "⚠️  SCHEMA DRIFT DETECTED"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Your schema differs from main branch."
-    echo "This will cause merge conflicts when creating PR."
-    echo ""
-    echo "Differences:"
-    diff prisma/schema.prisma "$MAIN_SCHEMA" | head -20
-    echo ""
-    read -p "Sync schema from main? [y/N]: " -n 1 -r
-    echo
+If schemas differ, show the differences and ask user if they want to sync:
 
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-      echo "📋 Copying schema from main..."
-      cp "$MAIN_SCHEMA" prisma/schema.prisma
+```bash
+# Show differences
+diff prisma/schema.prisma ../main/prisma/schema.prisma | head -30
+```
 
-      echo "🔄 Regenerating Prisma client..."
-      pnpm prisma generate > /dev/null 2>&1
+If user wants to sync:
 
-      echo "✅ Schema synced successfully"
-      echo ""
-    else
-      echo "⚠️  Continuing with schema drift"
-      echo "   You may encounter merge conflicts in your PR."
-      echo ""
-    fi
-  fi
-else
-  echo "⚠️  Main worktree not found at ../main"
-  echo "   Skipping schema sync check"
-fi
+```bash
+# Copy schema from main
+cp ../main/prisma/schema.prisma prisma/schema.prisma
+
+# Regenerate Prisma client
+pnpm prisma generate
 ```
 
 **Why This Matters:**
@@ -160,21 +143,28 @@ Should show clean working tree.
 
 **Step 8: Analyze Potential Conflicts**
 
-```bash
-# Get files changed in current branch
-git diff main...HEAD --name-only > /tmp/current-changes.txt
+Get files changed in current branch:
 
-# Check each other worktree for overlaps
+```bash
+git diff main...HEAD --name-only > /tmp/current-changes.txt
+```
+
+Check other worktrees:
+
+```bash
 git worktree list
 ```
 
-For each other worktree:
+For each other worktree, check for overlaps:
 
 ```bash
+# Save current directory
 cd /path/to/other-worktree
+
+# Get files changed in that worktree
 git diff main...HEAD --name-only > /tmp/other-changes.txt
 
-# Find overlaps
+# Find overlapping files
 comm -12 <(sort /tmp/current-changes.txt) <(sort /tmp/other-changes.txt)
 ```
 
@@ -412,22 +402,20 @@ If no other worktrees found, skip to Stage 8.
 
 **Step 19.5: Analyze Each Worktree Status**
 
-For each worktree, check:
+For each worktree, check status (execute commands separately):
 
 ```bash
+# Navigate to worktree
 cd /path/to/other-worktree
 
 # Get branch name
-BRANCH=$(git branch --show-current)
+git branch --show-current
 
 # Count uncommitted files
-UNCOMMITTED=$(git status --short | wc -l)
+git status --short | wc -l
 
 # Check if behind main
-BEHIND=$(git rev-list HEAD..main --count 2>/dev/null || echo "0")
-
-# Store results
-echo "$WORKTREE_NAME|$BRANCH|$UNCOMMITTED|$BEHIND"
+git rev-list HEAD..main --count
 ```
 
 **Step 20: Present Options to User**
@@ -474,27 +462,26 @@ What would you like to do? (1/2/3)
 
 **If Option 1 (Update all clean):**
 
+For each worktree, check if clean and update:
+
 ```bash
-for worktree in <list>; do
-  cd /path/to/worktree
+# Navigate to worktree
+cd /path/to/worktree
 
-  # Check if clean
-  if [ "$(git status --short | wc -l)" = "0" ]; then
-    echo "🔄 Updating $worktree..."
-    git merge main --no-edit
+# Check if clean
+git status --short
 
-    if [ $? -ne 0 ]; then
-      echo "⚠️  Merge conflict in $worktree - skipping"
-      echo "   Resolve manually later with:"
-      echo "   cd /path/to/worktree && git merge main"
-      git merge --abort
-    else
-      echo "✅ $worktree updated successfully"
-    fi
-  else
-    echo "⏭️  Skipping $worktree (has uncommitted changes)"
-  fi
-done
+# If clean (output empty), merge main
+git merge main --no-edit
+```
+
+If merge conflicts occur:
+
+```bash
+# Abort the merge
+git merge --abort
+
+# User will need to resolve manually later
 ```
 
 **If Option 2 (Ask each):**
@@ -978,28 +965,42 @@ echo "   You'll need to update docs manually later."
 
 ### 24.1: Check for Stale References
 
+Search for TODOs related to completed feature:
+
 ```bash
-# Search for TODOs related to completed feature
-STALE_TODOS=$(grep -r "TODO.*<feature-keyword>" docs/ --include="*.md" || echo "none")
+grep -r "TODO.*<feature-keyword>" docs/ --include="*.md"
+```
 
-# Search for "planned" references
-STALE_PLANNED=$(grep -ri "planned.*<feature-keyword>" docs/ --include="*.md" || echo "none")
+Search for "planned" references:
 
-# Search for status markers that should be updated
-STALE_STATUS=$(grep -r "🔄.*<feature-keyword>\|⚠️.*<feature-keyword>" docs/ --include="*.md" || echo "none")
+```bash
+grep -ri "planned.*<feature-keyword>" docs/ --include="*.md"
+```
+
+Search for status markers that should be updated:
+
+```bash
+grep -r "🔄.*<feature-keyword>\|⚠️.*<feature-keyword>" docs/ --include="*.md"
 ```
 
 ### 24.2: Validate Last Updated Dates
 
+Check STATUS.md last updated:
+
 ```bash
-# Check STATUS.md last updated
-STATUS_DATE=$(grep "Last Updated" docs/STATUS.md | cut -d: -f2 | xargs)
+grep "Last Updated" docs/STATUS.md
+```
 
-# Check ROADMAP.md last updated
-ROADMAP_DATE=$(grep "Last Updated" docs/ROADMAP.md | cut -d: -f2 | xargs)
+Check ROADMAP.md last updated:
 
-# Should both be today
-TODAY=$(date +%Y-%m-%d)
+```bash
+grep "Last Updated" docs/ROADMAP.md
+```
+
+Get today's date:
+
+```bash
+date +%Y-%m-%d
 ```
 
 ### 24.3: Validate Feature Status Consistency

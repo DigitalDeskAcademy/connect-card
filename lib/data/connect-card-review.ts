@@ -171,7 +171,9 @@ async function generateSignedImageUrl(imageKey: string): Promise<string> {
       ];
 
       // Cycle through test images based on key name
-      const hash = imageKey.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      const hash = imageKey
+        .split("")
+        .reduce((acc, char) => acc + char.charCodeAt(0), 0);
       const imageIndex = hash % testImages.length;
 
       console.log(
