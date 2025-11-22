@@ -22,6 +22,44 @@
 
 ---
 
+## Worktree Development
+
+**This project uses git worktrees for feature isolation.** Each feature (prayer, volunteer, tech-debt, etc.) has its own worktree with isolated database and git history.
+
+### pnpm Workspace Configuration
+
+**CRITICAL:** All worktrees share a single `node_modules` at the repository root via pnpm workspaces. This prevents dependency drift.
+
+**Setup:** Already configured in `/pnpm-workspace.yaml`
+
+```yaml
+packages:
+  - "main"
+  - "prayer"
+  - "volunteer"
+  - "tech-debt"
+  # Add new worktrees here when created
+```
+
+**Why This Matters:**
+
+- ✅ Zero dependency drift between worktrees
+- ✅ One `pnpm install` updates all worktrees
+- ✅ Smaller disk usage (shared dependencies)
+- ✅ Industry-standard pattern (Vercel, Turborepo)
+
+**When You Create a New Worktree:**
+
+1. Use `/create-worktree <feature-name>` command
+2. Add the worktree folder to `pnpm-workspace.yaml`
+3. Run `pnpm install` at repo root
+
+**After Merging PRs:**
+
+Dependencies are automatically synced via workspace. No manual `pnpm install` needed in individual worktrees.
+
+---
+
 ## Commands
 
 ```bash
@@ -228,29 +266,14 @@ Wait for user to say "commit this" or "ready to commit".
 
 ---
 
-## Git Workflow (Only When User Says "Commit This")
+## Git Workflow
 
-```bash
-# Step 1: Check what changed
-git status
+**For worktree integration:** Use `/plan-integration` command - handles Step 0 (clean main), formatting, building, and staging automatically.
 
-# Step 2: Build to verify
-pnpm build  # MUST pass - verifies all imports exist
+**For regular commits:** Only when user explicitly says "commit this":
 
-# Step 3: Stage EVERYTHING (critical for Vercel)
-git add .
-
-# Step 4: Verify staging
-git status
-
-# Step 5: Commit (pre-commit hook runs format/lint)
-git commit -m "feat: add volunteer creation form"
-
-# Step 6: Push (only if user explicitly asks)
-git push origin branch
-```
-
-**Why `git add .` is critical:** Local build uses uncommitted files, but Vercel only gets committed files. Missing files = production build fails.
+1. Format → Build → Stage → Commit → Push
+2. Always `git add .` (Vercel only sees committed files)
 
 ---
 

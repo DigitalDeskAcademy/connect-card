@@ -544,4 +544,13 @@ import { prisma } from "@/lib/db";
 
 ---
 
-_Last updated: 2025-01-14_
+## Dev-Only File Naming (Never Commit)
+
+**Seeds:** `prisma/seed-demo-{feature}.ts` (e.g., `seed-demo-volunteer.ts`)
+**Images:** `public/{feature}-*.png` (e.g., `volunteer-form.png`, `prayer-ui.png`, `ai-session-bug.png`)
+
+These patterns are gitignored. Use them for AI sessions, testing, and local dev. Production seed is `seed-demo.ts` in main.
+
+---
+
+_Last updated: 2025-11-16_

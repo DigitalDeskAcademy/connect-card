@@ -59,7 +59,7 @@ export function AgencyNavSidebar({
                 {/* Following existing pattern - CSS truncate like AppSidebar */}
                 <span
                   className={`font-semibold truncate max-w-[180px] block ${
-                    brandName === "SideCar." ? "text-[1.75rem]" : "text-base"
+                    brandName === "Church Connect" ? "text-xl" : "text-base"
                   }`}
                 >
                   {brandName}

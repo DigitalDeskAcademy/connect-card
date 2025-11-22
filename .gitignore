@@ -79,3 +79,30 @@ public/*-screenshot-*.png
 
 # But DO track the directory structure
 !.worktree/*/docs/.gitkeep
+
+# ========================================
+# DEV-ONLY FILES (Never Commit)
+# ========================================
+
+# Feature-specific demo seeds (use seed-demo.ts in main for production)
+# Naming: seed-demo-{feature}.ts (e.g., seed-demo-volunteer.ts, seed-demo-prayer.ts)
+prisma/seed-demo-*.ts
+
+# AI session images and screenshots
+# Naming patterns for images to share with Claude:
+#   - prayer-*.png (prayer feature screenshots)
+#   - volunteer-*.png (volunteer feature screenshots)
+#   - ai-session-*.png (general AI session images)
+#   - test-*.png (test/debug screenshots)
+#   - demo-*.png (demo data screenshots)
+#   - screenshot-*.png (general screenshots)
+public/prayer-*.png
+public/volunteer-*.png
+public/ai-session-*.png
+public/test-*.png
+public/demo-*.png
+public/screenshot-*.png
+
+# Temporary development assets
+public/temp/
+public/dev-assets/

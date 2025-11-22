@@ -162,9 +162,9 @@ export function CourseListingPage({
               <>
                 <div className="mb-4 p-4 bg-muted rounded-lg">
                   <p className="text-sm text-muted-foreground">
-                    Platform courses are created and maintained by SideCar.
-                    These courses are available to all your clients but cannot
-                    be edited.
+                    Platform courses are created and maintained by Church
+                    Connect. These courses are available to all your clients but
+                    cannot be edited.
                   </p>
                 </div>
                 {renderCourseGrid(platformCourses)}

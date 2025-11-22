@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/sidebar";
 import { NavMain } from "@/components/sidebar/nav-main";
 import { Button } from "@/components/ui/button";
-import { IconHome, IconStar, IconCurrencyDollar } from "@tabler/icons-react";
+import { IconHome, IconStar } from "@tabler/icons-react";
 import Image from "next/image";
 
 export function PublicSidebar() {
@@ -68,11 +68,11 @@ export function PublicSidebar() {
               url: "/features",
               icon: IconStar,
             },
-            {
-              title: "Pricing",
-              url: "/pricing",
-              icon: IconCurrencyDollar,
-            },
+            // {
+            //   title: "Pricing",
+            //   url: "/pricing",
+            //   icon: IconCurrencyDollar,
+            // }, // Hidden for demo
           ]
         : [
             {
@@ -85,11 +85,11 @@ export function PublicSidebar() {
               url: "/features",
               icon: IconStar,
             },
-            {
-              title: "Pricing",
-              url: "/pricing",
-              icon: IconCurrencyDollar,
-            },
+            // {
+            //   title: "Pricing",
+            //   url: "/pricing",
+            //   icon: IconCurrencyDollar,
+            // }, // Hidden for demo
           ];
 
   // Filter out Pricing on agency pages for unauthenticated users

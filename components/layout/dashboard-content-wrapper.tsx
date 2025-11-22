@@ -105,7 +105,7 @@ export function DashboardContentWrapper({
           <div className="@container/main flex flex-col h-full">{children}</div>
         </div>
 
-        {/* SideCar AI assistant sidebar - integrated into layout */}
+        {/* Church Connect AI assistant sidebar - integrated into layout */}
         <SideCarAISidebar
           isOpen={isAiSidebarOpen}
           onClose={() => setIsAiSidebarOpen(false)}

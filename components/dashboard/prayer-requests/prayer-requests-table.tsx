@@ -30,7 +30,7 @@ export async function PrayerRequestsTable({ slug }: PrayerRequestsTableProps) {
   // 3. Fetch organization locations for create dialog
   const locations = await getOrganizationLocations(organization.id);
 
-  // 3. Transform to list items for table
+  // 4. Transform to list items for table
   const listItems: PrayerRequestListItem[] = prayerRequests.map(request => ({
     id: request.id,
     request: request.request,
@@ -54,6 +54,7 @@ export async function PrayerRequestsTable({ slug }: PrayerRequestsTableProps) {
       pageSize={10}
       slug={slug}
       locations={locations}
+      teamMembers={[]} // Not used in current implementation
     />
   );
 }

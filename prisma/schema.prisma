@@ -50,6 +50,7 @@ model Organization {
   locations             Location[]
   prayerRequests        PrayerRequest[]
   volunteerCategories   VolunteerCategory[]
+  prayerBatches         PrayerBatch[]
 
   @@map("organization")
 }
@@ -75,6 +76,7 @@ model Location {
   connectCardBatches ConnectCardBatch[]
   users              User[]
   prayerRequests     PrayerRequest[]
+  prayerBatches      PrayerBatch[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -178,6 +180,7 @@ model User {
   organization      Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   defaultLocation   Location?     @relation(fields: [defaultLocationId], references: [id])
   assignedPrayerRequests PrayerRequest[] @relation("AssignedPrayerRequests")
+  assignedPrayerBatches  PrayerBatch[]   @relation("AssignedPrayerBatches")
   assignedConnectCards   ConnectCard[]   @relation("AssignedConnectCards")
 
   @@index([defaultLocationId])
@@ -1389,6 +1392,8 @@ model PrayerRequest {
   /// Source tracking
   /// Link to originating connect card (if from card scan)
   connectCardId  String?
+  /// Prayer batch this request belongs to
+  prayerBatchId  String?
   /// Name of person submitting request (if not from connect card)
   submittedBy    String?
   /// Submitter email for follow-up communication
@@ -1418,11 +1423,13 @@ model PrayerRequest {
   organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   location       Location?           @relation(fields: [locationId], references: [id], onDelete: SetNull)
   connectCard    ConnectCard?        @relation(fields: [connectCardId], references: [id], onDelete: SetNull)
+  prayerBatch    PrayerBatch?        @relation(fields: [prayerBatchId], references: [id], onDelete: SetNull)
   assignedTo     User?               @relation("AssignedPrayerRequests", fields: [assignedToId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, createdAt])
   @@index([organizationId, locationId])
   @@index([organizationId, status])
+  @@index([prayerBatchId])
   @@index([assignedToId])
   @@map("prayer_request")
 }
@@ -1453,4 +1460,45 @@ enum PrayerRequestStatus {
   ANSWERED
   /// Archived (no longer active)
   ARCHIVED
+}
+
+/// Prayer batch for grouping daily prayer requests
+/// Groups prayers collected on a specific day for assignment to prayer team
+model PrayerBatch {
+  id             String      @id @default(cuid())
+  /// Organization that owns this batch
+  organizationId String
+  /// Campus/location where prayers originated (null for multi-campus batches)
+  locationId     String?
+  /// Batch display name (e.g., "Monday Nov 18, 2025 Prayers")
+  name           String
+  /// Date this batch represents (for daily grouping)
+  batchDate      DateTime
+  /// Prayer team member assigned to this batch
+  assignedToId   String?
+  /// Denormalized name for display (performance optimization)
+  assignedToName String?
+  /// Number of prayers in this batch (denormalized for performance)
+  prayerCount    Int         @default(0)
+  /// Batch processing status
+  status         BatchStatus @default(PENDING)
+  /// Date when batch was completed (all prayers marked as prayed)
+  completedAt    DateTime?
+  /// Optional batch notes
+  notes          String?
+  /// Batch creation timestamp
+  createdAt      DateTime    @default(now())
+  /// Last update timestamp
+  updatedAt      DateTime    @updatedAt
+  /// Relations
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  location       Location?    @relation(fields: [locationId], references: [id])
+  assignedTo     User?        @relation("AssignedPrayerBatches", fields: [assignedToId], references: [id], onDelete: SetNull)
+  prayerRequests PrayerRequest[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, locationId])
+  @@index([organizationId, batchDate])
+  @@index([batchDate])
+  @@map("prayer_batch")
 }

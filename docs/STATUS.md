@@ -2,7 +2,7 @@
 
 **Current Phase:** Phase 3 (Production Launch Prep)
 **Production Ready:** ⚠️ NO - Review queue complete, needs production environment setup
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-11-22
 
 > 🎯 **PROJECT ORIGIN**: Forked from SideCar Platform (IV therapy clinic SaaS) → Rebranded to Church Connect Card
 > **Core Product:** Church visitor engagement platform with AI-powered connect card scanning
@@ -38,25 +38,32 @@
 
 ### Prayer Request Management ✅ COMPLETE (Nov 2025)
 
-**Multi-tenant prayer request tracking with privacy controls**
+**Multi-tenant prayer request tracking with privacy controls and batch assignment**
 
 - TanStack Table UI with search, filter, sort, pagination
 - Privacy levels (Public, Members Only, Leadership, Private)
 - Auto-categorization (8 categories) + sensitive keyword detection
+- **Prayer batch management** - Bulk assignment to team members with batch tracking
+- Batch detail UI with row selection and bulk actions
 - Multi-tenant security verified (E2E tests passing)
 - Git worktree isolation with dedicated database
 
 **See `/docs/features/prayer-management/vision.md` for full details**
 
-### Volunteer Onboarding ✅ COMPLETE (Nov 2025)
+### Volunteer Onboarding Pipeline ✅ COMPLETE (Nov 2025)
 
-**Automated volunteer intake from connect cards**
+**Automated volunteer inquiry routing (bridges connect cards → Planning Center)**
 
-- Volunteer directory with TanStack Table
-- Skills management with certifications and expiration tracking
-- Assignment workflow (route inquiries to ministry leaders)
-- Background check tracking
-- NOT a scheduling system (churches use Planning Center)
+- Connect card volunteer interest extraction (AI Vision) ✅
+- Assignment workflow (route inquiries to ministry leaders by category) ✅
+- SMS automation toggle for onboarding kickoff ✅
+- Team volunteer category assignments (Hospitality, Kids, Worship, etc.) ✅
+- Volunteer directory with TanStack Table UI ✅
+- Skills management (certifications, verification dates) ✅
+- E2E test suite (8 tests passing) ✅
+- ⚠️ **Known Issue:** EditVolunteerDialog temporarily disabled (TypeScript fix pending)
+
+**Strategic Position:** Feed Planning Center, don't replace it (NOT a volunteer management system)
 
 **See `/docs/features/volunteer-management/vision.md` for full details**
 
@@ -139,19 +146,46 @@
 
 - ⚠️ Using `prisma db push` for development (need proper migrations for production)
 - ⚠️ Limited inline code documentation (acceptable for MVP)
+- ⚠️ **EditVolunteerDialog disabled** - TypeScript type inference issue with Zod + React Hook Form
+  - Schema: `categories` field changed from `.default([])` to required to fix inference
+  - CREATE form works, EDIT form has unresolved type error
+  - Edit button disabled until fix implemented
+  - Follow-up PR needed
 
 ---
 
 ## 🎯 Recent Completions (Last 30 Days)
 
-### Volunteer Assignment Workflow ✅ COMPLETED (Nov 15, 2025)
+### Prayer Batch Management ✅ COMPLETED (Nov 22, 2025)
 
-- Connect card volunteer routing to ministry leaders
-- Skills management UI with certification tracking
-- Assignment workflow with automated onboarding kickoff
-- E2E test suite (7 test cases passing)
+**Bulk prayer assignment with batch tracking and analytics**
 
-**PR #26** - `feat: volunteer assignment workflow with category management`
+- Prayer batch creation with date-based naming
+- Batch detail UI with TanStack Table (row selection, bulk actions)
+- Bulk assignment server actions with Arcjet rate limiting
+- Assign selected prayers or entire batch to team members
+- Multi-tenant organizationId scoping for all queries
+- E2E test suite (10 tests, 8 passing)
+- Optimistic UI updates for assignment workflow
+
+**PR #30** - `feat: add prayer batch management with bulk assignment`
+**Merged:** Nov 22, 2025 (squash merge)
+
+### Volunteer Onboarding Pipeline ✅ COMPLETED (Nov 20, 2025)
+
+**Complete volunteer inquiry routing system integrated with connect cards**
+
+- Connect card volunteer interest extraction (AI Vision)
+- Assignment workflow (route inquiries to ministry leaders by category)
+- Volunteer directory with TanStack Table UI (search, filter, sort, pagination)
+- Skills management (certifications, verification dates, expiration tracking)
+- SMS automation toggle for onboarding kickoff
+- E2E test suite (8 tests passing)
+- Multi-tenant security verified with location-based filtering
+- ⚠️ Known Issue: EditVolunteerDialog temporarily disabled (TypeScript fix pending)
+
+**PR #29** - `feat: volunteer onboarding pipeline`
+**Merged:** Nov 20, 2025 (squash merge)
 
 ### Prayer Management MVP ✅ COMPLETED (Nov 14, 2025)
 
@@ -198,6 +232,6 @@
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-11-22
 **See `/docs/ROADMAP.md` for feature priorities and timeline**
 **See `/docs/features/{feature}/vision.md` for detailed feature planning**

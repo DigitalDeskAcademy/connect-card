@@ -28,7 +28,7 @@ interface iAppProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function PlatformNavSidebar({
-  brandName = "SideCar.",
+  brandName = "Church Connect",
   homeUrl = "/",
   ...props
 }: iAppProps) {
@@ -45,7 +45,7 @@ export function PlatformNavSidebar({
                 {/* Following existing pattern - CSS truncate like CourseSidebar */}
                 <span
                   className={`font-semibold truncate max-w-[180px] block group-data-[collapsible=icon]:invisible ${
-                    brandName === "SideCar." ? "text-[1.75rem]" : "text-base"
+                    brandName === "Church Connect" ? "text-xl" : "text-base"
                   }`}
                 >
                   {brandName}
