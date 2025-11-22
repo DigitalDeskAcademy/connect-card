@@ -206,6 +206,7 @@ export const backgroundCheckStatuses = [
 
 // Volunteer category types enum
 export const volunteerCategoryTypes = [
+  "GENERAL",
   "GREETER",
   "USHER",
   "KIDS_MINISTRY",
