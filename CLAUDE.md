@@ -22,44 +22,6 @@
 
 ---
 
-## Worktree Development
-
-**This project uses git worktrees for feature isolation.** Each feature (prayer, volunteer, tech-debt, etc.) has its own worktree with isolated database and git history.
-
-### pnpm Workspace Configuration
-
-**CRITICAL:** All worktrees share a single `node_modules` at the repository root via pnpm workspaces. This prevents dependency drift.
-
-**Setup:** Already configured in `/pnpm-workspace.yaml`
-
-```yaml
-packages:
-  - "main"
-  - "prayer"
-  - "volunteer"
-  - "tech-debt"
-  # Add new worktrees here when created
-```
-
-**Why This Matters:**
-
-- ✅ Zero dependency drift between worktrees
-- ✅ One `pnpm install` updates all worktrees
-- ✅ Smaller disk usage (shared dependencies)
-- ✅ Industry-standard pattern (Vercel, Turborepo)
-
-**When You Create a New Worktree:**
-
-1. Use `/create-worktree <feature-name>` command
-2. Add the worktree folder to `pnpm-workspace.yaml`
-3. Run `pnpm install` at repo root
-
-**After Merging PRs:**
-
-Dependencies are automatically synced via workspace. No manual `pnpm install` needed in individual worktrees.
-
----
-
 ## Commands
 
 ```bash

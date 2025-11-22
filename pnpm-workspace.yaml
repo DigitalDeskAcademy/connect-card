@@ -1,13 +1,3 @@
-# pnpm Workspace Configuration
-# Ensures all worktrees share the same node_modules to prevent dependency drift
-
-packages:
-  - "."
-  - "../prayer"
-  - "../volunteer"
-  - "../tech-debt"
-  # Add new worktrees here when created
-
 ignoredBuiltDependencies:
   - "@prisma/client"
   - "@prisma/engines"
