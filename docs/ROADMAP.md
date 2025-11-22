@@ -36,6 +36,22 @@ AI-powered connect card scanning with Claude Vision API → Upload, extract, rev
 
 See `/docs/features/connect-cards/vision.md` for full details.
 
+### Phase 2.5: Prayer & Volunteer Management (Nov 2025) ✅ COMPLETE
+
+**Prayer Request Management:**
+
+- Multi-tenant prayer request tracking with privacy controls
+- Prayer batch management with bulk assignment workflow
+- Auto-categorization and sensitive keyword detection
+- See `/docs/features/prayer-management/vision.md`
+
+**Volunteer Onboarding Pipeline:**
+
+- Connect card volunteer interest extraction and routing
+- Assignment workflow to ministry leaders by category
+- Skills management and background check tracking
+- See `/docs/features/volunteer-management/vision.md`
+
 ---
 
 ## 🚀 Current Phase: Phase 3 (Production Launch - Nov 2025)
@@ -83,16 +99,11 @@ See `/docs/features/connect-cards/vision.md` for full details.
 **GHL Integration** - SMS/email campaigns for visitor follow-up
 **See `/docs/features/communication/vision.md` (coming soon)**
 
-### Phase 6: Prayer & Volunteer Management (Mar 2026)
-
-- **Prayer Requests** - See `/docs/features/prayer-management/vision.md`
-- **Volunteer Onboarding** - See `/docs/features/volunteer-management/vision.md`
-
-### Phase 7: Analytics & Insights (Apr 2026)
+### Phase 6: Analytics & Insights (Apr 2026)
 
 **Visitor trends, retention metrics, predictive insights**
 
-### Phase 8: Multi-Location & Scaling (May 2026)
+### Phase 7: Multi-Location & Scaling (May 2026)
 
 **Support 10+ churches with 50,000+ members total**
 
@@ -133,6 +144,6 @@ These features are explicitly **NOT** planned for MVP:
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-11-22
 **See `/docs/STATUS.md` for current working/broken features**
 **See `/docs/features/{feature}/vision.md` for detailed feature planning**

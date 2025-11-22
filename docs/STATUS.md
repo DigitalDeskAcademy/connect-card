@@ -2,7 +2,7 @@
 
 **Current Phase:** Phase 3 (Production Launch Prep)
 **Production Ready:** ⚠️ NO - Review queue complete, needs production environment setup
-**Last Updated:** 2025-11-20
+**Last Updated:** 2025-11-22
 
 > 🎯 **PROJECT ORIGIN**: Forked from SideCar Platform (IV therapy clinic SaaS) → Rebranded to Church Connect Card
 > **Core Product:** Church visitor engagement platform with AI-powered connect card scanning
@@ -38,11 +38,13 @@
 
 ### Prayer Request Management ✅ COMPLETE (Nov 2025)
 
-**Multi-tenant prayer request tracking with privacy controls**
+**Multi-tenant prayer request tracking with privacy controls and batch assignment**
 
 - TanStack Table UI with search, filter, sort, pagination
 - Privacy levels (Public, Members Only, Leadership, Private)
 - Auto-categorization (8 categories) + sensitive keyword detection
+- **Prayer batch management** - Bulk assignment to team members with batch tracking
+- Batch detail UI with row selection and bulk actions
 - Multi-tenant security verified (E2E tests passing)
 - Git worktree isolation with dedicated database
 
@@ -154,6 +156,21 @@
 
 ## 🎯 Recent Completions (Last 30 Days)
 
+### Prayer Batch Management ✅ COMPLETED (Nov 22, 2025)
+
+**Bulk prayer assignment with batch tracking and analytics**
+
+- Prayer batch creation with date-based naming
+- Batch detail UI with TanStack Table (row selection, bulk actions)
+- Bulk assignment server actions with Arcjet rate limiting
+- Assign selected prayers or entire batch to team members
+- Multi-tenant organizationId scoping for all queries
+- E2E test suite (10 tests, 8 passing)
+- Optimistic UI updates for assignment workflow
+
+**PR #30** - `feat: add prayer batch management with bulk assignment`
+**Merged:** Nov 22, 2025 (squash merge)
+
 ### Volunteer Onboarding Pipeline ✅ COMPLETED (Nov 20, 2025)
 
 **Complete volunteer inquiry routing system integrated with connect cards**
@@ -215,6 +232,6 @@
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-11-22
 **See `/docs/ROADMAP.md` for feature priorities and timeline**
 **See `/docs/features/{feature}/vision.md` for detailed feature planning**
