@@ -150,19 +150,6 @@ GoHighLevel, Stripe, Tigris S3, Better Auth integration details
 
 ---
 
-## 🗄️ Archived Documentation
-
-Historical docs moved to `/.archive/docs/`:
-
-- Completed plans (documentation-strategy.md, prayer-management-plan.md)
-- One-time setup guides (worktree-setup.md)
-- Session notes (volunteer-sessions/)
-- Superseded docs (project-overview.md)
-
-**Why archive instead of delete?** Preserve git history and context for future reference.
-
----
-
 ## ✅ Documentation Principles
 
 1. **Single Source of Truth** - Each piece of info exists in ONE place
@@ -177,11 +164,11 @@ Historical docs moved to `/.archive/docs/`:
 
 - ❌ Create new TODO files (use ROADMAP.md)
 - ❌ Duplicate information (link to existing docs)
-- ❌ Leave contradictions (archive old info)
+- ❌ Leave contradictions (delete outdated docs)
 - ❌ Forget to update STATUS.md (should reflect reality)
 - ❌ Put detailed planning in ROADMAP (use feature visions)
 
 ---
 
-**Last Updated:** 2025-11-16
-**Total Files:** 17 (down from 25, 32% reduction)
+**Last Updated:** 2025-11-23
+**Total Files:** 16 (down from 25, 36% reduction)
