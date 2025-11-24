@@ -112,12 +112,16 @@ export async function updateConnectCard(
         prayerRequest: validation.data.prayerRequest,
         assignedLeaderId: validation.data.assignedLeaderId,
         smsAutomationEnabled: validation.data.smsAutomationEnabled,
+        sendMessageToLeader: validation.data.sendMessageToLeader,
+        sendBackgroundCheckInfo: validation.data.sendBackgroundCheckInfo,
         status: "REVIEWED", // Mark as reviewed after correction
         updatedAt: new Date(),
       },
       select: {
         id: true,
         smsAutomationEnabled: true,
+        sendMessageToLeader: true,
+        sendBackgroundCheckInfo: true,
       },
     });
 

@@ -7,7 +7,11 @@ import { ApiResponse } from "@/lib/types";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { volunteerSchema, type VolunteerSchemaType } from "@/lib/zodSchemas";
-import type { VolunteerStatus, BackgroundCheckStatus, VolunteerCategoryType } from "@/lib/generated/prisma";
+import type {
+  VolunteerStatus,
+  BackgroundCheckStatus,
+  VolunteerCategoryType,
+} from "@/lib/generated/prisma";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -616,7 +620,8 @@ export async function processVolunteer(
       };
 
       if (backgroundCheckStatus) {
-        updateData.backgroundCheckStatus = backgroundCheckStatus as BackgroundCheckStatus;
+        updateData.backgroundCheckStatus =
+          backgroundCheckStatus as BackgroundCheckStatus;
       }
 
       await tx.volunteer.update({

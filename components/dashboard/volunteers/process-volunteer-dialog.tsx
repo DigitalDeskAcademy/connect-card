@@ -165,7 +165,10 @@ export function ProcessVolunteerDialog({
           {/* Ministry Categories (Multi-Select) */}
           <div className="space-y-2">
             <Label>Ministry Categories *</Label>
-            <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+            <Popover
+              open={categoryPopoverOpen}
+              onOpenChange={setCategoryPopoverOpen}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"

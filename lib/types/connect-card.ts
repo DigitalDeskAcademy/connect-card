@@ -86,3 +86,28 @@ export const VOLUNTEER_CATEGORY_OPTIONS = [
 ] as const;
 
 export type VolunteerCategory = (typeof VOLUNTEER_CATEGORY_OPTIONS)[number];
+
+/**
+ * Format volunteer category enum values to human-readable labels
+ *
+ * Converts database enum values (e.g., "KIDS_MINISTRY") to display labels (e.g., "Kids Ministry")
+ *
+ * @param category - Volunteer category enum value
+ * @returns Formatted human-readable label
+ */
+export function formatVolunteerCategoryLabel(category: string): string {
+  const labels: Record<string, string> = {
+    GENERAL: "General",
+    GREETER: "Greeter",
+    USHER: "Usher",
+    KIDS_MINISTRY: "Kids Ministry",
+    WORSHIP_TEAM: "Worship Team",
+    PARKING: "Parking",
+    HOSPITALITY: "Hospitality",
+    AV_TECH: "AV Tech",
+    PRAYER_TEAM: "Prayer Team",
+    OTHER: "Other",
+  };
+
+  return labels[category] || category;
+}

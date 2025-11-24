@@ -75,12 +75,10 @@ export function VolunteersClient({
   // Filter volunteers based on active tab
   const filteredVolunteers = useMemo(() => {
     if (activeTab === "pending") {
-      return volunteers.filter((v) => v.status === "PENDING");
+      return volunteers.filter(v => v.status === "PENDING");
     }
     // "all" tab shows ACTIVE and INACTIVE volunteers (not PENDING)
-    return volunteers.filter((v) =>
-      ["ACTIVE", "INACTIVE"].includes(v.status)
-    );
+    return volunteers.filter(v => ["ACTIVE", "INACTIVE"].includes(v.status));
   }, [volunteers, activeTab]);
 
   /**

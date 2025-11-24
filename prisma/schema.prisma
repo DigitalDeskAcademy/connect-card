@@ -488,6 +488,10 @@ model ConnectCard {
   assignedLeaderId  String?
   /// SMS automation workflow enabled for volunteer onboarding
   smsAutomationEnabled Boolean @default(false)
+  /// Send notification message to assigned volunteer leader
+  sendMessageToLeader Boolean @default(false)
+  /// Send background check information to volunteer
+  sendBackgroundCheckInfo Boolean @default(false)
   /// Volunteer onboarding pipeline status (Inquiry → Planning Center Ready)
   volunteerOnboardingStatus VolunteerOnboardingStatus?
   /// Tracking which documents were sent (background check, policies, forms)

@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VolunteerOverviewTab } from "./volunteer-overview-tab";
-import {
-  IconUser,
-  IconHistory,
-  IconNotes,
-} from "@tabler/icons-react";
+import { IconUser, IconHistory, IconNotes } from "@tabler/icons-react";
 import type { Volunteer, VolunteerSkill } from "@/lib/generated/prisma";
 
 /**

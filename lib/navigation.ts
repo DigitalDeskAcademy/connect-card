@@ -305,7 +305,10 @@ export function getPageTitle(
   if (normalizedPath.includes("/connect-cards/batches/")) {
     return "Batch Details";
   }
-  if (normalizedPath.includes("/volunteer/") && segments[segments.length - 2] === "volunteer") {
+  if (
+    normalizedPath.includes("/volunteer/") &&
+    segments[segments.length - 2] === "volunteer"
+  ) {
     return "Volunteer Profile";
   }
 

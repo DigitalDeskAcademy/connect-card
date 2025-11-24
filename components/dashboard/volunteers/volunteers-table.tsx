@@ -65,7 +65,10 @@ export function VolunteersTable({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [volunteerToDelete, setVolunteerToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [volunteerToDelete, setVolunteerToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   // Open delete confirmation dialog
   const handleDelete = (id: string) => {
@@ -73,7 +76,7 @@ export function VolunteersTable({
     if (volunteer) {
       setVolunteerToDelete({
         id,
-        name: volunteer.churchMember?.name || "Unknown"
+        name: volunteer.churchMember?.name || "Unknown",
       });
       setIsDeleteDialogOpen(true);
     }
@@ -122,7 +125,9 @@ export function VolunteersTable({
           <DialogHeader>
             <DialogTitle>Delete Volunteer</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {volunteerToDelete?.name}? This action cannot be undone and will permanently remove their volunteer profile and all associated data.
+              Are you sure you want to delete {volunteerToDelete?.name}? This
+              action cannot be undone and will permanently remove their
+              volunteer profile and all associated data.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

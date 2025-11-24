@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { IconPhone, IconMail, IconMapPin, IconSend } from "@tabler/icons-react";
@@ -38,10 +44,7 @@ interface VolunteerOverviewTabProps {
   };
 }
 
-export function VolunteerOverviewTab({
-  volunteer,
-}: VolunteerOverviewTabProps) {
-
+export function VolunteerOverviewTab({ volunteer }: VolunteerOverviewTabProps) {
   // Background check status color mapping
   const bgCheckStatusColor = {
     NOT_STARTED: "secondary",

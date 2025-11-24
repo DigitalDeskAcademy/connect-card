@@ -50,7 +50,12 @@ import {
 } from "@/components/ui/empty";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { IconSearch, IconUserPlus, IconUserCheck, IconMessageCircle } from "@tabler/icons-react";
+import {
+  IconSearch,
+  IconUserPlus,
+  IconUserCheck,
+  IconMessageCircle,
+} from "@tabler/icons-react";
 import { CreateVolunteerDialog } from "./create-volunteer-dialog";
 import { ProcessVolunteerDialog } from "./process-volunteer-dialog";
 import { useRouter } from "next/navigation";
@@ -106,7 +111,8 @@ export function VolunteerDataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
-  const [selectedVolunteer, setSelectedVolunteer] = useState<VolunteerWithRelations | null>(null);
+  const [selectedVolunteer, setSelectedVolunteer] =
+    useState<VolunteerWithRelations | null>(null);
 
   // Handle successful volunteer creation
   const handleVolunteerCreated = () => {
@@ -201,11 +207,7 @@ export function VolunteerDataTable<TData, TValue>({
         <div className="flex items-center justify-between">
           <CardTitle>{title}</CardTitle>
           <div className="flex items-center gap-2">
-            <Button
-              onClick={handleBulkSMS}
-              variant="outline"
-              className="gap-2"
-            >
+            <Button onClick={handleBulkSMS} variant="outline" className="gap-2">
               <IconMessageCircle className="h-4 w-4" />
               Bulk SMS
             </Button>
@@ -235,7 +237,10 @@ export function VolunteerDataTable<TData, TValue>({
           </InputGroup>
 
           {/* Category Filter */}
-          <Select value={categoryFilter} onValueChange={handleCategoryFilterChange}>
+          <Select
+            value={categoryFilter}
+            onValueChange={handleCategoryFilterChange}
+          >
             <SelectTrigger className="w-full sm:w-[200px] flex-shrink-0">
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
@@ -259,7 +264,8 @@ export function VolunteerDataTable<TData, TValue>({
                 className="gap-2"
               >
                 <IconUserCheck className="h-4 w-4" />
-                Process Selected ({table.getFilteredSelectedRowModel().rows.length})
+                Process Selected (
+                {table.getFilteredSelectedRowModel().rows.length})
               </Button>
             )}
         </div>
