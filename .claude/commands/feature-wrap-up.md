@@ -266,6 +266,8 @@ This PR modifies files also changed in other feature branches:
 
 **Step 12: Create PR**
 
+**NO** AI attribution (CLAUDE.md policy) - Keep PR descriptions clean and professional
+
 ```bash
 gh pr create --title "<type>: <feature>" --body "$(cat <<'EOF'
 <PR description>

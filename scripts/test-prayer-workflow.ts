@@ -54,7 +54,9 @@ async function checkWorkflow() {
   );
   for (let i = 0; i < prayersFromCards.length; i++) {
     const prayer = prayersFromCards[i];
-    console.log(`${i + 1}. ${prayer.submittedBy || "Unknown"} (${prayer.status})`);
+    console.log(
+      `${i + 1}. ${prayer.submittedBy || "Unknown"} (${prayer.status})`
+    );
     console.log(`   Request: ${prayer.request.substring(0, 60)}...`);
     console.log(
       `   Category: ${prayer.category || "None"} | Private: ${prayer.isPrivate}`

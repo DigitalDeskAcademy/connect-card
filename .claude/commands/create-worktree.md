@@ -94,43 +94,88 @@ ls /home/digitaldesk/Desktop/connect-card/FEATURE_NAME/
 
 ---
 
-## Step 4: Create Database for Feature
+## Step 4: Create Neon Database Branch
 
-**Database Naming Convention:**
+**⚠️ This project uses Neon PostgreSQL (cloud database), NOT local PostgreSQL**
 
-```
-DATABASE_URL="postgresql://user:password@localhost:5432/connect_card_FEATURE_NAME"
+**Pattern from existing worktrees:**
 
-Example:
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/connect_card_analytics_dashboard"
-```
+- Prayer worktree: `ep-long-feather-ad7s8ao0` (Neon branch)
+- Volunteer worktree: `ep-bitter-recipe-ad3v8ovt` (Neon branch)
+- Main worktree: `ep-falling-unit-adhn1juc` (production branch)
 
-**Steps:**
+Each worktree gets an **isolated Neon database branch** with its own endpoint.
 
-1. **Extract database credentials from main .env:**
+---
+
+### Option A: Neon CLI (Automated)
+
+**If neonctl is installed:**
 
 ```bash
+# Check if Neon CLI exists
+which neonctl
+
+# Create branch from main
+neonctl branches create --name FEATURE_NAME --parent main
+
+# Get the new DATABASE_URL
+neonctl connection-string FEATURE_NAME
+```
+
+**Copy the DATABASE_URL for Step 5.**
+
+---
+
+### Option B: Neon Dashboard (Manual) ⭐ RECOMMENDED
+
+**Most common approach:**
+
+1. Go to https://console.neon.tech
+2. Select project: **Church Connect Card**
+3. Click **"Branches"** → **"New Branch"**
+4. **Name:** `FEATURE_NAME` (e.g., `connect-card`)
+5. **Parent branch:** `main`
+6. Click **"Create Branch"**
+7. **Copy the DATABASE_URL** (looks like `postgresql://neondb_owner:...@ep-RANDOM-ID.../neondb?sslmode=require`)
+
+**Save this DATABASE_URL - you'll need it in Step 5.**
+
+---
+
+### Option C: Prompt User
+
+**If uncertain about Neon setup, ask user:**
+
+```
+⚠️ MANUAL STEP REQUIRED: Create Neon Database Branch
+
+This project uses Neon PostgreSQL (cloud database).
+You need to create a new database branch for isolated development.
+
+Steps:
+1. Go to https://console.neon.tech
+2. Select your project: Church Connect Card
+3. Create new branch from main
+4. Name it: FEATURE_NAME
+5. Copy the DATABASE_URL
+
+When you have the DATABASE_URL, proceed to Step 5.
+```
+
+---
+
+**Verification:**
+
+```bash
+# Check main DATABASE_URL format
 cd /home/digitaldesk/Desktop/connect-card/main
 grep DATABASE_URL .env
+
+# Should see: postgresql://neondb_owner:...@ep-falling-unit-adhn1juc.c-2.us-east-1.aws.neon.tech/neondb?...
 ```
 
-2. **Create new database:**
-
-```bash
-# Replace with actual credentials from main .env
-psql -U postgres -h localhost -c "CREATE DATABASE connect_card_FEATURE_NAME;"
-
-# Example:
-# psql -U postgres -h localhost -c "CREATE DATABASE connect_card_analytics_dashboard;"
-```
-
-**If database creation fails:**
-
-- Check PostgreSQL is running
-- Verify credentials
-- Suggest user creates manually
-
-**Once database created, proceed to Step 5.**
+**Once Neon branch created and DATABASE_URL copied, proceed to Step 5.**
 
 ---
 
@@ -147,36 +192,61 @@ cp ../main/.env .env
 
 **Required Changes in .env:**
 
-1. **DATABASE_URL** (CRITICAL):
+1. **DATABASE_URL** (CRITICAL - Neon branch endpoint):
 
 ```bash
-# OLD (main):
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/connect_card"
+# OLD (main - production branch):
+DATABASE_URL="postgresql://neondb_owner:npg_...@ep-falling-unit-adhn1juc.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 
-# NEW (worktree):
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/connect_card_FEATURE_NAME"
+# NEW (worktree - from Neon dashboard Step 4):
+DATABASE_URL="postgresql://neondb_owner:npg_...@ep-NEW-ENDPOINT-HERE.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
 ```
 
-2. **NEXT_PUBLIC_APP_URL** (if needed):
+**⚠️ IMPORTANT:** Only the endpoint changes (`ep-XXXXX`). Credentials stay the same.
+
+2. **BETTER_AUTH_URL** (NO CHANGE):
 
 ```bash
-# If running dev server on different port
-NEXT_PUBLIC_APP_URL="http://localhost:3001"
+BETTER_AUTH_URL=http://localhost:3000  # ← Keep at port 3000 (same for all worktrees)
 ```
 
-3. **Keep same for all other values:**
+3. **NEXT_PUBLIC_APP_URL** (NO CHANGE):
+
+```bash
+NEXT_PUBLIC_APP_URL=http://localhost:3000  # ← Keep at port 3000 (same for all worktrees)
+```
+
+4. **GHL_REDIRECT_URI** (NO CHANGE):
+
+```bash
+GHL_REDIRECT_URI=http://localhost:3000/api/crm/callback  # ← Keep at port 3000
+```
+
+5. **All other values** (NO CHANGE):
 
 - BETTER_AUTH_SECRET (same)
 - AWS credentials (same - shared S3)
 - ANTHROPIC_API_KEY (same)
 - ARCJET keys (same)
+- S3_UPLOAD_ALLOWED_DOMAINS (same)
+
+**Why all worktrees use port 3000:**
+
+- You only run ONE dev server at a time
+- Switch worktrees by stopping one server, starting another
+- No port juggling needed
 
 **Edit the .env file now:**
 
 Use the Edit tool to update:
 
-- Line with DATABASE_URL → change database name
-- Add comment at top: `# Worktree: FEATURE_NAME`
+- Line with DATABASE_URL → paste new Neon branch endpoint from Step 4
+- Add comments at top:
+  ```
+  # Worktree: FEATURE_NAME
+  # Feature Branch: feature/FEATURE_NAME
+  # Database: Neon branch (isolated)
+  ```
 
 **Once .env configured, proceed to Step 6.**
 

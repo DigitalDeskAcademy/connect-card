@@ -27,6 +27,7 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 ## Technical Approach
 
 ### Database Schema
+
 - `PrayerRequest` model with JSONB metadata
 - `PrayerBatch` for bulk assignment workflows
 - Privacy levels: PUBLIC, MEMBERS_ONLY, LEADERSHIP, PRIVATE
@@ -34,6 +35,7 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 - Multi-tenant organizationId + locationId scoping
 
 ### Privacy Controls
+
 - **Public:** Anyone can see
 - **Members Only:** Logged-in church members can see
 - **Leadership:** Only pastors/staff can see
@@ -41,12 +43,14 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 - **Sensitive keyword detection:** Auto-flags addiction, suicide, abuse
 
 ### UI Components
+
 - TanStack Table with search, filter, sort, pagination
 - Row selection for batch operations
 - Privacy badges (color-coded indicators)
 - Bulk assignment controls
 
 ### Server Actions
+
 - `assignSelectedPrayers()` - Assign specific prayers to team member
 - `assignAllPrayers()` - Assign entire batch to team member
 - Arcjet rate limiting (5 requests/minute)
@@ -57,6 +61,7 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 ## Feature Roadmap
 
 ### Phase 1: Prayer Management MVP ✅ COMPLETE
+
 - [x] Database schema (PrayerRequest with privacy levels)
 - [x] TanStack Table UI (search, filter, sort, pagination)
 - [x] Privacy controls (4 levels + staff-only private requests)
@@ -64,6 +69,7 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 - [x] E2E test suite (8 tests covering isolation, privacy, workflow)
 
 ### Phase 2: Prayer Batch Management ✅ COMPLETE
+
 - [x] Batch model with organizationId scoping
 - [x] Bulk assignment UI (TanStack Table row selection)
 - [x] Assign selected prayers server action
@@ -71,12 +77,14 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 - [x] E2E test suite (10 tests, 8 passing)
 
 ### Phase 3: Follow-Up Workflows (Planned)
+
 - [ ] Prayer request status tracking (PENDING, IN_PROGRESS, ANSWERED, ARCHIVED)
 - [ ] Follow-up reminders (check-in after 1 week, 2 weeks)
 - [ ] Answered prayer tracking (celebrate answered prayers)
 - [ ] Prayer partner assignments (recurring assignments)
 
 ### Phase 4: Communication & Automation (Planned)
+
 - [ ] SMS/email prayer requests to prayer team
 - [ ] Two-way responses (team replies via SMS/email)
 - [ ] Automated weekly prayer digest
@@ -87,6 +95,7 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 ## Testing Strategy
 
 ### E2E Tests (Complete)
+
 - Multi-tenant isolation (staff can only see their org's prayers)
 - Privacy controls (staff can't see other staff's private requests)
 - Role-based access (church_admin sees more than user)
@@ -94,6 +103,7 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 - Search functionality (SQL injection protection)
 
 ### Manual Testing
+
 - Process 100+ real prayer requests from pilot church
 - Test privacy levels with actual sensitive content
 - Verify multi-campus routing (locationId filtering)
@@ -104,15 +114,19 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 ## Success Metrics
 
 ### Request Capture
+
 - 60% → 95% of prayer requests from connect cards captured
 
 ### Privacy Compliance
+
 - 70% → 95% sensitive topics auto-detected and flagged
 
 ### Distribution Time
+
 - 30 minutes → 5 minutes per week (automated workflows)
 
 ### Follow-Up Rate
+
 - 50% → 80% (reminder system for answered prayers)
 
 ---
@@ -120,14 +134,17 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 ## Deployment Plan
 
 ### Database Migrations
+
 - PrayerRequest model in production ✅
 - PrayerBatch model in production ✅
 - No breaking changes planned
 
 ### Feature Flags
+
 - None required (feature complete)
 
 ### Rollback Plan
+
 - Manual prayer tracking still available (spreadsheets, paper)
 
 ---
@@ -135,9 +152,11 @@ Multi-tenant prayer request tracking system with privacy controls, auto-categori
 ## Known Issues
 
 ### E2E Test Failures (2 tests)
+
 **Status:** Known issue, not blocking production
 
 **Failing Tests:**
+
 1. `BASIC: Verify batches exist in system`
 2. `DATA: No orphaned cards (all cards have batchId)`
 
