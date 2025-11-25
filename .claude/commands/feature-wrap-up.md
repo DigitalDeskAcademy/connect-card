@@ -1,46 +1,247 @@
 ---
-description: Complete end-to-end feature workflow - worktree-aware with conflict detection
+description: Complete end-to-end feature workflow from quality checks to session recovery
 model: claude-sonnet-4-5-20250929
 ---
 
-# Feature Wrap-Up (Worktree-Aware + Optional Sync)
+# Feature Wrap-Up - Industry Standard Workflow
 
-Complete feature workflow: build → commit → conflict forecast → PR → merge → sync worktrees → handoff.
+Complete feature workflow: sync → build → commit → PR → merge → docs → handoff.
 
 **Key Features:**
 
-- ✅ Detects merge conflicts BEFORE creating PR
+- ✅ **INDUSTRY STANDARD:** Syncs with main BEFORE creating PR
+- ✅ Detects merge conflicts before PR creation
 - ✅ Updates main worktree after merge (always)
-- ✅ **NEW:** Optional sync of other worktrees (safety-first with smart detection)
-- ✅ Warns about active worktrees (uncommitted changes)
-- ✅ NO doc updates in feature branch (prevents conflicts)
-- ✅ Generates copyable handoff text
+- ✅ Optional sync of other worktrees (safety-first)
+- ✅ Required documentation updates (prevents drift)
+- ✅ Generates comprehensive handoff text
 
 ---
 
-## Stage 1: Schema Sync Verification
+## Stage 1: Sync with Main (INDUSTRY STANDARD)
 
-**Purpose:** Prevent merge conflicts by ensuring your Prisma schema matches main before wrapping up.
+**Purpose:** Ensure your feature branch integrates with latest main BEFORE creating PR. This catches integration issues early on your machine, not in CI/CD.
+
+**Why This Matters:**
+
+- Your code might break when combined with new changes in main
+- Better to find conflicts now than during PR review
+- Reviewers shouldn't see merge conflicts
+- Tests should run against code that's already integrated
+
+**Industry Precedent:**
+
+- **Google Engineering:** "Sync your branch with latest main before sending code review"
+- **GitHub Flow:** "Keep branch up to date with base branch before creating PR"
+- **GitLab:** "Rebase feature branch on target branch before creating MR"
+- **Trunk-Based Development:** "Integrate with trunk multiple times per day"
+
+---
+
+**Step 1: Fetch Latest Main**
+
+```bash
+git fetch origin main
+```
+
+**Step 2: Check If Behind Main**
+
+```bash
+git rev-list HEAD..origin/main --count
+```
+
+Store the count. If 0, skip to Stage 2.
+
+**Step 3: Show What Changed in Main**
+
+If behind main (count > 0):
+
+```bash
+# Show commits you're missing
+git log HEAD..origin/main --oneline --no-merges
+
+# Show files changed in main
+git diff HEAD...origin/main --stat
+```
+
+Present to user:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️  YOUR BRANCH IS BEHIND MAIN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Your branch is <count> commits behind origin/main.
+
+New commits in main:
+<show git log output>
+
+Files changed in main:
+<show git diff --stat output>
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏭 INDUSTRY STANDARD: Sync with main BEFORE creating PR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+This ensures:
+✅ Your code works with latest changes
+✅ No merge conflicts during PR review
+✅ Tests run against integrated code
+✅ Reviewer sees clean, mergeable PR
+
+Options:
+1. Merge main into your branch (preserves commit history)
+2. Rebase your branch on main (cleaner linear history)
+3. Skip sync (NOT RECOMMENDED - may cause PR conflicts)
+
+What would you like to do? (1/2/3)
+```
+
+**Step 4: Handle User Choice**
+
+**If Option 1 (Merge):**
+
+```bash
+git merge origin/main --no-edit
+```
+
+If conflicts occur:
+
+```bash
+# Show conflicted files
+git status --short | grep "^UU\|^AA\|^DD"
+
+# Abort merge
+git merge --abort
+```
+
+Show user:
+
+```
+⚠️  MERGE CONFLICTS DETECTED
+
+Conflicted files:
+<list files>
+
+You need to resolve these manually:
+
+1. Run: git merge origin/main
+2. Fix conflicts in each file
+3. Stage resolved files: git add <file>
+4. Complete merge: git commit
+5. Re-run /feature-wrap-up
+
+Abort for now? (yes/no)
+```
+
+**If Option 2 (Rebase):**
+
+```bash
+git rebase origin/main
+```
+
+If conflicts occur during rebase:
+
+```bash
+# Show conflict
+git status
+
+# Abort rebase
+git rebase --abort
+```
+
+Show similar conflict resolution guide as merge.
+
+**If Option 3 (Skip):**
+
+**Show strong warning:**
+
+```
+⚠️  ⚠️  ⚠️  WARNING ⚠️  ⚠️  ⚠️
+
+Skipping sync with main violates industry best practices.
+
+CONSEQUENCES:
+- PR may have merge conflicts (reviewer has to resolve)
+- Your tests pass, but combined code may fail
+- CI/CD may fail unexpectedly
+- Integration issues discovered late
+
+This is why Google, GitHub, GitLab all require sync first.
+
+Are you SURE you want to skip? (yes/no)
+```
+
+If still yes, add note for PR description later.
+
+**Step 5: Verify Sync Success**
+
+```bash
+# Check if ahead of main only (no divergence)
+git rev-list origin/main..HEAD --count  # Your commits
+git rev-list HEAD..origin/main --count  # Should be 0 now
+
+# Verify working tree is clean
+git status
+```
+
+Show confirmation:
+
+```
+✅ SYNC COMPLETE
+
+Your branch now includes all changes from main.
+
+Status:
+- Your commits ahead: <count>
+- Main commits behind: 0 (synced)
+- Working tree: clean
+
+Ready to proceed with quality verification (Stage 2)
+```
+
+---
+
+## Stage 2: Schema Sync Verification
+
+**Purpose:** Prevent merge conflicts by ensuring your Prisma schema matches main's schema.
 
 **Step 1: Check Schema Sync**
 
-Check if schema differs from main, and offer to sync if needed:
-
 ```bash
-# Check schema sync (execute step-by-step, not as single block)
 diff -q prisma/schema.prisma ../main/prisma/schema.prisma
 ```
 
-If schemas differ, show the differences and ask user if they want to sync:
+If no difference, skip to Stage 3.
+
+**Step 2: Show Schema Differences**
+
+If schemas differ:
 
 ```bash
-# Show differences
 diff prisma/schema.prisma ../main/prisma/schema.prisma | head -30
 ```
 
-If user wants to sync:
+Ask user:
+
+```
+⚠️  SCHEMA OUT OF SYNC
+
+Your schema differs from main's schema.
+
+This can happen if:
+- Another feature merged schema changes
+- You started this branch before recent schema updates
+
+Sync schema from main now? (yes/no/show-full-diff)
+```
+
+**Step 3: Sync Schema (If Requested)**
 
 ```bash
+# Backup current schema
+cp prisma/schema.prisma prisma/schema.prisma.backup
+
 # Copy schema from main
 cp ../main/prisma/schema.prisma prisma/schema.prisma
 
@@ -48,15 +249,20 @@ cp ../main/prisma/schema.prisma prisma/schema.prisma
 pnpm prisma generate
 ```
 
-**Why This Matters:**
+Show:
 
-- Schema changes in main (from other merged features) will conflict with your branch
-- Syncing now prevents PR conflicts and failed builds
-- Worktree best practice: Always sync shared infrastructure before merging
+```
+✅ SCHEMA SYNCED
+
+Copied schema from main worktree
+Regenerated Prisma client
+
+Your backup: prisma/schema.prisma.backup
+```
 
 ---
 
-## Stage 2: Quality Verification
+## Stage 3: Quality Verification
 
 **Step 1: Run Build**
 
@@ -68,7 +274,7 @@ If build fails:
 
 - Report TypeScript errors with file:line references
 - STOP workflow
-- Ask: "Build failed. Fix errors? (yes/no)"
+- Ask: "Build failed. Fix errors before continuing? (yes/no)"
 
 **Step 2: Run ESLint**
 
@@ -85,17 +291,38 @@ If lint fails:
 
 Scan for:
 
-- `console.log`/`console.error` statements
-- `TODO`/`FIXME` in critical paths
-- `.only()` in test files
+```bash
+# Console statements (coding-patterns.md forbids these)
+grep -r "console\\.log\|console\\.error" actions/ app/ lib/ components/ --include="*.ts" --include="*.tsx"
+
+# Test-only code left in
+grep -r "\\.only(" tests/ --include="*.ts"
+
+# TODO/FIXME in critical paths
+grep -r "TODO\|FIXME" actions/ app/api/ --include="*.ts"
+```
 
 If found, report and ask if acceptable to proceed.
 
+**Step 4: Build Success Confirmation**
+
+```
+✅ QUALITY CHECKS PASSED
+
+- Build: successful
+- ESLint: clean
+- No console.log statements
+- No .only() in tests
+- Ready to commit
+
+Proceeding to Stage 4 (Commit)
+```
+
 ---
 
-## Stage 3: Commit Feature Code
+## Stage 4: Commit Feature Code
 
-**Step 4: Git Status**
+**Step 1: Git Status**
 
 ```bash
 git status
@@ -104,19 +331,23 @@ git diff --stat
 
 Show user summary of changes.
 
-**Step 5: Draft Commit Message**
+**Step 2: Draft Commit Message**
 
-Analyze changes and create commit:
+Analyze changes and create commit following Conventional Commits:
 
 ```
-<type>: <short summary>
+<type>(<scope>): <short summary>
 
-<optional details>
+<optional detailed description>
+
+<optional breaking changes>
 ```
 
-**NO** AI attribution (CLAUDE.md policy)
+**Types:** feat, fix, docs, refactor, test, chore, perf, style
 
-**Step 6: Commit**
+**NO** AI attribution (CLAUDE.md policy - no "Generated with Claude Code")
+
+**Step 3: Commit**
 
 ```bash
 git add .
@@ -126,7 +357,7 @@ EOF
 )"
 ```
 
-**Step 7: Verify**
+**Step 4: Verify Commit**
 
 ```bash
 git log -1 --oneline
@@ -135,30 +366,38 @@ git status
 
 Should show clean working tree.
 
----
+```
+✅ FEATURE CODE COMMITTED
 
-## Stage 4: Conflict Forecast & Analysis
+Commit: <sha> <message>
+Working tree: clean
 
-**CRITICAL**: This project uses git worktrees. Multiple features modify docs simultaneously.
-
-**Step 8: Analyze Potential Conflicts**
-
-Get files changed in current branch:
-
-```bash
-git diff main...HEAD --name-only > /tmp/current-changes.txt
+Ready for conflict forecast (Stage 5)
 ```
 
-Check other worktrees:
+---
+
+## Stage 5: Conflict Forecast & Analysis
+
+**Purpose:** Detect potential merge conflicts BEFORE creating PR by analyzing changes across all worktrees.
+
+**Step 1: Get Files Changed in Current Branch**
+
+```bash
+git diff origin/main...HEAD --name-only > /tmp/current-changes.txt
+```
+
+**Step 2: Check Other Worktrees**
 
 ```bash
 git worktree list
 ```
 
-For each other worktree, check for overlaps:
+**Step 3: Analyze Each Worktree for Overlaps**
+
+For each other worktree (excluding current and main):
 
 ```bash
-# Save current directory
 cd /path/to/other-worktree
 
 # Get files changed in that worktree
@@ -168,34 +407,51 @@ git diff main...HEAD --name-only > /tmp/other-changes.txt
 comm -12 <(sort /tmp/current-changes.txt) <(sort /tmp/other-changes.txt)
 ```
 
-**Step 9: Generate Conflict Forecast**
+**Step 4: Generate Conflict Forecast**
 
-Create forecast report and show to user:
+Categorize overlapping files:
+
+- **HIGH RISK:** Code files (actions/, components/, lib/)
+- **EXPECTED:** Documentation (docs/STATUS.md, docs/ROADMAP.md)
+- **CLEAN:** No overlaps
+
+Present forecast:
 
 ```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  MERGE CONFLICT FORECAST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Detected potential conflicts with other feature branches:
+Potential conflicts with other feature branches:
 
-HIGH RISK (Same files modified):
-- tests/helpers/auth.ts (also modified in: volunteer)
+HIGH RISK (Same code files modified):
+- lib/data/helpers.ts (also modified in: volunteer)
   Strategy: COMBINE both changes during merge
+  Risk: May require manual conflict resolution
 
-EXPECTED (Documentation):
-- docs/ROADMAP.md (also modified in: volunteer)
+EXPECTED (Documentation files):
+- docs/ROADMAP.md (also modified in: volunteer, prayer)
   Strategy: Keep both task lists, merge sections
 - docs/STATUS.md (also modified in: volunteer)
   Strategy: Combine completion notes from both features
 
 CLEAN (No conflicts):
-- lib/data/prayer-requests.ts (feature-specific)
-- components/dashboard/prayer-requests/* (feature-specific)
+- lib/data/tech-debt.ts (feature-specific)
+- actions/security/* (feature-specific)
 
-RECOMMENDATION:
-These conflicts are EXPECTED in worktree workflow. During PR merge:
-1. Resolve via GitHub UI (visual diff editor)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 RECOMMENDATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+These conflicts are EXPECTED in worktree workflow.
+
+During PR merge (via GitHub UI):
+1. Resolve via visual diff editor
 2. COMBINE content from both branches (don't replace)
 3. Keep all feature documentation and code changes
+
+For code conflicts: Carefully merge logic from both features
+For doc conflicts: Keep all updates, combine sections
 
 Proceed with PR creation? (yes/no)
 ```
@@ -204,67 +460,71 @@ Proceed with PR creation? (yes/no)
 
 - Ask what they'd like to adjust
 - Offer to help resolve conflicts pre-merge
-- Wait for confirmation before proceeding
+- Wait for confirmation
 
 ---
 
-## Stage 5: Pull Request
+## Stage 6: Pull Request
 
-**Step 10: Push Branch**
+**Step 1: Push Branch**
 
 ```bash
 git push origin <branch-name> -u
 ```
 
-**Step 11: Generate PR Description**
+**Step 2: Generate PR Description**
 
 ```bash
-git log main..HEAD --oneline
-git diff main...HEAD --stat
+# Get commit history
+git log origin/main..HEAD --oneline
+
+# Get file changes
+git diff origin/main...HEAD --stat
 ```
 
-Draft PR:
+Draft PR using this template:
 
 ```markdown
 ## Summary
 
-<1-3 bullets describing feature>
+<1-3 bullets describing what was built>
 
 ## Changes
 
-- <key files>
-- <new functionality>
+- <key file 1> - <what changed>
+- <key file 2> - <what changed>
+- <key file 3> - <what changed>
 
 ## Testing
 
-<how to test>
+<how this was tested>
 
 ## Merge Conflict Notes
 
-<If conflicts detected in Stage 3>
+<If conflicts detected in Stage 5>
 
 ⚠️ **Expected Conflicts**
 
 This PR modifies files also changed in other feature branches:
 
-- `tests/helpers/auth.ts` (volunteer branch)
-- `docs/ROADMAP.md` (volunteer branch)
+- `<file>` (also in: <other-branch>)
 
 **Resolution Strategy**: COMBINE changes from both branches
 
-- Auth file: Merge both improvements
-- Docs: Keep all task lists and completion notes
+- Code files: Merge both sets of logic
+- Docs: Keep all updates and task lists
 
 ## Checklist
 
 - [x] Build passes
 - [x] ESLint clean
+- [x] Synced with main (industry standard)
 - [x] Conflict forecast reviewed
 - [x] Multi-tenant isolation verified
 - [ ] Manual testing (if needed)
 ```
 
-**Step 12: Create PR**
+**Step 3: Create PR**
 
 ```bash
 gh pr create --title "<type>: <feature>" --body "$(cat <<'EOF'
@@ -273,22 +533,31 @@ EOF
 )"
 ```
 
-Store PR number for later.
+Store PR number for later stages.
+
+```
+✅ PULL REQUEST CREATED
+
+PR #<number>: <title>
+URL: <github-url>
+
+Ready for testing & merge (Stage 7)
+```
 
 ---
 
-## Stage 6: Testing & Merge
+## Stage 7: Testing & Merge
 
-**Step 13: Manual Testing?**
+**Step 1: Manual Testing Check**
 
 Ask: "Need manual testing before merge? (yes/no)"
 
 If YES:
 
 - Show testing checklist
-- Wait for confirmation
+- Wait for user confirmation
 
-**Step 14: Merge PR**
+**Step 2: Merge PR**
 
 Ask: "Ready to squash and merge? (yes/no)"
 
@@ -296,7 +565,7 @@ Ask: "Ready to squash and merge? (yes/no)"
 gh pr merge <pr-number> --squash --delete-branch
 ```
 
-**Step 15: Verify Merge**
+**Step 3: Verify Merge**
 
 ```bash
 gh pr view <pr-number> --json state,mergedAt
@@ -304,109 +573,107 @@ gh pr view <pr-number> --json state,mergedAt
 
 Should show "MERGED" with timestamp.
 
+```
+✅ PR MERGED TO MAIN
+
+PR #<number> merged successfully
+Remote branch deleted
+Timestamp: <merged-at>
+
+Ready to update main worktree (Stage 8)
+```
+
 ---
 
-## Stage 7: Post-Merge - Update Main Worktree ONLY
+## Stage 8: Post-Merge Main Worktree Update
 
-**CRITICAL**: Only update the main worktree. DO NOT touch other feature worktrees.
+**Purpose:** Update the main worktree with your merged changes. Other feature worktrees are NOT touched.
 
-**Why**: Other worktrees may be on different feature branches still in progress. Merging main into them could cause conflicts or overwrite work.
-
-**Step 16: Update Main Worktree Only**
+**Step 1: Navigate to Main Worktree**
 
 ```bash
 cd ../main
+```
+
+**Step 2: Pull Latest Main**
+
+```bash
 git fetch origin main
 git pull origin main
 git status
 ```
 
-Main worktree now has your merged feature.
-
-**Step 16.5: Check for Schema Changes**
-
-If `prisma/schema.prisma` was modified in your feature:
+**Step 3: Check for Schema Changes**
 
 ```bash
-# Check if schema.prisma changed
 git log -1 --name-only | grep "prisma/schema.prisma"
 ```
 
-If schema was modified, **you must update the database**:
+If schema was modified:
 
 ```
 ⚠️  SCHEMA CHANGES DETECTED
 
 Your PR modified prisma/schema.prisma.
 
-REQUIRED: Run database migration in main worktree:
+REQUIRED: Update database in main worktree
 
+Run now:
   pnpm prisma generate
   pnpm prisma db push
 
-This adds the new columns/tables to main's database.
+This adds new columns/tables to main's database.
+Without this, code will fail when using new schema.
 
-Without this, your code will fail when it tries to use the new schema.
+Run database update now? (yes/no)
 ```
 
-**Step 17: Verify Main Worktree State**
+If yes:
+
+```bash
+pnpm prisma generate
+pnpm prisma db push
+```
+
+**Step 4: Verify Main Worktree State**
 
 ```bash
 git status
 git log -3 --oneline
 ```
 
-Should show clean working tree with your merged commit.
-
-**Step 18: Other Worktrees - DO NOT UPDATE**
-
-```bash
-git worktree list
 ```
+✅ MAIN WORKTREE UPDATED
 
-**IMPORTANT**: Do NOT automatically update other worktrees.
+Current commit: <sha> <your-merged-commit>
+Working tree: clean
+Database: <updated if schema changed>
 
-Show user:
+Other worktrees intentionally NOT updated (separate features in progress)
 
-```
-📋 WORKTREE STATUS
-
-✅ main: Updated with your merged feature
-⏭️  volunteer: SKIPPED (different feature in progress)
-⏭️  prayer: SKIPPED (current feature worktree, can be cleaned up later)
-
-Other worktrees are working on separate features and should NOT be automatically updated.
-
-If you need to update another worktree with main changes:
-1. Manually cd to that worktree
-2. Ensure working tree is clean (git status)
-3. Merge main: git merge main
-4. Resolve any conflicts manually
-
-This prevents accidentally overwriting work in progress.
+Ready for optional worktree sync (Stage 9)
 ```
 
 ---
 
-## Stage 7.5: Sync Other Worktrees (Optional - Safety First)
+## Stage 9: Optional Worktree Sync
 
-**Purpose:** Give user the option to update other worktrees with latest main, but with strong safety checks.
+**Purpose:** Give user option to update other worktrees with latest main, with strong safety checks.
 
-**Step 19: Detect Other Worktrees**
+**Step 1: Detect Other Worktrees**
 
 ```bash
 git worktree list | grep -v "$(pwd)" | grep -v "/main"
 ```
 
-If no other worktrees found, skip to Stage 8.
+If no other worktrees, skip to Stage 10.
 
-**Step 19.5: Analyze Each Worktree Status**
+**Step 2: Analyze Each Worktree Status**
 
-For each worktree, check status (execute commands separately):
+For each worktree:
 
 ```bash
-# Navigate to worktree
-cd /path/to/other-worktree
+cd /path/to/worktree
 
 # Get branch name
 git branch --show-current
@@ -418,9 +685,7 @@ git status --short | wc -l
 git rev-list HEAD..main --count
 ```
 
-**Step 20: Present Options to User**
-
-Show user the worktree status table:
+**Step 3: Present Status Table**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -439,111 +704,55 @@ Worktree: prayer
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⚠️  IMPORTANT: Only update worktrees that are CLEAN (no uncommitted work)
+⚠️  IMPORTANT: Only update CLEAN worktrees (no uncommitted work)
 
-Updating an active worktree can:
+Updating active worktrees can:
 - Cause merge conflicts
-- Interrupt your work
+- Interrupt work in progress
 - Require manual conflict resolution
 
 SAFE PRACTICE:
 - ✅ Update CLEAN/IDLE worktrees now
-- ❌ Skip ACTIVE worktrees (you'll sync them manually later)
+- ❌ Skip ACTIVE worktrees (sync manually later)
 
 Options:
-1. Update all CLEAN worktrees (skip active ones) - RECOMMENDED
+1. Update all CLEAN worktrees (skip active) - RECOMMENDED
 2. Ask me for each worktree individually
 3. Skip all (I'll sync manually later)
 
 What would you like to do? (1/2/3)
 ```
 
-**Step 21: Handle User Choice**
+**Step 4: Handle User Choice**
 
 **If Option 1 (Update all clean):**
 
-For each worktree, check if clean and update:
+For each worktree where uncommitted count = 0:
 
 ```bash
-# Navigate to worktree
 cd /path/to/worktree
+git status --short  # Verify clean
 
-# Check if clean
-git status --short
-
-# If clean (output empty), merge main
+# If clean, merge main
 git merge main --no-edit
 ```
 
-If merge conflicts occur:
+If merge conflicts:
 
 ```bash
-# Abort the merge
 git merge --abort
-
-# User will need to resolve manually later
+# Mark as "requires manual sync"
 ```
 
 **If Option 2 (Ask each):**
 
-For each worktree:
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Worktree: volunteer
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Branch: feature/volunteer-management
-Uncommitted files: 5
-
-⚠️  WARNING: This worktree has UNCOMMITTED changes!
-
-Uncommitted files:
-- actions/volunteers/volunteers.ts (modified)
-- components/dashboard/volunteers/... (modified)
-- app/church/[slug]/admin/volunteer/page.tsx (modified)
-- public/test-image.png (untracked)
-- .env.local (modified)
-
-Merging main now will:
-- Require resolving merge conflicts (if any)
-- Mix your uncommitted work with main's changes
-- Potentially break your current work-in-progress
-
-RECOMMENDATION: Skip this worktree and sync manually when ready.
-
-Update this worktree? (yes/no/skip) [default: skip]
-```
-
-Wait for user response. If yes, attempt merge. If no/skip, move to next.
+For each worktree, show detailed prompt with uncommitted files listed, ask yes/no/skip.
 
 **If Option 3 (Skip all):**
 
-Show instructions:
+Show manual sync instructions.
 
-```
-✅ Skipped all worktrees
-
-When you're ready to sync a worktree manually:
-
-1. Finish your work and commit changes:
-   cd /path/to/worktree
-   git add .
-   git commit -m "your message"
-
-2. Merge latest main:
-   git merge main
-
-3. Resolve any conflicts if they occur
-
-4. Continue working with latest code
-
-This gives you full control over WHEN to integrate main's changes.
-```
-
-**Step 22: Summary Report**
-
-After processing, show final status:
+**Step 5: Summary Report**
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -555,15 +764,17 @@ After processing, show final status:
 ⏭️  volunteer: Skipped (5 uncommitted files - active work)
 
 Manual sync needed:
-- volunteer: cd /home/.../volunteer && git merge main (when ready)
+- volunteer: cd /path && git merge main (when ready)
 
-All critical worktrees are synced or have instructions!
+All critical worktrees synced or have instructions!
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ready for documentation update (Stage 10)
 ```
 
 ---
 
-## Stage 8: Documentation Update (REQUIRED - Industry Standard)
+## Stage 10: Documentation Update (REQUIRED)
 
 **Purpose:** Ensure documentation ALWAYS reflects reality. Every PR must update relevant docs.
 
@@ -571,217 +782,61 @@ All critical worktrees are synced or have instructions!
 
 ---
 
-**Step 20: Switch to Main Worktree**
+**Step 1: Verify in Main Worktree**
 
 ```bash
-cd /path/to/main-worktree
-git pull origin main  # Get latest merged PR
-```
-
-Verify you're on main and synced:
-
-```bash
-git branch --show-current  # Should show "main"
+cd ../main
+git branch --show-current  # Should be "main"
 git status                 # Should be clean
 ```
 
----
-
-**Step 21: Documentation Impact Analysis**
-
-**CRITICAL:** Analyze what was built vs what was planned to identify ALL affected docs.
-
-### 21.1: Read the Merged PR
+**Step 2: Read Merged PR Details**
 
 ```bash
-# Get PR details
+# Get PR info
 gh pr view <pr-number> --json title,body,files
 
-# See what was actually built
+# See what was built
 git log -1 --stat
 ```
 
 Extract:
 
-- Feature area (connect-cards, volunteer, prayer, member-management)
-- What was built (new components, server actions, database changes)
-- Scope changes (did direction change from original plan?)
+- Feature area (connect-cards, volunteer, prayer, security)
+- What was built
+- Scope changes
 
-### 21.2: Identify Affected Documentation
-
-**Always update:**
-
-1. `docs/STATUS.md` - Health dashboard
-2. `docs/ROADMAP.md` - Priority list
-
-**Conditionally update:** 3. `docs/features/{feature}/vision.md` - If scope changed or feature completed 4. Remove stale content - TODOs, planning docs, outdated references
-
-### 21.3: Read Current Documentation State
+**Step 3: Read Current Documentation**
 
 ```bash
-# Read all potentially affected docs
-cat docs/STATUS.md | grep -A 20 "In Progress"
-cat docs/ROADMAP.md | grep -A 10 "Active Work"
-cat docs/features/<feature>/vision.md | head -50
+# Check STATUS.md
+grep -A 20 "In Progress\|Working Features" docs/STATUS.md
+
+# Check ROADMAP.md
+grep -A 10 "Active Work\|Current Phase" docs/ROADMAP.md
+
+# Check feature vision (if exists)
+ls docs/features/*/vision.md
 ```
 
 **Analyze:**
 
-- Is feature still marked "In Progress" in STATUS.md?
-- Is feature still in "Active Work" in ROADMAP.md?
-- Does feature vision match what was actually built?
-- Are there TODOs for features just completed?
+- Is feature marked "In Progress" in STATUS.md?
+- Is feature in "Active Work" in ROADMAP.md?
+- Are there completed TODOs to move?
 
----
+**Step 4: Generate Documentation Updates**
 
-**Step 22: Generate Documentation Updates**
+**Always Update:**
 
-**Generate precise diffs for each affected file.**
+1. `docs/STATUS.md` - Move from "In Progress" → "Complete"
+2. `docs/ROADMAP.md` - Mark task as ✅ COMPLETE
 
-### 22.1: STATUS.md Updates
+**Conditionally Update:** 3. `docs/features/{feature}/vision.md` - If scope changed or feature completed 4. Remove stale content - TODOs, outdated references
 
-**Rule:** Move feature from "In Progress" → "Complete" with summary.
+**Step 5: Show Documentation Diff**
 
-**Template:**
-
-```markdown
-## ✅ Working Features
-
-### <Feature Name> ✅ COMPLETE (<Month> <Year>)
-
-**<One-line description>**
-
-- <Key accomplishment 1>
-- <Key accomplishment 2>
-- <Key accomplishment 3>
-
-**See `/docs/features/<feature>/vision.md` for full details**
-```
-
-**Example Update:**
-
-```diff
--## 🔄 In Progress
--
--### Volunteer Management UI
--
--- 🔄 **Volunteer Directory** - Building TanStack Table UI
--- 🔄 **Create Forms** - Dialog-based volunteer creation
-
-+## ✅ Working Features
-+
-+### Volunteer Management ✅ COMPLETE (Nov 2025)
-+
-+**Volunteer directory and CRUD operations**
-+
-+- Volunteer directory with TanStack Table (sorting, search, filtering)
-+- Create volunteer form with validation (emergency contacts, background checks)
-+- Volunteer detail page with tabbed interface and edit capability
-+- Skills management UI with proficiency levels
-+
-+**See `/docs/features/volunteer-management/vision.md` for full details**
-```
-
-**Also check "Blockers" section** - remove if PR resolved blockers.
-
-### 22.2: ROADMAP.md Updates
-
-**Rule:** Mark task/phase as ✅ COMPLETE, update "Active Work" section.
-
-**Template:**
-
-```diff
- ### Active Work
-
--- **<Feature>** 🔄 IN PROGRESS - <description>
-+- **<Feature>** ✅ COMPLETE - <what was delivered>
-```
-
-**If phase completed, update "Current Phase":**
-
-```diff
--**Current Phase:** Phase 3 (Production Launch Prep)
-+**Current Phase:** Phase 4 (Member Management)
-```
-
-**Move completed tasks to "Completed Phases" if major milestone:**
-
-```diff
-+### Phase 3: Production Launch ✅ COMPLETE (Nov 2025)
-+
-+**Goal:** Launch to first pilot church with production-ready system
-+
-+- ✅ Connect Card Enhancements - Review queue, batch management
-+- ✅ Team Management - Multi-campus permissions
-+- ✅ Volunteer Management - Directory, forms, detail pages
-```
-
-### 22.3: Feature Vision Updates (If Scope Changed)
-
-**Only update if:**
-
-- Feature direction changed during development
-- Planned features were cut or modified
-- New features were added that weren't planned
-
-**Updates:**
-
-1. **Status header** - Change from "IN PROGRESS" → "COMPLETE"
-2. **Current Status section** - Mark completed items with ✅
-3. **Planned Features** - Move completed checkboxes to done
-4. **Next Steps** - Remove if fully complete, update if partial
-
-**Example:**
-
-```diff
- # Volunteer Management - Product Vision
-
--**Status:** 🔄 **IN PROGRESS**
-+**Status:** ✅ **COMPLETE - Phase 3**
- **Last Updated:** 2025-11-16
-
- ## 🚀 Current Status (Phase 3)
-
--### Volunteer Directory (IN PROGRESS)
-+### Volunteer Directory ✅ COMPLETE
-
--- [ ] Directory with TanStack Table
--- [ ] Create volunteer form
--- [ ] Volunteer detail page
-+- [x] Directory with TanStack Table (sorting, search, filtering)
-+- [x] Create volunteer form with validation
-+- [x] Volunteer detail page with tabbed interface
-+- [x] Edit volunteer dialog with optimistic locking
-+- [x] Skills management UI
-```
-
-### 22.4: Stale Content Cleanup
-
-**Search for stale references to completed feature:**
-
-```bash
-# Find TODOs related to feature
-grep -r "TODO.*volunteer" docs/ --include="*.md"
-
-# Find "planned" or "in progress" references
-grep -r "planned.*volunteer\|in progress.*volunteer" docs/ --include="*.md" -i
-
-# Find outdated status markers
-grep -r "🔄.*volunteer\|⚠️.*volunteer" docs/ --include="*.md"
-```
-
-**Remove or update stale content:**
-
-- TODOs that were just completed
-- "Planned for Phase X" text for features now built
-- Outdated architecture notes
-- References to old approaches that were changed
-
----
-
-**Step 23: Show Documentation Diff & Get Approval**
-
-**Present comprehensive diff to user with color-coded changes:**
+Present comprehensive diff:
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -789,9 +844,7 @@ grep -r "🔄.*volunteer\|⚠️.*volunteer" docs/ --include="*.md"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 This PR completed: <Feature Name>
-PR #<number>: <PR title>
-
-The following documentation MUST be updated to reflect reality:
+PR #<number>: <title>
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📄 1. docs/STATUS.md
@@ -799,39 +852,43 @@ The following documentation MUST be updated to reflect reality:
 
 CHANGE: Move from "In Progress" → "Complete"
 
-[Show exact diff with - and + markers]
+-## 🔄 In Progress
+-
+-### Tech Debt Fixes
+-- 🔄 **Security Audit** - Addressing CRITICAL issues
+
++## ✅ Working Features
++
++### Security Fixes ✅ COMPLETE (Nov 2025)
++
++**Comprehensive security audit addressing 11 vulnerabilities**
++
++- Multi-tenant isolation enforcement (3 CRITICAL fixes)
++- PII logging removal (23 files cleaned)
++- Generic error messages (security best practice)
++
++**See `/docs/technical/security-fixes-2025-11-21.md` for full audit**
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📄 2. docs/ROADMAP.md
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-CHANGE: Mark Phase 3 task as complete
+CHANGE: Mark task as complete
 
-[Show exact diff]
+-### Active Work
+-
+-- **Security Audit** 🔄 IN PROGRESS - Fixing CRITICAL vulnerabilities
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📄 3. docs/features/volunteer-management/vision.md
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-CHANGE: Update status and mark completed features
-
-[Show exact diff]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🗑️  4. Stale Content Cleanup
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-REMOVE: Outdated TODOs and planning text
-
-[List files with stale content]
++### Active Work
++
++- **Security Audit** ✅ COMPLETE - 11 vulnerabilities fixed (PR #<number>)
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 📊 SUMMARY:
-- Files to update: 3
-- Lines added: <count>
-- Lines removed: <count>
-- Stale content cleaned: <count> references
+- Files to update: 2
+- Lines added: ~15
+- Lines removed: ~5
 
 ⚠️  Documentation updates are REQUIRED for every PR.
     Skipping causes documentation drift and confuses future AI sessions.
@@ -847,34 +904,33 @@ OPTIONS:
    → Review and modify before applying
 
 3. Skip documentation update (NOT RECOMMENDED)
-   → Causes documentation drift, requires manual cleanup later
+   → Causes documentation drift, manual cleanup later
 
 What would you like to do? (1/2/3)
 ```
 
-### Handle User Response:
+**Step 6: Handle Response**
 
-#### Option 1: Apply All Updates (RECOMMENDED)
+**If Option 1 (Apply all):**
 
 ```bash
-# Apply all changes
-<apply each diff to respective file>
+# Apply changes using Edit tool
+<apply diffs to each file>
 
-# Stage all doc changes
-git add docs/STATUS.md docs/ROADMAP.md docs/features/*/vision.md
+# Stage docs
+git add docs/STATUS.md docs/ROADMAP.md
 
-# Verify staged changes
+# Verify
 git diff --cached --stat
 
 # Commit
-git commit -m "docs: update STATUS/ROADMAP/vision after <feature> merge (PR #<number>)
+git commit -m "docs: update STATUS/ROADMAP after <feature> merge (PR #<number>)
 
 - Mark <feature> as complete in STATUS.md
 - Update ROADMAP.md active work section
-- Update feature vision status and completed items
-- Remove stale TODOs and planning references
+- Update last modified dates
 
-Ensures documentation reflects actual state after PR #<number> merge."
+Ensures documentation reflects state after PR #<number>."
 
 # Push
 git push origin main
@@ -883,45 +939,13 @@ git push origin main
 git log -1 --oneline
 ```
 
-Show success:
+**If Option 2 (Edit):**
 
-```
-✅ DOCUMENTATION UPDATED
+Show each file, ask for edits, apply custom changes.
 
-All documentation now reflects the actual state of the codebase.
+**If Option 3 (Skip):**
 
-Committed: docs: update STATUS/ROADMAP/vision after <feature> merge (PR #<number>)
-Pushed to: main
-```
-
-#### Option 2: Edit Proposed Changes
-
-Ask user:
-
-```
-Which file would you like to edit?
-
-1. STATUS.md
-2. ROADMAP.md
-3. features/<feature>/vision.md
-4. All of them
-
-Choice: _
-```
-
-For each file:
-
-- Show current proposed diff
-- Ask: "What changes would you like?"
-- Regenerate based on feedback
-- Show updated diff
-- Confirm: "Apply this version? (yes/no)"
-
-Once all edits confirmed, apply and commit.
-
-#### Option 3: Skip Documentation Update
-
-**Show strong warning:**
+Show strong warning:
 
 ```
 ⚠️  ⚠️  ⚠️  WARNING ⚠️  ⚠️  ⚠️
@@ -931,257 +955,70 @@ Skipping documentation updates is STRONGLY DISCOURAGED.
 CONSEQUENCES:
 - STATUS.md won't reflect current state
 - ROADMAP.md will show incorrect priorities
-- Feature visions will be stale
-- Future AI sessions will waste hours on wrong information
-- Next developer will be confused about project state
+- Future AI sessions waste hours on wrong info
+- Next developer confused about project state
 
-This is the ROOT CAUSE of documentation drift you just fixed.
+This is the ROOT CAUSE of documentation drift.
 
-Are you ABSOLUTELY SURE you want to skip? (yes/no)
+Add reminder comment to PR? (yes/no)
 ```
 
-If user still says yes:
+**Step 7: Validation**
+
+After committing docs, validate:
 
 ```bash
-# Add comment to PR about skipped docs
-gh pr comment <pr-number> --body "⚠️ **Documentation updates skipped**
+# Check for stale TODOs
+grep -r "TODO.*<feature>" docs/ --include="*.md"
 
-Manual update required:
-- [ ] Update STATUS.md
-- [ ] Update ROADMAP.md
-- [ ] Update feature vision docs
+# Check for outdated status markers
+grep -r "🔄.*<feature>" docs/ --include="*.md"
 
-@<username> Please update docs manually to prevent drift."
+# Verify last updated dates
+grep "Last Updated" docs/STATUS.md docs/ROADMAP.md
+```
 
-echo "⚠️  Documentation update skipped. Added reminder to PR."
-echo "   You'll need to update docs manually later."
+Show validation results:
+
+```
+✅ DOCUMENTATION VALIDATION
+
+- No stale TODOs found
+- No outdated status markers
+- Last updated dates: 2025-11-24 (today)
+- Feature marked complete consistently
+
+Documentation is accurate and current! 🎉
 ```
 
 ---
 
-**Step 24: Documentation Validation**
+## Stage 11: Handoff Generation
 
-**After committing docs, validate they match reality:**
+**Step 1: Ask About Next Feature**
 
-### 24.1: Check for Stale References
-
-Search for TODOs related to completed feature:
-
-```bash
-grep -r "TODO.*<feature-keyword>" docs/ --include="*.md"
-```
-
-Search for "planned" references:
-
-```bash
-grep -ri "planned.*<feature-keyword>" docs/ --include="*.md"
-```
-
-Search for status markers that should be updated:
-
-```bash
-grep -r "🔄.*<feature-keyword>\|⚠️.*<feature-keyword>" docs/ --include="*.md"
-```
-
-### 24.2: Validate Last Updated Dates
-
-Check STATUS.md last updated:
-
-```bash
-grep "Last Updated" docs/STATUS.md
-```
-
-Check ROADMAP.md last updated:
-
-```bash
-grep "Last Updated" docs/ROADMAP.md
-```
-
-Get today's date:
-
-```bash
-date +%Y-%m-%d
-```
-
-### 24.3: Validate Feature Status Consistency
-
-```bash
-# Check feature appears in STATUS.md complete section
-grep -A 20 "Working Features" docs/STATUS.md | grep -i "<feature>" > /dev/null
-
-# Check ROADMAP marks feature complete
-grep "COMPLETE.*<feature>\|<feature>.*COMPLETE" docs/ROADMAP.md > /dev/null
-```
-
-### 24.4: Show Validation Results
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 DOCUMENTATION VALIDATION
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ Stale Content Check:
-   - No stale TODOs found for this feature
-   - No "planned" references remaining
-   - No outdated status markers (🔄, ⚠️)
-
-✅ Last Updated Dates:
-   - STATUS.md: 2025-11-16 (today)
-   - ROADMAP.md: 2025-11-16 (today)
-
-✅ Feature Status Consistency:
-   - Feature marked complete in STATUS.md ✅
-   - Feature marked complete in ROADMAP.md ✅
-   - Feature vision updated ✅
-
-✅ Cross-Reference Check:
-   - STATUS.md links to feature vision ✅
-   - ROADMAP.md references correct phase ✅
-   - No contradictory status markers ✅
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-✅ ALL VALIDATION CHECKS PASSED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Documentation is up-to-date and consistent with codebase reality.
-Future AI sessions will have accurate context! 🎉
-```
-
-**If validation fails:**
-
-```
-⚠️  VALIDATION WARNINGS
-
-Found issues:
-- 3 stale TODOs still reference volunteer feature
-  → Files: docs/technical/integrations.md:45, docs/STATUS.md:102
-
-- STATUS.md last updated: 2025-11-10 (6 days old)
-  → Should be updated to today's date
-
-Fix these issues now? (yes/no)
-```
-
----
-
-**Step 25: Final Documentation State Report**
-
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 DOCUMENTATION UPDATE COMPLETE
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-UPDATED FILES:
-✅ docs/STATUS.md - Feature moved to "Complete"
-✅ docs/ROADMAP.md - Phase 3 marked complete
-✅ docs/features/volunteer-management/vision.md - Status updated
-
-COMMIT:
-📝 docs: update STATUS/ROADMAP/vision after volunteer UI merge (PR #26)
-🔗 https://github.com/org/repo/commit/<sha>
-
-VALIDATION:
-✅ All checks passed
-✅ No stale content remaining
-✅ Docs reflect current reality
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🎯 NEXT AI SESSION WILL HAVE ACCURATE CONTEXT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Status dashboards (STATUS.md, ROADMAP.md) are current
-Feature visions match what was actually built
-No contradictory or stale planning text
-
-Ready to proceed to Stage 9 (Handoff Generation)
-```
-
----
-
-**Key Improvements Over Original Stage 8:**
-
-**Original:**
-
-- ❌ Optional ("Update docs now? yes/no")
-- ❌ Only touches STATUS.md and ROADMAP.md
-- ❌ No feature vision updates
-- ❌ No stale content cleanup
-- ❌ No validation checks
-- ❌ No enforcement
-
-**New Industry-Standard Stage 8:**
-
-- ✅ **REQUIRED** - Strong warnings if skipped
-- ✅ **Comprehensive** - STATUS, ROADMAP, feature visions, stale content
-- ✅ **Systematic** - Analyzes what was built vs planned
-- ✅ **Validated** - Checks for stale references, consistency
-- ✅ **Enforced** - Won't complete without updates (or explicit skip with warning)
-- ✅ **Visible** - Shows exact diffs before applying
-- ✅ **Auditable** - Clean commit message with PR reference
-
-**Result:** Documentation ALWAYS reflects reality. No more drift, no more AI confusion.
-
----
-
-**When Documentation Updates Are NOT Needed:**
-
-**Only skip if PR is:**
-
-- Pure refactor (no feature changes)
-- Bug fix (already-working feature)
-- Code cleanup (no user-visible changes)
-- Test additions (no new functionality)
-
-**Even then, consider:**
-
-- Does STATUS.md mention this as broken? → Update to show fixed
-- Does ROADMAP.md list this as todo? → Mark complete
-- Does this resolve a blocker? → Remove from blockers list
-
-**Default: When in doubt, update docs.**
-
----
-
-## Stage 9: Handoff Generation
-
-**Step 23: Ask About Next Feature**
-
-Ask: "What feature should we work on next?"
+"What feature should we work on next?"
 
 Wait for user input.
 
-**Step 24: Generate Handoff Document**
+**Step 2: Generate Handoff Document**
 
 Create comprehensive handoff text (copyable, not saved to file):
 
 ````
-Feature Wrap-Up Complete! ✅
-============================
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎉 FEATURE WRAP-UP COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-## What Was Accomplished
+Feature: <feature-name>
+PR: #<number> - MERGED to main
+Date: <date>
 
-**Feature**: <feature-name>
-**PR**: #<number> - Merged to main
-**Date**: <date>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 AI SESSION HANDOFF
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**What Was Built**:
-<summary from PR>
-
-**Files Changed**:
-<key files from git diff>
-
-**Merge Conflicts Encountered**:
-<if any, how they were resolved>
-
-**Worktree Status**:
-- main: Updated with merged feature ✅
-- Other worktrees: Skipped (separate features in progress)
-
----
-
-## 📋 AI SESSION HANDOFF
-
-**Copy/paste this into your next Claude Code session:**
+Copy/paste this into your next Claude Code session:
 
 ---START HANDOFF---
 
@@ -1189,18 +1026,18 @@ Feature Wrap-Up Complete! ✅
 
 **Date**: <current-date>
 **Completed Feature**: <feature-name>
-**Next Feature**: <user-provided-next>
-**Current Worktree**: <path>
-**Current Branch**: main (synced)
+**Next Feature**: <user-provided>
+**Current Worktree**: main (synced)
+**Current Branch**: main
 
 ## Just Completed: <feature-name>
 
 **Status**: ✅ Merged to main (PR #<number>)
 
 **Summary**:
-<what was built>
+<what was built - from PR>
 
-**Key Files**:
+**Key Files Modified**:
 - <file 1>
 - <file 2>
 - <file 3>
@@ -1208,60 +1045,61 @@ Feature Wrap-Up Complete! ✅
 **Patterns Used**:
 - Multi-tenant: organizationId scoping
 - Server actions: Rate limiting + auth
-- TanStack Table: Data display
-- <others>
+- Industry workflow: Synced with main first
+- <other patterns>
 
-**Merge Conflicts Resolved**:
-<if any, document what and how>
+**Merge Conflicts**:
+<if any, what and how resolved>
 
-**Lessons Learned**:
-<anything notable>
+**Documentation Updated**:
+✅ STATUS.md - Feature marked complete
+✅ ROADMAP.md - Task marked done
+✅ All docs reflect current reality
 
 ## Worktree Architecture
 
 This project uses git worktrees for parallel development:
 
 ```
-/connect-card/.bare                    (bare repo)
-/connect-card/main                     (main branch)
-/connect-card/volunteer                (feature/volunteer-management)
-/connect-card/prayer                   (feature/prayer-management)
+/church-connect-hub/.bare         (bare repo)
+/church-connect-hub/main           (main branch)
+/church-connect-hub/volunteer      (feature branch)
+/church-connect-hub/prayer         (feature branch)
+/church-connect-hub/tech-debt      (just merged)
 ```
 
 **Database Isolation**:
-- main: ep-falling-unit-adhn1juc (port 3000)
-- volunteer: ep-bitter-recipe-ad3v8ovt (port 3001)
-- prayer: ep-long-feather-ad7s8ao0 (port 3002)
+- main: ep-xxx (port 3000)
+- volunteer: ep-yyy (port 3001)
+- prayer: ep-zzz (port 3002)
 
 **Critical Commands**:
 ```bash
-git worktree list                    # See all worktrees
-cd /path/to/worktree                # Switch context
-git merge main                      # Update feature with main changes
-DATABASE_URL="..." pnpm prisma ...  # Explicit DB for Prisma
+git worktree list                # See all worktrees
+cd /path/to/worktree            # Switch context
+git merge main                  # Update with main changes
 ```
 
 **Documentation Workflow**:
-- ❌ DON'T update /docs in feature branches
-- ✅ DO update docs in main AFTER merge
+- ✅ Docs updated in main AFTER merge
+- ❌ Never update docs in feature branches
 - Conflicts in docs are EXPECTED - combine, don't replace
 
 ## Current Project State
 
 **Working Features**:
-- Connect Card AI Vision extraction ✅
-- Review Queue with manual correction ✅
-- Team Management with invitations ✅
-- <just-completed-feature> ✅
+- Connect Card AI Vision ✅
+- Review Queue ✅
+- Team Management ✅
+- Prayer Management ✅
+- Volunteer Management ✅
+- <just-completed> ✅
 
 **In Progress** (Other Worktrees):
 - <list features in other worktrees>
 
 **Next Feature**:
 - <next-feature>
-
-**Known Issues**:
-<tech debt or blockers>
 
 ## Next Feature: <next-feature>
 
@@ -1271,24 +1109,8 @@ DATABASE_URL="..." pnpm prisma ...  # Explicit DB for Prisma
 **Recommended Approach**:
 <implementation suggestions>
 
-**Worktree Strategy**:
-
-Option 1: Use existing worktree (if related to ongoing feature)
-```bash
-cd /path/to/existing/worktree
-git checkout -b feature/<name>
-```
-
-Option 2: Create new worktree (for new domain)
-```bash
-cd /path/to/.bare
-git worktree add ../connect-card/<name> -b feature/<name>
-cd ../connect-card/<name>
-cp ../main/.env.local .  # Modify DATABASE_URL + PORT
-```
-
 **Files to Review**:
-<similar existing code>
+- <similar existing code>
 
 **Patterns to Follow**:
 - Server actions: `/add-server-action` command
@@ -1300,36 +1122,23 @@ cp ../main/.env.local .  # Modify DATABASE_URL + PORT
 
 **Documentation**:
 - `CLAUDE.md` - Core AI instructions
-- `docs/essentials/coding-patterns.md` - Implementation guide
-- `docs/worktree-database-setup.md` - Worktree workflows
+- `docs/essentials/coding-patterns.md` - Patterns
 - `docs/STATUS.md` - Current state
-- `docs/ROADMAP.md` - Feature roadmap
+- `docs/ROADMAP.md` - Priorities
 
 **Slash Commands**:
-- `/session-start <feature>` - Initialize new feature
+- `/session-start <feature>` - Initialize
 - `/feature-wrap-up` - This command
-- `/add-server-action <name>` - Generate server action
-- `/review-code` - Code quality check
+- `/add-server-action <name>` - Generate action
+- `/review-code` - Quality check
 
-**Worktree Workflow**:
-1. Work in dedicated worktree on feature branch
-2. Commit code (NO doc updates in branch)
-3. Run `/feature-wrap-up` (conflict detection + merge)
-4. Update docs in main AFTER merge
-5. Only main worktree updates (other feature worktrees stay independent)
-
-**Never**:
-- ❌ Update /docs in feature branches
-- ❌ Auto-update other feature worktrees (destroys work in progress)
-- ❌ Run Prisma without explicit DATABASE_URL
-- ❌ Commit without running build first
-
-**Always**:
-- ✅ Verify DATABASE_URL before Prisma ops
-- ✅ Check current worktree (`pwd`)
+**Critical Rules**:
 - ✅ Build before commit
-- ✅ Combine docs during merge conflicts
-- ✅ Update ONLY main worktree after merge (other worktrees are on different features)
+- ✅ Sync with main first (industry standard)
+- ✅ Update docs in main after merge
+- ✅ Only update main worktree post-merge
+- ❌ Never update docs in feature branches
+- ❌ Never auto-sync active worktrees
 
 ## Starting Next Session
 
@@ -1338,13 +1147,13 @@ cp ../main/.env.local .  # Modify DATABASE_URL + PORT
 /session-start <next-feature>
 ```
 
-This will set up branch/worktree and explore relevant code.
-
-**Good luck! Previous session completed successfully.**
+**Good luck! Previous session completed successfully.** 🚀
 
 ---END HANDOFF---
 
-Copy text between START/END markers for next session.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Copy text between START/END markers for next Claude Code session
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Great work on <feature-name>! 🎉
 ````
@@ -1353,71 +1162,68 @@ Great work on <feature-name>! 🎉
 
 ## Error Handling
 
-**Build Failures**:
+**Build Failures:**
 
 - Stop workflow
 - Report errors with file:line
 - Offer to help fix
-- Resume from Stage 1
+- Resume from Stage 3
 
-**Merge Conflicts**:
+**Sync Conflicts (Stage 1):**
 
-- Detected in Stage 3 (forecast)
-- Guided resolution in Stage 5 (merge)
-- COMBINE content strategy (don't replace)
+- Abort merge/rebase
+- Show conflict guide
+- User resolves manually
+- Re-run /feature-wrap-up
 
-**Worktree Update Failures**:
+**Merge Conflicts (Stage 5 forecast):**
 
-- Uncommitted changes: Offer options (skip/stash/commit)
-- Merge conflicts: Show guide, skip worktree
+- Warn in forecast
+- Guide resolution during PR merge
+- Emphasis: COMBINE content
+
+**Worktree Update Failures (Stage 9):**
+
+- Uncommitted changes: Skip or stash
+- Merge conflicts: Abort, mark for manual sync
 - Missing worktree: Continue gracefully
-
-**Documentation Conflicts (EXPECTED)**:
-
-- Warn in conflict forecast (Stage 3)
-- Guide manual resolution during merge
-- Emphasis: COMBINE all updates, keep everything
 
 ---
 
 ## When to Use This Command
 
-✅ **Use when**:
+✅ **Use when:**
 
 - Feature complete and tested
 - Ready to merge to main
-- Need automated wrap-up workflow
-- Want conflict detection before PR
-- Need worktree synchronization
+- Want automated wrap-up workflow
+- Need conflict detection
+- Need documentation updates
 - Need handoff for next session
 
-❌ **Don't use if**:
+❌ **Don't use if:**
 
 - Feature incomplete
 - Build broken
 - Critical bugs present
-- Not working in worktree setup
+- Not in worktree setup
 
 ---
 
-## Key Improvements Over Standard Workflow
+## Key Industry Standards Applied
 
-**Conflict Detection**:
+**Stage 1: Sync with Main First**
 
-- Forecasts conflicts BEFORE creating PR
-- Identifies overlapping file changes across worktrees
-- Provides resolution strategy recommendations
+- ✅ Google: "Sync before code review"
+- ✅ GitHub: "Keep branch up to date"
+- ✅ GitLab: "Rebase on target branch"
+- ✅ Trunk-Based: "Integrate frequently"
 
-**Worktree Sync**:
+**Stage 10: Required Documentation**
 
-- Automatically updates all worktrees after merge
-- Handles uncommitted changes gracefully
-- Detects and guides through merge conflicts
+- ✅ Every PR updates docs
+- ✅ Comprehensive (STATUS, ROADMAP, visions)
+- ✅ Validated (no stale content)
+- ✅ Auditable (clean commit messages)
 
-**Documentation Workflow**:
-
-- NO doc updates in feature branches (prevents conflicts)
-- Docs updated in main AFTER merge
-- Clear guidance on combining vs replacing content
-
-**Result**: Clean merges, synchronized codebase, comprehensive handoff documentation.
+**Result:** Clean merges, current docs, comprehensive handoffs.
