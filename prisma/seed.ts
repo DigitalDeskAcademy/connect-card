@@ -247,16 +247,14 @@ async function main() {
     userIds[userData.email] = user.id;
 
     // CRITICAL: Create Better Auth Account record for OTP login
+    const accountId = generateAccountId();
     await prisma.account.upsert({
       where: {
-        userId_accountId: {
-          userId: user.id,
-          accountId: userData.email,
-        },
+        id: accountId,
       },
       update: {},
       create: {
-        id: generateAccountId(),
+        id: accountId,
         userId: user.id,
         accountId: userData.email,
         providerId: "credential", // Better Auth OTP provider
