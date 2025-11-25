@@ -129,7 +129,6 @@ export async function revokeInvitation(
       message: `Invitation to ${invitation.email} has been revoked`,
     };
   } catch (error) {
-    console.error("Failed to revoke invitation:", error);
     return {
       status: "error",
       message: "Failed to revoke invitation. Please try again.",

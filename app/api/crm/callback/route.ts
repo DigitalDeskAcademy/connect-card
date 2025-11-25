@@ -67,8 +67,6 @@ export async function GET(req: NextRequest) {
     );
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.text();
-      console.error("Token exchange failed:", errorData);
       return NextResponse.redirect(
         new URL("/platform/admin/api?error=token_exchange", req.url)
       );
@@ -192,8 +190,7 @@ export async function GET(req: NextRequest) {
             }
           }
         }
-      } catch (error) {
-        console.error("Failed to fetch GHL locations:", error);
+      } catch {
         // Don't fail the whole OAuth flow if locations fetch fails
       }
     }
@@ -202,8 +199,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(
       new URL("/platform/admin/api?success=connected", req.url)
     );
-  } catch (error) {
-    console.error("GHL callback error:", error);
+  } catch {
     return NextResponse.redirect(
       new URL("/platform/admin/api?error=server", req.url)
     );

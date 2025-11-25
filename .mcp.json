@@ -1,1 +1,17 @@
-/home/digitaldesk/Desktop/connect-card/.mcp.json
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
+    },
+    "docker-mcp-gateway": {
+      "command": "docker",
+      "args": [
+        "mcp",
+        "gateway",
+        "run",
+        "--servers=context7,playwright,youtube_transcript"
+      ]
+    }
+  }
+}
