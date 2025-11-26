@@ -1,0 +1,348 @@
+# Prayer Management - Product Vision
+
+**Status:** In Development (65% Complete)
+**Last Updated:** 2025-11-16
+**Owner:** Church Operations Team
+
+---
+
+## 🎯 Product Vision
+
+### The Problem
+
+Churches collect prayer requests via connect cards but have no organized way to:
+
+- Track requests from submission to completion
+- Assign requests to prayer team members
+- Follow up on answered prayers
+- Maintain privacy for sensitive requests
+
+### The Solution
+
+Simple prayer request management integrated with connect card workflow:
+
+**Primary Source (70-80%):** Connect cards → AI extraction → Auto-create prayers
+**Secondary Source (20-30%):** Manual entry for phone/email submissions
+
+### Success Criteria
+
+- ✅ All connect card prayers automatically tracked
+- ✅ Simple manual creation for edge cases (phone, email, urgent)
+- ✅ Privacy controls (public vs private)
+- ✅ Assignment workflow (staff → team member)
+- ✅ Answered prayer tracking
+
+---
+
+## 🏗️ Architecture
+
+### Database Schema
+
+```prisma
+model PrayerRequest {
+  id             String              @id
+  organizationId String              // Multi-tenant isolation
+  locationId     String?             // Multi-campus support
+
+  // Request details
+  request        String              // Prayer text (2000 char max)
+  category       String?             // Auto-detected: Health, Family, Salvation, etc.
+  isPrivate      Boolean             // Privacy control
+  isUrgent       Boolean             // Priority flag
+
+  // Source tracking
+  connectCardId  String?             // Link to connect card (null for manual)
+  submittedBy    String?             // Person's name
+  submitterEmail String?             // For follow-up
+  submitterPhone String?             // For follow-up
+
+  // Workflow
+  status         PrayerRequestStatus // PENDING, ASSIGNED, PRAYING, ANSWERED, ARCHIVED
+  assignedToId   String?             // Assigned team member
+  followUpDate   DateTime?           // Scheduled follow-up
+  answeredDate   DateTime?           // When answered
+  answeredNotes  String?             // Testimony
+
+  createdAt      DateTime
+  updatedAt      DateTime
+}
+```
+
+### Privacy Model
+
+- **Public**: All staff can see (default)
+- **Private**: Only assigned team member + admins can see
+- **Auto-detection**: Sensitive keywords → auto-mark private
+- **Manual override**: Staff can change privacy
+
+### Multi-Tenant Scoping
+
+- Filter by `organizationId` (church isolation)
+- Filter by `locationId` (multi-campus support)
+- Staff see only public + assigned private requests
+- Admins see all requests
+
+---
+
+## 🚀 Feature Scope
+
+### ✅ What's Built (65% Complete)
+
+**Database Layer:**
+
+- ✅ PrayerRequest model with full schema
+- ✅ Multi-tenant data scoping
+- ✅ Privacy filtering logic
+- ✅ Category auto-detection (8 categories)
+- ✅ Sensitive keyword detection
+
+**UI Layer:**
+
+- ✅ Prayer requests table (TanStack Table)
+- ✅ Search, filter, sort, pagination
+- ✅ Privacy indicators
+- ✅ Status badges
+- ✅ Location filtering (multi-campus)
+- ✅ Empty states
+
+**Testing:**
+
+- ✅ E2E test suite (8 tests)
+- ✅ Multi-tenant isolation verified
+- ✅ Privacy controls validated
+
+### ❌ What's Missing (35% - Critical)
+
+**Server Actions (BLOCKING):**
+
+- ❌ Create prayer request (manual entry)
+- ❌ Update prayer request (edit text/category)
+- ❌ Assign to team member
+- ❌ Mark as answered (with testimony)
+- ❌ Delete/archive prayer request
+
+**UI Components:**
+
+- ❌ Simple creation form (name, request, privacy toggle)
+- ❌ Assignment dialog
+- ❌ Detail view dialog
+- ❌ Edit forms
+
+**Integration:**
+
+- ❌ Connect card review → auto-create prayer
+
+---
+
+## 📋 Implementation Roadmap
+
+### Phase 1: Server Actions (NEXT - Critical)
+
+**Goal:** Enable CRUD operations from UI
+
+**Tasks:**
+
+1. Implement 5 server actions (create, update, assign, mark-answered, delete)
+2. Add Zod validation schemas
+3. Add Arcjet rate limiting
+4. Multi-tenant isolation checks
+
+**Deliverables:**
+
+- Functional create/edit/delete operations
+- Assignment workflow working
+- Privacy controls enforced
+
+---
+
+### Phase 2: Simple Manual Creation
+
+**Goal:** Basic form for phone/email prayer submissions
+
+**Tasks:**
+
+1. Create simple form (name, request text, privacy toggle)
+2. Dialog wrapper with "New Prayer Request" button
+3. Success/error handling with toast
+4. Table refresh on success
+
+**Deliverables:**
+
+- Staff can manually create prayers
+- Simple, fast workflow
+- No complex fields (keep minimal)
+
+**Hold for Church Feedback:**
+
+- Email submission workflow
+- Phone intake process
+- Advanced categorization
+- Follow-up automation
+
+---
+
+### Phase 3: Assignment & Completion
+
+**Goal:** Complete prayer lifecycle workflow
+
+**Tasks:**
+
+1. Assignment dialog (select team member, add notes)
+2. Detail view dialog (full request, edit capability)
+3. Mark as answered (testimony textarea)
+4. Assignment history tracking
+
+**Deliverables:**
+
+- Full assignment workflow
+- Answered prayer tracking
+- Team member workload visibility
+
+---
+
+### Phase 4: Connect Card Integration
+
+**Goal:** Auto-create prayers from connect card review
+
+**Tasks:**
+
+1. Modify connect card review action
+2. Extract `extractedData.prayerRequest`
+3. Create PrayerRequest with `connectCardId` link
+4. Privacy auto-detection
+5. Category auto-detection
+
+**Deliverables:**
+
+- 70-80% of prayers automated
+- Manual review only for exceptions
+- Privacy respected automatically
+
+---
+
+## 🚫 Out of Scope (For MVP)
+
+**Not building (defer to Phase 5+):**
+
+- ❌ Prayer batch grouping (no batching needed)
+- ❌ Prayer team management (use existing team roles)
+- ❌ Bulk operations (CRUD operations are individual)
+- ❌ Advanced reporting/analytics
+- ❌ Prayer wall (public display)
+- ❌ Export to PDF/email
+- ❌ GHL SMS notifications
+- ❌ Follow-up automation workflows
+
+**Rationale:** Ship simple MVP first, add complexity based on church feedback.
+
+---
+
+## 📊 Key Metrics
+
+**Current Status:**
+
+- Database: ✅ Complete
+- UI: ✅ Complete
+- E2E Tests: ✅ Complete
+- Server Actions: ❌ Not started (BLOCKING)
+- Connect Card Integration: ❌ Not started
+
+**Overall Completion:** 65%
+
+**Next Milestone:** Server actions complete → 85% complete
+
+---
+
+## 🔄 Workflow Example
+
+### Scenario 1: Connect Card Prayer (Automated)
+
+```
+Sunday service
+  → Visitor fills connect card with prayer request
+  → Staff scans card
+  → AI extracts prayer text
+  → Auto-creates PrayerRequest (connectCardId linked)
+  → Privacy auto-detected
+  → Category auto-assigned
+  → Appears in prayer table
+  → Staff assigns to team member
+  → Team member prays, marks answered
+```
+
+**Staff effort:** 30 seconds (assign only)
+
+---
+
+### Scenario 2: Phone Call Prayer (Manual)
+
+```
+Monday morning
+  → Church office receives call: "Pray for my mom's surgery"
+  → Staff clicks "New Prayer Request"
+  → Enters: Name, request text
+  → Toggles privacy if sensitive
+  → Submits
+  → Assigns to prayer team member
+  → Team member prays, marks answered
+```
+
+**Staff effort:** 2 minutes (manual entry)
+
+---
+
+## ✅ Success Criteria
+
+**We've succeeded when:**
+
+1. ✅ 80%+ of prayers come from connect cards (automated)
+2. ✅ Staff can manually create prayers in <2 minutes
+3. ✅ Privacy controls prevent accidental public exposure
+4. ✅ Team members can see only their assigned prayers
+5. ✅ Answered prayers are tracked with testimonies
+6. ✅ Multi-campus churches can filter by location
+
+---
+
+## 🎓 Design Principles
+
+### 1. Simplicity Over Features
+
+- **Individual prayers**, not batched
+- **Simple table**, not complex dashboards
+- **Basic CRUD**, not advanced workflows
+- Ship fast, enhance based on feedback
+
+### 2. Privacy First
+
+- **Default public**, explicit private
+- **Auto-detect** sensitive keywords
+- **Staff permissions** enforced
+- **Private → assigned only** strict isolation
+
+### 3. Multi-Source Support
+
+- **Primary:** Connect cards (automated)
+- **Secondary:** Manual entry (fallback)
+- **Both supported**, clean UX for each
+
+### 4. Multi-Tenant Architecture
+
+- **Organization isolation** (church data never leaks)
+- **Location filtering** (multi-campus support)
+- **Role-based access** (staff vs admin permissions)
+
+---
+
+## 📖 Related Documentation
+
+- **Implementation Details:** `/docs/technical/architecture-decisions.md` (ADR-XXX)
+- **Database Schema:** `/prisma/schema.prisma` (PrayerRequest model)
+- **E2E Tests:** `/tests/e2e/09-prayer-management.spec.ts`
+- **Data Layer:** `/lib/data/prayer-requests.ts`
+
+---
+
+**Last Updated:** 2025-11-16
+**Status:** Living document - Updated as vision evolves
+**Next Review:** After Phase 1 complete (server actions shipped)
