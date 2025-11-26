@@ -1,11 +1,34 @@
 "use client";
 
-import { DataTable } from "../payments/data-table";
-import { volunteerColumns } from "./columns";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { VolunteerDataTable } from "./data-table";
+import { getVolunteerColumns } from "./columns";
 import type { VolunteerWithRelations } from "./volunteers-client";
+import { deleteVolunteer } from "@/actions/volunteers/volunteers";
+
+interface Location {
+  id: string;
+  name: string;
+}
 
 interface VolunteersTableProps {
   volunteers: VolunteerWithRelations[];
+  slug: string;
+  organizationId: string;
+  locations: Location[];
+  activeTab: string;
+  canDelete: boolean;
 }
 
 /**
@@ -14,37 +37,117 @@ interface VolunteersTableProps {
  * Displays volunteer directory with TanStack Table.
  *
  * Features:
- * - Sortable columns (name, status, start date)
+ * - Two-tab navigation: "All Volunteers" / "Pending Volunteers"
+ * - Sortable columns (name, phone, categories)
+ * - Checkbox selection for bulk operations
  * - Search filtering (volunteer name, email)
- * - Status filtering (active, on break, inactive, pending)
+ * - Category filtering (OR logic)
  * - Pagination (10 items per page)
  * - Empty state for no volunteers
+ * - Integrated create volunteer button
+ * - Process volunteer dialog (pending tab only)
+ * - Actions menu (3-dot) with View Profile and Delete (admin only)
+ * - Delete confirmation dialog with volunteer name display
  *
  * Architecture:
- * - columns.tsx: Column definitions with TanStack Table types
- * - data-table.tsx: Reusable DataTable component (shared with payments)
- * - volunteers-table.tsx: Wrapper component (this file)
+ * - columns.tsx: Column definitions with checkbox selection and actions menu
+ * - data-table.tsx: VolunteerDataTable component (based on prayer table pattern)
+ * - volunteers-table.tsx: Wrapper component with delete confirmation dialog (this file)
  */
-export function VolunteersTable({ volunteers }: VolunteersTableProps) {
+export function VolunteersTable({
+  volunteers,
+  slug,
+  organizationId,
+  locations,
+  activeTab,
+  canDelete,
+}: VolunteersTableProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [volunteerToDelete, setVolunteerToDelete] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  // Open delete confirmation dialog
+  const handleDelete = (id: string) => {
+    const volunteer = volunteers.find(v => v.id === id);
+    if (volunteer) {
+      setVolunteerToDelete({
+        id,
+        name: volunteer.churchMember?.name || "Unknown",
+      });
+      setIsDeleteDialogOpen(true);
+    }
+  };
+
+  // Confirm and execute delete
+  const handleDeleteConfirm = () => {
+    if (!volunteerToDelete) return;
+
+    startTransition(async () => {
+      const result = await deleteVolunteer(slug, volunteerToDelete.id);
+
+      if (result.status === "success") {
+        toast.success(result.message);
+        router.refresh();
+        setIsDeleteDialogOpen(false);
+        setVolunteerToDelete(null);
+      } else {
+        toast.error(result.message);
+      }
+    });
+  };
+
+  const columns = getVolunteerColumns({
+    slug,
+    canDelete,
+    onDelete: handleDelete,
+  });
+
   return (
-    <DataTable
-      columns={volunteerColumns}
-      data={volunteers}
-      title="Volunteer Directory"
-      searchPlaceholder="Search volunteers..."
-      searchColumn="name"
-      statusFilterColumn="status"
-      statusFilterOptions={[
-        { value: "ALL", label: "All Status" },
-        { value: "ACTIVE", label: "Active" },
-        { value: "ON_BREAK", label: "On Break" },
-        { value: "INACTIVE", label: "Inactive" },
-        { value: "PENDING_APPROVAL", label: "Pending" },
-      ]}
-      defaultSortColumn="name"
-      defaultSortDesc={false}
-      emptyStateTitle="No volunteers yet"
-      emptyStateDescription="Add your first volunteer to get started with volunteer management"
-    />
+    <>
+      <VolunteerDataTable
+        columns={columns}
+        data={volunteers}
+        title="Volunteer Directory"
+        pageSize={10}
+        slug={slug}
+        organizationId={organizationId}
+        locations={locations}
+        activeTab={activeTab}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Volunteer</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete {volunteerToDelete?.name}? This
+              action cannot be undone and will permanently remove their
+              volunteer profile and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={isPending}
+            >
+              {isPending ? "Deleting..." : "Delete Volunteer"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

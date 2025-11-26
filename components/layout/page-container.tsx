@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
@@ -60,6 +63,24 @@ export interface PageContainerProps {
    * @default "div"
    */
   as?: "div" | "main" | "section";
+
+  /**
+   * Optional back button configuration
+   *
+   * When provided, renders a back button at the top of the page
+   * using the standardized pattern (lucide-react ArrowLeft icon)
+   */
+  backButton?: {
+    /**
+     * URL to navigate back to
+     */
+    href: string;
+    /**
+     * Button label text
+     * @default "Back"
+     */
+    label?: string;
+  };
 }
 
 /**
@@ -154,6 +175,7 @@ export function PageContainer({
   variant = "default",
   className,
   as: Component = "div",
+  backButton,
 }: PageContainerProps) {
   // Special case: "none" variant renders children directly with no wrapper
   if (variant === "none") {
@@ -189,6 +211,16 @@ export function PageContainer({
       data-variant={variant}
       className={cn(baseStyles, variantStyles[variant], className)}
     >
+      {backButton && (
+        <div className="mb-6">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href={backButton.href}>
+              <ArrowLeft className="mr-2 w-5 h-5" />
+              {backButton.label || "Back"}
+            </Link>
+          </Button>
+        </div>
+      )}
       {children}
     </Component>
   );
