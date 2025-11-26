@@ -26,12 +26,14 @@ This worktree handles **global, cross-cutting technical issues** that affect the
 **Risk:** Revenue = $0
 
 **The Bug:**
+
 ```typescript
 // CURRENT: Subscription check happens AFTER role check returns
 // Churches with expired subscriptions still get full access
 ```
 
 **The Fix:**
+
 ```typescript
 // Move subscription check BEFORE role returns
 if (!["ACTIVE", "TRIAL"].includes(organization.subscriptionStatus)) {
@@ -51,13 +53,15 @@ if (!["ACTIVE", "TRIAL"].includes(organization.subscriptionStatus)) {
 **Risk:** GDPR fines up to $20M, trust destruction
 
 **The Bug:**
+
 ```typescript
 // Found throughout server actions:
-console.error("Failed to save:", error);  // May contain PII
-console.log("Data:", extractedData);       // Contains PII
+console.error("Failed to save:", error); // May contain PII
+console.log("Data:", extractedData); // Contains PII
 ```
 
 **The Fix:**
+
 ```typescript
 // DELETE all console.log/error with data
 // Use structured logging without PII if needed
@@ -65,6 +69,7 @@ console.log("Data:", extractedData);       // Contains PII
 ```
 
 **Files to audit:**
+
 - [ ] `/actions/connect-card/*.ts`
 - [ ] `/actions/prayer-requests/*.ts`
 - [ ] `/actions/volunteers/*.ts`
@@ -82,6 +87,7 @@ console.log("Data:", extractedData);       // Contains PII
 **Risk:** Unusable at 10K records
 
 **Required Indexes:**
+
 ```prisma
 // ConnectCard - most queried table
 @@index([organizationId, scannedAt(sort: Desc)])
@@ -113,6 +119,7 @@ console.log("Data:", extractedData);       // Contains PII
 **Risk:** Platform crashes at ~200 users
 
 **The Bug:**
+
 ```typescript
 // CURRENT: Fetches ALL records
 const cards = await prisma.connectCard.findMany({
@@ -121,17 +128,19 @@ const cards = await prisma.connectCard.findMany({
 ```
 
 **The Fix:**
+
 ```typescript
 // Add pagination to EVERY list query
 const cards = await prisma.connectCard.findMany({
   where: { organizationId },
-  take: 50,           // Default page size
-  skip: offset,       // Pagination offset
-  orderBy: { createdAt: 'desc' },
+  take: 50, // Default page size
+  skip: offset, // Pagination offset
+  orderBy: { createdAt: "desc" },
 });
 ```
 
 **Files to fix:**
+
 - [ ] `/lib/data/connect-card-analytics.ts`
 - [ ] `/lib/data/connect-card-batch.ts`
 - [ ] `/lib/data/connect-card-review.ts`
@@ -154,6 +163,7 @@ const cards = await prisma.connectCard.findMany({
 **Risk:** Slow performance, high database costs
 
 **Strategy:**
+
 - Add Redis/Upstash for hot data
 - Cache organization settings
 - Cache user permissions
@@ -169,6 +179,7 @@ const cards = await prisma.connectCard.findMany({
 **Risk:** Can't switch databases, tight coupling
 
 **Strategy:**
+
 - Create repository pattern
 - Abstract data access
 - Enable future database flexibility
@@ -210,16 +221,16 @@ try {
 
 ## 📊 Progress Tracking
 
-| Phase | Issue | Status | PR |
-|-------|-------|--------|-----|
-| 1 | Subscription bypass | [ ] | - |
-| 1 | PII in logs | [ ] | - |
-| 1 | Missing indexes | [ ] | - |
-| 1 | No pagination | [ ] | - |
-| 2 | No caching | [ ] | - |
-| 2 | No data abstraction | [ ] | - |
-| 3 | Type safety | [ ] | - |
-| 3 | Error swallowing | [ ] | - |
+| Phase | Issue               | Status | PR  |
+| ----- | ------------------- | ------ | --- |
+| 1     | Subscription bypass | [ ]    | -   |
+| 1     | PII in logs         | [ ]    | -   |
+| 1     | Missing indexes     | [ ]    | -   |
+| 1     | No pagination       | [ ]    | -   |
+| 2     | No caching          | [ ]    | -   |
+| 2     | No data abstraction | [ ]    | -   |
+| 3     | Type safety         | [ ]    | -   |
+| 3     | Error swallowing    | [ ]    | -   |
 
 ---
 
