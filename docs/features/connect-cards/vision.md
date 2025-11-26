@@ -43,6 +43,7 @@
 **Risk:** Slow dashboard, memory issues
 
 **The Fix:**
+
 - Limit default to 4 weeks
 - Use aggregates for historical totals
 - Add date range selector
@@ -53,11 +54,11 @@
 
 ## 📊 Fix Progress
 
-| Priority | Issue | Status | PR |
-|----------|-------|--------|-----|
-| 1 | Race conditions | [ ] | - |
-| 2 | Raw images | [ ] | - |
-| 3 | ALL TIME fetch | [ ] | - |
+| Priority | Issue           | Status | PR  |
+| -------- | --------------- | ------ | --- |
+| 1        | Race conditions | [ ]    | -   |
+| 2        | Raw images      | [ ]    | -   |
+| 3        | ALL TIME fetch  | [ ]    | -   |
 
 ---
 
