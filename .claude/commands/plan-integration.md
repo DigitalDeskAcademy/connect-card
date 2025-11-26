@@ -1,7 +1,6 @@
 ---
 description: Create industry-standard integration plan for merging worktree features to main
 argument-hint: [optional: specific worktree names to include]
-model: claude-opus-4-5-20251101
 ---
 
 # Worktree Integration Planning

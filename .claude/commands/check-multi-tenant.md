@@ -1,6 +1,5 @@
 ---
 description: Deep multi-tenant safety audit - verify complete data isolation
-model: claude-opus-4-5-20251101
 ---
 
 # Check Multi-Tenant

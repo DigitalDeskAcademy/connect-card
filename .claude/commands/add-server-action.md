@@ -1,7 +1,6 @@
 ---
 description: Generate server action with security patterns (rate limiting, auth, validation)
 argument-hint: [action-name] [action-type]
-model: claude-opus-4-5-20251101
 ---
 
 # Add Server Action
