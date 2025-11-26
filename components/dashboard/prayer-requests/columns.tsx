@@ -206,20 +206,20 @@ export const prayerRequestColumns: ColumnDef<PrayerRequestListItem>[] = [
       const isUrgent = row.original.isUrgent;
 
       return (
-        <div className="flex items-center justify-center">
-          {isUrgent ? (
-            // Urgent takes priority - shows emergency icon only
+        <div className="flex items-center justify-center gap-1">
+          {isUrgent && (
             <IconAlertTriangle
               className="h-4 w-4 text-orange-500"
-              title={isPrivate ? "Urgent & Private" : "Urgent"}
+              title="Urgent"
             />
-          ) : isPrivate ? (
-            // Show lock only if not urgent
+          )}
+          {isPrivate && (
             <IconLock
               className="h-4 w-4 text-muted-foreground"
               title="Private"
             />
-          ) : (
+          )}
+          {!isUrgent && !isPrivate && (
             <span className="text-muted-foreground text-xs">—</span>
           )}
         </div>
