@@ -1,6 +1,5 @@
 ---
 description: Deep multi-tenant safety audit - verify complete data isolation
-model: claude-sonnet-4-5-20250929
 ---
 
 # Check Multi-Tenant

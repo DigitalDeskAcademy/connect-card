@@ -1,63 +1,45 @@
 # Connect Card Management - Product Vision
 
-**Status:** 🟠 **NEEDS FIXES** - 3 issues before production
-**Current Phase:** Phase 3 Complete, Performance Fixes Needed
+**Status:** 🟢 **READY FOR PR** - All critical fixes complete
+**Current Phase:** Phase 3 Complete, Ready for Production
 **Worktree:** `/church-connect-hub/connect-card`
 **Branch:** `feature/connect-card`
 **Last Updated:** 2025-11-25
 
 ---
 
-## 🚨 Assigned Fixes (Before Production)
+## ✅ Completed Fixes (Nov 2025)
 
-**These issues are assigned to this worktree. Fix before production launch.**
+**All critical issues resolved.**
 
-### 1. Race Conditions in Batch Creation
+### 1. Race Conditions in Batch Creation ✅
 
-**File:** `lib/data/connect-card-batch.ts:72`
-**Impact:** Data corruption when multiple users upload simultaneously
-**Risk:** Lost connect cards, duplicate batches
-
-**The Bug:** Concurrent batch creation can create duplicate batches or assign cards to wrong batch.
-
-**Status:** [ ] Not started
+**File:** `lib/data/connect-card-batch.ts:80-118`
+**Fix:** Added Prisma interactive transaction with Serializable isolation level to prevent concurrent batch creation.
 
 ---
 
-### 2. Raw Images in Review Queue
+### 2. Raw Images in Review Queue ✅
 
-**File:** Review queue using `<img>` instead of `<Image>`
-**Impact:** 30-50MB page loads in review queue
-**Risk:** Slow UX, high bandwidth costs
-
-**The Fix:** Replace `<img>` with Next.js `<Image>` component for automatic optimization.
-
-**Status:** [ ] Not started
+**File:** `review-queue-client.tsx`, `upload-client.tsx`
+**Fix:** Added native lazy loading (`loading="lazy"`, `decoding="async"`) to all images. Next.js Image incompatible with react-medium-image-zoom and blob URLs.
 
 ---
 
-### 3. Dashboard Fetches ALL TIME Data
+### 3. Dashboard Fetches ALL TIME Data ✅
 
-**File:** `lib/data/connect-card-analytics.ts:80-115`
-**Impact:** 40MB+ per dashboard load after 1 year of data
-**Risk:** Slow dashboard, memory issues
-
-**The Fix:**
-- Limit default to 4 weeks
-- Use aggregates for historical totals
-- Add date range selector
-
-**Status:** [ ] Not started
+**File:** `lib/data/connect-card-analytics.ts:86-114`
+**Fix:** Replaced unbounded query with bounded 4-week window. Uses COUNT query for today's total. Legacy fields use 4-week totals (will be refined as stats requirements solidify).
 
 ---
 
 ## 📊 Fix Progress
 
-| Priority | Issue | Status | PR |
-|----------|-------|--------|-----|
-| 1 | Race conditions | [ ] | - |
-| 2 | Raw images | [ ] | - |
-| 3 | ALL TIME fetch | [ ] | - |
+| Priority | Issue           | Status | PR  |
+| -------- | --------------- | ------ | --- |
+| 1        | Race conditions | ✅     | -   |
+| 2        | Raw images      | ✅     | -   |
+| 3        | ALL TIME fetch  | ✅     | -   |
 
 ---
 

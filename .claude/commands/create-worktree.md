@@ -1,7 +1,6 @@
 ---
 description: Create a fully-configured feature worktree with database isolation
 argument-hint: <feature-name>
-model: claude-sonnet-4-5-20250929
 ---
 
 # Create Feature Worktree

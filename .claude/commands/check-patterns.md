@@ -1,6 +1,5 @@
 ---
 description: Verify code follows all documented patterns
-model: claude-sonnet-4-5-20250929
 ---
 
 # Check Patterns

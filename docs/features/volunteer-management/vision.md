@@ -29,6 +29,7 @@
 **Status:** 🔄 In progress
 
 **Required:**
+
 - [ ] Pipeline stage tracking (Inquiry → Welcome → Documents → Ready)
 - [ ] Visual pipeline dashboard
 - [ ] Status update actions
@@ -41,6 +42,7 @@
 **Status:** [ ] Planned
 
 **Required:**
+
 - [ ] Pipeline view UI
 - [ ] Filter by stage
 - [ ] Stuck volunteer alerts
@@ -49,11 +51,11 @@
 
 ## 📊 Fix Progress
 
-| Priority | Issue | Status | PR |
-|----------|-------|--------|-----|
-| 1 | N+1 Query | [ ] | - |
-| 2 | Onboarding tracking | 🔄 | - |
-| 3 | Pipeline dashboard | [ ] | - |
+| Priority | Issue               | Status | PR  |
+| -------- | ------------------- | ------ | --- |
+| 1        | N+1 Query           | [ ]    | -   |
+| 2        | Onboarding tracking | 🔄     | -   |
+| 3        | Pipeline dashboard  | [ ]    | -   |
 
 ---
 

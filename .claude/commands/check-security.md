@@ -1,6 +1,5 @@
 ---
 description: Comprehensive security audit against OWASP Top 10 and project standards
-model: claude-sonnet-4-5-20250929
 ---
 
 # Check Security

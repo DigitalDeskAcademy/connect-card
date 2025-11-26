@@ -112,17 +112,11 @@ export function ConnectCardUploadClient({
   } | null>(null);
   const [loadingBatch, setLoadingBatch] = useState(true);
 
-  // Fetch active batch on mount
+  // DO NOT fetch/create batch on mount - only create when uploading
+  // This prevents empty batches from being created just by viewing the page
   useEffect(() => {
-    async function fetchActiveBatch() {
-      const result = await getActiveBatchAction(slug);
-      if (result.status === "success" && result.data) {
-        setActiveBatch(result.data);
-      }
-      setLoadingBatch(false);
-    }
-    fetchActiveBatch();
-  }, [slug]);
+    setLoadingBatch(false);
+  }, []);
 
   // Test mode state
   const [testImage, setTestImage] = useState<File | null>(null);
@@ -354,6 +348,15 @@ export function ConnectCardUploadClient({
           );
 
           if (saveResult.status === "success") {
+            // Fetch active batch info after first successful save
+            // (batch is created during save if it doesn't exist)
+            if (!activeBatch) {
+              const batchResult = await getActiveBatchAction(slug);
+              if (batchResult.status === "success" && batchResult.data) {
+                setActiveBatch(batchResult.data);
+              }
+            }
+
             setImages(prev =>
               prev.map(img =>
                 img.id === image.id
@@ -578,6 +581,13 @@ export function ConnectCardUploadClient({
         );
 
         if (result.status === "success") {
+          // Fetch active batch info after first successful save
+          if (!activeBatch) {
+            const batchResult = await getActiveBatchAction(slug);
+            if (batchResult.status === "success" && batchResult.data) {
+              setActiveBatch(batchResult.data);
+            }
+          }
           toast.success("Connect card saved to database!");
           setTestSavedId(result.data?.id || null);
         } else {
@@ -699,64 +709,7 @@ export function ConnectCardUploadClient({
         )}
       </div>
 
-      {/* Stats Cards - Only show after processing starts */}
-      {savedCount > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          {/* Successfully Processed */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Scanned & Saved
-                </CardTitle>
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{savedCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Cards saved to database
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Awaiting Review */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Awaiting Review
-                </CardTitle>
-                <ClipboardCheck className="h-4 w-4 text-primary" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{savedCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Ready for review queue
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Failed */}
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Failed
-                </CardTitle>
-                <AlertCircle className="h-4 w-4 text-primary" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{errorCount}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Processing errors
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      {/* Removed separate stat cards - now combined in batch completion card below */}
 
       {/* Upload Tabs */}
       {images.length === 0 && !testPreview && (
@@ -1129,6 +1082,8 @@ export function ConnectCardUploadClient({
                     src={testPreview}
                     alt="Test connect card"
                     className="w-full h-full object-contain bg-muted"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
               </CardContent>
@@ -1179,14 +1134,15 @@ export function ConnectCardUploadClient({
             </Alert>
           )}
 
-          {/* Batch Actions - Only show after processing complete */}
+          {/* Batch Summary - Only show after processing complete */}
           {activeBatch &&
             !loadingBatch &&
             savedCount === images.length &&
             savedCount > 0 && (
               <Card className="mb-6">
                 <CardContent className="py-4">
-                  <div className="flex items-center justify-between">
+                  {/* Top row: Batch name + Review button */}
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <CheckCircle2 className="h-5 w-5" />
@@ -1194,10 +1150,6 @@ export function ConnectCardUploadClient({
                       <div>
                         <p className="text-sm font-medium">
                           Batch &quot;{activeBatch.name}&quot; complete
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {savedCount} {savedCount === 1 ? "card" : "cards"}{" "}
-                          ready to review
                         </p>
                       </div>
                     </div>
@@ -1214,6 +1166,35 @@ export function ConnectCardUploadClient({
                       Review Batch
                     </Button>
                   </div>
+
+                  {/* Stats row - compact inline display */}
+                  <div className="flex items-center gap-6 text-sm border-t pt-3">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      <span className="text-muted-foreground">Saved:</span>
+                      <span className="font-semibold">{savedCount}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <ClipboardCheck className="h-4 w-4 text-blue-500" />
+                      <span className="text-muted-foreground">
+                        Awaiting Review:
+                      </span>
+                      <span className="font-semibold">{savedCount}</span>
+                    </div>
+                  </div>
+
+                  {/* Failed alert - only show if there are errors */}
+                  {errorCount > 0 && (
+                    <div className="mt-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+                      <div className="flex items-center gap-2 text-destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <span className="font-medium">
+                          {errorCount} card{errorCount !== 1 ? "s" : ""} failed
+                          to process
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -1260,6 +1241,8 @@ export function ConnectCardUploadClient({
                     src={image.preview}
                     alt="Connect card"
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   {/* Status Overlay */}
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -1356,6 +1339,7 @@ export function ConnectCardUploadClient({
               alt="Connect card full size"
               className="w-full h-auto object-contain"
               style={{ maxHeight: "calc(100vh - 5rem)" }}
+              decoding="async"
             />
           )}
         </DialogContent>
