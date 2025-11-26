@@ -35,6 +35,9 @@ function formatBatchName(locationName: string, date: Date): string {
 /**
  * Get or create active batch for user's location
  * Used during upload to auto-assign cards to current batch
+ *
+ * Uses Prisma interactive transaction with Serializable isolation
+ * to prevent race conditions when multiple users upload simultaneously.
  */
 export async function getOrCreateActiveBatch(
   userId: string,
@@ -45,7 +48,7 @@ export async function getOrCreateActiveBatch(
   locationId: string | null;
   cardCount: number;
 }> {
-  // Get user's location
+  // Get user's location (outside transaction - read-only)
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -63,39 +66,56 @@ export async function getOrCreateActiveBatch(
     throw new Error("User must have a default location to upload cards");
   }
 
-  // Check for existing active batch for this location today
+  // Calculate date range for today (outside transaction - pure computation)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  let batch = await prisma.connectCardBatch.findFirst({
-    where: {
-      organizationId,
-      locationId: user.defaultLocationId,
-      status: "PENDING",
-      createdAt: {
-        gte: today,
-        lt: tomorrow,
-      },
+  const locationId = user.defaultLocationId;
+  const locationName = user.defaultLocation.name;
+
+  // Use Serializable transaction to prevent race conditions
+  // If two requests hit this simultaneously, one will wait for the other
+  const batch = await prisma.$transaction(
+    async tx => {
+      // Check for existing active batch for this location today
+      let existingBatch = await tx.connectCardBatch.findFirst({
+        where: {
+          organizationId,
+          locationId,
+          status: "PENDING",
+          createdAt: {
+            gte: today,
+            lt: tomorrow,
+          },
+        },
+      });
+
+      // Create new batch if none exists
+      if (!existingBatch) {
+        const batchName = formatBatchName(locationName, new Date());
+
+        existingBatch = await tx.connectCardBatch.create({
+          data: {
+            organizationId,
+            locationId,
+            uploadedBy: userId,
+            name: batchName,
+            status: "PENDING",
+            cardCount: 0,
+          },
+        });
+      }
+
+      return existingBatch;
     },
-  });
-
-  // Create new batch if none exists
-  if (!batch) {
-    const batchName = formatBatchName(user.defaultLocation.name, new Date());
-
-    batch = await prisma.connectCardBatch.create({
-      data: {
-        organizationId,
-        locationId: user.defaultLocationId,
-        uploadedBy: userId,
-        name: batchName,
-        status: "PENDING",
-        cardCount: 0,
-      },
-    });
-  }
+    {
+      isolationLevel: "Serializable", // Prevents concurrent batch creation
+      maxWait: 5000, // 5 seconds max wait for lock
+      timeout: 10000, // 10 seconds max transaction time
+    }
+  );
 
   return {
     id: batch.id,
@@ -140,7 +160,7 @@ export async function getBatchesForReview(
     where.locationId = user.defaultLocationId;
   }
 
-  // Fetch batches with card counts and location info
+  // Fetch batches with card counts (only EXTRACTED cards awaiting review)
   return prisma.connectCardBatch.findMany({
     where,
     include: {
@@ -153,7 +173,11 @@ export async function getBatchesForReview(
       },
       _count: {
         select: {
-          cards: true,
+          cards: {
+            where: {
+              status: "EXTRACTED", // Only count cards awaiting review
+            },
+          },
         },
       },
     },

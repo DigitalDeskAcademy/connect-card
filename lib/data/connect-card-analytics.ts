@@ -76,18 +76,23 @@ export async function getConnectCardAnalytics(
   const fourWeeksAgo = new Date(thisWeekStart);
   fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28); // 4 weeks * 7 days
 
-  // Fetch cards from last 4 weeks (for averaging) + all time (for legacy)
-  const [recentCards, allCards] = await Promise.all([
-    // Last 4 weeks including this week
+  // Base where clause for all queries (multi-tenant + location filtering)
+  const baseWhere = {
+    organizationId,
+    status: "REVIEWED" as const,
+    ...(locationId && { locationId }),
+  };
+
+  // Fetch cards from last 4 weeks only (bounded query - never loads unbounded data)
+  // This provides all the data needed for weekly metrics, trends, and averages
+  const [recentCards, todayCount] = await Promise.all([
     prisma.connectCard.findMany({
       where: {
-        organizationId,
-        status: "REVIEWED", // Only count reviewed/approved cards
+        ...baseWhere,
         scannedAt: {
           gte: fourWeeksAgo,
           lt: thisWeekEnd,
         },
-        ...(locationId && { locationId }),
       },
       select: {
         scannedAt: true,
@@ -97,19 +102,13 @@ export async function getConnectCardAnalytics(
         extractedData: true,
       },
     }),
-    // All time (for legacy compatibility)
-    prisma.connectCard.findMany({
+    // Today's count (simple COUNT query)
+    prisma.connectCard.count({
       where: {
-        organizationId,
-        status: "REVIEWED", // Only count reviewed/approved cards
-        ...(locationId && { locationId }),
-      },
-      select: {
-        scannedAt: true,
-        visitType: true,
-        prayerRequest: true,
-        interests: true,
-        extractedData: true,
+        ...baseWhere,
+        scannedAt: {
+          gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+        },
       },
     }),
   ]);
@@ -209,23 +208,16 @@ export async function getConnectCardAnalytics(
     .slice(0, 3)
     .map(([category, count]) => ({ category, count }));
 
-  // Legacy calculations (all time)
-  const legacyMetrics = calculateMetrics(allCards);
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const todayCount = allCards.filter(
-    card => new Date(card.scannedAt) >= todayStart
-  ).length;
-
   return {
     thisWeek,
     fourWeekAverage,
     trends,
     topPrayerCategories,
-    // Legacy fields
-    totalCards: legacyMetrics.totalCards,
-    firstTimeVisitors: legacyMetrics.firstTimeVisitors,
-    prayerRequests: legacyMetrics.prayerRequests,
-    volunteersInterested: legacyMetrics.volunteersInterested,
+    // Legacy fields (using 4-week bounded data - will be refined as stats requirements solidify)
+    totalCards: allRecentMetrics.totalCards,
+    firstTimeVisitors: allRecentMetrics.firstTimeVisitors,
+    prayerRequests: allRecentMetrics.prayerRequests,
+    volunteersInterested: allRecentMetrics.volunteersInterested,
     todayCount,
     weekCount: thisWeek.totalCards,
   };

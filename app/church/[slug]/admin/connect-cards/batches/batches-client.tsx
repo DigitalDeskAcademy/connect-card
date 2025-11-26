@@ -53,9 +53,9 @@ interface BatchesClientProps {
 function getStatusBadge(status: string) {
   switch (status) {
     case "PENDING":
-      return <Badge variant="secondary">Pending Review</Badge>;
     case "IN_REVIEW":
-      return <Badge variant="default">In Review</Badge>;
+      // Don't show badge - card count tells the story
+      return null;
     case "COMPLETED":
       return (
         <Badge
@@ -68,7 +68,7 @@ function getStatusBadge(status: string) {
     case "ARCHIVED":
       return <Badge variant="outline">Archived</Badge>;
     default:
-      return <Badge>{status}</Badge>;
+      return null;
   }
 }
 

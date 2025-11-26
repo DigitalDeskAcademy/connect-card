@@ -247,16 +247,14 @@ async function main() {
     userIds[userData.email] = user.id;
 
     // CRITICAL: Create Better Auth Account record for OTP login
+    const accountId = generateAccountId();
     await prisma.account.upsert({
       where: {
-        userId_accountId: {
-          userId: user.id,
-          accountId: userData.email,
-        },
+        id: accountId,
       },
       update: {},
       create: {
-        id: generateAccountId(),
+        id: accountId,
         userId: user.id,
         accountId: userData.email,
         providerId: "credential", // Better Auth OTP provider
@@ -706,13 +704,19 @@ async function main() {
   ];
 
   for (const prayer of prayers) {
+    // Map privacy levels to simple boolean
+    // PUBLIC/MEMBERS_ONLY = false (visible to prayer team)
+    // LEADERSHIP/PRIVATE = true (restricted visibility)
+    const isPrivate =
+      prayer.privacyLevel === "LEADERSHIP" || prayer.privacyLevel === "PRIVATE";
+
     await prisma.prayerRequest.create({
       data: {
         organizationId: newlifeOrg.id,
         locationId: prayer.locationId,
         request: prayer.request,
         category: prayer.category as any,
-        privacyLevel: prayer.privacyLevel as any,
+        isPrivate: isPrivate,
         status: prayer.status as any,
         isUrgent: prayer.isUrgent,
         submittedBy: prayer.submittedBy,
@@ -802,6 +806,7 @@ async function main() {
         categories: {
           create: {
             category: vol.category as any,
+            organizationId: newlifeOrg.id,
           },
         },
       },
