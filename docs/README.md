@@ -1,6 +1,6 @@
 # Documentation Index
 
-**Single Source of Truth (SSOT)** - Each piece of information exists in exactly one place.
+**Two-Document Architecture** - Clear separation between technical and business documentation.
 
 ---
 
@@ -8,15 +8,15 @@
 
 **For New Developers:**
 
-1. Read `STATUS.md` - Current project state
-2. Read `essentials/architecture.md` - System design
+1. Read `PLAYBOOK.md` - THE technical guide (patterns, blockers, debt)
+2. Read `PROJECT.md` - Business context and roadmap
 3. Read `essentials/coding-patterns.md` - How to write code
 4. Read `essentials/development.md` - Local setup
 
 **For AI Sessions:**
 
-1. Start with `STATUS.md` - What's working/broken
-2. Check `ROADMAP.md` - Current priorities
+1. Start with `PLAYBOOK.md` - Technical single source of truth
+2. Check `PROJECT.md` - Current priorities and status
 3. Reference `features/{feature}/vision.md` - Detailed feature planning
 
 ---
@@ -25,10 +25,10 @@
 
 ```
 docs/
-├── STATUS.md                    # ← Health dashboard (what works, what's broken)
-├── ROADMAP.md                   # ← Priority list (what needs to be done)
+├── 🔴 PLAYBOOK.md               # ← THE GUIDE: Technical single source of truth
+├── PROJECT.md                   # ← Business overview (vision, status, roadmap)
 │
-├── features/                    # ← Feature SSOT (detailed planning)
+├── features/                    # ← Feature specs (detailed planning)
 │   ├── connect-cards/vision.md
 │   ├── member-management/vision.md
 │   ├── prayer-management/vision.md
@@ -46,45 +46,50 @@ docs/
 └── technical/                   # ← Implementation details
     ├── architecture-decisions.md # ADR log
     ├── adr-code-examples.md      # Code examples for ADRs
-    ├── integrations.md           # Third-party integrations
-    └── accessibility-modernization-plan.md # In-progress work
+    └── integrations.md           # Third-party integrations
 ```
 
 ---
 
-## 📊 Core Dashboards
+## 📊 Core Documents
 
-### STATUS.md - Health Dashboard
+### 🔴 PLAYBOOK.md - Technical Single Source of Truth
 
-**Purpose:** Current state of the project (working/broken/in-progress)
+**Purpose:** THE authoritative guide for building Church Connect Hub. If there's a conflict, this document wins.
 
-**When to read:**
+**Contains:**
 
-- Starting a new session
-- Checking feature status
-- Understanding what's production-ready
+- Critical production blockers (MUST FIX)
+- Technical debt register
+- Code patterns and standards
+- Performance issues and fixes
+- Architecture decisions
+
+**When to update:**
+
+- After every feature wrap-up (automatic)
+- When discovering critical issues
+- When establishing new patterns
+- When making architectural decisions
+
+### PROJECT.md - Business & Product Overview
+
+**Purpose:** Combined business/product documentation (what we're building, why, and when)
+
+**Contains:**
+
+- Product vision and problem statement
+- Current status (working/broken features)
+- Roadmap and priorities
+- Success metrics
+- Team information
 
 **When to update:**
 
 - Feature completed
-- Bug discovered
-- Production deployment
-
-### ROADMAP.md - Priority List
-
-**Purpose:** What needs to be done next
-
-**When to read:**
-
-- Planning next feature
-- Understanding product direction
-- Checking upcoming phases
-
-**When to update:**
-
-- Completing a phase
-- Changing feature priorities
-- Adding new features
+- Priorities changed
+- Business decisions made
+- Metrics updated
 
 ---
 
@@ -150,25 +155,50 @@ GoHighLevel, Stripe, Tigris S3, Better Auth integration details
 
 ---
 
+## ⚠️ Documentation Rules (STRICT)
+
+### For Main Branch:
+
+- ✅ Edit PLAYBOOK.md and PROJECT.md ONLY in main
+- ✅ Update after feature merges via feature-wrap-up
+- ❌ NEVER edit these files in feature worktrees
+
+### For Feature Worktrees:
+
+- ✅ ONLY edit `/docs/features/{your-feature}/`
+- ❌ NEVER edit PLAYBOOK.md or PROJECT.md
+- ❌ NEVER create `.worktree/` directories
+- ✅ Merge main frequently to stay in sync
+
+### Documentation Ownership:
+
+| Document         | Location                 | Who Edits        | When                 |
+| ---------------- | ------------------------ | ---------------- | -------------------- |
+| **PLAYBOOK.md**  | `/docs/`                 | Main branch only | After features merge |
+| **PROJECT.md**   | `/docs/`                 | Main branch only | Business changes     |
+| **Feature Docs** | `/docs/features/{name}/` | Feature worktree | During development   |
+
+---
+
 ## ✅ Documentation Principles
 
-1. **Single Source of Truth** - Each piece of info exists in ONE place
-2. **Feature-First** - Detailed planning in feature vision docs
-3. **Lightweight Dashboards** - STATUS/ROADMAP link to details, don't duplicate
-4. **No Duplication** - Reference, don't copy
-5. **Always Current** - Docs reflect reality, not aspirations
+1. **Two Documents Rule** - Technical (PLAYBOOK) + Business (PROJECT)
+2. **Single Source of Truth** - Each piece of info exists in ONE place
+3. **Feature-First** - Detailed planning in feature vision docs
+4. **No .worktree Directories** - Use git-native `/docs/` structure
+5. **Clear Ownership** - Main owns architecture, features own their docs
 
 ---
 
 ## 🚫 What NOT to Do
 
-- ❌ Create new TODO files (use ROADMAP.md)
-- ❌ Duplicate information (link to existing docs)
+- ❌ Create new TODO files (use PROJECT.md roadmap section)
+- ❌ Edit PLAYBOOK/PROJECT in feature worktrees
+- ❌ Create `.worktree/` directories
+- ❌ Duplicate information (reference, don't copy)
 - ❌ Leave contradictions (delete outdated docs)
-- ❌ Forget to update STATUS.md (should reflect reality)
-- ❌ Put detailed planning in ROADMAP (use feature visions)
 
 ---
 
-**Last Updated:** 2025-11-23
-**Total Files:** 16 (down from 25, 36% reduction)
+**Last Updated:** 2025-11-25
+**Total Files:** 2 main docs + feature docs (simplified from 10+ files)
