@@ -27,7 +27,9 @@ export default arcjet({
   characteristics: ["fingerprint"],
   rules: [
     shield({
-      mode: "LIVE",
+      // Use DRY_RUN in development/test to allow Playwright tests
+      // LIVE mode blocks bots in production
+      mode: process.env.NODE_ENV === "production" ? "LIVE" : "DRY_RUN",
     }),
   ],
 });

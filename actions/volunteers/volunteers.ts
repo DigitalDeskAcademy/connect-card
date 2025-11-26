@@ -46,7 +46,7 @@ export async function createVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -76,7 +76,7 @@ export async function createVolunteer(
   if (!validation.success) {
     return {
       status: "error",
-      message: validation.error.errors[0]?.message || "Invalid input",
+      message: "Invalid form data",
     };
   }
 
@@ -150,7 +150,7 @@ export async function createVolunteer(
       const newVolunteer = await tx.volunteer.create({
         data: {
           churchMemberId,
-          organizationId: validatedData.organizationId,
+          organizationId: organization.id, // Multi-tenant isolation from auth context
           locationId: validatedData.locationId,
           status: validatedData.status,
           startDate: validatedData.startDate,
@@ -231,7 +231,7 @@ export async function updateVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -274,37 +274,23 @@ export async function updateVolunteer(
       }
     }
 
-    // 5. Update volunteer profile with optimistic locking
-    const updatedVolunteer = await prisma.volunteer.updateMany({
+    // 5. Verify volunteer exists and belongs to organization
+    const existingVolunteer = await prisma.volunteer.findFirst({
       where: {
         id: volunteerId,
         organizationId: organization.id, // Multi-tenant isolation
-        version: currentVersion, // Optimistic lock - fails if version changed
-      },
-      data: {
-        ...data,
-        version: { increment: 1 }, // Increment version on successful update
       },
     });
 
-    // If count is 0, either volunteer doesn't exist or version mismatch
-    if (updatedVolunteer.count === 0) {
-      // Check if volunteer exists
-      const volunteer = await prisma.volunteer.findFirst({
-        where: {
-          id: volunteerId,
-          organizationId: organization.id,
-        },
-      });
+    if (!existingVolunteer) {
+      return {
+        status: "error",
+        message: "Unable to update volunteer",
+      };
+    }
 
-      if (!volunteer) {
-        return {
-          status: "error",
-          message: "Unable to update volunteer",
-        };
-      }
-
-      // Version mismatch - someone else updated the volunteer
+    // Check version for optimistic locking
+    if (existingVolunteer.version !== currentVersion) {
       return {
         status: "error",
         message:
@@ -312,6 +298,17 @@ export async function updateVolunteer(
         shouldRefresh: true,
       };
     }
+
+    // 6. Update volunteer profile with optimistic locking
+    // Note: categories are not updated here - they're managed via VolunteerCategory relation
+    const { categories, ...volunteerData } = data;
+    await prisma.volunteer.update({
+      where: { id: volunteerId },
+      data: {
+        ...volunteerData,
+        version: { increment: 1 }, // Increment version on successful update
+      },
+    });
 
     // 6. Revalidate relevant pages
     revalidatePath(`/church/${slug}/admin/volunteers`);
@@ -357,7 +354,7 @@ export async function deleteVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -449,7 +446,7 @@ export async function deactivateVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -544,7 +541,7 @@ export async function reactivateVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 

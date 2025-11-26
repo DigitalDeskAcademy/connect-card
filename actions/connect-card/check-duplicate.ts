@@ -92,7 +92,6 @@ export async function checkDuplicate(
       isDuplicate: false,
     };
   } catch (error) {
-    console.error("Duplicate check error:", error);
     return {
       status: "error",
       message: "Failed to check for duplicates",

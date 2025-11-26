@@ -188,7 +188,6 @@ export async function acceptInvitation(
       },
     };
   } catch (error) {
-    console.error("Failed to accept invitation:", error);
     return {
       status: "error",
       message: "Failed to accept invitation. Please try again.",

@@ -34,8 +34,15 @@ export default async function VolunteerDetailPage({ params }: PageProps) {
   }
 
   return (
-    <PageContainer variant="tabs">
-      <VolunteerDetailClient volunteer={volunteer} slug={slug} />
+    <PageContainer
+      variant="tabs"
+      as="main"
+      backButton={{
+        href: `/church/${slug}/admin/volunteer`,
+        label: "Back",
+      }}
+    >
+      <VolunteerDetailClient volunteer={volunteer} />
     </PageContainer>
   );
 }
