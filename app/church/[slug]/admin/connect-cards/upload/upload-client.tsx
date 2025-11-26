@@ -1082,6 +1082,8 @@ export function ConnectCardUploadClient({
                     src={testPreview}
                     alt="Test connect card"
                     className="w-full h-full object-contain bg-muted"
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
               </CardContent>
@@ -1174,7 +1176,9 @@ export function ConnectCardUploadClient({
                     </div>
                     <div className="flex items-center gap-2">
                       <ClipboardCheck className="h-4 w-4 text-blue-500" />
-                      <span className="text-muted-foreground">Awaiting Review:</span>
+                      <span className="text-muted-foreground">
+                        Awaiting Review:
+                      </span>
                       <span className="font-semibold">{savedCount}</span>
                     </div>
                   </div>
@@ -1184,7 +1188,10 @@ export function ConnectCardUploadClient({
                     <div className="mt-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
                       <div className="flex items-center gap-2 text-destructive">
                         <AlertCircle className="h-4 w-4" />
-                        <span className="font-medium">{errorCount} card{errorCount !== 1 ? 's' : ''} failed to process</span>
+                        <span className="font-medium">
+                          {errorCount} card{errorCount !== 1 ? "s" : ""} failed
+                          to process
+                        </span>
                       </div>
                     </div>
                   )}
@@ -1234,6 +1241,8 @@ export function ConnectCardUploadClient({
                     src={image.preview}
                     alt="Connect card"
                     className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
                   />
                   {/* Status Overlay */}
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -1330,6 +1339,7 @@ export function ConnectCardUploadClient({
               alt="Connect card full size"
               className="w-full h-auto object-contain"
               style={{ maxHeight: "calc(100vh - 5rem)" }}
+              decoding="async"
             />
           )}
         </DialogContent>

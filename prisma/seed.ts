@@ -707,7 +707,8 @@ async function main() {
     // Map privacy levels to simple boolean
     // PUBLIC/MEMBERS_ONLY = false (visible to prayer team)
     // LEADERSHIP/PRIVATE = true (restricted visibility)
-    const isPrivate = prayer.privacyLevel === "LEADERSHIP" || prayer.privacyLevel === "PRIVATE";
+    const isPrivate =
+      prayer.privacyLevel === "LEADERSHIP" || prayer.privacyLevel === "PRIVATE";
 
     await prisma.prayerRequest.create({
       data: {

@@ -1,6 +1,6 @@
 ---
 description: Clean unused code, imports, files, and dependencies
-model: claude-sonnet-4-5-20250929
+model: claude-opus-4-5-20251101
 ---
 
 # Clean
