@@ -1,8 +1,73 @@
 # Prayer Management - Product Vision
 
-**Status:** In Development (65% Complete)
-**Last Updated:** 2025-11-16
+**Status:** 🟠 **BLOCKING** - Server actions needed (65% Complete)
+**Worktree:** `/church-connect-hub/prayer`
+**Branch:** `feature/prayer-enhancements`
+**Last Updated:** 2025-11-25
 **Owner:** Church Operations Team
+
+---
+
+## 🚨 Assigned Fixes (BLOCKING Feature Completion)
+
+**These issues are assigned to this worktree. Feature is unusable until complete.**
+
+### 1. Server Actions (CRITICAL - 35% of feature)
+
+**Impact:** Users cannot create, edit, assign, or complete prayers
+**Risk:** Feature is display-only, no functionality
+
+**Required Actions:**
+
+| Action | File | Status |
+|--------|------|--------|
+| `createPrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
+| `updatePrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
+| `assignPrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
+| `markAnswered` | `/actions/prayer-requests/` | [ ] Not started |
+| `deletePrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
+
+**Each action must include:**
+- Zod validation schema
+- Arcjet rate limiting
+- Multi-tenant `organizationId` scoping
+- Privacy checks for private prayers
+
+---
+
+### 2. UI Components (Depends on Server Actions)
+
+| Component | Status |
+|-----------|--------|
+| Create prayer form | [ ] Not started |
+| Assignment dialog | [ ] Not started |
+| Detail view dialog | [ ] Not started |
+| Edit form | [ ] Not started |
+| Mark answered dialog | [ ] Not started |
+
+---
+
+### 3. Performance: N+1 Query Fix
+
+**File:** `lib/data/prayer-requests.ts:228-300`
+**Impact:** 8 sequential COUNT queries = 400ms minimum latency
+**Risk:** Slow dashboard
+
+**The Fix:** Replace 8 COUNT queries with single GROUP BY query.
+
+**Status:** [ ] Not started
+
+---
+
+## 📊 Fix Progress
+
+| Priority | Issue | Status | PR |
+|----------|-------|--------|-----|
+| 1 | Server Actions (5) | [ ] | - |
+| 2 | UI Components (5) | [ ] | - |
+| 3 | N+1 Query | [ ] | - |
+
+**Overall:** 65% → Target 100%
 
 ---
 

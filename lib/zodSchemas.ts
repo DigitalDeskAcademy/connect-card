@@ -181,6 +181,8 @@ export const connectCardUpdateSchema = z.object({
   prayerRequest: z.string().nullable().optional(),
   assignedLeaderId: z.string().uuid().nullable().optional(),
   smsAutomationEnabled: z.boolean().default(false),
+  sendMessageToLeader: z.boolean().default(false),
+  sendBackgroundCheckInfo: z.boolean().default(false),
 });
 
 // ============================================================================
