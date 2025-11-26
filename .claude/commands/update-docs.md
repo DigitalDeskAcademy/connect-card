@@ -1,7 +1,6 @@
 ---
 description: Comprehensive documentation audit - sync, verify consistency, remove outdated content
 argument-hint: [what changed]
-model: claude-sonnet-4-5-20250929
 ---
 
 # Update Documentation

@@ -588,6 +588,8 @@ export function ReviewQueueClient({
                       src={currentCard.imageUrl.trim() || undefined}
                       alt="Connect card scan"
                       className="w-full h-full object-contain"
+                      loading="lazy"
+                      decoding="async"
                       onError={() => setImageError(true)}
                     />
                   </div>
