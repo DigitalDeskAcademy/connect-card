@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import arcjet, { fixedWindow } from "@/lib/arcjet";
+import { request } from "@arcjet/next";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
@@ -20,7 +21,7 @@ const aj = arcjet.withRule(
   })
 );
 
-export async function POST(request: NextRequest) {
+export async function POST(nextRequest: NextRequest) {
   try {
     // 1. Authentication check
     const session = await auth.api.getSession({
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Parse request body (read once)
-    const body = await request.json();
+    const body = await nextRequest.json();
     const { imageData, mediaType, organizationSlug } = body;
 
     if (!organizationSlug) {
@@ -74,9 +75,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Rate limiting (use request, not the original parameter)
-    const req = await import("@arcjet/next").then(m => m.request());
-    const decision = await aj.protect(await req, {
+    // 4. Rate limiting
+    const req = await request();
+    const decision = await aj.protect(req, {
       fingerprint: `${session.user.id}_${user.organization.id}_extract`,
     });
 
@@ -95,8 +96,6 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
-
-    console.log("📷 Processing connect card image (base64)");
 
     // Call Claude Vision API with base64 data
     const response = await anthropic.messages.create({
@@ -161,8 +160,6 @@ Be thorough with handwritten content, even if messy, but strict about ignoring p
       ],
     });
 
-    console.log("✅ Claude response received");
-
     // Extract the text content from the response
     const textContent = response.content.find(block => block.type === "text");
 
@@ -179,7 +176,6 @@ Be thorough with handwritten content, even if messy, but strict about ignoring p
     // Try to find JSON in the response (Claude might wrap it in markdown)
     const jsonMatch = extractedText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error("No JSON found in response:", extractedText);
       return NextResponse.json(
         {
           error: "Could not extract JSON from response",
@@ -191,16 +187,12 @@ Be thorough with handwritten content, even if messy, but strict about ignoring p
 
     const extractedData = JSON.parse(jsonMatch[0]);
 
-    console.log("📋 Extracted data:", extractedData);
-
     return NextResponse.json({
       success: true,
       data: extractedData,
       raw_text: extractedText,
     });
   } catch (error) {
-    console.error("❌ Error processing connect card:", error);
-
     return NextResponse.json(
       {
         error: "Failed to process connect card",

@@ -57,7 +57,6 @@ export async function markDuplicate(slug: string, cardId: string) {
       message: "Card marked as duplicate and removed from queue",
     };
   } catch (error) {
-    console.error("Failed to mark duplicate:", error);
     return {
       status: "error",
       message: "Failed to mark card as duplicate",

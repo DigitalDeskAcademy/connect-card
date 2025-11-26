@@ -228,8 +228,7 @@ export async function GET() {
 
     // 4. Redirect to GHL authorization page
     return NextResponse.redirect(authUrl.toString());
-  } catch (error) {
-    console.error("GHL authorization error:", error);
+  } catch {
     return NextResponse.json(
       { error: "Authorization failed" },
       { status: 500 }

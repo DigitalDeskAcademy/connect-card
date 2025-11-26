@@ -114,15 +114,9 @@ export async function saveConnectCard(
   const validation = connectCardSchema.safeParse(data);
 
   if (!validation.success) {
-    // Log validation errors for debugging
-    console.error("[Connect Card Validation Failed]", {
-      errors: validation.error.errors,
-      data: JSON.stringify(data, null, 2),
-    });
-
     return {
       status: "error",
-      message: "Invalid Form Data",
+      message: "Invalid form data",
     };
   }
 
@@ -130,14 +124,6 @@ export async function saveConnectCard(
   const validationResult = validateConnectCardData(
     validation.data.extractedData
   );
-
-  // Log validation results for monitoring
-  if (validationResult.needsReview) {
-    console.log("[Connect Card Validation] Issues detected:", {
-      issues: validationResult.issues,
-      extractedData: validation.data.extractedData,
-    });
-  }
 
   /**
    * Location Assignment & Validation
@@ -265,7 +251,6 @@ export async function saveConnectCard(
       data: { id: connectCard.id },
     };
   } catch (error) {
-    console.error("Failed to save connect card:", error);
     return {
       status: "error",
       message: "Failed to save connect card",

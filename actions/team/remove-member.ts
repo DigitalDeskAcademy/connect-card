@@ -55,7 +55,7 @@ export async function removeMember(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to remove team members",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -85,7 +85,7 @@ export async function removeMember(
   if (!validation.success) {
     return {
       status: "error",
-      message: validation.error.errors[0]?.message || "Invalid input",
+      message: "Invalid form data",
     };
   }
 
@@ -157,7 +157,10 @@ export async function removeMember(
 
     // 10. Update user to remove organization association
     await prisma.user.update({
-      where: { id: memberId },
+      where: {
+        id: memberId,
+        organizationId: organization.id, // Multi-tenant isolation
+      },
       data: {
         organizationId: null,
         role: null,
@@ -173,7 +176,6 @@ export async function removeMember(
       message: `${user.name} has been removed from the team`,
     };
   } catch (error) {
-    console.error("Failed to remove member:", error);
     return {
       status: "error",
       message: "Failed to remove team member. Please try again.",
