@@ -1,7 +1,59 @@
 # Volunteer Onboarding Pipeline - Product Vision
 
-**Last Updated:** 2025-11-16
-**Status:** Strategic Pivot - Focus on Onboarding Automation (Not Volunteer Management)
+**Status:** 🟡 **IN PROGRESS** - Onboarding features in development
+**Worktree:** `/church-connect-hub/volunteer`
+**Branch:** `feature/volunteer-management`
+**Last Updated:** 2025-11-25
+**Focus:** Onboarding Automation (Not Volunteer Management)
+
+---
+
+## 🚨 Assigned Fixes
+
+**These issues are assigned to this worktree.**
+
+### 1. Performance: N+1 Query in Volunteer Stats
+
+**Impact:** Multiple queries per volunteer in stats calculations
+**Risk:** Slow dashboard as volunteer count grows
+
+**The Fix:** Optimize queries to batch fetch related data.
+
+**Status:** [ ] Not started
+
+---
+
+### 2. Onboarding Status Tracking
+
+**Impact:** Can't track volunteer journey from inquiry to ready
+**Status:** 🔄 In progress
+
+**Required:**
+- [ ] Pipeline stage tracking (Inquiry → Welcome → Documents → Ready)
+- [ ] Visual pipeline dashboard
+- [ ] Status update actions
+
+---
+
+### 3. Onboarding Pipeline Dashboard
+
+**Impact:** No visibility into where volunteers are stuck
+**Status:** [ ] Planned
+
+**Required:**
+- [ ] Pipeline view UI
+- [ ] Filter by stage
+- [ ] Stuck volunteer alerts
+
+---
+
+## 📊 Fix Progress
+
+| Priority | Issue | Status | PR |
+|----------|-------|--------|-----|
+| 1 | N+1 Query | [ ] | - |
+| 2 | Onboarding tracking | 🔄 | - |
+| 3 | Pipeline dashboard | [ ] | - |
 
 ---
 
