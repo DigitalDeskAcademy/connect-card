@@ -3,6 +3,10 @@
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
 import arcjet, { fixedWindow } from "@/lib/arcjet";
 import { prisma } from "@/lib/db";
+import {
+  BackgroundCheckStatus,
+  VolunteerCategoryType,
+} from "@/lib/generated/prisma";
 import { ApiResponse } from "@/lib/types";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
@@ -606,6 +610,123 @@ export async function reactivateVolunteer(
     return {
       status: "error",
       message: "Failed to reactivate volunteer. Please try again.",
+    };
+  }
+}
+
+/**
+ * Process Volunteer (PENDING_APPROVAL → ACTIVE)
+ *
+ * Processes a pending volunteer by assigning categories and activating them.
+ * Used in the volunteer onboarding workflow after connect card processing.
+ *
+ * Security:
+ * - Requires admin permissions
+ * - Multi-tenant data isolation via organizationId
+ * - Rate limiting via Arcjet
+ *
+ * @param slug - Organization slug for multi-tenant context
+ * @param volunteerId - Volunteer ID to process
+ * @param categories - Array of category types to assign
+ * @param backgroundCheckStatus - Optional background check status update
+ * @returns ApiResponse with success/error status
+ */
+export async function processVolunteer(
+  slug: string,
+  volunteerId: string,
+  categories: string[],
+  backgroundCheckStatus?: string
+): Promise<ApiResponse> {
+  // 1. Authentication and authorization
+  const { session, organization, dataScope } =
+    await requireDashboardAccess(slug);
+
+  // 2. Permission check
+  if (!dataScope.filters.canManageUsers) {
+    return {
+      status: "error",
+      message: "You don't have permission to perform this action",
+    };
+  }
+
+  // 3. Rate limiting
+  const req = await request();
+  const decision = await aj.protect(req, {
+    fingerprint: `${session.user.id}_${organization.id}_process_volunteer`,
+  });
+
+  if (decision.isDenied()) {
+    if (decision.reason.isRateLimit()) {
+      return {
+        status: "error",
+        message: "Too many requests. Please wait and try again.",
+      };
+    } else {
+      return {
+        status: "error",
+        message: "Request blocked by security policy",
+      };
+    }
+  }
+
+  try {
+    // 4. Find volunteer and verify they belong to this organization
+    const volunteer = await prisma.volunteer.findFirst({
+      where: {
+        id: volunteerId,
+        organizationId: organization.id, // Multi-tenant isolation
+      },
+      include: {
+        churchMember: true,
+        categories: true,
+      },
+    });
+
+    if (!volunteer) {
+      return {
+        status: "error",
+        message: "Volunteer not found",
+      };
+    }
+
+    // 5. Update volunteer status to ACTIVE and optionally update background check
+    await prisma.volunteer.update({
+      where: { id: volunteerId },
+      data: {
+        status: "ACTIVE",
+        ...(backgroundCheckStatus && {
+          backgroundCheckStatus: backgroundCheckStatus as BackgroundCheckStatus,
+        }),
+      },
+    });
+
+    // 6. Delete existing categories and add new ones
+    await prisma.volunteerCategory.deleteMany({
+      where: { volunteerId: volunteerId },
+    });
+
+    if (categories.length > 0) {
+      await prisma.volunteerCategory.createMany({
+        data: categories.map(category => ({
+          volunteerId: volunteerId,
+          organizationId: organization.id,
+          category: category as VolunteerCategoryType,
+        })),
+      });
+    }
+
+    // 7. Revalidate relevant pages
+    revalidatePath(`/church/${slug}/admin/volunteers`);
+    revalidatePath(`/church/${slug}/admin/volunteers/${volunteerId}`);
+
+    return {
+      status: "success",
+      message: `${volunteer.churchMember.name} has been activated as a volunteer`,
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message: "Failed to process volunteer. Please try again.",
     };
   }
 }
