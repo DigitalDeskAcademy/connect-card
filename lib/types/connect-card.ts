@@ -69,19 +69,20 @@ export type InterestOption = (typeof INTEREST_OPTIONS)[number];
  * Volunteer category options
  *
  * Used when "Volunteering" interest is selected to categorize specific volunteer roles.
+ * IMPORTANT: Must match Prisma VolunteerCategoryType enum exactly (SSOT).
  * Categories are ordered by popularity/frequency of need.
  */
 export const VOLUNTEER_CATEGORY_OPTIONS = [
-  "General",
-  "Kids Camp",
-  "Kids Ministry",
-  "Worship Team",
-  "Greeting",
-  "Parking",
-  "Tech/Media",
-  "Youth Ministry",
-  "Prayer Team",
-  "Other",
+  "GENERAL",
+  "GREETER",
+  "USHER",
+  "KIDS_MINISTRY",
+  "WORSHIP_TEAM",
+  "PARKING",
+  "HOSPITALITY",
+  "AV_TECH",
+  "PRAYER_TEAM",
+  "OTHER",
 ] as const;
 
 export type VolunteerCategory = (typeof VOLUNTEER_CATEGORY_OPTIONS)[number];

@@ -85,12 +85,12 @@ export function ReviewQueueClient({
       normalizedVisitType = "First Visit";
     }
 
-    // Determine volunteer category - use existing, or default to "General" if Volunteering is selected
+    // Determine volunteer category - use existing, or default to "GENERAL" if Volunteering is selected
     const interests = currentCard.interests || [];
     const hasVolunteering = interests.includes("Volunteering");
     let volunteerCategory = currentCard.volunteerCategory || "";
     if (hasVolunteering && !volunteerCategory) {
-      volunteerCategory = "General";
+      volunteerCategory = "GENERAL";
     }
 
     return {
