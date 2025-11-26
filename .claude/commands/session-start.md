@@ -1,7 +1,7 @@
 ---
 description: Initialize a new feature session with branch, docs, and code exploration
 argument-hint: [feature description]
-model: claude-sonnet-4-5-20250929
+model: claude-opus-4-5-20251101
 ---
 
 # Feature Session Initialization
