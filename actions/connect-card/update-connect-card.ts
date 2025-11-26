@@ -67,17 +67,9 @@ export async function updateConnectCard(
   const validation = connectCardUpdateSchema.safeParse(data);
 
   if (!validation.success) {
-    // Log validation errors to console for debugging
-    console.error(
-      "Connect card validation failed:",
-      validation.error.flatten()
-    );
-
-    // Return first validation error for user feedback
-    const firstError = validation.error.errors[0];
     return {
       status: "error",
-      message: firstError?.message || "Invalid form data",
+      message: "Invalid form data",
     };
   }
 
@@ -152,16 +144,8 @@ export async function updateConnectCard(
             existingCard.locationId,
             prayerRequestText
           );
-
-          console.log(
-            `[Prayer Request Created] From connect card: ${validation.data.id}`
-          );
         } catch (error) {
-          // Log error but don't fail the card update
-          console.error(
-            "[Prayer Request Creation Failed] Card still updated:",
-            error
-          );
+          // Prayer request creation failed but card update continues
         }
       }
     }
@@ -185,14 +169,10 @@ export async function updateConnectCard(
           // Auto-complete batch when all cards are reviewed
           if (allReviewed && batch.status !== "COMPLETED") {
             await updateBatchStatus(batch.id, "COMPLETED");
-            console.log(
-              `[Batch Auto-Completed] All ${batch.cards.length} cards reviewed in batch: ${batch.id}`
-            );
           }
         }
       } catch (error) {
-        // Log error but don't fail the card update
-        console.error("[Batch Auto-Complete Failed]:", error);
+        // Batch auto-complete failed but card update continues
       }
     }
 

@@ -64,7 +64,6 @@ export async function getActiveBatchAction(slug: string): Promise<
       data: batch,
     };
   } catch (error) {
-    console.error("Failed to get active batch:", error);
     return {
       status: "error",
       message: "Failed to get active batch",
@@ -119,7 +118,6 @@ export async function completeBatchAction(
       message: "Batch marked as complete",
     };
   } catch (error) {
-    console.error("Failed to complete batch:", error);
     return {
       status: "error",
       message: "Failed to complete batch",
@@ -189,7 +187,6 @@ export async function startNewBatchAction(
       data: newBatch,
     };
   } catch (error) {
-    console.error("Failed to start new batch:", error);
     return {
       status: "error",
       message: "Failed to start new batch",
@@ -267,7 +264,6 @@ export async function deleteBatchAction(
       message: "Batch deleted successfully",
     };
   } catch (error) {
-    console.error("Failed to delete batch:", error);
     return {
       status: "error",
       message: "Failed to delete batch",

@@ -253,9 +253,6 @@ export const POST = async (req: NextRequest) => {
     process.env.NODE_ENV === "development" &&
     req.nextUrl.pathname === "/api/auth/sign-in/anonymous"
   ) {
-    console.log(
-      "🔓 Skipping Arcjet protection for anonymous sign-in (dev mode)"
-    );
     return authHandlers.POST(req);
   }
 

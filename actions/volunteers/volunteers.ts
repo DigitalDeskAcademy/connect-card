@@ -7,11 +7,6 @@ import { ApiResponse } from "@/lib/types";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { volunteerSchema, type VolunteerSchemaType } from "@/lib/zodSchemas";
-import type {
-  VolunteerStatus,
-  BackgroundCheckStatus,
-  VolunteerCategoryType,
-} from "@/lib/generated/prisma";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -51,7 +46,7 @@ export async function createVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -81,7 +76,7 @@ export async function createVolunteer(
   if (!validation.success) {
     return {
       status: "error",
-      message: validation.error.errors[0]?.message || "Invalid input",
+      message: "Invalid form data",
     };
   }
 
@@ -155,7 +150,7 @@ export async function createVolunteer(
       const newVolunteer = await tx.volunteer.create({
         data: {
           churchMemberId,
-          organizationId: validatedData.organizationId,
+          organizationId: organization.id, // Multi-tenant isolation from auth context
           locationId: validatedData.locationId,
           status: validatedData.status,
           startDate: validatedData.startDate,
@@ -170,14 +165,16 @@ export async function createVolunteer(
         },
       });
 
-      // Create category assignments (always at least OTHER due to schema default)
-      await tx.volunteerCategory.createMany({
-        data: validatedData.categories.map(category => ({
-          volunteerId: newVolunteer.id,
-          organizationId: organization.id,
-          category: category,
-        })),
-      });
+      // Create category assignments if provided
+      if (validatedData.categories && validatedData.categories.length > 0) {
+        await tx.volunteerCategory.createMany({
+          data: validatedData.categories.map(category => ({
+            volunteerId: newVolunteer.id,
+            organizationId: organization.id,
+            category: category,
+          })),
+        });
+      }
 
       return newVolunteer;
     });
@@ -234,7 +231,7 @@ export async function updateVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -277,37 +274,23 @@ export async function updateVolunteer(
       }
     }
 
-    // 5. Update volunteer profile with optimistic locking
-    const updatedVolunteer = await prisma.volunteer.updateMany({
+    // 5. Verify volunteer exists and belongs to organization
+    const existingVolunteer = await prisma.volunteer.findFirst({
       where: {
         id: volunteerId,
         organizationId: organization.id, // Multi-tenant isolation
-        version: currentVersion, // Optimistic lock - fails if version changed
-      },
-      data: {
-        ...data,
-        version: { increment: 1 }, // Increment version on successful update
       },
     });
 
-    // If count is 0, either volunteer doesn't exist or version mismatch
-    if (updatedVolunteer.count === 0) {
-      // Check if volunteer exists
-      const volunteer = await prisma.volunteer.findFirst({
-        where: {
-          id: volunteerId,
-          organizationId: organization.id,
-        },
-      });
+    if (!existingVolunteer) {
+      return {
+        status: "error",
+        message: "Unable to update volunteer",
+      };
+    }
 
-      if (!volunteer) {
-        return {
-          status: "error",
-          message: "Unable to update volunteer",
-        };
-      }
-
-      // Version mismatch - someone else updated the volunteer
+    // Check version for optimistic locking
+    if (existingVolunteer.version !== currentVersion) {
       return {
         status: "error",
         message:
@@ -315,6 +298,17 @@ export async function updateVolunteer(
         shouldRefresh: true,
       };
     }
+
+    // 6. Update volunteer profile with optimistic locking
+    // Note: categories are not updated here - they're managed via VolunteerCategory relation
+    const { categories, ...volunteerData } = data;
+    await prisma.volunteer.update({
+      where: { id: volunteerId },
+      data: {
+        ...volunteerData,
+        version: { increment: 1 }, // Increment version on successful update
+      },
+    });
 
     // 6. Revalidate relevant pages
     revalidatePath(`/church/${slug}/admin/volunteers`);
@@ -328,6 +322,97 @@ export async function updateVolunteer(
     return {
       status: "error",
       message: "Unable to update volunteer. Please try again.",
+    };
+  }
+}
+
+/**
+ * Delete Volunteer Profile
+ *
+ * Deletes a volunteer profile. This cascades to delete associated skills,
+ * availability, and shifts due to Prisma onDelete: Cascade.
+ *
+ * Security:
+ * - Requires admin permissions
+ * - Multi-tenant data isolation via organizationId
+ * - Rate limiting via Arcjet
+ * - Validates volunteer belongs to organization
+ *
+ * @param slug - Organization slug for multi-tenant context
+ * @param volunteerId - Volunteer ID to delete
+ * @returns ApiResponse with success/error status
+ */
+export async function deleteVolunteer(
+  slug: string,
+  volunteerId: string
+): Promise<ApiResponse> {
+  // 1. Authentication and authorization
+  const { session, organization, dataScope } =
+    await requireDashboardAccess(slug);
+
+  // 2. Permission check
+  if (!dataScope.filters.canManageUsers) {
+    return {
+      status: "error",
+      message: "You don't have permission to perform this action",
+    };
+  }
+
+  // 3. Rate limiting
+  const req = await request();
+  const decision = await aj.protect(req, {
+    fingerprint: `${session.user.id}_${organization.id}_delete_volunteer`,
+  });
+
+  if (decision.isDenied()) {
+    if (decision.reason.isRateLimit()) {
+      return {
+        status: "error",
+        message: "Too many requests. Please wait before trying again.",
+      };
+    } else {
+      return {
+        status: "error",
+        message: "Request blocked by security policy",
+      };
+    }
+  }
+
+  try {
+    // 4. Find volunteer and verify they belong to this organization
+    const volunteer = await prisma.volunteer.findFirst({
+      where: {
+        id: volunteerId,
+        organizationId: organization.id, // Multi-tenant isolation
+      },
+      include: {
+        churchMember: true,
+      },
+    });
+
+    if (!volunteer) {
+      return {
+        status: "error",
+        message: "Volunteer not found",
+      };
+    }
+
+    // 5. Delete volunteer profile (cascades to skills, availability, shifts)
+    await prisma.volunteer.delete({
+      where: { id: volunteerId },
+    });
+
+    // 6. Revalidate relevant pages
+    revalidatePath(`/church/${slug}/admin/volunteers`);
+
+    return {
+      status: "success",
+      message: `${volunteer.churchMember.name}'s volunteer profile has been deleted`,
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message: "Failed to delete volunteer profile. Please try again.",
     };
   }
 }
@@ -361,7 +446,7 @@ export async function deactivateVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -456,7 +541,7 @@ export async function reactivateVolunteer(
   if (!dataScope.filters.canManageUsers) {
     return {
       status: "error",
-      message: "You don't have permission to manage volunteers",
+      message: "You don't have permission to perform this action",
     };
   }
 
@@ -521,235 +606,6 @@ export async function reactivateVolunteer(
     return {
       status: "error",
       message: "Failed to reactivate volunteer. Please try again.",
-    };
-  }
-}
-
-/**
- * Process Pending Volunteer
- *
- * Moves a volunteer from PENDING to ACTIVE status and assigns ministry categories.
- * This is the key workflow for onboarding volunteers from connect cards.
- *
- * Security:
- * - Requires admin permissions
- * - Multi-tenant data isolation via organizationId
- * - Rate limiting via Arcjet
- * - Transaction ensures atomic status + category updates
- *
- * @param slug - Organization slug for multi-tenant context
- * @param volunteerId - Volunteer ID to process
- * @param categories - Array of ministry categories to assign
- * @param backgroundCheckStatus - Optional background check status update
- * @returns ApiResponse with success/error status
- */
-export async function processVolunteer(
-  slug: string,
-  volunteerId: string,
-  categories: string[],
-  backgroundCheckStatus?: string
-): Promise<ApiResponse> {
-  // 1. Authentication and authorization
-  const { session, organization, dataScope } =
-    await requireDashboardAccess(slug);
-
-  // 2. Permission check
-  if (!dataScope.filters.canManageUsers) {
-    return {
-      status: "error",
-      message: "You don't have permission to process volunteers",
-    };
-  }
-
-  // 3. Rate limiting
-  const req = await request();
-  const decision = await aj.protect(req, {
-    fingerprint: `${session.user.id}_${organization.id}_process_volunteer`,
-  });
-
-  if (decision.isDenied()) {
-    if (decision.reason.isRateLimit()) {
-      return {
-        status: "error",
-        message: "Too many requests. Please wait before trying again.",
-      };
-    } else {
-      return {
-        status: "error",
-        message: "Request blocked by security policy",
-      };
-    }
-  }
-
-  // 4. Validation
-  if (!categories || categories.length === 0) {
-    return {
-      status: "error",
-      message: "At least one category must be selected",
-    };
-  }
-
-  try {
-    // 5. Find volunteer and verify they belong to this organization + are PENDING_APPROVAL
-    const volunteer = await prisma.volunteer.findFirst({
-      where: {
-        id: volunteerId,
-        organizationId: organization.id, // Multi-tenant isolation
-        status: "PENDING_APPROVAL",
-      },
-      include: {
-        churchMember: true,
-      },
-    });
-
-    if (!volunteer) {
-      return {
-        status: "error",
-        message: "Pending volunteer not found",
-      };
-    }
-
-    // 6. Process volunteer: update status + categories in transaction
-    await prisma.$transaction(async tx => {
-      // Update volunteer status to ACTIVE
-      const updateData: {
-        status: VolunteerStatus;
-        backgroundCheckStatus?: BackgroundCheckStatus;
-      } = {
-        status: "ACTIVE",
-      };
-
-      if (backgroundCheckStatus) {
-        updateData.backgroundCheckStatus =
-          backgroundCheckStatus as BackgroundCheckStatus;
-      }
-
-      await tx.volunteer.update({
-        where: { id: volunteerId },
-        data: updateData,
-      });
-
-      // Delete existing category assignments
-      await tx.volunteerCategory.deleteMany({
-        where: {
-          volunteerId: volunteerId,
-          organizationId: organization.id,
-        },
-      });
-
-      // Create new category assignments
-      await tx.volunteerCategory.createMany({
-        data: categories.map(category => ({
-          volunteerId: volunteerId,
-          organizationId: organization.id,
-          category: category as VolunteerCategoryType,
-        })),
-      });
-    });
-
-    // 7. Revalidate relevant pages
-    revalidatePath(`/church/${slug}/admin/volunteer`);
-    revalidatePath(`/church/${slug}/admin/volunteer/${volunteerId}`);
-
-    return {
-      status: "success",
-      message: `${volunteer.churchMember.name} has been processed and activated`,
-    };
-  } catch (error) {
-    return {
-      status: "error",
-      message: "Failed to process volunteer. Please try again.",
-    };
-  }
-}
-
-/**
- * Delete Volunteer
- *
- * Permanently deletes a volunteer profile and all associated data.
- * Admin-only operation with cascade deletion of skills, availability, categories, and shifts.
- *
- * Security:
- * - Requires admin permissions (church_owner or church_admin)
- * - Multi-tenant data isolation via organizationId
- * - Rate limiting via Arcjet
- * - Cascade deletes all related records
- *
- * @param slug - Organization slug for multi-tenant context
- * @param volunteerId - ID of volunteer to delete
- * @returns ApiResponse with deletion status
- */
-export async function deleteVolunteer(
-  slug: string,
-  volunteerId: string
-): Promise<ApiResponse> {
-  // 1. Authentication and authorization
-  const { session, organization, dataScope } =
-    await requireDashboardAccess(slug);
-
-  // 2. Permission check - only admins can delete
-  if (!dataScope.filters.canDeleteData) {
-    return {
-      status: "error",
-      message: "You don't have permission to delete volunteers",
-    };
-  }
-
-  // 3. Rate limiting
-  const req = await request();
-  const decision = await aj.protect(req, {
-    fingerprint: `${session.user.id}_${organization.id}_delete_volunteer`,
-  });
-
-  if (decision.isDenied()) {
-    if (decision.reason.isRateLimit()) {
-      return {
-        status: "error",
-        message: "Too many requests. Please wait before trying again.",
-      };
-    } else {
-      return {
-        status: "error",
-        message: "Request blocked by security policy",
-      };
-    }
-  }
-
-  try {
-    // 4. Verify volunteer exists and belongs to organization
-    const volunteer = await prisma.volunteer.findFirst({
-      where: {
-        id: volunteerId,
-        organizationId: organization.id,
-      },
-      include: {
-        churchMember: true,
-      },
-    });
-
-    if (!volunteer) {
-      return {
-        status: "error",
-        message: "Volunteer not found",
-      };
-    }
-
-    // 5. Delete volunteer with cascade (skills, categories, availability, shifts)
-    await prisma.volunteer.delete({
-      where: { id: volunteerId },
-    });
-
-    // 6. Revalidate relevant pages
-    revalidatePath(`/church/${slug}/admin/volunteer`);
-
-    return {
-      status: "success",
-      message: `${volunteer.churchMember.name} has been removed from volunteers`,
-    };
-  } catch (error) {
-    return {
-      status: "error",
-      message: "Failed to delete volunteer. Please try again.",
     };
   }
 }

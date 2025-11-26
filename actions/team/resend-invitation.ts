@@ -188,7 +188,6 @@ export async function resendInvitation(
       message: `Invitation resent to ${invitation.email}`,
     };
   } catch (error) {
-    console.error("Failed to resend invitation:", error);
     return {
       status: "error",
       message: "Failed to resend invitation. Please try again.",
