@@ -191,7 +191,6 @@ export async function updateMember(
       message: `${user.name} has been updated successfully`,
     };
   } catch (error) {
-    console.error("Failed to update member:", error);
     return {
       status: "error",
       message: "Failed to update team member. Please try again.",

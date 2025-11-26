@@ -19,6 +19,11 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Pagination,
   PaginationContent,
   PaginationItem,
@@ -37,6 +42,7 @@ import {
   ZoomIn,
   Trash2,
   ArrowLeft,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
@@ -48,8 +54,8 @@ import {
   VISIT_STATUS_OPTIONS,
   INTEREST_OPTIONS,
   VOLUNTEER_CATEGORY_OPTIONS,
+  formatVolunteerCategoryLabel,
 } from "@/lib/types/connect-card";
-import { VolunteerOnboardingChecklist } from "@/components/dashboard/connect-cards/volunteer-onboarding-checklist";
 
 interface VolunteerLeader {
   id: string;
@@ -104,6 +110,8 @@ export function ReviewQueueClient({
       isExistingMember: false,
       assignedLeaderId: currentCard.assignedLeaderId || "",
       smsAutomationEnabled: currentCard.smsAutomationEnabled || false,
+      sendMessageToLeader: false,
+      sendBackgroundCheckInfo: false,
     };
   });
 
@@ -127,6 +135,17 @@ export function ReviewQueueClient({
   const [validationErrors, setValidationErrors] = useState<{
     volunteerCategory?: boolean;
   }>({});
+
+  // Volunteer assignment collapsible state
+  const [isAssignmentOpen, setIsAssignmentOpen] = useState(false);
+
+  // Auto-expand volunteer assignment section for non-GENERAL categories
+  useEffect(() => {
+    if (formData?.volunteerCategory) {
+      // Auto-expand for any category except GENERAL
+      setIsAssignmentOpen(formData.volunteerCategory !== "GENERAL");
+    }
+  }, [formData?.volunteerCategory]);
 
   // Check for duplicates when card changes
   useEffect(() => {
@@ -182,12 +201,12 @@ export function ReviewQueueClient({
       normalizedVisitType = "First Visit";
     }
 
-    // Determine volunteer category - use existing, or default to "General" if Volunteering is selected
+    // Determine volunteer category - use existing, or default to "GENERAL" if Volunteering is selected
     const interests = card.interests || [];
     const hasVolunteering = interests.includes("Volunteering");
     let volunteerCategory = card.volunteerCategory || "";
     if (hasVolunteering && !volunteerCategory) {
-      volunteerCategory = "General";
+      volunteerCategory = "GENERAL";
     }
 
     setFormData({
@@ -201,6 +220,8 @@ export function ReviewQueueClient({
       isExistingMember: false,
       assignedLeaderId: card.assignedLeaderId || "",
       smsAutomationEnabled: card.smsAutomationEnabled || false,
+      sendMessageToLeader: false,
+      sendBackgroundCheckInfo: false,
     });
     setImageError(false); // Reset image error state for new card
     setValidationErrors({}); // Clear validation errors for new card
@@ -249,6 +270,8 @@ export function ReviewQueueClient({
           prayerRequest: formData.prayerRequest || null,
           assignedLeaderId: formData.assignedLeaderId || null,
           smsAutomationEnabled: formData.smsAutomationEnabled,
+          sendMessageToLeader: formData.sendMessageToLeader,
+          sendBackgroundCheckInfo: formData.sendBackgroundCheckInfo,
         });
 
         if (result.status === "success") {
@@ -285,10 +308,10 @@ export function ReviewQueueClient({
     setFormData({
       ...formData,
       interests: newInterests,
-      // When checking "Volunteering", default to "General" category
+      // When checking "Volunteering", default to "GENERAL" category
       volunteerCategory:
         interest === "Volunteering" && !isCurrentlyChecked
-          ? "General"
+          ? "GENERAL"
           : formData.volunteerCategory,
     });
 
@@ -719,147 +742,216 @@ export function ReviewQueueClient({
               </div>
             </div>
 
-            {/* Volunteer Category - Only show if "Volunteering" is checked */}
+            {/* Volunteer Onboarding Card - Show when Volunteering is selected */}
             {formData.interests.includes("Volunteering") && (
-              <div className="space-y-2">
-                <Label htmlFor="volunteerCategory">
-                  Volunteer Category <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={formData.volunteerCategory}
-                  onValueChange={value => {
-                    setFormData({ ...formData, volunteerCategory: value });
-                    // Clear validation error when user selects a value
-                    if (validationErrors.volunteerCategory) {
-                      setValidationErrors({
-                        ...validationErrors,
-                        volunteerCategory: false,
-                      });
-                    }
-                  }}
-                  disabled={isPending}
-                >
-                  <SelectTrigger
-                    id="volunteerCategory"
-                    className={
-                      validationErrors.volunteerCategory
-                        ? "border-destructive focus:ring-destructive"
-                        : ""
-                    }
-                  >
-                    <SelectValue placeholder="Select volunteer category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {VOLUNTEER_CATEGORY_OPTIONS.map(category => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {validationErrors.volunteerCategory && (
-                  <p className="text-sm text-destructive">
-                    Volunteer category is required
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Volunteer Assignment Workflow - Only show for non-General categories */}
-            {formData.interests.includes("Volunteering") &&
-              formData.volunteerCategory &&
-              formData.volunteerCategory !== "General" && (
-                <div className="border-t pt-4 space-y-4">
-                  <div>
-                    <h3 className="text-sm font-semibold mb-1">
-                      Volunteer Assignment
+              <Card className="bg-muted/50 py-0">
+                <CardContent className="p-4 space-y-4">
+                  {/* Card Header */}
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-semibold">
+                      Volunteer Onboarding
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      Assign this volunteer to a category leader and optionally
-                      enable SMS workflow
+                      Categorize this volunteer and optionally assign to a team
+                      leader
                     </p>
                   </div>
 
-                  {/* Assigned Leader Dropdown */}
+                  {/* Volunteer Category */}
                   <div className="space-y-2">
-                    <Label htmlFor="assignedLeader">
-                      Assigned Leader (Optional)
+                    <Label htmlFor="volunteerCategory">
+                      Volunteer Category{" "}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Select
-                      value={formData.assignedLeaderId}
-                      onValueChange={value =>
-                        setFormData({ ...formData, assignedLeaderId: value })
-                      }
+                      value={formData.volunteerCategory}
+                      onValueChange={value => {
+                        setFormData({ ...formData, volunteerCategory: value });
+                        // Clear validation error when user selects a value
+                        if (validationErrors.volunteerCategory) {
+                          setValidationErrors({
+                            ...validationErrors,
+                            volunteerCategory: false,
+                          });
+                        }
+                      }}
                       disabled={isPending}
                     >
-                      <SelectTrigger id="assignedLeader">
-                        <SelectValue placeholder="Select a leader..." />
+                      <SelectTrigger
+                        id="volunteerCategory"
+                        className={
+                          validationErrors.volunteerCategory
+                            ? "border-destructive focus:ring-destructive"
+                            : ""
+                        }
+                      >
+                        <SelectValue placeholder="Select volunteer category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {volunteerLeaders
-                          .filter(leader =>
-                            leader.volunteerCategories.includes(
-                              formData.volunteerCategory
-                            )
-                          )
-                          .map(leader => (
-                            <SelectItem key={leader.id} value={leader.id}>
-                              {leader.name}
-                            </SelectItem>
-                          ))}
-                        {volunteerLeaders.filter(leader =>
-                          leader.volunteerCategories.includes(
-                            formData.volunteerCategory
-                          )
-                        ).length === 0 && (
-                          <SelectItem value="none" disabled>
-                            No leaders assigned to this category
+                        {VOLUNTEER_CATEGORY_OPTIONS.map(category => (
+                          <SelectItem key={category} value={category}>
+                            {formatVolunteerCategoryLabel(category)}
                           </SelectItem>
-                        )}
+                        ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Leaders with &quot;{formData.volunteerCategory}&quot;
-                      category.{" "}
-                      <a
-                        href={`/church/${slug}/admin/team`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        Add role to staff member →
-                      </a>
-                    </p>
+                    {validationErrors.volunteerCategory && (
+                      <p className="text-sm text-destructive">
+                        Volunteer category is required
+                      </p>
+                    )}
                   </div>
 
-                  {/* SMS Automation Checkbox */}
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="smsAutomation"
-                      checked={formData.smsAutomationEnabled}
-                      onCheckedChange={checked =>
-                        setFormData({
-                          ...formData,
-                          smsAutomationEnabled: Boolean(checked),
-                        })
-                      }
-                      disabled={isPending}
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor="smsAutomation"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  {/* Volunteer Assignment - Collapsible */}
+                  {formData.volunteerCategory &&
+                    formData.volunteerCategory !== "GENERAL" && (
+                      <Collapsible
+                        open={isAssignmentOpen}
+                        onOpenChange={setIsAssignmentOpen}
+                        className="border-t pt-4"
                       >
-                        Enable SMS Automation
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        Send automated onboarding messages (initial info →
-                        calendar invite → reminders)
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+                        <CollapsibleTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="flex w-full justify-between p-0 hover:bg-transparent whitespace-normal"
+                          >
+                            <div className="flex-1 text-left min-w-0">
+                              <h4 className="text-sm font-semibold">
+                                Volunteer Assignment
+                              </h4>
+                              <p className="text-sm text-muted-foreground">
+                                Assign leader and configure notifications
+                              </p>
+                            </div>
+                            <ChevronDown
+                              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                                isAssignmentOpen ? "rotate-180" : ""
+                              }`}
+                            />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="pt-4 space-y-4">
+                          {/* Assigned Leader Dropdown */}
+                          <div className="space-y-2">
+                            <Label htmlFor="assignedLeader">
+                              Assigned Leader (Optional)
+                            </Label>
+                            <Select
+                              value={formData.assignedLeaderId}
+                              onValueChange={value =>
+                                setFormData({
+                                  ...formData,
+                                  assignedLeaderId: value,
+                                })
+                              }
+                              disabled={isPending}
+                            >
+                              <SelectTrigger id="assignedLeader">
+                                <SelectValue placeholder="Select a leader..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {volunteerLeaders
+                                  .filter(leader =>
+                                    leader.volunteerCategories.includes(
+                                      formData.volunteerCategory
+                                    )
+                                  )
+                                  .map(leader => (
+                                    <SelectItem
+                                      key={leader.id}
+                                      value={leader.id}
+                                    >
+                                      {leader.name}
+                                    </SelectItem>
+                                  ))}
+                                {volunteerLeaders.filter(leader =>
+                                  leader.volunteerCategories.includes(
+                                    formData.volunteerCategory
+                                  )
+                                ).length === 0 && (
+                                  <SelectItem value="none" disabled>
+                                    No leaders assigned to this category
+                                  </SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-xs text-muted-foreground">
+                              Leaders with &quot;
+                              {formatVolunteerCategoryLabel(
+                                formData.volunteerCategory
+                              )}
+                              &quot; category.{" "}
+                              <a
+                                href={`/church/${slug}/admin/team`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-primary hover:underline"
+                              >
+                                Add role to staff member →
+                              </a>
+                            </p>
+                          </div>
+
+                          {/* Send Message to Leader Checkbox */}
+                          <div className="flex items-start space-x-2">
+                            <Checkbox
+                              id="sendMessageToLeader"
+                              checked={formData.sendMessageToLeader}
+                              onCheckedChange={checked =>
+                                setFormData({
+                                  ...formData,
+                                  sendMessageToLeader: Boolean(checked),
+                                })
+                              }
+                              disabled={isPending}
+                            />
+                            <div className="grid gap-1 leading-none">
+                              <label
+                                htmlFor="sendMessageToLeader"
+                                className="text-sm font-medium leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                              >
+                                Send message to Leader
+                              </label>
+                              <p className="text-xs text-muted-foreground leading-tight">
+                                Notify the assigned leader about this new
+                                volunteer
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Send Background Check Info Checkbox */}
+                          <div className="flex items-start space-x-2">
+                            <Checkbox
+                              id="sendBackgroundCheckInfo"
+                              checked={formData.sendBackgroundCheckInfo}
+                              onCheckedChange={checked =>
+                                setFormData({
+                                  ...formData,
+                                  sendBackgroundCheckInfo: Boolean(checked),
+                                })
+                              }
+                              disabled={isPending}
+                            />
+                            <div className="grid gap-1 leading-none">
+                              <label
+                                htmlFor="sendBackgroundCheckInfo"
+                                className="text-sm font-medium leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                              >
+                                Send Background check information
+                              </label>
+                              <p className="text-xs text-muted-foreground leading-tight">
+                                Send background check instructions and forms to
+                                volunteer
+                              </p>
+                            </div>
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Prayer Request */}
             <div className="space-y-2">
@@ -919,33 +1011,6 @@ export function ReviewQueueClient({
           </CardContent>
         </Card>
       </div>
-
-      {/* Volunteer Onboarding Pipeline Preview - Show when volunteering selected */}
-      {formData.interests.includes("Volunteering") &&
-        formData.volunteerCategory && (
-          <div className="mt-4">
-            <VolunteerOnboardingChecklist
-              volunteerCategory={formData.volunteerCategory}
-              assignedLeaderName={
-                formData.assignedLeaderId
-                  ? volunteerLeaders.find(
-                      l => l.id === formData.assignedLeaderId
-                    )?.name
-                  : undefined
-              }
-              smsAutomationEnabled={formData.smsAutomationEnabled}
-              onboardingStatus={
-                currentCard.volunteerOnboardingStatus || "INQUIRY"
-              }
-              orientationDate={
-                currentCard.volunteerOrientationDate
-                  ? new Date(currentCard.volunteerOrientationDate)
-                  : null
-              }
-              onboardingNotes={currentCard.volunteerOnboardingNotes}
-            />
-          </div>
-        )}
     </div>
   );
 }

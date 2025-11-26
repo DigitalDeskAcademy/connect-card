@@ -94,13 +94,6 @@ export async function deleteCourse(
       // Step 2: Clean up S3 files
       const s3Result = await cleanupCourseFiles(course);
 
-      if (s3Result.errors > 0) {
-        console.warn(
-          `S3 cleanup had ${s3Result.errors} errors:`,
-          s3Result.errorDetails
-        );
-      }
-
       // Step 3: Delete course (cascades to chapters/lessons)
       await prisma.course.delete({
         where: {
@@ -144,13 +137,6 @@ export async function deleteCourse(
       // Step 2: Clean up S3 files
       const s3Result = await cleanupCourseFiles(course);
 
-      if (s3Result.errors > 0) {
-        console.warn(
-          `S3 cleanup had ${s3Result.errors} errors:`,
-          s3Result.errorDetails
-        );
-      }
-
       // Step 3: Delete course
       const whereClause =
         user.user.role === "platform_admin"
@@ -169,7 +155,6 @@ export async function deleteCourse(
       };
     }
   } catch (error) {
-    console.error("Failed to delete course:", error);
     return {
       status: "error",
       message: "Failed to delete course",

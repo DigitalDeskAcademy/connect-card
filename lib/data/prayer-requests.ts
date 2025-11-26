@@ -82,28 +82,33 @@ export async function getPrayerRequestsForScope(
     ];
   }
 
-  // Privacy filtering
-  // Staff can only see public requests unless they're assigned
-  // Admins and owners can see all requests
-  if (
-    !dataScope.filters.canManageUsers &&
-    filters?.isPrivate !== true &&
-    userId
-  ) {
-    where.OR = [
-      { isPrivate: false }, // Public requests
-      { assignedToId: userId }, // Requests assigned to user
-    ];
-  }
-
-  // If explicitly filtering for private requests only
-  if (filters?.isPrivate === true) {
-    // Only allow if user has permission
-    if (dataScope.filters.canManageUsers) {
+  // Privacy filtering - positive logic for clarity
+  if (dataScope.filters.canManageUsers) {
+    // Admins and owners see everything (already filtered by organizationId)
+    // If explicitly filtering for private requests, apply that filter
+    if (filters?.isPrivate === true) {
       where.isPrivate = true;
-    } else if (userId) {
-      // Staff can only see their assigned private requests
+    } else if (filters?.isPrivate === false) {
+      where.isPrivate = false;
+    }
+    // If no privacy filter specified, show all requests
+  } else {
+    // Staff: only see public requests OR requests assigned to them
+    if (filters?.isPrivate === true && userId) {
+      // Explicitly filtering for private - staff can only see assigned ones
       where.AND = [{ isPrivate: true }, { assignedToId: userId }];
+    } else if (filters?.isPrivate === false) {
+      // Explicitly filtering for public
+      where.isPrivate = false;
+    } else if (userId) {
+      // No explicit privacy filter - show public OR assigned to them
+      where.OR = [
+        { isPrivate: false }, // Public requests
+        { assignedToId: userId }, // Requests assigned to user
+      ];
+    } else {
+      // Staff without userId - should only see public
+      where.isPrivate = false;
     }
   }
 

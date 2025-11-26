@@ -140,7 +140,7 @@ export async function getBatchesForReview(
     where.locationId = user.defaultLocationId;
   }
 
-  // Fetch batches with card counts and location info
+  // Fetch batches with card counts (only EXTRACTED cards awaiting review)
   return prisma.connectCardBatch.findMany({
     where,
     include: {
@@ -153,7 +153,11 @@ export async function getBatchesForReview(
       },
       _count: {
         select: {
-          cards: true,
+          cards: {
+            where: {
+              status: "EXTRACTED", // Only count cards awaiting review
+            },
+          },
         },
       },
     },

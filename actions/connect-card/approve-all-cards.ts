@@ -41,7 +41,6 @@ export async function approveAllCards(slug: string) {
       data: { count: result.count },
     };
   } catch (error) {
-    console.error("Failed to approve all cards:", error);
     return {
       status: "error",
       message: "Failed to approve cards",

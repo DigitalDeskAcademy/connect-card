@@ -238,7 +238,6 @@ export async function inviteStaff(
       message: `Invitation sent to ${email}`,
     };
   } catch (error) {
-    console.error("Failed to invite staff:", error);
     return {
       status: "error",
       message: "Failed to send invitation. Please try again.",

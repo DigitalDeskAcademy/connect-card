@@ -305,6 +305,12 @@ export function getPageTitle(
   if (normalizedPath.includes("/connect-cards/batches/")) {
     return "Batch Details";
   }
+  if (
+    normalizedPath.includes("/volunteer/") &&
+    segments[segments.length - 2] === "volunteer"
+  ) {
+    return "Volunteer Profile";
+  }
 
   // Convert kebab-case to Title Case
   return lastSegment
