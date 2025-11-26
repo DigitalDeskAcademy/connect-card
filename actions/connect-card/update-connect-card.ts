@@ -165,17 +165,11 @@ export async function updateConnectCard(
           });
           churchMemberId = existingMember.id;
           memberUpdated = true;
-          console.log(
-            `[Member Updated] Existing member ${existingMember.id} updated from connect card`
-          );
         } else {
           // Email match but name different - flag for review but still link
           // Per spec: Flag for manual review when name differs
           nameMismatchWarning = true;
           churchMemberId = existingMember.id;
-          console.log(
-            `[Name Mismatch] Card name "${cardName}" differs from member name "${existingMember.name}"`
-          );
         }
 
         // Handle volunteer category for existing member
@@ -200,9 +194,6 @@ export async function updateConnectCard(
                   category: categoryType,
                 },
               });
-              console.log(
-                `[Volunteer Category Added] ${categoryType} added to existing volunteer`
-              );
             }
           }
         } else if (
@@ -232,9 +223,6 @@ export async function updateConnectCard(
             });
           }
           volunteerCreated = true;
-          console.log(
-            `[Volunteer Created] New volunteer ${newVolunteer.id} for existing member`
-          );
         }
       } else {
         // No email match - create new ChurchMember
@@ -250,9 +238,6 @@ export async function updateConnectCard(
         });
         churchMemberId = newMember.id;
         memberCreated = true;
-        console.log(
-          `[Member Created] New member ${newMember.id} from connect card`
-        );
 
         // Create Volunteer record if category selected (PENDING_APPROVAL per spec)
         if (validation.data.volunteerCategory) {
@@ -278,9 +263,6 @@ export async function updateConnectCard(
             });
           }
           volunteerCreated = true;
-          console.log(
-            `[Volunteer Created] New volunteer ${newVolunteer.id} with category ${categoryType}`
-          );
         }
       }
     } else if (cardName) {
@@ -296,9 +278,6 @@ export async function updateConnectCard(
       });
       churchMemberId = newMember.id;
       memberCreated = true;
-      console.log(
-        `[Member Created] New member ${newMember.id} (no email) from connect card`
-      );
 
       // Create Volunteer if category selected
       if (validation.data.volunteerCategory) {
@@ -433,8 +412,7 @@ export async function updateConnectCard(
       message: messages.join(". "),
       data: { id: updatedCard.id },
     };
-  } catch (error) {
-    console.error("[Update Connect Card Failed]:", error);
+  } catch {
     return {
       status: "error",
       message: "Failed to process connect card",

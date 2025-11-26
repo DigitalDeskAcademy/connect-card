@@ -64,8 +64,13 @@ export default createMiddleware(aj, async (request: NextRequest) => {
     }
   }
 
-  // Apply auth middleware to all platform routes (admin and learning preview)
-  if (pathname.startsWith("/platform/")) {
+  // Apply auth middleware to protected routes
+  // - /platform/* - Platform admin routes
+  // - /church/*/admin/* - Church admin dashboard routes
+  if (
+    pathname.startsWith("/platform/") ||
+    /^\/church\/[^\/]+\/admin/.test(pathname)
+  ) {
     return authMiddleware(request);
   }
 
