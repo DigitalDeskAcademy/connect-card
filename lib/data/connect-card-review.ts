@@ -41,12 +41,14 @@ export interface ConnectCardForReview {
  * Generates signed S3 URLs for secure image display.
  *
  * @param organizationId - Organization ID for multi-tenant filtering
+ * @param limit - Max cards to return (default: 50, max: 100)
  * @returns Array of connect cards awaiting review with signed image URLs
  */
 export async function getConnectCardsForReview(
-  organizationId: string
+  organizationId: string,
+  limit: number = 50
 ): Promise<ConnectCardForReview[]> {
-  // Fetch cards needing review
+  // Fetch cards needing review with limit to prevent memory issues
   const cards = await prisma.connectCard.findMany({
     where: {
       organizationId,
@@ -55,6 +57,7 @@ export async function getConnectCardsForReview(
     orderBy: {
       scannedAt: "desc", // Most recent first
     },
+    take: Math.min(100, Math.max(1, limit)), // Cap at 100 for memory safety
     select: {
       id: true,
       imageKey: true,
@@ -228,6 +231,7 @@ export async function getConnectCardsForBatchReview(
   organizationId: string
 ): Promise<ConnectCardForReview[]> {
   // Fetch cards needing review in this batch
+  // Batches are typically small (single upload session), but limit for safety
   const cards = await prisma.connectCard.findMany({
     where: {
       organizationId, // Multi-tenant isolation
@@ -237,6 +241,7 @@ export async function getConnectCardsForBatchReview(
     orderBy: {
       scannedAt: "asc", // Review in order scanned
     },
+    take: 100, // Reasonable limit per batch - most batches have <50 cards
     select: {
       id: true,
       imageKey: true,
