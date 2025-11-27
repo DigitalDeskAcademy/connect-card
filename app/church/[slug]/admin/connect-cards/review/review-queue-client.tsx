@@ -276,20 +276,18 @@ export function ReviewQueueClient({
         });
 
         if (result.status === "success") {
-          toast.success("Connect card reviewed and saved!");
-
           // Remove the processed card from local state
           const remainingCards = cards.filter((_, idx) => idx !== currentIndex);
           setCards(remainingCards);
 
           if (remainingCards.length === 0) {
-            // All cards processed - navigate back to batches
-            // Batch auto-completes in the server action
-            toast.success("All cards in this batch have been reviewed!");
+            // All cards processed - single toast, navigate back to batches
+            toast.success("All cards reviewed! Batch complete.");
             router.push(`/church/${slug}/admin/connect-cards?tab=batches`);
             router.refresh();
           } else {
-            // Move to next card (or stay at same index if we removed the current one)
+            // Card saved, move to next
+            toast.success("Saved");
             const newIndex = Math.min(currentIndex, remainingCards.length - 1);
             setCurrentIndex(newIndex);
             resetFormForCard(remainingCards[newIndex]);

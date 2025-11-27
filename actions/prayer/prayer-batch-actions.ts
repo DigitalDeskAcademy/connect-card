@@ -1,7 +1,7 @@
 "use server";
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
-import arcjet, { fixedWindow } from "@/lib/arcjet";
+import arcjet, { fixedWindow, arcjetMode } from "@/lib/arcjet";
 import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
 import { z } from "zod";
@@ -11,7 +11,7 @@ import { revalidatePath } from "next/cache";
 // Rate limiting configuration
 const aj = arcjet.withRule(
   fixedWindow({
-    mode: "LIVE",
+    mode: arcjetMode,
     window: "1m",
     max: 10,
   })

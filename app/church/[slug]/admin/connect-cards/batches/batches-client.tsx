@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Package,
@@ -48,28 +47,6 @@ interface Batch {
 interface BatchesClientProps {
   batches: Batch[];
   slug: string;
-}
-
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "PENDING":
-    case "IN_REVIEW":
-      // Don't show badge - card count tells the story
-      return null;
-    case "COMPLETED":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-green-50 text-green-700 border-green-200"
-        >
-          Completed
-        </Badge>
-      );
-    case "ARCHIVED":
-      return <Badge variant="outline">Archived</Badge>;
-    default:
-      return null;
-  }
 }
 
 export function BatchesClient({ batches, slug }: BatchesClientProps) {
@@ -155,24 +132,15 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(batch.status)}
-                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="flex gap-2">
                   <Button asChild size="sm">
                     <Link
-                      href={
-                        batch.status === "COMPLETED"
-                          ? `/church/${slug}/admin/connect-cards/batches/${batch.id}`
-                          : `/church/${slug}/admin/connect-cards/review/${batch.id}`
-                      }
+                      href={`/church/${slug}/admin/connect-cards/review/${batch.id}`}
                     >
-                      {batch.status === "COMPLETED"
-                        ? "View Batch"
-                        : "Review Cards"}
+                      Review Cards
                     </Link>
                   </Button>
                   <Button

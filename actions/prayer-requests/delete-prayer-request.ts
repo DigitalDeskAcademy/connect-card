@@ -1,7 +1,7 @@
 "use server";
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
-import arcjet, { fixedWindow } from "@/lib/arcjet";
+import arcjet, { fixedWindow, arcjetMode } from "@/lib/arcjet";
 import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
 import { request } from "@arcjet/next";
@@ -13,7 +13,7 @@ import { canAccessLocation } from "@/lib/data/location-filter";
 
 const aj = arcjet.withRule(
   fixedWindow({
-    mode: "LIVE",
+    mode: arcjetMode,
     window: "1m",
     max: 5, // 5 deletions per minute
   })
