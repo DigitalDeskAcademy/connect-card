@@ -71,15 +71,6 @@ public/*-screenshot-*.png
 /test-results/
 .vscode/settings.json
 
-# Worktree-specific documentation (never commit)
-# Session notes, testing guides, and WIP planning are local to each worktree
-.worktree/*/docs/session-notes/
-.worktree/*/docs/testing/
-.worktree/*/docs/wip/
-
-# But DO track the directory structure
-!.worktree/*/docs/.gitkeep
-
 # ========================================
 # DEV-ONLY FILES (Never Commit)
 # ========================================
