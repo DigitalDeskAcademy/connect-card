@@ -1,22 +1,28 @@
 # Documentation Index
 
-**Two-Document Architecture** - Clear separation between technical and business documentation.
+**Multi-Worktree Architecture** - Coordinated development across feature branches with central project management.
 
 ---
 
 ## 🚀 Quick Start
 
+**For Any Worktree Session:**
+
+1. **CHECK FIRST:** `WORKTREE-STATUS.md` - What should I work on?
+2. Read your feature's vision doc in `features/{feature}/vision.md`
+3. Reference `PLAYBOOK.md` for technical patterns
+
 **For New Developers:**
 
-1. Read `PLAYBOOK.md` - THE technical guide (patterns, blockers, debt)
-2. Read `PROJECT.md` - Business context and roadmap
-3. Read `essentials/coding-patterns.md` - How to write code
-4. Read `essentials/development.md` - Local setup
+1. Read `WORKTREE-STATUS.md` - Project dashboard and worktree assignments
+2. Read `PLAYBOOK.md` - THE technical guide (patterns, blockers, debt)
+3. Read `PROJECT.md` - Business context and roadmap
+4. Read `essentials/coding-patterns.md` - How to write code
 
 **For AI Sessions:**
 
-1. Start with `PLAYBOOK.md` - Technical single source of truth
-2. Check `PROJECT.md` - Current priorities and status
+1. **Start with `WORKTREE-STATUS.md`** - Know which worktree you're in and what to do
+2. Check `PLAYBOOK.md` - Technical single source of truth
 3. Reference `features/{feature}/vision.md` - Detailed feature planning
 
 ---
