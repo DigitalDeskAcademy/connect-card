@@ -111,6 +111,16 @@ export const requireDashboardAccess = cache(async (slug: string) => {
     return redirect("/unauthorized");
   }
 
+  // CRITICAL: Check subscription status BEFORE granting any access
+  // This prevents churches with expired subscriptions from using the platform
+  const activeStatuses = ["ACTIVE", "TRIAL"];
+  if (
+    !organization.subscriptionStatus ||
+    !activeStatuses.includes(organization.subscriptionStatus)
+  ) {
+    return redirect(`/church/${slug}/subscription-expired`);
+  }
+
   // Account Owner (church_owner) - sees all locations
   if (member.role === "owner") {
     const dataScope: AgencyScope = {
@@ -171,15 +181,6 @@ export const requireDashboardAccess = cache(async (slug: string) => {
     return { session, organization, dataScope, member };
   }
 
-  // Check subscription status for all users
-  const activeStatuses = ["ACTIVE", "TRIAL"];
-  if (
-    !organization.subscriptionStatus ||
-    !activeStatuses.includes(organization.subscriptionStatus)
-  ) {
-    return redirect(`/church/${slug}/subscription-expired`);
-  }
-
-  // Unknown role
+  // Unknown role - should not reach here if member exists with valid role
   return redirect("/unauthorized");
 });

@@ -1,0 +1,386 @@
+# Worktree Project Dashboard
+
+**Purpose:** Central status board for all worktrees. Check here first to know what to work on.
+**Last Updated:** 2025-11-26
+**Update Frequency:** After each significant work session
+
+---
+
+## 🚦 Project Health at a Glance
+
+| Worktree         | Port | Branch                         | Status            | Current Focus                    |
+| ---------------- | ---- | ------------------------------ | ----------------- | -------------------------------- |
+| **main**         | 3000 | `main`                         | 🟢 Active         | Project management, Dashboard UI |
+| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready for work | ChMS Sync (CSV Export)           |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🔴 BLOCKING       | Server actions needed            |
+| **volunteer**    | 3003 | `feature/volunteer-management` | 🟡 In Progress    | Onboarding pipeline              |
+| **tech-debt**    | 3004 | `feature/tech-debt`            | 🔴 CRITICAL       | Production blockers              |
+
+---
+
+## 🚨 PRIORITY ORDER
+
+**Work on these in order. Don't skip ahead.**
+
+```
+1. tech-debt     → Production blockers (MUST FIX FIRST)
+2. prayer        → Server actions (feature unusable)
+3. volunteer     → Onboarding pipeline (in progress)
+4. connect-card  → ChMS sync (new feature)
+5. main          → Project management (ongoing)
+```
+
+---
+
+## 📋 Worktree Details
+
+---
+
+### 🔴 tech-debt (Port 3004)
+
+**Status:** CRITICAL - Blocks production launch
+**Branch:** `feature/tech-debt`
+**Vision Doc:** `/docs/features/tech-debt/vision.md`
+
+#### What You Should Be Working On
+
+**Phase 1 - Production Blockers (ALL MUST BE DONE):**
+
+| #   | Task                          | File                                                 | Time Est. | Status |
+| --- | ----------------------------- | ---------------------------------------------------- | --------- | ------ |
+| 1   | Fix subscription bypass       | `app/data/dashboard/require-dashboard-access.ts:175` | 30 min    | [ ]    |
+| 2   | Remove PII from logs          | 20+ server action files                              | 1 day     | [ ]    |
+| 3   | Add database indexes          | `prisma/schema.prisma`                               | 4 hours   | [ ]    |
+| 4   | Add pagination to all queries | `/lib/data/*.ts`                                     | 2-3 days  | [ ]    |
+
+#### Start Here
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/tech-debt
+pnpm dev  # Runs on port 3004
+
+# First task: Fix subscription bypass
+# Open: app/data/dashboard/require-dashboard-access.ts
+# Move subscription check BEFORE role returns (see vision doc)
+```
+
+#### Definition of Done
+
+- [ ] All 4 Phase 1 items complete
+- [ ] PR created to main
+- [ ] PLAYBOOK.md updated with completion status
+
+#### Blockers
+
+None - this is the blocker for everything else.
+
+---
+
+### 🔴 prayer (Port 3002)
+
+**Status:** BLOCKING - Feature 65% complete but unusable
+**Branch:** `feature/prayer-enhancements`
+**Vision Doc:** `/docs/features/prayer-management/vision.md`
+
+#### What You Should Be Working On
+
+**Phase 1 - Server Actions (CRITICAL):**
+
+| #   | Task                         | Status |
+| --- | ---------------------------- | ------ |
+| 1   | `createPrayerRequest` action | [ ]    |
+| 2   | `updatePrayerRequest` action | [ ]    |
+| 3   | `assignPrayerRequest` action | [ ]    |
+| 4   | `markAnswered` action        | [ ]    |
+| 5   | `deletePrayerRequest` action | [ ]    |
+
+**Each action requires:**
+
+- Zod validation schema
+- Arcjet rate limiting
+- Multi-tenant `organizationId` scoping
+- Privacy checks for private prayers
+
+#### Start Here
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/prayer
+pnpm dev  # Runs on port 3002
+
+# First task: Create server action file
+# Create: /actions/prayer-requests/create.ts
+# Follow pattern from /actions/connect-card/save-connect-card.ts
+```
+
+#### Definition of Done
+
+- [ ] All 5 server actions implemented
+- [ ] UI components for create/edit/assign dialogs
+- [ ] N+1 query fix in prayer-requests.ts
+- [ ] PR created to main
+
+#### Blockers
+
+None - can work independently.
+
+---
+
+### 🟡 volunteer (Port 3003)
+
+**Status:** In Progress - Onboarding pipeline
+**Branch:** `feature/volunteer-management`
+**Vision Doc:** `/docs/features/volunteer-management/vision.md`
+
+#### What You Should Be Working On
+
+**Current Phase - Onboarding Pipeline:**
+
+| #   | Task                                         | Status         |
+| --- | -------------------------------------------- | -------------- |
+| 1   | Onboarding status tracking (Inquiry → Ready) | 🔄 In Progress |
+| 2   | Visual pipeline dashboard                    | [ ]            |
+| 3   | Status update actions                        | [ ]            |
+| 4   | N+1 query optimization                       | [ ]            |
+
+**After Onboarding Complete - Bulk Messaging (Phase 4):**
+
+- See `/docs/features/volunteer-management/bulk-messaging-spec.md`
+- Route: `/church/[slug]/admin/volunteer/message`
+
+#### Start Here
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/volunteer
+pnpm dev  # Runs on port 3003
+
+# Current focus: Complete onboarding pipeline
+# Check vision doc for detailed requirements
+```
+
+#### Definition of Done (Onboarding)
+
+- [ ] Pipeline stages visible in UI
+- [ ] Status transitions working
+- [ ] N+1 queries fixed
+- [ ] PR created to main
+
+#### Blockers
+
+None - can work independently.
+
+---
+
+### 🟢 connect-card (Port 3001)
+
+**Status:** Ready for new work - Phase 3 complete
+**Branch:** `feature/connect-card`
+**Vision Doc:** `/docs/features/connect-cards/vision.md`
+
+#### What You Should Be Working On
+
+**Next Feature - Church Software Sync (Phase 3):**
+
+- See `/docs/features/integrations/church-software-sync-spec.md`
+- Route: `/church/[slug]/admin/integrations`
+
+| #   | Task                               | Status |
+| --- | ---------------------------------- | ------ |
+| 1   | Create integrations page UI        | [ ]    |
+| 2   | Planning Center CSV format export  | [ ]    |
+| 3   | Breeze CSV format export           | [ ]    |
+| 4   | Generic CSV format export          | [ ]    |
+| 5   | Export tracking (mark as exported) | [ ]    |
+| 6   | Export history log                 | [ ]    |
+
+#### Start Here
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/connect-card
+pnpm dev  # Runs on port 3001
+
+# First task: Create integrations page
+# Create: /app/church/[slug]/admin/integrations/page.tsx
+# Follow the UI wireframes in the spec doc
+```
+
+#### Definition of Done
+
+- [ ] CSV export working for all 3 formats
+- [ ] Export tracking in database
+- [ ] Route added to navigation
+- [ ] PR created to main
+
+#### Blockers
+
+None - can work independently.
+
+#### Note
+
+This worktree has uncommitted changes. Run `git status` to review before starting new work.
+
+---
+
+### 🟢 main (Port 3000)
+
+**Status:** Active - Project management & shared infrastructure
+**Branch:** `main`
+**Vision Doc:** N/A (this is the trunk)
+
+#### What You Should Be Working On
+
+**Ongoing Responsibilities:**
+
+- Project management and coordination
+- Documentation updates
+- Dashboard UI/UX improvements
+- Cross-cutting infrastructure changes
+- Merging PRs from feature worktrees
+
+**Recently Completed:**
+
+- ✅ Dashboard quick actions grid (8 buttons)
+- ✅ Location-aware default tab
+- ✅ Worktree port configuration
+- ✅ Feature specs for bulk messaging & ChMS sync
+- ✅ Roadmap updates with worktree assignments
+
+#### Start Here
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/main
+pnpm dev  # Runs on port 3000
+
+# Check this doc for project coordination
+# Review PRs from feature worktrees
+# Update docs as features complete
+```
+
+#### Current Tasks
+
+- [ ] Review and merge feature PRs as they come in
+- [ ] Keep this status document updated
+- [ ] Coordinate cross-worktree dependencies
+
+---
+
+## 🔄 Dependency Map
+
+```
+                    ┌─────────────────┐
+                    │   tech-debt     │
+                    │  (MUST FIX)     │
+                    └────────┬────────┘
+                             │ blocks production
+                             ▼
+    ┌────────────────────────┼────────────────────────┐
+    │                        │                        │
+    ▼                        ▼                        ▼
+┌─────────┐           ┌─────────────┐          ┌─────────────┐
+│ prayer  │           │  volunteer  │          │connect-card │
+│(server  │           │ (onboarding)│          │ (ChMS sync) │
+│actions) │           │             │          │             │
+└─────────┘           └─────────────┘          └─────────────┘
+    │                        │                        │
+    │                        │                        │
+    └────────────────────────┼────────────────────────┘
+                             │ all merge to
+                             ▼
+                    ┌─────────────────┐
+                    │      main       │
+                    │ (coordination)  │
+                    └─────────────────┘
+```
+
+**Key Dependencies:**
+
+- `tech-debt` → Must complete Phase 1 before production launch
+- Feature worktrees (`prayer`, `volunteer`, `connect-card`) can work in parallel
+- All features merge to `main` when complete
+
+---
+
+## 📊 Overall Project Progress
+
+| Phase   | Description             | Status | Target   |
+| ------- | ----------------------- | ------ | -------- |
+| Phase 1 | Production Fixes        | 🔴 0%  | Week 1   |
+| Phase 2 | Pilot Church            | 🟡 50% | Dec 2025 |
+| Phase 3 | Member Mgmt + ChMS Sync | ⬜ 0%  | Jan 2026 |
+| Phase 4 | Communication           | ⬜ 0%  | Feb 2026 |
+| Phase 5 | Scale                   | ⬜ 0%  | Mar 2026 |
+
+**Blockers to Production:**
+
+1. ❌ Subscription bypass not fixed
+2. ❌ PII in logs
+3. ❌ No pagination
+4. ❌ Missing indexes
+
+---
+
+## 🔧 Quick Commands
+
+### Check All Worktree Status
+
+```bash
+for worktree in main connect-card prayer volunteer tech-debt; do
+  echo "=== $worktree ==="
+  cd /home/digitaldesk/Desktop/church-connect-hub/$worktree
+  git status --short
+  echo ""
+done
+```
+
+### Start Any Worktree
+
+```bash
+# Replace WORKTREE with: main, connect-card, prayer, volunteer, tech-debt
+cd /home/digitaldesk/Desktop/church-connect-hub/WORKTREE
+pnpm dev
+```
+
+### Sync Worktree with Main
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/WORKTREE
+git fetch origin
+git merge origin/main
+```
+
+---
+
+## 📝 How to Update This Document
+
+**When to update:**
+
+- After completing significant work in any worktree
+- After merging a PR to main
+- After discovering blockers or dependencies
+- At start of each work session (review status)
+
+**What to update:**
+
+1. Status emoji (🔴 🟡 🟢)
+2. Current Focus description
+3. Task checkboxes
+4. Progress percentages
+5. "Last Updated" date at top
+
+---
+
+## 📞 Quick Reference
+
+| Need                | Location                                                     |
+| ------------------- | ------------------------------------------------------------ |
+| Technical patterns  | `/docs/PLAYBOOK.md`                                          |
+| Project roadmap     | `/docs/PROJECT.md`                                           |
+| Connect card spec   | `/docs/features/connect-cards/vision.md`                     |
+| Prayer spec         | `/docs/features/prayer-management/vision.md`                 |
+| Volunteer spec      | `/docs/features/volunteer-management/vision.md`              |
+| Tech debt spec      | `/docs/features/tech-debt/vision.md`                         |
+| Bulk messaging spec | `/docs/features/volunteer-management/bulk-messaging-spec.md` |
+| ChMS sync spec      | `/docs/features/integrations/church-software-sync-spec.md`   |
+
+---
+
+**Remember:** Check this document at the start of each session. If your worktree status is unclear, update this doc first.

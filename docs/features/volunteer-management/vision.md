@@ -436,6 +436,17 @@ enum VolunteerOnboardingStatus {
 - Progress tracking with automated reminders
 - Planning Center API export
 
+**📋 Planned (Phase 4): Bulk Messaging**
+
+**Spec:** `/docs/features/volunteer-management/bulk-messaging-spec.md`
+
+- Filter volunteers by ministry/location/status/background check
+- Compose messages with merge tags ({first_name}, etc.)
+- Attach calendar links and documents
+- Send via GHL (SMS and/or Email)
+- Delivery tracking (sent, delivered, opened)
+- Message history and templates
+
 **❌ Not Planned:**
 
 - Permanent volunteer directory (Planning Center's job)
@@ -446,6 +457,13 @@ enum VolunteerOnboardingStatus {
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-11-26
 **Document Purpose:** Clarify product vision - we're building onboarding automation, not volunteer management
 **Strategic Position:** Feed Planning Center, don't compete with it
+
+---
+
+## 📚 Related Documentation
+
+- [Bulk Messaging Spec](./bulk-messaging-spec.md) - Detailed spec for volunteer outreach feature
+- [Church Software Sync](/docs/features/integrations/church-software-sync-spec.md) - Export volunteers to Planning Center

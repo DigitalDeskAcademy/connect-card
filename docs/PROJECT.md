@@ -99,38 +99,57 @@ Churches lose 70% of first-time visitors because:
 
 **BLOCKED - Critical technical issues**
 
-- [ ] Add pagination (crashes at 200 users)
-- [ ] Fix subscription enforcement
-- [ ] Remove PII from logs
-- [ ] Add database indexes
-      See ENGINEERING-PLAYBOOK.md for details.
+- [ ] Add pagination (crashes at 200 users) → `tech-debt` worktree
+- [ ] Fix subscription enforcement → `tech-debt` worktree
+- [ ] Remove PII from logs → `tech-debt` worktree
+- [ ] Add database indexes → `tech-debt` worktree
+
+See ENGINEERING-PLAYBOOK.md for details.
 
 ### Phase 2: Pilot Church (December 2025)
 
 **Goal:** First church using in production
 
+- [x] Dashboard UI/UX - Quick action cards for staff workflows → `main` ✅
 - [ ] Onboard pilot church (6 locations)
 - [ ] Process 100+ real cards
 - [ ] Gather feedback
 - [ ] Fix discovered issues
 
-### Phase 3: Member Management (January 2026)
+### Phase 3: Member Management + Data Sync (January 2026)
 
-**Goal:** Complete visitor → member pipeline
+**Goal:** Complete visitor → member pipeline + export to ChMS
 
 - [ ] Member directory
 - [ ] Profile pages
 - [ ] Journey tracking
 - [ ] Duplicate detection
+- [ ] **Church Software Sync (CSV Export)** → `connect-card` worktree
+  - Planning Center format export
+  - Breeze format export
+  - Generic CSV export
+  - Export tracking (mark as exported)
+  - See `/docs/features/integrations/church-software-sync-spec.md`
 
 ### Phase 4: Communication (February 2026)
 
-**Goal:** Automated follow-up
+**Goal:** Automated follow-up + bulk outreach
 
 - [ ] GoHighLevel OAuth integration
 - [ ] Campaign templates
 - [ ] SMS/email automation
 - [ ] Response tracking
+- [ ] **Bulk Message Volunteers** → `volunteer` worktree
+  - Filter volunteers by ministry/location/status
+  - Compose with calendar links & document attachments
+  - Send via GHL (SMS/Email)
+  - Delivery tracking
+  - See `/docs/features/volunteer-management/bulk-messaging-spec.md`
+- [ ] **Church Software Sync (API)** → `connect-card` worktree
+  - Planning Center OAuth integration
+  - Breeze OAuth integration
+  - Automatic sync on card processing
+  - Field mapping UI
 
 ### Phase 5: Scale (March 2026)
 
