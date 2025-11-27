@@ -21,8 +21,8 @@ export async function PrayerRequestsTable({ slug }: PrayerRequestsTableProps) {
   const { dataScope, session, organization } =
     await requireDashboardAccess(slug);
 
-  // 2. Fetch prayer requests for user's scope
-  const prayerRequests = await getPrayerRequestsForScope(
+  // 2. Fetch prayer requests for user's scope (paginated)
+  const { data: prayerRequests } = await getPrayerRequestsForScope(
     dataScope,
     session.user.id
   );
