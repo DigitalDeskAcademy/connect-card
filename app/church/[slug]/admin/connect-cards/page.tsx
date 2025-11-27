@@ -72,13 +72,21 @@ export default async function ConnectCardsPage({ params }: PageProps) {
       : locations[0]?.id || null;
 
   // Fetch batches for review
-  const batches = await getBatchesForReview(session.user.id, organization.id);
+  const allBatches = await getBatchesForReview(
+    session.user.id,
+    organization.id
+  );
 
-  // Count pending batches (PENDING or IN_REVIEW status)
-  const pendingBatchCount = batches.filter(
-    (batch: { status: string }) =>
-      batch.status === "PENDING" || batch.status === "IN_REVIEW"
-  ).length;
+  // Filter to only show batches that need action:
+  // - Not COMPLETED status
+  // - Has cards remaining to review (_count.cards > 0)
+  const batches = allBatches.filter(
+    (batch: { status: string; _count: { cards: number } }) =>
+      batch.status !== "COMPLETED" && batch._count.cards > 0
+  );
+
+  // Count is just the filtered list length
+  const pendingBatchCount = batches.length;
 
   return (
     <PageContainer as="main">

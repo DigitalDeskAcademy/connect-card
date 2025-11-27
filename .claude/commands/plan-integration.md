@@ -202,13 +202,12 @@ Check for feature-specific docs:
 
 ```bash
 # In worktree directory
-find . -path "./.worktree/*/docs/*.md" -o -path "./docs/features/*/vision.md"
+find ./docs/features -name "*.md"
 ```
 
 Read:
 
-- Feature vision docs
-- Worktree-specific planning docs
+- Feature vision docs in /docs/features/
 - README files
 
 Extract:
@@ -848,12 +847,10 @@ git branch -d feature/<branch-name>
 git push origin --delete feature/<branch-name>
 ```
 
-**Step 3: Archive Worktree Docs**
+**Step 3: Archive Feature Docs (if needed)**
 
-```bash
-# Move worktree-specific docs to archive
-mv .worktree/<name>/docs .archive/worktrees/<name>-YYYY-MM-DD/
-```
+Feature docs in `/docs/features/` are committed and persist after merge.
+No archival needed - they remain as documentation.
 
 **Step 4: Update Worktree List**
 
