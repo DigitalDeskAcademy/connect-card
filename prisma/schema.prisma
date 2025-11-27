@@ -57,6 +57,7 @@ model Organization {
   backgroundCheckConfig   BackgroundCheckConfig?
   backgroundCheckRecords  BackgroundCheckRecord[]
   messageTemplates        MessageTemplate[]
+  dataExports             DataExport[]
 
   @@map("organization")
 }
@@ -530,12 +531,59 @@ model ConnectCard {
   batch            ConnectCardBatch?  @relation(fields: [batchId], references: [id])
   assignedLeader   User?              @relation("AssignedConnectCards", fields: [assignedLeaderId], references: [id])
   prayerRequests   PrayerRequest[]
+  /// Last time this card was included in a data export
+  lastExportedAt   DateTime?
+  /// User ID who last exported this card
+  lastExportedBy   String?
+  /// Format of last export (for tracking)
+  lastExportFormat String?
 
   @@index([organizationId, status])
   @@index([organizationId, locationId])
   @@index([scannedAt])
   @@index([imageHash])
   @@map("connect_card")
+}
+
+/// Data export formats for ChMS integrations
+enum DataExportFormat {
+  /// Planning Center People CSV format
+  PLANNING_CENTER_CSV
+  /// Breeze ChMS CSV format
+  BREEZE_CSV
+  /// Generic CSV with all fields
+  GENERIC_CSV
+}
+
+/// Tracks data exports for ChMS integrations
+/// Stores export metadata and file references for re-download capability
+model DataExport {
+  id             String           @id @default(cuid())
+  /// Organization that owns this export
+  organizationId String
+  /// Export format used
+  format         DataExportFormat
+  /// Filters applied (JSON: locationId, onlyNew, dateRange)
+  filters        Json?
+  /// Number of records exported
+  recordCount    Int
+  /// Generated filename
+  fileName       String
+  /// S3/Tigris storage key for CSV file
+  fileKey        String
+  /// File size in bytes
+  fileSizeBytes  Int?
+  /// User ID who created the export
+  exportedBy     String
+  /// When export was created
+  exportedAt     DateTime         @default(now())
+  /// When file was last downloaded
+  downloadedAt   DateTime?
+  /// Organization relation
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, exportedAt])
+  @@map("data_export")
 }
 
 /// Church member profiles - unified model for all people in the church system
