@@ -24,5 +24,6 @@ export async function getOrganizationLocations(organizationId: string) {
     orderBy: {
       name: "asc",
     },
+    take: 50, // Most churches have <10 locations, limit for safety
   });
 }

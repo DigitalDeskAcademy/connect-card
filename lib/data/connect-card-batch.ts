@@ -161,6 +161,7 @@ export async function getBatchesForReview(
   }
 
   // Fetch batches with card counts (only EXTRACTED cards awaiting review)
+  // Limit to recent batches - older batches should be archived
   return prisma.connectCardBatch.findMany({
     where,
     include: {
@@ -184,11 +185,12 @@ export async function getBatchesForReview(
     orderBy: {
       createdAt: "desc",
     },
+    take: 100, // Reasonable limit - most churches process <100 batches/quarter
   });
 }
 
 /**
- * Get single batch with all cards
+ * Get single batch with cards (limited for memory safety)
  */
 export async function getBatchWithCards(batchId: string) {
   return prisma.connectCardBatch.findUnique({
@@ -205,6 +207,7 @@ export async function getBatchWithCards(batchId: string) {
         orderBy: {
           createdAt: "asc",
         },
+        take: 200, // Limit cards per batch - most batches have <100 cards
       },
     },
   });
