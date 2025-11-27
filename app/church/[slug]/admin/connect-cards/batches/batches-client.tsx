@@ -10,6 +10,8 @@ import {
   FileText,
   Trash2,
   Loader2,
+  Download,
+  AlertTriangle,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -54,6 +56,19 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [exportWarningOpen, setExportWarningOpen] = useState(false);
+
+  // Count pending batches for export warning
+  const pendingBatches = batches.filter(b => b.status === "PENDING");
+  const hasPendingBatches = pendingBatches.length > 0;
+
+  const handleExportClick = () => {
+    if (hasPendingBatches) {
+      setExportWarningOpen(true);
+    } else {
+      router.push(`/church/${slug}/admin/export`);
+    }
+  };
 
   const handleDeleteClick = (batch: Batch) => {
     setBatchToDelete(batch);
@@ -80,13 +95,19 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          Connect Card Batches
-        </h2>
-        <p className="text-muted-foreground">
-          Review and manage uploaded connect card batches
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Connect Card Batches
+          </h2>
+          <p className="text-muted-foreground">
+            Review and manage uploaded connect card batches
+          </p>
+        </div>
+        <Button onClick={handleExportClick} className="gap-2">
+          <Download className="h-4 w-4" />
+          Export to ChMS
+        </Button>
       </div>
 
       {/* Batch list */}
@@ -204,6 +225,57 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
               ) : (
                 "Delete Batch"
               )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Export Warning Dialog - Pending Batches */}
+      <AlertDialog open={exportWarningOpen} onOpenChange={setExportWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Pending Batches Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                You have{" "}
+                <span className="font-semibold text-foreground">
+                  {pendingBatches.length} batch
+                  {pendingBatches.length !== 1 ? "es" : ""}
+                </span>{" "}
+                that haven&apos;t been reviewed yet. Cards in pending batches
+                won&apos;t be included in the export.
+              </p>
+              <p className="text-sm">
+                Would you like to review them first or continue to export?
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setExportWarningOpen(false);
+                // Navigate to first pending batch
+                if (pendingBatches[0]) {
+                  router.push(
+                    `/church/${slug}/admin/connect-cards/review/${pendingBatches[0].id}`
+                  );
+                }
+              }}
+            >
+              Review Batches
+            </Button>
+            <AlertDialogAction
+              onClick={() => {
+                setExportWarningOpen(false);
+                router.push(`/church/${slug}/admin/export`);
+              }}
+            >
+              Export Anyway
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
