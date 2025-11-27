@@ -82,6 +82,12 @@ export function DashboardClient({
         ))}
       </TabsList>
 
+      {/* Quick Actions - Right below location tabs, always visible */}
+      <QuickActionsGrid
+        slug={slug}
+        defaultLocationSlug={userDefaultLocationSlug}
+      />
+
       {/* Cumulative Tab Content */}
       <TabsContent value="cumulative" className="mt-0 space-y-6">
         {/* KPI Cards - 4 columns, prominent at top */}
@@ -165,21 +171,8 @@ export function DashboardClient({
           </Card>
         </div>
 
-        {/* Two Column Layout: Quick Actions + Chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Quick Actions - Left column (1/3 width on lg) */}
-          <div className="lg:col-span-1">
-            <QuickActionsGrid
-              slug={slug}
-              defaultLocationSlug={userDefaultLocationSlug}
-            />
-          </div>
-
-          {/* Chart - Right column (2/3 width on lg) */}
-          <div className="lg:col-span-2">
-            <ConnectCardChart data={chartData} />
-          </div>
-        </div>
+        {/* Chart - Full width */}
+        <ConnectCardChart data={chartData} />
 
         {/* Top Prayer Categories - Full width below */}
         {analytics.topPrayerCategories.length > 0 && (
