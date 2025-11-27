@@ -62,10 +62,11 @@ where: {
 ```
 /church-connect-hub/
 ├── .bare/            # Bare repository
-├── main/             # Main branch
-├── connect-card/     # Feature worktree (port 3004)
+├── main/             # Main branch (port 3000)
+├── connect-card/     # Feature worktree (port 3001)
 ├── prayer/           # Feature worktree (port 3002)
-└── volunteer/        # Feature worktree (port 3001)
+├── volunteer/        # Feature worktree (port 3003)
+└── tech-debt/        # Tech debt fixes (port 3004)
 ```
 
 **Each worktree:**
