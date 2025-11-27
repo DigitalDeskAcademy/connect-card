@@ -51,6 +51,12 @@ model Organization {
   prayerRequests        PrayerRequest[]
   volunteerCategories   VolunteerCategory[]
   prayerBatches         PrayerBatch[]
+  // Volunteer Onboarding System
+  ministryRequirements    MinistryRequirements[]
+  volunteerDocuments      VolunteerDocument[]
+  backgroundCheckConfig   BackgroundCheckConfig?
+  backgroundCheckRecords  BackgroundCheckRecord[]
+  messageTemplates        MessageTemplate[]
 
   @@map("organization")
 }
@@ -578,6 +584,10 @@ model ChurchMember {
   payments       Payment[]
   /// Volunteer profile (one-to-one relationship)
   volunteer      Volunteer?
+  /// Volunteer onboarding: documents received
+  documentDeliveries     DocumentDelivery[]
+  /// Volunteer onboarding: background check record
+  backgroundCheckRecord  BackgroundCheckRecord?
   /// Member creation timestamp
   createdAt      DateTime              @default(now())
   /// Last profile update
@@ -1507,4 +1517,312 @@ model PrayerBatch {
   @@index([organizationId, batchDate])
   @@index([batchDate])
   @@map("prayer_batch")
+}
+
+// ============================================================================
+// VOLUNTEER ONBOARDING SYSTEM
+// Phase 1: Document Management & Ministry Requirements
+// ============================================================================
+
+/// Ministry-specific volunteer requirements configuration
+/// Each church can configure different requirements per ministry category
+model MinistryRequirements {
+  id                       String                @id @default(cuid())
+  /// Organization for multi-tenant isolation
+  organizationId           String
+  /// Ministry category these requirements apply to
+  category                 VolunteerCategoryType
+  /// Whether background check is required for this ministry
+  backgroundCheckRequired  Boolean               @default(false)
+  /// How long background checks are valid (months)
+  backgroundCheckValidMonths Int?                @default(24)
+  /// Whether training is required
+  trainingRequired         Boolean               @default(false)
+  /// Description of required training
+  trainingDescription      String?
+  /// Link to training course or materials
+  trainingUrl              String?
+  /// Custom requirements (flexible JSON for future needs)
+  customRequirements       Json?
+  /// Whether this ministry is actively accepting volunteers
+  isActive                 Boolean               @default(true)
+  /// Display order for UI
+  sortOrder                Int                   @default(0)
+  /// Creation timestamp
+  createdAt                DateTime              @default(now())
+  /// Last update timestamp
+  updatedAt                DateTime              @updatedAt
+  /// Relations
+  organization             Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  documents                VolunteerDocument[]   @relation("MinistryDocuments")
+
+  @@unique([organizationId, category])
+  @@index([organizationId])
+  @@map("ministry_requirements")
+}
+
+/// Uploaded documents for volunteer onboarding
+/// Churches upload PDFs that are sent to volunteers during onboarding
+model VolunteerDocument {
+  id                String                 @id @default(cuid())
+  /// Organization for multi-tenant isolation
+  organizationId    String
+  /// Document display name (e.g., "Volunteer Handbook")
+  name              String
+  /// Original filename
+  fileName          String
+  /// S3 URL for the document
+  fileUrl           String
+  /// File size in bytes
+  fileSize          Int
+  /// MIME type (e.g., "application/pdf")
+  mimeType          String
+  /// Scope of this document
+  scope             DocumentScope          @default(GLOBAL)
+  /// If MINISTRY_SPECIFIC, which category
+  category          VolunteerCategoryType?
+  /// Whether this is a system-provided template
+  isTemplate        Boolean                @default(false)
+  /// Document version number
+  version           Int                    @default(1)
+  /// Previous version ID for version history
+  previousVersionId String?
+  /// Description or notes about this document
+  description       String?
+  /// User who uploaded this document
+  uploadedBy        String
+  /// Upload timestamp
+  uploadedAt        DateTime               @default(now())
+  /// Creation timestamp
+  createdAt         DateTime               @default(now())
+  /// Last update timestamp
+  updatedAt         DateTime               @updatedAt
+  /// Relations
+  organization      Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ministries        MinistryRequirements[] @relation("MinistryDocuments")
+  deliveries        DocumentDelivery[]
+
+  @@index([organizationId, scope])
+  @@index([organizationId, category])
+  @@map("volunteer_document")
+}
+
+/// Track which volunteers received which documents
+/// Audit trail for compliance and follow-up
+model DocumentDelivery {
+  id                String          @id @default(cuid())
+  /// Organization for multi-tenant isolation
+  organizationId    String
+  /// Document that was delivered
+  documentId        String
+  /// Volunteer who received the document (ChurchMember ID)
+  volunteerId       String
+  /// How the document was delivered
+  deliveryMethod    DeliveryMethod
+  /// When the document was delivered
+  deliveredAt       DateTime        @default(now())
+  /// When the volunteer acknowledged receipt (optional)
+  acknowledgedAt    DateTime?
+  /// Relations
+  document          VolunteerDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  volunteer         ChurchMember      @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, volunteerId])
+  @@index([organizationId])
+  @@index([volunteerId])
+  @@map("document_delivery")
+}
+
+/// Organization's background check configuration
+/// Each church configures their provider and settings once
+model BackgroundCheckConfig {
+  id                String           @id @default(cuid())
+  /// Organization for multi-tenant isolation
+  organizationId    String           @unique
+  /// Background check provider
+  provider          BGCheckProvider  @default(PROTECT_MY_MINISTRY)
+  /// Church's account ID with the provider (optional)
+  providerAccountId String?
+  /// Direct URL for volunteers to apply (for CUSTOM provider)
+  applicationUrl    String?
+  /// How long background checks are valid (months)
+  validityMonths    Int              @default(24)
+  /// Who pays for background checks
+  paymentModel      BGCheckPayment   @default(CHURCH_PAID)
+  /// Days before expiry to send reminders (e.g., [30, 7])
+  reminderDays      Int[]            @default([30, 7])
+  /// Custom instructions shown to volunteers
+  instructions      String?
+  /// Whether background check system is enabled
+  isEnabled         Boolean          @default(false)
+  /// Creation timestamp
+  createdAt         DateTime         @default(now())
+  /// Last update timestamp
+  updatedAt         DateTime         @updatedAt
+  /// Relations
+  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("background_check_config")
+}
+
+/// Individual background check records for volunteers
+/// Tracks status and timeline for each volunteer's background check
+model BackgroundCheckRecord {
+  id                String          @id @default(cuid())
+  /// Organization for multi-tenant isolation
+  organizationId    String
+  /// Volunteer this check belongs to (ChurchMember ID)
+  volunteerId       String          @unique
+  /// Current status of the background check
+  status            BGCheckRecordStatus @default(NOT_REQUESTED)
+  /// When the request was sent to the volunteer
+  requestedAt       DateTime?
+  /// When the volunteer started the application
+  submittedAt       DateTime?
+  /// When the check was completed
+  completedAt       DateTime?
+  /// When this check expires
+  expiresAt         DateTime?
+  /// Provider's reference ID (for tracking)
+  externalId        String?
+  /// Number of reminders sent
+  remindersSent     Int             @default(0)
+  /// When the last reminder was sent
+  lastReminderAt    DateTime?
+  /// Notes (e.g., "Volunteer needs to contact provider")
+  notes             String?
+  /// Creation timestamp
+  createdAt         DateTime        @default(now())
+  /// Last update timestamp
+  updatedAt         DateTime        @updatedAt
+  /// Relations
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  volunteer         ChurchMember    @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, volunteerId])
+  @@index([organizationId, status])
+  @@index([expiresAt])
+  @@map("background_check_record")
+}
+
+/// Customizable message templates for volunteer onboarding
+/// Churches can customize automated messages sent during onboarding
+model MessageTemplate {
+  id                String          @id @default(cuid())
+  /// Organization for multi-tenant isolation
+  organizationId    String
+  /// Template type (determines when it's used)
+  templateType      TemplateType
+  /// Display name for the template
+  name              String
+  /// Email subject line (for email templates)
+  subject           String?
+  /// Message body (supports merge fields like {first_name})
+  body              String
+  /// Delivery channel for this template
+  channel           MessageChannel
+  /// Whether this template is active
+  isActive          Boolean         @default(true)
+  /// Whether this is the system default (can't be deleted)
+  isDefault         Boolean         @default(false)
+  /// Creation timestamp
+  createdAt         DateTime        @default(now())
+  /// Last update timestamp
+  updatedAt         DateTime        @updatedAt
+  /// Relations
+  organization      Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, templateType])
+  @@index([organizationId])
+  @@map("message_template")
+}
+
+// ============================================================================
+// VOLUNTEER ONBOARDING ENUMS
+// ============================================================================
+
+/// Document scope - whether document applies globally or to specific ministry
+enum DocumentScope {
+  /// Applies to all volunteers regardless of ministry
+  GLOBAL
+  /// Only applies to specific ministry category
+  MINISTRY_SPECIFIC
+}
+
+/// How a document was delivered to a volunteer
+enum DeliveryMethod {
+  /// Sent as email attachment
+  EMAIL
+  /// Sent as SMS with link
+  SMS_LINK
+  /// Included in welcome packet
+  WELCOME_PACKET
+}
+
+/// Background check provider options
+enum BGCheckProvider {
+  /// Protect My Ministry (most popular with churches)
+  PROTECT_MY_MINISTRY
+  /// Sterling Volunteers
+  STERLING_VOLUNTEERS
+  /// Ministry Safe (includes training)
+  MINISTRY_SAFE
+  /// Checkr
+  CHECKR
+  /// Church uses their own provider (URL-only)
+  CUSTOM
+}
+
+/// Who pays for background checks
+enum BGCheckPayment {
+  /// Church pays for all background checks
+  CHURCH_PAID
+  /// Volunteer pays at checkout
+  VOLUNTEER_PAID
+  /// Split cost between church and volunteer
+  SUBSIDIZED
+}
+
+/// Background check record status (more granular than BackgroundCheckStatus)
+enum BGCheckRecordStatus {
+  /// Request not yet sent to volunteer
+  NOT_REQUESTED
+  /// Request sent, waiting for volunteer to start
+  REQUESTED
+  /// Volunteer started application
+  IN_PROGRESS
+  /// Provider is reviewing
+  PENDING_REVIEW
+  /// Check completed and cleared
+  COMPLETED
+  /// Check is past validity period
+  EXPIRED
+}
+
+/// Message template types for volunteer onboarding
+enum TemplateType {
+  /// Initial welcome message to new volunteer
+  VOLUNTEER_WELCOME
+  /// Document delivery notification
+  DOCUMENT_DELIVERY
+  /// Background check request
+  BACKGROUND_CHECK_REQUEST
+  /// Background check reminder
+  BACKGROUND_CHECK_REMINDER
+  /// Background check completed notification
+  BACKGROUND_CHECK_COMPLETE
+  /// Notification to leader about new volunteer
+  LEADER_NEW_VOLUNTEER
+  /// Notification to leader that volunteer is ready
+  LEADER_VOLUNTEER_READY
+  /// Reminder for stalled onboarding (7 days)
+  ONBOARDING_STALLED_7DAY
+  /// Reminder for stalled onboarding (14 days)
+  ONBOARDING_STALLED_14DAY
+  /// Background check expiring soon
+  BACKGROUND_CHECK_EXPIRING
+  /// Bulk volunteer request message
+  BULK_VOLUNTEER_REQUEST
+  /// Event volunteer signup
+  EVENT_VOLUNTEER_SIGNUP
 }
