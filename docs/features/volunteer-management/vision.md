@@ -19,7 +19,9 @@
 
 **The Fix:** Optimize queries to batch fetch related data.
 
-**Status:** [ ] Not started
+**Status:** ✅ N/A - Simplified scope (we're an onboarding bridge, not a volunteer management platform)
+
+**Resolution:** The existing queries in `lib/data/volunteers.ts` are already well-optimized with `Promise.all` and proper Prisma includes. Since we're keeping the feature simple (onboarding pipeline → sync to Planning Center), the complex volunteer analytics that would require N+1 optimization won't be built.
 
 ---
 
@@ -53,7 +55,7 @@
 
 | Priority | Issue               | Status | PR  |
 | -------- | ------------------- | ------ | --- |
-| 1        | N+1 Query           | [ ]    | -   |
+| 1        | N+1 Query           | ✅ N/A | -   |
 | 2        | Onboarding tracking | 🔄     | -   |
 | 3        | Pipeline dashboard  | [ ]    | -   |
 
