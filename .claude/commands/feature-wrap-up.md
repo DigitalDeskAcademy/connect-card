@@ -1,5 +1,6 @@
 ---
 description: Complete end-to-end feature workflow - worktree-aware with conflict detection
+model: claude-opus-4-5-20251101
 ---
 
 # Feature Wrap-Up (Worktree-Aware + Optional Sync)

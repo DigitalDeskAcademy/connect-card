@@ -4,7 +4,7 @@
 **Current Phase:** Phase 3 Complete, Ready for Production
 **Worktree:** `/church-connect-hub/connect-card`
 **Branch:** `feature/connect-card`
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-26
 
 ---
 
@@ -33,13 +33,37 @@
 
 ---
 
+### 4. Cards Not Removing After Save ✅
+
+**File:** `review-queue-client.tsx`
+**Fix:** Changed `cards` from static prop to local state (`useState(initialCards)`). After save/discard, card is filtered out of local state immediately. Redirects to batches when all cards processed.
+
+---
+
+### 5. Removed "Approve All" Button ✅
+
+**File:** `review-queue-client.tsx`
+**Fix:** Removed "Approve All" button to prevent staff from skipping review. AI extraction is 60-85% accurate - human review is required for data quality. Digital cards (future) may allow bulk approval.
+
+---
+
+### 6. Simplified Batch List UI ✅
+
+**File:** `batches-client.tsx`
+**Fix:** Removed filter buttons (All/Pending/Completed) - unnecessary clutter. Badge on tab shows pending count. Staff just needs to see and review batches.
+
+---
+
 ## 📊 Fix Progress
 
-| Priority | Issue           | Status | PR  |
-| -------- | --------------- | ------ | --- |
-| 1        | Race conditions | ✅     | -   |
-| 2        | Raw images      | ✅     | -   |
-| 3        | ALL TIME fetch  | ✅     | -   |
+| Priority | Issue                | Status | PR  |
+| -------- | -------------------- | ------ | --- |
+| 1        | Race conditions      | ✅     | -   |
+| 2        | Raw images           | ✅     | -   |
+| 3        | ALL TIME fetch       | ✅     | -   |
+| 4        | Cards not removing   | ✅     | -   |
+| 5        | Approve All risk     | ✅     | -   |
+| 6        | Batch filter clutter | ✅     | -   |
 
 ---
 

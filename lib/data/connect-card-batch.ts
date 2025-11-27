@@ -94,7 +94,25 @@ export async function getOrCreateActiveBatch(
 
       // Create new batch if none exists
       if (!existingBatch) {
-        const batchName = formatBatchName(locationName, new Date());
+        // Count ALL batches for this location today (including completed)
+        // to generate unique sequence number for same-day batches
+        const batchCountToday = await tx.connectCardBatch.count({
+          where: {
+            organizationId,
+            locationId,
+            createdAt: {
+              gte: today,
+              lt: tomorrow,
+            },
+          },
+        });
+
+        // Add sequence number if this isn't the first batch of the day
+        const baseName = formatBatchName(locationName, new Date());
+        const batchName =
+          batchCountToday > 0
+            ? `${baseName} (${batchCountToday + 1})`
+            : baseName;
 
         existingBatch = await tx.connectCardBatch.create({
           data: {

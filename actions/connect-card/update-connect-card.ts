@@ -1,7 +1,7 @@
 "use server";
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
-import arcjet, { fixedWindow } from "@/lib/arcjet";
+import arcjet, { fixedWindow, arcjetMode } from "@/lib/arcjet";
 import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
 import {
@@ -16,7 +16,7 @@ import { VolunteerCategoryType } from "@/lib/generated/prisma";
 
 const aj = arcjet.withRule(
   fixedWindow({
-    mode: "LIVE",
+    mode: arcjetMode,
     window: "1m",
     max: 10, // Allow 10 updates per minute (staff reviewing cards)
   })
