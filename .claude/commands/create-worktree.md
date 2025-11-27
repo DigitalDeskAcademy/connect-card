@@ -7,7 +7,7 @@ argument-hint: <feature-name>
 
 **Feature Name:** `$ARGUMENTS`
 
-You're creating a new isolated worktree for feature development with industry-standard setup including database isolation, environment configuration, and documentation structure.
+You're creating a new isolated worktree for feature development with industry-standard setup including database isolation and environment configuration.
 
 ---
 
@@ -40,10 +40,10 @@ Follow these steps **sequentially** - each step builds on the previous one.
 
 ```bash
 # Show current worktrees
-git worktree list
+git -C /home/digitaldesk/Desktop/church-connect-hub/.bare worktree list
 
 # Check for conflicts
-ls -la /home/digitaldesk/Desktop/connect-card/
+ls -la /home/digitaldesk/Desktop/church-connect-hub/
 ```
 
 **Verify:**
@@ -65,28 +65,28 @@ ls -la /home/digitaldesk/Desktop/connect-card/
 
 ```bash
 # Navigate to bare repo
-cd /home/digitaldesk/Desktop/connect-card/.bare
+cd /home/digitaldesk/Desktop/church-connect-hub/.bare
 
-# Create worktree with feature branch
-git worktree add -b feature/$ARGUMENTS ../FEATURE_NAME
+# Create worktree with feature branch from main
+git worktree add -b feature/$ARGUMENTS ../FEATURE_NAME main
 
-# Example: git worktree add -b feature/analytics-dashboard ../analytics-dashboard
+# Example: git worktree add -b feature/integrations ../integrations main
 ```
 
 **What This Does:**
 
-- Creates `/home/digitaldesk/Desktop/connect-card/FEATURE_NAME/` directory
-- Creates branch `feature/$ARGUMENTS`
+- Creates `/home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME/` directory
+- Creates branch `feature/$ARGUMENTS` based on main
 - Checks out the branch automatically
 
 **Verify:**
 
 ```bash
 # Confirm worktree created
-git worktree list
+git -C /home/digitaldesk/Desktop/church-connect-hub/.bare worktree list
 
 # Check directory exists
-ls /home/digitaldesk/Desktop/connect-card/FEATURE_NAME/
+ls /home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME/
 ```
 
 **Once created, proceed to Step 4.**
@@ -99,17 +99,28 @@ ls /home/digitaldesk/Desktop/connect-card/FEATURE_NAME/
 
 **Pattern from existing worktrees:**
 
-- Prayer worktree: `ep-long-feather-ad7s8ao0` (Neon branch)
-- Volunteer worktree: `ep-bitter-recipe-ad3v8ovt` (Neon branch)
 - Main worktree: `ep-falling-unit-adhn1juc` (production branch)
-
-Each worktree gets an **isolated Neon database branch** with its own endpoint.
+- Each worktree gets an **isolated Neon database branch** with its own endpoint.
 
 ---
 
-### Option A: Neon CLI (Automated)
+### Option A: Neon Dashboard (Manual) ⭐ RECOMMENDED
 
-**If neonctl is installed:**
+**Most common approach:**
+
+1. Go to https://console.neon.tech
+2. Select project: **Church Connect Card**
+3. Click **"Branches"** → **"New Branch"**
+4. **Name:** `FEATURE_NAME` (e.g., `integrations`)
+5. **Parent branch:** `main`
+6. Click **"Create Branch"**
+7. **Copy the DATABASE_URL** (looks like `postgresql://neondb_owner:...@ep-RANDOM-ID.../neondb?sslmode=require`)
+
+**Save this DATABASE_URL - you'll need it in Step 5.**
+
+---
+
+### Option B: Neon CLI (If installed)
 
 ```bash
 # Check if Neon CLI exists
@@ -122,57 +133,7 @@ neonctl branches create --name FEATURE_NAME --parent main
 neonctl connection-string FEATURE_NAME
 ```
 
-**Copy the DATABASE_URL for Step 5.**
-
 ---
-
-### Option B: Neon Dashboard (Manual) ⭐ RECOMMENDED
-
-**Most common approach:**
-
-1. Go to https://console.neon.tech
-2. Select project: **Church Connect Card**
-3. Click **"Branches"** → **"New Branch"**
-4. **Name:** `FEATURE_NAME` (e.g., `connect-card`)
-5. **Parent branch:** `main`
-6. Click **"Create Branch"**
-7. **Copy the DATABASE_URL** (looks like `postgresql://neondb_owner:...@ep-RANDOM-ID.../neondb?sslmode=require`)
-
-**Save this DATABASE_URL - you'll need it in Step 5.**
-
----
-
-### Option C: Prompt User
-
-**If uncertain about Neon setup, ask user:**
-
-```
-⚠️ MANUAL STEP REQUIRED: Create Neon Database Branch
-
-This project uses Neon PostgreSQL (cloud database).
-You need to create a new database branch for isolated development.
-
-Steps:
-1. Go to https://console.neon.tech
-2. Select your project: Church Connect Card
-3. Create new branch from main
-4. Name it: FEATURE_NAME
-5. Copy the DATABASE_URL
-
-When you have the DATABASE_URL, proceed to Step 5.
-```
-
----
-
-**Verification:**
-
-```bash
-# Check main DATABASE_URL format
-cd /home/digitaldesk/Desktop/connect-card/main
-grep DATABASE_URL .env
-
-# Should see: postgresql://neondb_owner:...@ep-falling-unit-adhn1juc.c-2.us-east-1.aws.neon.tech/neondb?...
-```
 
 **Once Neon branch created and DATABASE_URL copied, proceed to Step 5.**
 
@@ -181,12 +142,10 @@ grep DATABASE_URL .env
 ## Step 5: Setup Environment Variables
 
 ```bash
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
+cd /home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME
 
 # Copy main .env as template
 cp ../main/.env .env
-
-# Edit .env for worktree-specific values
 ```
 
 **Required Changes in .env:**
@@ -195,57 +154,28 @@ cp ../main/.env .env
 
 ```bash
 # OLD (main - production branch):
-DATABASE_URL="postgresql://neondb_owner:npg_...@ep-falling-unit-adhn1juc.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL="postgresql://neondb_owner:npg_...@ep-falling-unit-adhn1juc.../neondb?sslmode=require"
 
 # NEW (worktree - from Neon dashboard Step 4):
-DATABASE_URL="postgresql://neondb_owner:npg_...@ep-NEW-ENDPOINT-HERE.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DATABASE_URL="postgresql://neondb_owner:npg_...@ep-NEW-ENDPOINT-HERE.../neondb?sslmode=require"
 ```
 
 **⚠️ IMPORTANT:** Only the endpoint changes (`ep-XXXXX`). Credentials stay the same.
 
-2. **BETTER_AUTH_URL** (NO CHANGE):
+2. **All other values** (NO CHANGE):
 
-```bash
-BETTER_AUTH_URL=http://localhost:3000  # ← Keep at port 3000 (same for all worktrees)
-```
-
-3. **NEXT_PUBLIC_APP_URL** (NO CHANGE):
-
-```bash
-NEXT_PUBLIC_APP_URL=http://localhost:3000  # ← Keep at port 3000 (same for all worktrees)
-```
-
-4. **GHL_REDIRECT_URI** (NO CHANGE):
-
-```bash
-GHL_REDIRECT_URI=http://localhost:3000/api/crm/callback  # ← Keep at port 3000
-```
-
-5. **All other values** (NO CHANGE):
-
+- BETTER_AUTH_URL, NEXT_PUBLIC_APP_URL (keep at localhost:3000)
 - BETTER_AUTH_SECRET (same)
 - AWS credentials (same - shared S3)
 - ANTHROPIC_API_KEY (same)
 - ARCJET keys (same)
-- S3_UPLOAD_ALLOWED_DOMAINS (same)
 
 **Why all worktrees use port 3000:**
 
 - You only run ONE dev server at a time
 - Switch worktrees by stopping one server, starting another
-- No port juggling needed
 
-**Edit the .env file now:**
-
-Use the Edit tool to update:
-
-- Line with DATABASE_URL → paste new Neon branch endpoint from Step 4
-- Add comments at top:
-  ```
-  # Worktree: FEATURE_NAME
-  # Feature Branch: feature/FEATURE_NAME
-  # Database: Neon branch (isolated)
-  ```
+**Edit the .env file now with the new DATABASE_URL.**
 
 **Once .env configured, proceed to Step 6.**
 
@@ -254,26 +184,17 @@ Use the Edit tool to update:
 ## Step 6: Install Dependencies
 
 ```bash
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
+cd /home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME
 
-# Install packages (this will take 2-3 minutes)
+# Install packages
 pnpm install
 ```
-
-**What This Does:**
-
-- Installs node_modules in worktree (isolated from main)
-- Links to shared pnpm store (saves disk space)
-- Ensures package versions match package.json
 
 **Verify:**
 
 ```bash
 # Check node_modules exists
-ls -la node_modules/
-
-# Verify pnpm lockfile
-ls pnpm-lock.yaml
+ls -la node_modules/ | head -5
 ```
 
 **Once dependencies installed, proceed to Step 7.**
@@ -283,37 +204,16 @@ ls pnpm-lock.yaml
 ## Step 7: Push Database Schema
 
 ```bash
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
+cd /home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME
 
 # Generate Prisma client
 pnpm prisma generate
 
 # Push schema to worktree database
 pnpm prisma db push
-
-# Expected output: "Your database is now in sync with your Prisma schema."
 ```
 
-**What This Does:**
-
-- Creates all tables in worktree database
-- Matches current schema from main
-- Generates Prisma client types
-
-**Verify:**
-
-```bash
-# Check tables created
-psql -U postgres -h localhost -d connect_card_FEATURE_NAME -c "\dt"
-
-# Should see: Organization, User, Member, ConnectCard, PrayerRequest, Volunteer, etc.
-```
-
-**If schema push fails:**
-
-- Check DATABASE_URL in .env is correct
-- Verify database exists
-- Check PostgreSQL connection
+**Expected output:** "Your database is now in sync with your Prisma schema."
 
 **Once schema pushed, proceed to Step 8.**
 
@@ -322,7 +222,7 @@ psql -U postgres -h localhost -d connect_card_FEATURE_NAME -c "\dt"
 ## Step 8: Seed Test Data
 
 ```bash
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
+cd /home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME
 
 # Seed database with test data
 pnpm seed:all
@@ -334,612 +234,155 @@ pnpm seed:all
 - Creates test users (owner, admin, staff)
 - Seeds sample data (connect cards, prayers, volunteers)
 
-**Verify:**
-
-```bash
-# Check data exists
-psql -U postgres -h localhost -d connect_card_FEATURE_NAME -c "SELECT COUNT(*) FROM \"Organization\";"
-
-# Should return at least 1 organization
-```
-
 **Once seeded, proceed to Step 9.**
 
 ---
 
-## Step 9: Create Development Documentation (Gitignored)
+## Step 9: Create Feature Vision Doc
+
+**IMPORTANT: Do NOT create .worktree/ directories. Use /docs/features/ instead.**
+
+Check if feature vision doc already exists:
 
 ```bash
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
-
-# Create worktree dev docs directory (automatically gitignored)
-mkdir -p .worktree/FEATURE_NAME/docs
-
-# Create .gitkeep to track directory structure
-touch .worktree/FEATURE_NAME/.gitkeep
+ls /home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME/docs/features/
 ```
 
-**Documentation Structure:**
+If the feature needs a new vision doc, create it at:
+`/docs/features/FEATURE_NAME/vision.md`
 
-```
-FEATURE_NAME/
-└── .worktree/FEATURE_NAME/
-    ├── .gitkeep                    # COMMITTED (directory structure)
-    └── docs/                       # ❌ GITIGNORED (dev notes only)
-        ├── planning.md             # Feature planning
-        ├── implementation.md       # Implementation notes
-        ├── testing.md              # Test strategy
-        └── decisions.md            # Design decisions
-```
-
-**Why This Works:**
-
-- `.worktree/*/` is already in `.gitignore` (never commits)
-- Dev docs stay local to worktree (no merge conflicts)
-- Clean main branch (no dev doc pollution)
-- Developers edit freely (no git sync needed)
-
-**Create development documentation templates:**
-
-Use Write tool to create these files:
-
-1. **.worktree/FEATURE_NAME/docs/planning.md:**
+**Template:**
 
 ```markdown
-# FEATURE_NAME - Planning
+# FEATURE_NAME Feature Vision
 
-**Worktree:** /FEATURE_NAME
-**Branch:** feature/FEATURE_NAME
 **Status:** Planning
+**Owner:** [Team/Person]
+**Related Features:** [List related features]
 
 ---
 
-## Feature Requirements
+## Purpose
 
-- [ ] List feature requirements here
-- [ ] Define user stories
-- [ ] Identify acceptance criteria
+[Brief description of what this feature does]
 
-## Database Schema Changes
+---
 
-- [ ] List new tables/models needed
-- [ ] Document field changes to existing models
-- [ ] Note indexes to add
+## Problems Solved
 
-## UI Components Needed
+1. [Problem 1]
+2. [Problem 2]
 
-- [ ] List new components to build
-- [ ] Identify shadcn/ui components to use
-- [ ] Note existing components to reference
+---
 
-## API Endpoints
+## Technical Approach
 
-- [ ] List server actions needed
-- [ ] Document route parameters
-- [ ] Define request/response schemas
+### Database Schema
 
-## Technical Dependencies
+- [List new tables/models]
 
-- [ ] External libraries to install
-- [ ] Integrations required (S3, APIs, etc.)
-- [ ] Environment variables needed
+### UI Components
 
-## References
+- [List components to build]
 
-- Core Patterns: ../../../main/docs/essentials/coding-patterns.md
-- Architecture: ../../../main/docs/essentials/architecture.md
-- ADRs: ../../../main/docs/technical/architecture-decisions.md
+### Server Actions
+
+- [List server actions needed]
+
+---
+
+## Feature Roadmap
+
+### Phase 1: [Name]
+
+- [ ] Task 1
+- [ ] Task 2
+
+### Phase 2: [Name]
+
+- [ ] Task 1
+- [ ] Task 2
+
+---
+
+## Success Metrics
+
+- [Metric 1]
+- [Metric 2]
+
+---
+
+**Last Updated:** [Date]
 ```
 
-2. **.worktree/FEATURE_NAME/docs/implementation.md:**
-
-```markdown
-# FEATURE_NAME - Implementation Notes
-
-**Developer Notes:** This file tracks what was built and how.
+**Once vision doc reviewed/created, proceed to Step 10.**
 
 ---
 
-## What Was Built
-
-[Describe the implementation]
-
-## Key Files Created
-
-- actions/FEATURE_NAME/
-- components/dashboard/FEATURE_NAME/
-- lib/data/FEATURE_NAME.ts
-
-## Database Changes
-
-- [ ] Schema changes pushed
-- [ ] Seed data updated
-- [ ] Migrations created (if needed)
-
-## Challenges & Solutions
-
-### Challenge 1
-
-**Problem:** [Describe problem]
-**Solution:** [How you solved it]
-
-### Challenge 2
-
-**Problem:** [Describe problem]
-**Solution:** [How you solved it]
-
-## Code Patterns Used
-
-- [ ] Multi-tenant organizationId filtering
-- [ ] Rate limiting on server actions
-- [ ] Zod schema validation
-- [ ] TanStack Table for data display
-- [ ] PageContainer for layout
-
-## Testing Done
-
-- [ ] E2E tests written
-- [ ] Manual testing completed
-- [ ] Edge cases covered
-
-## Integration Notes
-
-[Notes for when merging to main]
-```
-
-3. **.worktree/FEATURE_NAME/docs/testing.md:**
-
-```markdown
-# FEATURE_NAME - Testing Strategy
-
----
-
-## E2E Test Coverage
-
-- [ ] Happy path (main user flow)
-- [ ] Error handling
-- [ ] Edge cases
-- [ ] Multi-tenant isolation
-- [ ] Role-based permissions
-
-## Manual Testing Checklist
-
-### As Account Owner
-
-- [ ] Test functionality X
-- [ ] Verify permissions Y
-
-### As Admin
-
-- [ ] Test functionality X
-- [ ] Verify restricted access
-
-### As Staff
-
-- [ ] Test functionality X
-- [ ] Verify location filtering
-
-## Test Data
-
-**Database:** connect_card_FEATURE_NAME
-
-**Test Users:**
-
-- owner@example.com (church owner)
-- admin@example.com (church admin)
-- staff@example.com (church staff)
-
-## Known Issues
-
-- [ ] List any bugs/issues found during testing
-```
-
-4. **.worktree/FEATURE_NAME/docs/decisions.md:**
-
-```markdown
-# FEATURE_NAME - Design Decisions
-
-**Purpose:** Document why specific choices were made.
-
----
-
-## Decision 1: [Title]
-
-**Context:** [What was the situation?]
-
-**Options Considered:**
-
-1. Option A - [pros/cons]
-2. Option B - [pros/cons]
-
-**Decision:** Chose Option [A/B]
-
-**Reasoning:** [Why this choice?]
-
----
-
-## Decision 2: [Title]
-
-**Context:** [What was the situation?]
-
-**Options Considered:**
-
-1. Option A - [pros/cons]
-2. Option B - [pros/cons]
-
-**Decision:** Chose Option [A/B]
-
-**Reasoning:** [Why this choice?]
-
----
-
-## Important Architectural Decisions
-
-**If any decisions affect other features or core architecture:**
-
-- Create ADR in main: /main/docs/technical/architecture-decisions.md
-- Reference the ADR number here
-```
-
-**Once dev docs created, proceed to Step 10.**
-
----
-
-## Step 10: Create Worktree README (Optional)
-
-```bash
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
-```
-
-**Create README.md in worktree root:**
-
-Use Write tool to create:
-
-**FEATURE_NAME/README.md:**
-
-````markdown
-# FEATURE_NAME Worktree
-
-**Feature Branch:** `feature/FEATURE_NAME`
-**Database:** `connect_card_FEATURE_NAME`
-**Dev Server:** http://localhost:3000 (or 3001 if main is running)
-
----
-
-## Quick Start
-
-\`\`\`bash
-
-# Navigate to worktree
-
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
-
-# Start dev server
-
-pnpm dev
-
-# Run database migrations
-
-pnpm prisma db push
-
-# Seed test data
-
-pnpm seed:all
-\`\`\`
-
-## Development Documentation (Gitignored)
-
-**Location:** `.worktree/FEATURE_NAME/docs/`
-
-- **planning.md** - Feature requirements, schema changes, UI components
-- **implementation.md** - Implementation notes, challenges, solutions
-- **testing.md** - Test strategy, manual testing checklist
-- **decisions.md** - Design decisions, why choices were made
-
-**Note:** These docs are gitignored and stay local to this worktree.
-
-## Core Documentation (Main Worktree)
-
-Reference docs from main (shared across all worktrees):
-
-- **Coding Patterns:** ../main/docs/essentials/coding-patterns.md
-- **Architecture:** ../main/docs/essentials/architecture.md
-- **ADRs:** ../main/docs/technical/architecture-decisions.md
-- **shadcn/ui:** ../main/docs/essentials/shadcn.md
-
-## Database
-
-**Connection:**
-\`\`\`
-Database: connect_card_FEATURE_NAME
-User: postgres
-Host: localhost:5432
-\`\`\`
-
-**Seed Data:**
-
-- Organization: Church Connect Demo
-- Users: owner@example.com, admin@example.com, staff@example.com
-
-## Git Commands
-
-\`\`\`bash
-
-# Check current branch
-
-git branch --show-current
-
-# Commit changes
-
-git add .
-git commit -m "feat: your message"
-
-# Push to remote
-
-git push origin feature/FEATURE_NAME
-
-# Pull latest from main
-
-git pull origin main
-\`\`\`
-
-## Testing
-
-\`\`\`bash
-
-# Run E2E tests
-
-pnpm test:e2e
-
-# Type check
-
-pnpm tsc --noEmit
-
-# Lint
-
-pnpm lint
-
-# Build
-
-pnpm build
-\`\`\`
-
-## Notes
-
-- **Isolated database** - Changes won't affect main
-- **Local dependencies** - node_modules installed per worktree
-- **Gitignored dev docs** - .worktree/ never commits to git
-- **Clean merges** - Only code merges to main, dev docs stay local
-
----
-
-**Created:** [current date]
-\`\`\`
-
-**Once README created, proceed to Step 11.**
-
----
-
-## Step 11: Verify Worktree Setup
+## Step 10: Verify Worktree Setup
 
 **Run verification checks:**
 
 ```bash
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
+cd /home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME
 
 # 1. Check git status
 git status
 
-# 2. Check database connection
-pnpm prisma db pull
+# 2. Check branch
+git branch --show-current
 
 # 3. Verify dependencies
-pnpm list --depth=0
+ls node_modules | head -5
 
-# 4. Check build passes
-pnpm build
-
-# 5. Verify dev server starts (don't leave running)
-timeout 10 pnpm dev || true
+# 4. Test database connection
+pnpm prisma db pull --print 2>&1 | head -5
 ```
-````
 
 **Expected Results:**
 
 - ✅ Git status clean (on feature/FEATURE_NAME branch)
+- ✅ Branch is `feature/FEATURE_NAME`
+- ✅ Dependencies installed
 - ✅ Prisma connects to worktree database
-- ✅ Dependencies installed (no errors)
-- ✅ Build passes (no TypeScript errors)
-- ✅ Dev server starts successfully
 
-**If any check fails:**
-
-- Report specific failure to user
-- Provide troubleshooting steps
-- Don't proceed until resolved
-
-**Once all checks pass, proceed to Step 12.**
+**Once all checks pass, provide summary.**
 
 ---
 
-## Step 12: Create Integration Checklist (Gitignored)
-
-**Create integration checklist in dev docs:**
-
-Use Write tool to create:
-
-**.worktree/FEATURE_NAME/docs/integration-checklist.md:**
-
-```markdown
-# Integration Checklist - FEATURE_NAME
-
-**Purpose:** Pre-merge checklist before integrating to main
-
-**Note:** This file is gitignored (stays local to worktree)
-
----
-
-## Pre-Integration Requirements
-
-### Code Quality
-
-- [ ] All TypeScript errors resolved
-- [ ] ESLint warnings addressed
-- [ ] Build passes successfully
-- [ ] No console.log/error statements in production code
-
-### Testing
-
-- [ ] E2E tests written and passing
-- [ ] Manual testing on all user roles (owner, admin, staff)
-- [ ] Multi-tenant isolation verified
-- [ ] Location-based filtering tested (if applicable)
-
-### Database
-
-- [ ] Schema changes documented
-- [ ] Migration script created (if needed)
-- [ ] Seed data updated in main
-- [ ] Indexes added for new queries
-
-### Security
-
-- [ ] All server actions have rate limiting
-- [ ] Multi-tenant organizationId filtering verified
-- [ ] Input validation with Zod schemas
-- [ ] Error messages are generic (no data leakage)
-
-### Documentation
-
-- [ ] ADR created if architectural changes (in main docs)
-- [ ] STATUS.md updated in main (if needed)
-- [ ] ROADMAP.md updated in main (if needed)
-
-### Performance
-
-- [ ] No N+1 query patterns
-- [ ] Composite indexes added where needed
-- [ ] Bundle size impact acceptable
-- [ ] No unnecessary client components
-
-### Integration Plan
-
-- [ ] Create integration plan with /plan-integration
-- [ ] Review with team
-- [ ] Schedule merge window
-- [ ] Backup production database
-
----
-
-## Merge Workflow
-
-\`\`\`bash
-
-# 1. Update from main
-
-cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
-git pull origin main
-
-# 2. Resolve conflicts (if any)
-
-# ... conflict resolution ...
-
-# 3. Run integration plan
-
-# /plan-integration FEATURE_NAME
-
-# 4. Test merged code
-
-pnpm build
-pnpm test:e2e
-
-# 5. Merge to main
-
-cd /home/digitaldesk/Desktop/connect-card/main
-git merge feature/FEATURE_NAME
-
-# 6. Verify only code merged (dev docs stay in worktree)
-
-git status
-
-# Should NOT show .worktree/ files (gitignored)
-
-# 7. Push to main
-
-git push origin main
-
-# 8. Deploy to production
-
-# (follow deployment checklist)
-
-\`\`\`
-
----
-
-**Complete this checklist before running /plan-integration**
-\`\`\`
-
-**Once checklist created, proceed to Step 13 (Final Summary).**
-
----
-
-## Step 13: Provide Setup Summary
+## Step 11: Provide Setup Summary
 
 **Report to user:**
-```
 
+```
 ✅ Worktree Setup Complete - FEATURE_NAME
 
 📁 Location:
-/home/digitaldesk/Desktop/connect-card/FEATURE_NAME
+/home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME
 
 🌿 Branch:
 feature/FEATURE_NAME
 
 🗄️ Database:
-connect_card_FEATURE_NAME (isolated)
+Neon branch (isolated from main)
 
-📋 Development Docs (Gitignored):
-✅ .worktree/FEATURE_NAME/docs/planning.md
-✅ .worktree/FEATURE_NAME/docs/implementation.md
-✅ .worktree/FEATURE_NAME/docs/testing.md
-✅ .worktree/FEATURE_NAME/docs/decisions.md
-✅ .worktree/FEATURE_NAME/docs/integration-checklist.md
-✅ README.md (worktree root)
-
-✅ Verification:
+✅ Setup Complete:
+✅ Git worktree created
 ✅ Dependencies installed
 ✅ Database schema pushed
 ✅ Test data seeded
-✅ Build passes
-✅ Dev server tested
 
 🚀 Next Steps:
+1. cd /home/digitaldesk/Desktop/church-connect-hub/FEATURE_NAME
+2. pnpm dev (start development)
+3. Review /docs/features/FEATURE_NAME/vision.md
+4. Begin implementation (follow coding-patterns.md)
 
-1.  cd /home/digitaldesk/Desktop/connect-card/FEATURE_NAME
-2.  pnpm dev (start development)
-3.  Edit .worktree/FEATURE_NAME/docs/planning.md (define requirements)
-4.  Begin implementation (follow coding-patterns.md)
-
-📚 Core Documentation (Main Worktree - SSoT):
-
-- Coding Patterns: ../main/docs/essentials/coding-patterns.md
-- Architecture: ../main/docs/essentials/architecture.md
-- ADRs: ../main/docs/technical/architecture-decisions.md
-- shadcn/ui: ../main/docs/essentials/shadcn.md
-
-💡 Key Points:
-
-- Dev docs are GITIGNORED (stay local to this worktree)
-- Only CODE merges to main (dev docs stay in feature branch)
-- No doc merge conflicts (docs never commit)
-- Reference core docs from main for shared patterns
-
-````
-
-**Ask user:**
-- "Worktree setup complete. Ready to start feature development?"
-- "Would you like me to help plan the feature in .worktree/FEATURE_NAME/docs/planning.md?"
+📚 Core Documentation:
+- Coding Patterns: docs/essentials/coding-patterns.md
+- Architecture: docs/essentials/architecture.md
+- Feature Vision: docs/features/FEATURE_NAME/vision.md
+```
 
 ---
 
@@ -947,19 +390,13 @@ connect_card_FEATURE_NAME (isolated)
 
 ### Database Connection Failed
 
-**Error:** "Can't reach database server"
+**Error:** "Can't connect to database"
 
 **Solution:**
-```bash
-# Check PostgreSQL is running
-sudo systemctl status postgresql
 
-# Start if needed
-sudo systemctl start postgresql
-
-# Verify credentials
-psql -U postgres -h localhost -l
-````
+- Check DATABASE_URL in .env
+- Verify Neon branch was created
+- Check Neon dashboard for connection string
 
 ### Port Already in Use
 
@@ -971,8 +408,7 @@ psql -U postgres -h localhost -l
 # Kill process on port 3000
 fuser -k 3000/tcp
 
-# OR run on different port
-PORT=3001 pnpm dev
+# OR stop other dev servers first
 ```
 
 ### Build Fails
@@ -982,13 +418,8 @@ PORT=3001 pnpm dev
 **Solution:**
 
 ```bash
-# Check for missing dependencies
 pnpm install
-
-# Regenerate Prisma client
 pnpm prisma generate
-
-# Check TypeScript errors
 pnpm tsc --noEmit
 ```
 
@@ -998,54 +429,23 @@ pnpm tsc --noEmit
 
 ### Core Documentation (Main Worktree)
 
-- **Architecture:** ../main/docs/essentials/architecture.md
-- **Coding Patterns:** ../main/docs/essentials/coding-patterns.md
-- **ADRs:** ../main/docs/technical/architecture-decisions.md
-- **shadcn/ui:** ../main/docs/essentials/shadcn.md
-
-### Existing Worktrees
-
-- **Prayer:** /home/digitaldesk/Desktop/connect-card/prayer (feature/prayer-management)
-- **Volunteer:** /home/digitaldesk/Desktop/connect-card/volunteer (feature/volunteer-management)
+- **Architecture:** docs/essentials/architecture.md
+- **Coding Patterns:** docs/essentials/coding-patterns.md
+- **ADRs:** docs/technical/architecture-decisions.md
 
 ### Git Worktree Commands
 
 ```bash
 # List all worktrees
-git worktree list
+git -C /home/digitaldesk/Desktop/church-connect-hub/.bare worktree list
 
 # Remove a worktree
-git worktree remove FEATURE_NAME
+git -C /home/digitaldesk/Desktop/church-connect-hub/.bare worktree remove FEATURE_NAME
 
 # Prune deleted worktrees
-git worktree prune
+git -C /home/digitaldesk/Desktop/church-connect-hub/.bare worktree prune
 ```
 
 ---
 
-## 📖 Documentation Architecture Summary
-
-**Main Worktree (`/main/docs/`):**
-
-- Core patterns that apply to ALL features
-- Single source of truth (SSoT)
-- Committed to main branch
-- Shared across all worktrees via git pulls
-
-**Feature Worktrees (`.worktree/FEATURE_NAME/docs/`):**
-
-- Development docs (planning, implementation, testing, decisions)
-- Gitignored (never commits, never merges)
-- Stays local to worktree (no conflicts)
-- Developers edit freely during active development
-
-**When to Document Where:**
-
-- Architectural decisions affecting multiple features → Main ADR
-- Shared coding patterns → Main coding-patterns.md
-- Feature planning/implementation notes → Worktree dev docs
-- Design decisions → Worktree decisions.md (or Main ADR if cross-cutting)
-
----
-
-**This command creates a production-ready, isolated worktree for feature development with clean documentation boundaries.**
+**This command creates a production-ready, isolated worktree for feature development.**
