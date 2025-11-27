@@ -32,6 +32,7 @@ import {
   IconSearch,
   IconCreditCard,
   IconCode,
+  IconFileExport,
 } from "@tabler/icons-react";
 
 export interface NavigationItem {
@@ -122,6 +123,11 @@ export function getChurchNavigation(slug: string): NavigationConfig {
             title: "Analytics",
             url: `/church/${slug}/admin/analytics`,
             icon: IconChartBar,
+          },
+          {
+            title: "Export Data",
+            url: `/church/${slug}/admin/export`,
+            icon: IconFileExport,
           },
           {
             title: "Training Center",
