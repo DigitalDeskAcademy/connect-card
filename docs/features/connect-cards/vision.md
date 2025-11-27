@@ -149,7 +149,28 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 ---
 
-## 🔮 Future Enhancements (Phase 4+)
+## 🔮 Future Enhancements (Phase 3-4)
+
+### Church Software Sync (Phase 3) → This Worktree
+
+**Spec:** `/docs/features/integrations/church-software-sync-spec.md`
+
+**Phase 3A: CSV Export (MVP)**
+
+- [ ] Export page UI with filters (location, date range, export status)
+- [ ] Planning Center CSV format (ready for People → Import)
+- [ ] Breeze CSV format (ready for People → Import People)
+- [ ] Generic CSV format
+- [ ] Export tracking (mark records as exported)
+- [ ] Export history log
+
+**Phase 4: Direct API Integration**
+
+- [ ] Planning Center OAuth connection
+- [ ] Breeze OAuth connection
+- [ ] Field mapping UI
+- [ ] Automatic sync on card processing
+- [ ] Duplicate detection (email match)
 
 ### Member Matching & Deduplication
 
