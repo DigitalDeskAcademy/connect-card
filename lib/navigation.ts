@@ -137,6 +137,12 @@ export function getChurchNavigation(slug: string): NavigationConfig {
       },
     ],
     navSecondary: [
+      // TODO: Remove for production - dev-only visibility
+      {
+        title: "Dev",
+        url: `/church/${slug}/admin/dev`,
+        icon: IconCode,
+      },
       {
         title: "Settings",
         url: `/church/${slug}/admin/settings`,
