@@ -2,7 +2,7 @@
 
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import { requireChurchAdmin } from "@/app/data/church/require-church-admin";
-import arcjet, { fixedWindow } from "@/lib/arcjet";
+import arcjet, { fixedWindow, arcjetMode } from "@/lib/arcjet";
 import { prisma } from "@/lib/db";
 import { ApiResponse } from "@/lib/types";
 import { request } from "@arcjet/next";
@@ -11,7 +11,7 @@ import { cleanupCourseFiles } from "@/lib/s3-cleanup";
 
 const aj = arcjet.withRule(
   fixedWindow({
-    mode: "LIVE",
+    mode: arcjetMode,
     window: "1m",
     max: 3, // More restrictive for delete operations
   })

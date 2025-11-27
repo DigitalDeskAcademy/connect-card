@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Package,
@@ -50,31 +49,8 @@ interface BatchesClientProps {
   slug: string;
 }
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "PENDING":
-    case "IN_REVIEW":
-      // Don't show badge - card count tells the story
-      return null;
-    case "COMPLETED":
-      return (
-        <Badge
-          variant="outline"
-          className="bg-green-50 text-green-700 border-green-200"
-        >
-          Completed
-        </Badge>
-      );
-    case "ARCHIVED":
-      return <Badge variant="outline">Archived</Badge>;
-    default:
-      return null;
-  }
-}
-
 export function BatchesClient({ batches, slug }: BatchesClientProps) {
   const router = useRouter();
-  const [filter, setFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -101,59 +77,20 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
     });
   };
 
-  // Filter batches by status
-  const filteredBatches = batches.filter(batch => {
-    if (filter === "all") return true;
-    if (filter === "pending")
-      return batch.status === "PENDING" || batch.status === "IN_REVIEW";
-    if (filter === "completed") return batch.status === "COMPLETED";
-    return true;
-  });
-
-  const pendingCount = batches.filter(
-    b => b.status === "PENDING" || b.status === "IN_REVIEW"
-  ).length;
-  const completedCount = batches.filter(b => b.status === "COMPLETED").length;
-
   return (
     <div className="space-y-6">
-      {/* Header with filters */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            Connect Card Batches
-          </h2>
-          <p className="text-muted-foreground">
-            Review and manage uploaded connect card batches
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant={filter === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("all")}
-          >
-            All ({batches.length})
-          </Button>
-          <Button
-            variant={filter === "pending" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("pending")}
-          >
-            Pending ({pendingCount})
-          </Button>
-          <Button
-            variant={filter === "completed" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("completed")}
-          >
-            Completed ({completedCount})
-          </Button>
-        </div>
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Connect Card Batches
+        </h2>
+        <p className="text-muted-foreground">
+          Review and manage uploaded connect card batches
+        </p>
       </div>
 
       {/* Batch list */}
-      {filteredBatches.length === 0 ? (
+      {batches.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
@@ -166,7 +103,7 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {filteredBatches.map(batch => (
+          {batches.map(batch => (
             <Card key={batch.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -195,24 +132,15 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {getStatusBadge(batch.status)}
-                  </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="flex gap-2">
                   <Button asChild size="sm">
                     <Link
-                      href={
-                        batch.status === "COMPLETED"
-                          ? `/church/${slug}/admin/connect-cards/batches/${batch.id}`
-                          : `/church/${slug}/admin/connect-cards/review/${batch.id}`
-                      }
+                      href={`/church/${slug}/admin/connect-cards/review/${batch.id}`}
                     >
-                      {batch.status === "COMPLETED"
-                        ? "View Batch"
-                        : "Review Cards"}
+                      Review Cards
                     </Link>
                   </Button>
                   <Button

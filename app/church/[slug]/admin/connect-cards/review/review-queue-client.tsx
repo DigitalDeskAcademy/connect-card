@@ -46,7 +46,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
-import { approveAllCards } from "@/actions/connect-card/approve-all-cards";
 import { checkDuplicate } from "@/actions/connect-card/check-duplicate";
 import { deleteConnectCard } from "@/actions/connect-card/delete-connect-card";
 import type { ConnectCardForReview } from "@/lib/data/connect-card-review";
@@ -71,12 +70,14 @@ interface ReviewQueueClientProps {
 }
 
 export function ReviewQueueClient({
-  cards,
+  cards: initialCards,
   slug,
   batchName,
   volunteerLeaders,
 }: ReviewQueueClientProps) {
   const router = useRouter();
+  // Track cards in local state so we can remove them after processing
+  const [cards, setCards] = useState(initialCards);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPending, startTransition] = useTransition();
 
@@ -275,16 +276,21 @@ export function ReviewQueueClient({
         });
 
         if (result.status === "success") {
-          toast.success("Connect card reviewed and saved!");
+          // Remove the processed card from local state
+          const remainingCards = cards.filter((_, idx) => idx !== currentIndex);
+          setCards(remainingCards);
 
-          // Move to next card or refresh if this was the last one
-          if (currentIndex < cards.length - 1) {
-            const nextCard = cards[currentIndex + 1];
-            setCurrentIndex(currentIndex + 1);
-            resetFormForCard(nextCard);
-          } else {
-            // Last card - refresh the page to show updated queue
+          if (remainingCards.length === 0) {
+            // All cards processed - single toast, navigate back to batches
+            toast.success("All cards reviewed! Batch complete.");
+            router.push(`/church/${slug}/admin/connect-cards?tab=batches`);
             router.refresh();
+          } else {
+            // Card saved, move to next
+            toast.success("Saved");
+            const newIndex = Math.min(currentIndex, remainingCards.length - 1);
+            setCurrentIndex(newIndex);
+            resetFormForCard(remainingCards[newIndex]);
           }
         } else {
           toast.error(result.message);
@@ -324,29 +330,6 @@ export function ReviewQueueClient({
     }
   }
 
-  // Handle batch approval of all cards
-  async function handleApproveAll() {
-    if (!confirm(`Approve all ${cards.length} cards without review?`)) {
-      return;
-    }
-
-    startTransition(async () => {
-      try {
-        const result = await approveAllCards(slug);
-
-        if (result.status === "success") {
-          toast.success(result.message);
-          router.refresh();
-        } else {
-          toast.error(result.message);
-        }
-      } catch (error) {
-        console.error("Approve all error:", error);
-        toast.error("Failed to approve cards");
-      }
-    });
-  }
-
   // Handle discarding a card (delete from database)
   async function handleDiscard() {
     if (!currentCard) return;
@@ -366,23 +349,21 @@ export function ReviewQueueClient({
         if (result.status === "success") {
           toast.success("Connect card discarded");
 
-          // Move to next card or navigate back if this was the last one
-          if (currentIndex < cards.length - 1) {
-            const nextCard = cards[currentIndex + 1];
-            setCurrentIndex(currentIndex + 1);
-            resetFormForCard(nextCard);
-          } else if (currentIndex > 0) {
-            // If this was the last card but not the only one, go to previous
-            const prevCard = cards[currentIndex - 1];
-            setCurrentIndex(currentIndex - 1);
-            resetFormForCard(prevCard);
-          } else {
-            // This was the only card - navigate back to batches
-            router.push(`/church/${slug}/admin/connect-cards?tab=batches`);
-          }
+          // Remove the discarded card from local state
+          const remainingCards = cards.filter((_, idx) => idx !== currentIndex);
+          setCards(remainingCards);
 
-          // Refresh to update the queue
-          router.refresh();
+          if (remainingCards.length === 0) {
+            // All cards gone - navigate back to batches
+            toast.success("All cards in this batch have been processed!");
+            router.push(`/church/${slug}/admin/connect-cards?tab=batches`);
+            router.refresh();
+          } else {
+            // Move to next card (or stay at same index if we removed the current one)
+            const newIndex = Math.min(currentIndex, remainingCards.length - 1);
+            setCurrentIndex(newIndex);
+            resetFormForCard(remainingCards[newIndex]);
+          }
         } else {
           toast.error(result.message);
         }
@@ -423,22 +404,7 @@ export function ReviewQueueClient({
   return (
     <div className="space-y-4">
       {/* Action Bar */}
-      <div className="flex items-center justify-between">
-        {/* Accept All Button */}
-        <Button onClick={handleApproveAll} disabled={isPending} size="lg">
-          {isPending ? (
-            <>
-              <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-              Approving...
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="mr-2 w-5 h-5" />
-              Accept All ({cards.length})
-            </>
-          )}
-        </Button>
-
+      <div className="flex items-center justify-end">
         {/* Back Button */}
         <Button
           onClick={() =>
@@ -449,7 +415,7 @@ export function ReviewQueueClient({
           disabled={isPending}
         >
           <ArrowLeft className="mr-2 w-5 h-5" />
-          Back
+          Back to Batches
         </Button>
       </div>
 

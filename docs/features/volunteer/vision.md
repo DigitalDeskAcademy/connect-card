@@ -213,12 +213,93 @@ Our volunteer onboarding mirrors the prayer request workflow:
 
 ### 🚀 Phase 2: Automated Onboarding Workflows (Next)
 
+#### 🆕 Dynamic Volunteer Needs System
+
+**Concept:** Churches have changing volunteer needs. Instead of generic "what do you want to do?", we show them where help is actually needed.
+
+**Church Settings (Staff Configurable):**
+
+```typescript
+// Example church volunteer needs configuration
+{
+  currentNeeds: [
+    { category: "KIDS_MINISTRY", urgency: "high", description: "Sunday morning helpers" },
+    { category: "PARKING", urgency: "medium", description: "Parking team members" },
+    { category: "HOSPITALITY", urgency: "low", description: "Greeters for second service" }
+  ],
+  generalMessage: "If none of these interest you, we'll keep you in our general pool and reach out when new opportunities arise.",
+  lastUpdated: "2025-11-26"
+}
+```
+
+**Welcome Message Flow:**
+
+1. **Volunteer signs up** (via connect card or digital form)
+2. **System checks current church needs**
+3. **Welcome SMS/Email sent:**
+
+   ```
+   Hi Sarah! Thank you for reaching out to volunteer at New Life Church!
+
+   We currently have needs in these areas:
+   • Kids Ministry (high need) - Sunday morning helpers
+   • Parking Team - Parking team members
+   • Hospitality - Greeters for second service
+
+   Reply with the number of your interest (1, 2, or 3).
+
+   If none of these fit, reply "GENERAL" and we'll keep you in our
+   volunteer pool and reach out when new opportunities arise.
+   ```
+
+4. **Response triggers next workflow:**
+   - **Reply "1" (Kids Ministry)** → Background check form + Safe sanctuary policy + Leader intro
+   - **Reply "2" (Parking)** → Training video + Calendar invite for orientation
+   - **Reply "3" (Hospitality)** → Greeter guide + Calendar invite
+   - **Reply "GENERAL"** → Confirmation + "We'll be in touch when needs change"
+
+**Staff Settings UI (Church Admin):**
+
+- [ ] Add/remove current needs
+- [ ] Set urgency level (high/medium/low)
+- [ ] Custom descriptions per need
+- [ ] General fallback message
+- [ ] Preview welcome message
+- [ ] History log of need changes
+
+**Database Schema:**
+
+```prisma
+model VolunteerNeed {
+  id             String   @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  category       VolunteerCategoryType
+  urgency        VolunteerNeedUrgency  @default(MEDIUM)
+  description    String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([organizationId, category])
+}
+
+enum VolunteerNeedUrgency {
+  HIGH
+  MEDIUM
+  LOW
+}
+```
+
+---
+
 **Planned Features:**
 
 1. **Instant Welcome Message**
 
    - SMS: "Hi Sarah! Thanks for volunteering. You've been connected with Jane..."
    - Email: Ministry overview, next steps
+   - **NEW:** Dynamic needs-based welcome (see above)
 
 2. **Smart Document Routing**
 
