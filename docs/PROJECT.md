@@ -111,6 +111,8 @@ See ENGINEERING-PLAYBOOK.md for details.
 **Goal:** First church using in production
 
 - [x] Dashboard UI/UX - Quick action cards for staff workflows → `main` ✅
+- [ ] Card Format Onboarding - AI-guided field mapping for unique connect cards → `connect-card` worktree
+  - See `/docs/features/connect-cards/card-format-variance.md`
 - [ ] Onboard pilot church (6 locations)
 - [ ] Process 100+ real cards
 - [ ] Gather feedback
