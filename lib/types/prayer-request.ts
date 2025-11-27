@@ -92,6 +92,23 @@ export interface PrayerRequestFilters {
   dateFrom?: Date;
   dateTo?: Date;
   search?: string;
+  /** Page number (1-indexed). Defaults to 1. */
+  page?: number;
+  /** Items per page. Defaults to 50. Max 100. */
+  limit?: number;
+}
+
+/**
+ * Paginated result wrapper
+ *
+ * Generic type for paginated query results.
+ */
+export interface PaginatedResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 /**

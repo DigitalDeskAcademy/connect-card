@@ -19,6 +19,7 @@ import type {
   PrayerRequestWithRelations,
   PrayerRequestFilters,
   PrayerRequestStats,
+  PaginatedResult,
 } from "@/lib/types/prayer-request";
 
 /**
@@ -29,14 +30,18 @@ import type {
  *
  * @param dataScope - User's data scope from requireDashboardAccess
  * @param userId - Current user ID for privacy filtering
- * @param filters - Optional filters for status, category, etc.
- * @returns Array of prayer requests with relations
+ * @param filters - Optional filters for status, category, pagination, etc.
+ * @returns Paginated result with prayer requests and total count
  */
 export async function getPrayerRequestsForScope(
   dataScope: DataScope,
   userId?: string,
   filters?: PrayerRequestFilters
-): Promise<PrayerRequestWithRelations[]> {
+): Promise<PaginatedResult<PrayerRequestWithRelations>> {
+  // Pagination defaults
+  const page = Math.max(1, filters?.page ?? 1);
+  const limit = Math.min(100, Math.max(1, filters?.limit ?? 50));
+  const skip = (page - 1) * limit;
   // Build where clause with organization and location filtering
   const where: Prisma.PrayerRequestWhereInput = {
     organizationId: dataScope.organizationId,
@@ -112,47 +117,59 @@ export async function getPrayerRequestsForScope(
     }
   }
 
-  const requests = await prisma.prayerRequest.findMany({
-    where,
-    include: {
-      organization: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
+  // Run count and data queries in parallel for efficiency
+  const [total, requests] = await Promise.all([
+    prisma.prayerRequest.count({ where }),
+    prisma.prayerRequest.findMany({
+      where,
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        location: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+        connectCard: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            scannedAt: true,
+          },
+        },
+        assignedTo: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
         },
       },
-      location: {
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-        },
-      },
-      connectCard: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          scannedAt: true,
-        },
-      },
-      assignedTo: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-    },
-    orderBy: [
-      { isUrgent: "desc" }, // Urgent requests first
-      { status: "asc" }, // Then by status (PENDING first)
-      { createdAt: "desc" }, // Then by date (newest first)
-    ],
-  });
+      orderBy: [
+        { isUrgent: "desc" }, // Urgent requests first
+        { status: "asc" }, // Then by status (PENDING first)
+        { createdAt: "desc" }, // Then by date (newest first)
+      ],
+      take: limit,
+      skip,
+    }),
+  ]);
 
-  return requests;
+  return {
+    data: requests,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 }
 
 /**
@@ -619,6 +636,7 @@ export async function getPrayerTeamMembers(
     orderBy: {
       name: "asc",
     },
+    take: 100, // Reasonable limit for dropdown - most churches have <100 staff
   });
 
   return users;

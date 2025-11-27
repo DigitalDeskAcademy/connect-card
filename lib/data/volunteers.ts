@@ -99,6 +99,7 @@ export async function getVolunteersForScope(
       { status: "asc" }, // ACTIVE volunteers first
       { churchMember: { name: "asc" } },
     ],
+    take: 200, // Limit for memory safety - most churches have <200 volunteers
   });
 }
 
@@ -238,6 +239,7 @@ export async function getVolunteersNeedingBackgroundCheck(
     orderBy: {
       backgroundCheckExpiry: "asc", // Most urgent first
     },
+    take: 50, // Limit for dashboard view - shows most urgent cases
   });
 }
 
@@ -366,7 +368,7 @@ export async function getAvailableVolunteersForShift(
     opportunity.category &&
     kidsMinistryCategories.some(cat => opportunity.category?.includes(cat));
 
-  // Get all active volunteers
+  // Get active volunteers with limit for memory safety
   const volunteers = await prisma.volunteer.findMany({
     where: {
       organizationId,
@@ -405,6 +407,7 @@ export async function getAvailableVolunteersForShift(
         },
       },
     },
+    take: 200, // Limit candidates - filter further in memory
   });
 
   // Filter volunteers based on requirements
