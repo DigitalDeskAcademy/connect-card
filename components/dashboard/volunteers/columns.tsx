@@ -195,6 +195,48 @@ export function getVolunteerColumns({
       },
     },
     {
+      id: "backgroundCheckStatus",
+      accessorKey: "backgroundCheckStatus",
+      header: "Background Check",
+      cell: ({ row }) => {
+        const status = row.original.backgroundCheckStatus;
+        const statusConfig: Record<
+          string,
+          { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+        > = {
+          CLEARED: { label: "Cleared", variant: "default" },
+          IN_PROGRESS: { label: "In Progress", variant: "secondary" },
+          NOT_STARTED: { label: "Not Started", variant: "outline" },
+          FLAGGED: { label: "Flagged", variant: "destructive" },
+          EXPIRED: { label: "Expired", variant: "destructive" },
+        };
+
+        const config = statusConfig[status] || {
+          label: status || "Unknown",
+          variant: "outline" as const,
+        };
+
+        return (
+          <Badge
+            variant={config.variant}
+            className={
+              status === "CLEARED"
+                ? "bg-green-600 hover:bg-green-700"
+                : status === "EXPIRED"
+                  ? "bg-orange-500 hover:bg-orange-600"
+                  : ""
+            }
+          >
+            {config.label}
+          </Badge>
+        );
+      },
+      filterFn: (row, id, value) => {
+        if (!value || value === "ALL") return true;
+        return row.getValue(id) === value;
+      },
+    },
+    {
       id: "actions",
       cell: ({ row }) => (
         <ActionsCell

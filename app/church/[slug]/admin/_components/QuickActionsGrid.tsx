@@ -7,6 +7,7 @@ import {
   IconPray,
   IconHeart,
   IconRefresh,
+  IconSend,
 } from "@tabler/icons-react";
 import type { Icon } from "@tabler/icons-react";
 
@@ -61,6 +62,13 @@ export function QuickActionsGrid({
       href: `/church/${slug}/admin/volunteer${locationParam}`,
       icon: IconHeart,
       color: "text-red-500",
+    },
+    {
+      label: "Message Volunteers",
+      description: "Bulk outreach",
+      href: `/church/${slug}/admin/volunteer/message${locationParam}`,
+      icon: IconSend,
+      color: "text-teal-600 dark:text-teal-400",
     },
     {
       label: "Export Data",
