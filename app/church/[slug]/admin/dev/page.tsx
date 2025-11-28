@@ -1,11 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   IconUserPlus,
   IconPray,
   IconHeart,
   IconBug,
   IconPlugConnected,
+  IconDashboard,
 } from "@tabler/icons-react";
 
 interface Task {
@@ -20,6 +22,7 @@ interface WorktreeCardProps {
   statusLabel: string;
   icon: React.ReactNode;
   tasks: Task[];
+  wishlist?: Task[];
 }
 
 function WorktreeCard({
@@ -29,6 +32,7 @@ function WorktreeCard({
   statusLabel,
   icon,
   tasks,
+  wishlist,
 }: WorktreeCardProps) {
   const statusColors = {
     ready: "bg-green-500",
@@ -66,7 +70,7 @@ function WorktreeCard({
           {completedCount}/{totalCount} tasks
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
+      <CardContent className="pt-0 space-y-4">
         <div className="space-y-2">
           {tasks.map((task, index) => (
             <div key={index} className="flex items-center gap-2">
@@ -79,12 +83,42 @@ function WorktreeCard({
             </div>
           ))}
         </div>
+
+        {wishlist && wishlist.length > 0 && (
+          <div className="border-t pt-3">
+            <p className="text-xs font-medium text-muted-foreground mb-2">
+              Wishlist
+            </p>
+            <div className="space-y-2">
+              {wishlist.map((item, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Checkbox
+                    checked={item.completed}
+                    disabled
+                    className="h-4 w-4"
+                  />
+                  <span
+                    className={`text-sm ${item.completed ? "line-through text-muted-foreground" : "text-muted-foreground"}`}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-export default function DevDashboardPage() {
+export default async function DevDashboardPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+
   const worktrees: WorktreeCardProps[] = [
     {
       name: "Connect Cards",
@@ -93,14 +127,19 @@ export default function DevDashboardPage() {
       statusLabel: "Ready for PR",
       icon: <IconUserPlus className="h-5 w-5" />,
       tasks: [
-        { label: "Race conditions in batch creation", completed: true },
-        { label: "Raw images in review queue", completed: true },
-        { label: "Dashboard fetches ALL TIME data", completed: true },
-        { label: "Cards not removing after save", completed: true },
-        { label: "Remove Approve All button", completed: true },
-        { label: "Simplified batch list UI", completed: true },
         { label: "CSV Export (Phase 3A)", completed: false },
         { label: "Card format onboarding", completed: false },
+        {
+          label: "Handle 'Send background check' checkbox in Review UI",
+          completed: false,
+        },
+      ],
+      wishlist: [
+        { label: "Send message to Leader checkbox feature", completed: false },
+        {
+          label: "Automation for First Time / New Visitor selections",
+          completed: false,
+        },
       ],
     },
     {
@@ -110,11 +149,6 @@ export default function DevDashboardPage() {
       statusLabel: "65% - Blocking",
       icon: <IconPray className="h-5 w-5" />,
       tasks: [
-        { label: "Database layer & schema", completed: true },
-        { label: "Prayer requests table UI", completed: true },
-        { label: "Search, filter, sort, pagination", completed: true },
-        { label: "Privacy & status indicators", completed: true },
-        { label: "E2E test suite (8 tests)", completed: true },
         { label: "Server action: createPrayerRequest", completed: false },
         { label: "Server action: updatePrayerRequest", completed: false },
         { label: "Server action: assignPrayerRequest", completed: false },
@@ -124,6 +158,10 @@ export default function DevDashboardPage() {
         { label: "UI: Assignment dialog", completed: false },
         { label: "N+1 Query fix (8 COUNT queries)", completed: false },
       ],
+      wishlist: [
+        { label: "<Wishlist item 1>", completed: false },
+        { label: "<Wishlist item 2>", completed: false },
+      ],
     },
     {
       name: "Volunteer",
@@ -132,17 +170,16 @@ export default function DevDashboardPage() {
       statusLabel: "In Progress",
       icon: <IconHeart className="h-5 w-5" />,
       tasks: [
-        { label: "Connect card volunteer extraction", completed: true },
-        { label: "Volunteer category assignment", completed: true },
-        { label: "Assign to volunteer leader", completed: true },
-        { label: "SMS automation toggle", completed: true },
-        { label: "Team volunteer category assignments", completed: true },
         { label: "Onboarding status tracking", completed: false },
         { label: "Onboarding pipeline dashboard", completed: false },
         { label: "Dynamic volunteer needs system", completed: false },
         { label: "Automated welcome messages", completed: false },
         { label: "Background check integration", completed: false },
         { label: "N+1 Query optimization", completed: false },
+      ],
+      wishlist: [
+        { label: "<Wishlist item 1>", completed: false },
+        { label: "<Wishlist item 2>", completed: false },
       ],
     },
     {
@@ -152,14 +189,15 @@ export default function DevDashboardPage() {
       statusLabel: "Critical",
       icon: <IconBug className="h-5 w-5" />,
       tasks: [
-        { label: "Subscription bypass fix", completed: true },
-        { label: "PII removed from logs", completed: true },
-        { label: "Pagination added to queries", completed: true },
         { label: "Missing database indexes", completed: false },
         { label: "Add caching layer", completed: false },
         { label: "Data abstraction / repository pattern", completed: false },
         { label: "Type safety violations", completed: false },
         { label: "Silent error swallowing", completed: false },
+      ],
+      wishlist: [
+        { label: "<Wishlist item 1>", completed: false },
+        { label: "<Wishlist item 2>", completed: false },
       ],
     },
     {
@@ -178,18 +216,27 @@ export default function DevDashboardPage() {
         { label: "Breeze OAuth connection", completed: false },
         { label: "Field mapping UI", completed: false },
       ],
+      wishlist: [
+        { label: "<Wishlist item 1>", completed: false },
+        { label: "<Wishlist item 2>", completed: false },
+      ],
+    },
+    {
+      name: "Dashboard",
+      branch: "main",
+      status: "in-progress",
+      statusLabel: "In Progress",
+      icon: <IconDashboard className="h-5 w-5" />,
+      tasks: [],
+      wishlist: [
+        { label: "<Wishlist item 1>", completed: false },
+        { label: "<Wishlist item 2>", completed: false },
+      ],
     },
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Development Dashboard</h1>
-        <p className="text-muted-foreground">
-          Track progress across all feature worktrees
-        </p>
-      </div>
-
+    <PageContainer as="main" backButton={{ href: `/church/${slug}/admin` }}>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {worktrees.map(worktree => (
           <WorktreeCard key={worktree.name} {...worktree} />
@@ -199,6 +246,6 @@ export default function DevDashboardPage() {
       <p className="text-xs text-muted-foreground text-center">
         Data sourced from /docs/features/*/vision.md • Update during PRs
       </p>
-    </div>
+    </PageContainer>
   );
 }
