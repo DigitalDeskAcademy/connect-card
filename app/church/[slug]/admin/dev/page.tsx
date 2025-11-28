@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   IconUserPlus,
   IconPray,
@@ -84,7 +85,13 @@ function WorktreeCard({
   );
 }
 
-export default function DevDashboardPage() {
+export default async function DevDashboardPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+
   const worktrees: WorktreeCardProps[] = [
     {
       name: "Connect Cards",
@@ -182,14 +189,7 @@ export default function DevDashboardPage() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Development Dashboard</h1>
-        <p className="text-muted-foreground">
-          Track progress across all feature worktrees
-        </p>
-      </div>
-
+    <PageContainer as="main" backButton={{ href: `/church/${slug}/admin` }}>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {worktrees.map(worktree => (
           <WorktreeCard key={worktree.name} {...worktree} />
@@ -199,6 +199,6 @@ export default function DevDashboardPage() {
       <p className="text-xs text-muted-foreground text-center">
         Data sourced from /docs/features/*/vision.md • Update during PRs
       </p>
-    </div>
+    </PageContainer>
   );
 }
