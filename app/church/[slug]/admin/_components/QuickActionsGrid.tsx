@@ -1,16 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   IconUpload,
-  IconClipboardCheck,
   IconUserPlus,
   IconPray,
   IconHeart,
-  IconChartBar,
-  IconSend,
   IconRefresh,
+  IconSend,
 } from "@tabler/icons-react";
 import type { Icon } from "@tabler/icons-react";
 
@@ -43,35 +40,28 @@ export function QuickActionsGrid({
       description: "Scan connect cards",
       href: `/church/${slug}/admin/connect-cards${locationParam}`,
       icon: IconUpload,
-      color: "text-blue-600 dark:text-blue-400",
+      color: "text-blue-500",
     },
     {
-      label: "Process Cards",
-      description: "Review & approve",
-      href: `/church/${slug}/admin/connect-cards${locationParam}`,
-      icon: IconClipboardCheck,
-      color: "text-green-600 dark:text-green-400",
-    },
-    {
-      label: "Add Team Member",
-      description: "Invite staff",
+      label: "Invite Staff",
+      description: "Add team members",
       href: `/church/${slug}/admin/team`,
       icon: IconUserPlus,
-      color: "text-purple-600 dark:text-purple-400",
+      color: "text-purple-500",
     },
     {
-      label: "Prayer Requests",
-      description: "View & assign",
+      label: "Assign Prayers",
+      description: "Route to prayer team",
       href: `/church/${slug}/admin/prayer${locationParam}`,
       icon: IconPray,
-      color: "text-amber-600 dark:text-amber-400",
+      color: "text-amber-500",
     },
     {
-      label: "Volunteers",
-      description: "Manage team",
+      label: "Find Volunteers",
+      description: "Match to ministries",
       href: `/church/${slug}/admin/volunteer${locationParam}`,
       icon: IconHeart,
-      color: "text-red-600 dark:text-red-400",
+      color: "text-red-500",
     },
     {
       label: "Message Volunteers",
@@ -82,35 +72,28 @@ export function QuickActionsGrid({
     },
     {
       label: "Export Data",
-      description: "Download CSV",
-      href: `/church/${slug}/admin/export`,
+      description: "Sync to ChMS",
+      href: `/church/${slug}/admin/integrations`,
       icon: IconRefresh,
-      color: "text-cyan-600 dark:text-cyan-400",
-    },
-    {
-      label: "Analytics",
-      description: "View reports",
-      href: `/church/${slug}/admin/analytics`,
-      icon: IconChartBar,
-      color: "text-indigo-600 dark:text-indigo-400",
+      color: "text-cyan-500",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+    <div className="grid grid-cols-5 gap-4">
       {actions.map(action => (
         <Link key={action.label} href={action.href}>
-          <Card className="h-full transition-all hover:shadow-md hover:border-primary/50 cursor-pointer group">
-            <CardContent className="flex flex-col items-center justify-center p-4 text-center">
-              <action.icon
-                className={`h-8 w-8 mb-2 ${action.color} group-hover:scale-110 transition-transform`}
-              />
-              <span className="text-sm font-medium">{action.label}</span>
-              <span className="text-xs text-muted-foreground">
-                {action.description}
-              </span>
-            </CardContent>
-          </Card>
+          <div className="aspect-square flex flex-col items-center justify-center p-3 rounded-lg border bg-card hover:bg-accent hover:border-primary/50 transition-all cursor-pointer group">
+            <action.icon
+              className={`h-8 w-8 mb-2 ${action.color} group-hover:scale-110 transition-transform`}
+            />
+            <span className="text-sm font-medium text-center leading-tight">
+              {action.label}
+            </span>
+            <span className="text-xs text-muted-foreground text-center mt-1">
+              {action.description}
+            </span>
+          </div>
         </Link>
       ))}
     </div>

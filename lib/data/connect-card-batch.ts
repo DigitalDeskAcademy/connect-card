@@ -94,7 +94,25 @@ export async function getOrCreateActiveBatch(
 
       // Create new batch if none exists
       if (!existingBatch) {
-        const batchName = formatBatchName(locationName, new Date());
+        // Count ALL batches for this location today (including completed)
+        // to generate unique sequence number for same-day batches
+        const batchCountToday = await tx.connectCardBatch.count({
+          where: {
+            organizationId,
+            locationId,
+            createdAt: {
+              gte: today,
+              lt: tomorrow,
+            },
+          },
+        });
+
+        // Add sequence number if this isn't the first batch of the day
+        const baseName = formatBatchName(locationName, new Date());
+        const batchName =
+          batchCountToday > 0
+            ? `${baseName} (${batchCountToday + 1})`
+            : baseName;
 
         existingBatch = await tx.connectCardBatch.create({
           data: {
@@ -161,6 +179,7 @@ export async function getBatchesForReview(
   }
 
   // Fetch batches with card counts (only EXTRACTED cards awaiting review)
+  // Limit to recent batches - older batches should be archived
   return prisma.connectCardBatch.findMany({
     where,
     include: {
@@ -184,11 +203,12 @@ export async function getBatchesForReview(
     orderBy: {
       createdAt: "desc",
     },
+    take: 100, // Reasonable limit - most churches process <100 batches/quarter
   });
 }
 
 /**
- * Get single batch with all cards
+ * Get single batch with cards (limited for memory safety)
  */
 export async function getBatchWithCards(batchId: string) {
   return prisma.connectCardBatch.findUnique({
@@ -205,6 +225,7 @@ export async function getBatchWithCards(batchId: string) {
         orderBy: {
           createdAt: "asc",
         },
+        take: 200, // Limit cards per batch - most batches have <100 cards
       },
     },
   });

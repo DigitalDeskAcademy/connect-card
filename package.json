@@ -44,7 +44,6 @@
     "@fullcalendar/react": "^6.1.19",
     "@fullcalendar/timegrid": "^6.1.19",
     "@hookform/resolvers": "^5.1.1",
-    "@next/eslint-plugin-next": "^16.0.3",
     "@prisma/client": "^6.10.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.14",

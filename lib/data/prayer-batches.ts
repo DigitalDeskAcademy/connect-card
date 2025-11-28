@@ -40,6 +40,7 @@ export async function getPrayerBatches(organizationId: string) {
     orderBy: {
       batchDate: "desc",
     },
+    take: 100, // Limit to recent batches - older batches should be archived
   });
 }
 
@@ -121,6 +122,7 @@ export async function getPrayerBatchWithRequests(batchId: string) {
         orderBy: {
           createdAt: "desc",
         },
+        take: 200, // Limit requests per batch for memory safety
       },
       _count: {
         select: {

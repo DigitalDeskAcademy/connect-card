@@ -17,9 +17,15 @@ export {
   sensitiveInfo,
   shield,
   slidingWindow,
-  // Exporting the Arcjet Next.js middleware functions
-  // so they can be used in the Next.js application.
 };
+
+/**
+ * Returns the appropriate Arcjet mode based on environment.
+ * - Development: DRY_RUN (no remote calls, no latency)
+ * - Production: LIVE (full protection)
+ */
+export const arcjetMode =
+  process.env.NODE_ENV === "production" ? "LIVE" : ("DRY_RUN" as const);
 
 export default arcjet({
   key: env.ARCJET_KEY,

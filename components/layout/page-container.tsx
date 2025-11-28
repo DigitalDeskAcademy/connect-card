@@ -81,6 +81,23 @@ export interface PageContainerProps {
      */
     label?: string;
   };
+
+  /**
+   * Optional header configuration
+   *
+   * When provided, renders a standardized page header with title
+   * and optional description. Renders after back button (if present).
+   */
+  header?: {
+    /**
+     * Page title (h1)
+     */
+    title: string;
+    /**
+     * Optional description text below the title
+     */
+    description?: string;
+  };
 }
 
 /**
@@ -176,6 +193,7 @@ export function PageContainer({
   className,
   as: Component = "div",
   backButton,
+  header,
 }: PageContainerProps) {
   // Special case: "none" variant renders children directly with no wrapper
   if (variant === "none") {
@@ -212,13 +230,21 @@ export function PageContainer({
       className={cn(baseStyles, variantStyles[variant], className)}
     >
       {backButton && (
-        <div className="mb-6">
-          <Button variant="ghost" size="sm" asChild>
+        <div>
+          <Button variant="outline" size="sm" asChild>
             <Link href={backButton.href}>
-              <ArrowLeft className="mr-2 w-5 h-5" />
+              <ArrowLeft className="mr-2 h-4 w-4" />
               {backButton.label || "Back"}
             </Link>
           </Button>
+        </div>
+      )}
+      {header && (
+        <div>
+          <h1 className="text-2xl font-bold">{header.title}</h1>
+          {header.description && (
+            <p className="text-muted-foreground">{header.description}</p>
+          )}
         </div>
       )}
       {children}
