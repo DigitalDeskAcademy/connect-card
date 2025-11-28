@@ -154,9 +154,8 @@ export function VolunteerDataTable<TData, TValue>({
   const handleExportCSV = () => {
     // Get either selected rows or all filtered rows
     const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const rowsToExport = selectedRows.length > 0
-      ? selectedRows
-      : table.getFilteredRowModel().rows;
+    const rowsToExport =
+      selectedRows.length > 0 ? selectedRows : table.getFilteredRowModel().rows;
 
     if (rowsToExport.length === 0) {
       toast.error("No volunteers to export");
@@ -207,14 +206,20 @@ export function VolunteerDataTable<TData, TValue>({
     const csvContent = [
       headers.join(","),
       ...csvRows.map(row =>
-        row.map(cell => {
-          // Escape quotes and wrap in quotes if contains comma or quote
-          const cellStr = String(cell);
-          if (cellStr.includes(",") || cellStr.includes('"') || cellStr.includes("\n")) {
-            return `"${cellStr.replace(/"/g, '""')}"`;
-          }
-          return cellStr;
-        }).join(",")
+        row
+          .map(cell => {
+            // Escape quotes and wrap in quotes if contains comma or quote
+            const cellStr = String(cell);
+            if (
+              cellStr.includes(",") ||
+              cellStr.includes('"') ||
+              cellStr.includes("\n")
+            ) {
+              return `"${cellStr.replace(/"/g, '""')}"`;
+            }
+            return cellStr;
+          })
+          .join(",")
       ),
     ].join("\n");
 
@@ -223,13 +228,18 @@ export function VolunteerDataTable<TData, TValue>({
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `volunteers-${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute(
+      "download",
+      `volunteers-${new Date().toISOString().split("T")[0]}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast.success(`Exported ${rowsToExport.length} volunteer${rowsToExport.length === 1 ? "" : "s"} to CSV`);
+    toast.success(
+      `Exported ${rowsToExport.length} volunteer${rowsToExport.length === 1 ? "" : "s"} to CSV`
+    );
   };
 
   const table = useReactTable({
@@ -278,7 +288,9 @@ export function VolunteerDataTable<TData, TValue>({
   // Handle background check filter change
   const handleBgCheckFilterChange = (value: string) => {
     setBgCheckFilter(value);
-    table.getColumn("backgroundCheckStatus")?.setFilterValue(value === "ALL" ? undefined : value);
+    table
+      .getColumn("backgroundCheckStatus")
+      ?.setFilterValue(value === "ALL" ? undefined : value);
   };
 
   // Calculate pagination details
@@ -297,7 +309,11 @@ export function VolunteerDataTable<TData, TValue>({
         <div className="flex items-center justify-between">
           <CardTitle>{title}</CardTitle>
           <div className="flex items-center gap-2">
-            <Button onClick={handleExportCSV} variant="outline" className="gap-2">
+            <Button
+              onClick={handleExportCSV}
+              variant="outline"
+              className="gap-2"
+            >
               <IconDownload className="h-4 w-4" />
               Export CSV
             </Button>

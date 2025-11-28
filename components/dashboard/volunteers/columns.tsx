@@ -202,7 +202,10 @@ export function getVolunteerColumns({
         const status = row.original.backgroundCheckStatus;
         const statusConfig: Record<
           string,
-          { label: string; variant: "default" | "secondary" | "destructive" | "outline" }
+          {
+            label: string;
+            variant: "default" | "secondary" | "destructive" | "outline";
+          }
         > = {
           CLEARED: { label: "Cleared", variant: "default" },
           IN_PROGRESS: { label: "In Progress", variant: "secondary" },

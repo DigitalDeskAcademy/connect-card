@@ -1,15 +1,13 @@
 ---
 description: Complete end-to-end feature workflow - worktree-aware with conflict detection
-model: claude-opus-4-5-20251101
 ---
 
 # Feature Wrap-Up (Worktree-Aware)
 
-Complete feature workflow: build → commit → conflict check → PR → merge → sync main → handoff.
+Complete feature workflow: build → commit → PR → merge → sync main → handoff.
 
 **Key Features:**
 
-- Detects merge conflicts BEFORE creating PR
 - Updates main worktree after merge
 - Optional sync of other worktrees (safety-first)
 - NO doc updates in feature branch (prevents conflicts)
@@ -138,49 +136,19 @@ git status
 
 ---
 
-## Stage 4: Conflict Forecast
+## Stage 4: Review Changes
 
-### 4.1: Get Changed Files
-
-```bash
-git diff main...HEAD --name-only > /tmp/current-changes.txt
-cat /tmp/current-changes.txt
-```
-
-### 4.2: Check Other Worktrees
+### 4.1: Show Changed Files
 
 ```bash
-git -C /home/digitaldesk/Desktop/church-connect-hub/.bare worktree list
+git diff main...HEAD --name-only
 ```
 
-For each active worktree, check for overlapping files:
+### 4.2: Confirm Ready
 
-```bash
-# Example for volunteer worktree
-cd /home/digitaldesk/Desktop/church-connect-hub/volunteer
-git diff main...HEAD --name-only 2>/dev/null > /tmp/volunteer-changes.txt
-comm -12 <(sort /tmp/current-changes.txt) <(sort /tmp/volunteer-changes.txt) 2>/dev/null
-```
+List files that will be in the PR. GitHub will detect any merge conflicts with main during PR creation.
 
-### 4.3: Report Conflicts
-
-Show forecast:
-
-```
-MERGE CONFLICT FORECAST
-=======================
-
-HIGH RISK (same files modified):
-- <file> (also in: <worktree>)
-
-EXPECTED (documentation - combine during merge):
-- docs/features/*/vision.md
-
-CLEAN (no conflicts):
-- <feature-specific files>
-
-Proceed with PR? (yes/no)
-```
+Ask: "Ready to push and create PR? (yes/no)"
 
 ---
 
@@ -208,7 +176,6 @@ gh pr create --title "<type>: <feature>" --body "$(cat <<'EOF'
 ## Checklist
 - [x] Build passes
 - [x] ESLint clean
-- [x] Conflict forecast reviewed
 EOF
 )"
 ```
@@ -429,7 +396,7 @@ git merge main                    # Update from main
 ## Error Handling
 
 **Build Failures**: Stop, report errors, offer to fix
-**Merge Conflicts**: Detected in forecast, guided resolution
+**Merge Conflicts**: GitHub shows conflicts during PR - resolve before merge
 **Worktree Issues**: Skip active worktrees, provide manual instructions
 **Documentation**: Strong warning if skipped
 
