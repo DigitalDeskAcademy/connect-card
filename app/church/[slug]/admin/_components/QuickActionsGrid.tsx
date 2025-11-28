@@ -81,9 +81,9 @@ export function QuickActionsGrid({
       color: "text-teal-600 dark:text-teal-400",
     },
     {
-      label: "Sync Data",
-      description: "Export to ChMS",
-      href: `/church/${slug}/admin/integrations`,
+      label: "Export Data",
+      description: "Download CSV",
+      href: `/church/${slug}/admin/export`,
       icon: IconRefresh,
       color: "text-cyan-600 dark:text-cyan-400",
     },

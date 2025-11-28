@@ -11,6 +11,8 @@ import {
   FileText,
   Trash2,
   Loader2,
+  FileDown,
+  AlertTriangle,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -77,7 +79,25 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
   const [filter, setFilter] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
+  const [exportWarningOpen, setExportWarningOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Count pending batches for export warning
+  const pendingBatches = batches.filter(
+    b => b.status === "PENDING" || b.status === "IN_REVIEW"
+  );
+  const pendingCardCount = pendingBatches.reduce(
+    (sum, b) => sum + b._count.cards,
+    0
+  );
+
+  const handleExportClick = () => {
+    if (pendingBatches.length > 0) {
+      setExportWarningOpen(true);
+    } else {
+      router.push(`/church/${slug}/admin/export`);
+    }
+  };
 
   const handleDeleteClick = (batch: Batch) => {
     setBatchToDelete(batch);
@@ -127,27 +147,35 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
             Review and manage uploaded connect card batches
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant={filter === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("all")}
-          >
-            All ({batches.length})
-          </Button>
-          <Button
-            variant={filter === "pending" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("pending")}
-          >
-            Pending ({pendingCount})
-          </Button>
-          <Button
-            variant={filter === "completed" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("completed")}
-          >
-            Completed ({completedCount})
+        <div className="flex items-center gap-4">
+          {/* Filter buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant={filter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("all")}
+            >
+              All ({batches.length})
+            </Button>
+            <Button
+              variant={filter === "pending" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("pending")}
+            >
+              Pending ({pendingCount})
+            </Button>
+            <Button
+              variant={filter === "completed" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setFilter("completed")}
+            >
+              Completed ({completedCount})
+            </Button>
+          </div>
+          {/* Export button */}
+          <Button onClick={handleExportClick} className="gap-2">
+            <FileDown className="h-4 w-4" />
+            Export to ChMS
           </Button>
         </div>
       </div>
@@ -276,6 +304,57 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
               ) : (
                 "Delete Batch"
               )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Export Warning Dialog */}
+      <AlertDialog open={exportWarningOpen} onOpenChange={setExportWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Pending Batches Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                You have{" "}
+                <strong>
+                  {pendingBatches.length} batch
+                  {pendingBatches.length !== 1 ? "es" : ""}
+                </strong>{" "}
+                with{" "}
+                <strong>
+                  {pendingCardCount} card{pendingCardCount !== 1 ? "s" : ""}
+                </strong>{" "}
+                still pending review.
+              </p>
+              <p>
+                These cards won&apos;t be included in your export until
+                they&apos;re reviewed and processed.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can export now with only the processed cards, or review the
+                pending batches first.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setExportWarningOpen(false);
+                setFilter("pending");
+              }}
+            >
+              Review Pending Batches
+            </Button>
+            <AlertDialogAction
+              onClick={() => router.push(`/church/${slug}/admin/export`)}
+            >
+              Export Anyway
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
