@@ -19,15 +19,16 @@
 
 **Required Actions:**
 
-| Action | File | Status |
-|--------|------|--------|
+| Action                | File                        | Status          |
+| --------------------- | --------------------------- | --------------- |
 | `createPrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
 | `updatePrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
 | `assignPrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
-| `markAnswered` | `/actions/prayer-requests/` | [ ] Not started |
+| `markAnswered`        | `/actions/prayer-requests/` | [ ] Not started |
 | `deletePrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
 
 **Each action must include:**
+
 - Zod validation schema
 - Arcjet rate limiting
 - Multi-tenant `organizationId` scoping
@@ -37,12 +38,12 @@
 
 ### 2. UI Components (Depends on Server Actions)
 
-| Component | Status |
-|-----------|--------|
-| Create prayer form | [ ] Not started |
-| Assignment dialog | [ ] Not started |
-| Detail view dialog | [ ] Not started |
-| Edit form | [ ] Not started |
+| Component            | Status          |
+| -------------------- | --------------- |
+| Create prayer form   | [ ] Not started |
+| Assignment dialog    | [ ] Not started |
+| Detail view dialog   | [ ] Not started |
+| Edit form            | [ ] Not started |
 | Mark answered dialog | [ ] Not started |
 
 ---
@@ -61,11 +62,11 @@
 
 ## 📊 Fix Progress
 
-| Priority | Issue | Status | PR |
-|----------|-------|--------|-----|
-| 1 | Server Actions (5) | [ ] | - |
-| 2 | UI Components (5) | [ ] | - |
-| 3 | N+1 Query | [ ] | - |
+| Priority | Issue              | Status | PR  |
+| -------- | ------------------ | ------ | --- |
+| 1        | Server Actions (5) | [ ]    | -   |
+| 2        | UI Components (5)  | [ ]    | -   |
+| 3        | N+1 Query          | [ ]    | -   |
 
 **Overall:** 65% → Target 100%
 
