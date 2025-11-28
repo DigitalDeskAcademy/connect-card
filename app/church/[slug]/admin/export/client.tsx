@@ -10,6 +10,7 @@ import {
   type ExportHistoryItem,
 } from "@/actions/export";
 import { ExportFilters, ExportWarning } from "@/lib/export/types";
+import { NavTabs } from "@/components/layout/nav-tabs";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -45,7 +46,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, format } from "date-fns";
 
 interface Location {
   id: string;
@@ -55,13 +56,20 @@ interface Location {
 interface ExportClientProps {
   slug: string;
   locations: Location[];
+  activeTab: string;
 }
 
 type RecordFilter = "new" | "all" | "date_range";
 
-export function ExportClient({ slug, locations }: ExportClientProps) {
+export function ExportClient({
+  slug,
+  locations,
+  activeTab,
+}: ExportClientProps) {
   // Form state
-  const [format, setFormat] = useState<DataExportFormat>("PLANNING_CENTER_CSV");
+  const [formatValue, setFormatValue] = useState<DataExportFormat>(
+    "PLANNING_CENTER_CSV"
+  );
   const [locationId, setLocationId] = useState<string>("all");
   const [recordFilter, setRecordFilter] = useState<RecordFilter>("new");
 
@@ -106,7 +114,7 @@ export function ExportClient({ slug, locations }: ExportClientProps) {
       setExportSuccess(false);
 
       const filters = buildFilters();
-      const result = await getExportPreview(slug, format, filters);
+      const result = await getExportPreview(slug, formatValue, filters);
 
       if (result.success && result.data) {
         setPreview(result.data);
@@ -118,14 +126,14 @@ export function ExportClient({ slug, locations }: ExportClientProps) {
     };
 
     loadPreview();
-  }, [slug, format, buildFilters]);
+  }, [slug, formatValue, buildFilters]);
 
-  // Load export history on mount
+  // Load export history on mount and when tab changes to history
   useEffect(() => {
     const loadHistory = async () => {
       setHistoryLoading(true);
 
-      const result = await getExportHistory(slug, 5);
+      const result = await getExportHistory(slug, 20);
 
       if (result.success && result.data) {
         setHistory(result.data.exports);
@@ -141,7 +149,7 @@ export function ExportClient({ slug, locations }: ExportClientProps) {
   const handleExport = () => {
     startTransition(async () => {
       const filters = buildFilters();
-      const result = await createExport(slug, format, filters);
+      const result = await createExport(slug, formatValue, filters);
 
       if (result.success && result.data) {
         // Trigger download
@@ -152,12 +160,16 @@ export function ExportClient({ slug, locations }: ExportClientProps) {
         toast.success(`Exported ${result.data.recordCount} records`);
 
         // Refresh preview and history
-        const previewResult = await getExportPreview(slug, format, filters);
+        const previewResult = await getExportPreview(
+          slug,
+          formatValue,
+          filters
+        );
         if (previewResult.success && previewResult.data) {
           setPreview(previewResult.data);
         }
 
-        const historyResult = await getExportHistory(slug, 5);
+        const historyResult = await getExportHistory(slug, 20);
         if (historyResult.success && historyResult.data) {
           setHistory(historyResult.data.exports);
         }
@@ -186,284 +198,334 @@ export function ExportClient({ slug, locations }: ExportClientProps) {
   };
 
   const formatBytes = (bytes: number | null) => {
-    if (!bytes) return "";
+    if (!bytes) return "—";
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Export Connect Cards
-        </h1>
-        <p className="text-muted-foreground">
-          Download visitor data formatted for your church management software
-        </p>
-      </div>
+    <>
+      <NavTabs
+        baseUrl={`/church/${slug}/admin/export`}
+        tabs={[
+          { label: "Export", value: "export" },
+          { label: "History", value: "history", count: history.length },
+        ]}
+      />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Export Form */}
-        <div className="lg:col-span-2 space-y-6">
+      {activeTab === "history" ? (
+        // History Tab Content
+        <div className="p-4 lg:p-6">
           <Card>
             <CardHeader>
-              <CardTitle>Export Settings</CardTitle>
+              <CardTitle>Export History</CardTitle>
               <CardDescription>
-                Choose your export format and filter options
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Format Selection */}
-              <div className="space-y-3">
-                <Label>Export Format</Label>
-                <RadioGroup
-                  value={format}
-                  onValueChange={(v: string) =>
-                    setFormat(v as DataExportFormat)
-                  }
-                  className="grid gap-3"
-                >
-                  {formatOptions.map(option => (
-                    <div
-                      key={option.value}
-                      className="flex items-start space-x-3"
-                    >
-                      <RadioGroupItem
-                        value={option.value}
-                        id={option.value}
-                        className="mt-1"
-                      />
-                      <div className="grid gap-1">
-                        <Label
-                          htmlFor={option.value}
-                          className="font-medium cursor-pointer"
-                        >
-                          {option.label}
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          {option.description}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-
-              {/* Location Filter */}
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Select value={locationId} onValueChange={setLocationId}>
-                  <SelectTrigger id="location">
-                    <SelectValue placeholder="All locations" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {locations.map(loc => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        {loc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Record Filter */}
-              <div className="space-y-3">
-                <Label>Records to Export</Label>
-                <RadioGroup
-                  value={recordFilter}
-                  onValueChange={(v: string) =>
-                    setRecordFilter(v as RecordFilter)
-                  }
-                  className="space-y-2"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="new" id="new" />
-                    <Label htmlFor="new" className="font-normal cursor-pointer">
-                      Not yet exported
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="all" id="all" />
-                    <Label htmlFor="all" className="font-normal cursor-pointer">
-                      All records
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Preview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Preview
-                {previewLoading && (
-                  <RefreshCw className="h-4 w-4 animate-spin" />
-                )}
-              </CardTitle>
-              <CardDescription>
-                {preview ? (
-                  <>
-                    {preview.totalCount} record
-                    {preview.totalCount !== 1 ? "s" : ""} will be exported
-                  </>
-                ) : (
-                  "Loading preview..."
-                )}
+                Download previous exports or view export details
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Warnings */}
-              {preview && preview.warnings.length > 0 && (
-                <div className="mb-4 space-y-2">
-                  {preview.warnings.map((warning, idx) => (
-                    <Alert
-                      key={idx}
-                      variant="default"
-                      className="border-yellow-200 bg-yellow-50"
-                    >
-                      <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                      <AlertDescription className="text-yellow-800">
-                        {warning.message}
-                      </AlertDescription>
-                    </Alert>
-                  ))}
-                </div>
-              )}
-
-              {/* Preview Table */}
-              {previewLoading ? (
+              {historyLoading ? (
                 <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
                 </div>
-              ) : preview && preview.sampleRows.length > 0 ? (
-                <div className="rounded-md border overflow-x-auto">
+              ) : history.length > 0 ? (
+                <div className="rounded-md border">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        {preview.headers.map((header, idx) => (
-                          <TableHead key={idx} className="whitespace-nowrap">
-                            {header}
-                          </TableHead>
-                        ))}
+                        <TableHead>Format</TableHead>
+                        <TableHead>Records</TableHead>
+                        <TableHead>Size</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {preview.sampleRows.map((row, rowIdx) => (
-                        <TableRow key={rowIdx}>
-                          {row.map((cell, cellIdx) => (
-                            <TableCell
-                              key={cellIdx}
-                              className="whitespace-nowrap"
+                      {history.map(item => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+                              <span className="font-medium">
+                                {formatLabel(item.format)}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{item.recordCount}</TableCell>
+                          <TableCell>
+                            {formatBytes(item.fileSizeBytes)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col">
+                              <span className="text-sm">
+                                {format(
+                                  new Date(item.exportedAt),
+                                  "MMM d, yyyy"
+                                )}
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                {formatDistanceToNow(
+                                  new Date(item.exportedAt),
+                                  {
+                                    addSuffix: true,
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRedownload(item.id)}
+                              className="gap-2"
                             >
-                              {cell || (
-                                <span className="text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                          ))}
+                              <Download className="h-4 w-4" />
+                              Download
+                            </Button>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-8">
-                  No records match your filter criteria
-                </p>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <FileSpreadsheet className="h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No exports yet</h3>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    Export your connect cards to see them here. You can
+                    re-download any previous export.
+                  </p>
+                </div>
               )}
-
-              {/* Export Button */}
-              <div className="mt-6 flex items-center gap-4">
-                <Button
-                  onClick={handleExport}
-                  disabled={isPending || !preview || preview.totalCount === 0}
-                  className="gap-2"
-                >
-                  {isPending ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4" />
-                  )}
-                  {isPending ? "Exporting..." : "Download CSV"}
-                </Button>
-
-                {exportSuccess && (
-                  <span className="text-sm text-green-600 flex items-center gap-1">
-                    <CheckCircle2 className="h-4 w-4" />
-                    Export complete
-                  </span>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* Export History */}
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Recent Exports</CardTitle>
-              <CardDescription>Download previous exports</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {historyLoading ? (
+      ) : (
+        // Export Tab Content
+        <div className="p-4 lg:p-6 space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Export Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Export Settings</CardTitle>
+                <CardDescription>
+                  Choose your export format and filter options
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Format Selection */}
                 <div className="space-y-3">
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-16 w-full" />
-                  <Skeleton className="h-16 w-full" />
-                </div>
-              ) : history.length > 0 ? (
-                <div className="space-y-3">
-                  {history.map(item => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
-                    >
-                      <div className="flex items-start gap-3">
-                        <FileSpreadsheet className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium">
-                            {formatLabel(item.format)}
+                  <Label>Export Format</Label>
+                  <RadioGroup
+                    value={formatValue}
+                    onValueChange={(v: string) =>
+                      setFormatValue(v as DataExportFormat)
+                    }
+                    className="grid gap-3"
+                  >
+                    {formatOptions.map(option => (
+                      <div
+                        key={option.value}
+                        className="flex items-start space-x-3"
+                      >
+                        <RadioGroupItem
+                          value={option.value}
+                          id={option.value}
+                          className="mt-1"
+                        />
+                        <div className="grid gap-1">
+                          <Label
+                            htmlFor={option.value}
+                            className="font-medium cursor-pointer"
+                          >
+                            {option.label}
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            {option.description}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.recordCount} records •{" "}
-                            {formatDistanceToNow(new Date(item.exportedAt), {
-                              addSuffix: true,
-                            })}
-                          </p>
-                          {item.fileSizeBytes && (
-                            <p className="text-xs text-muted-foreground">
-                              {formatBytes(item.fileSizeBytes)}
-                            </p>
-                          )}
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRedownload(item.id)}
-                        title="Download again"
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    ))}
+                  </RadioGroup>
                 </div>
-              ) : (
-                <p className="text-muted-foreground text-center py-8 text-sm">
-                  No exports yet
-                </p>
-              )}
-            </CardContent>
-          </Card>
+
+                {/* Location Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Select value={locationId} onValueChange={setLocationId}>
+                    <SelectTrigger id="location">
+                      <SelectValue placeholder="All locations" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {locations.map(loc => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Record Filter */}
+                <div className="space-y-3">
+                  <Label>Records to Export</Label>
+                  <RadioGroup
+                    value={recordFilter}
+                    onValueChange={(v: string) =>
+                      setRecordFilter(v as RecordFilter)
+                    }
+                    className="space-y-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="new" id="new" />
+                      <Label
+                        htmlFor="new"
+                        className="font-normal cursor-pointer"
+                      >
+                        Not yet exported
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="all" id="all" />
+                      <Label
+                        htmlFor="all"
+                        className="font-normal cursor-pointer"
+                      >
+                        All records
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Preview */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  Preview
+                  {previewLoading && (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {preview ? (
+                    <>
+                      {preview.totalCount} record
+                      {preview.totalCount !== 1 ? "s" : ""} will be exported
+                    </>
+                  ) : (
+                    "Loading preview..."
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Warnings */}
+                {preview && preview.warnings.length > 0 && (
+                  <div className="mb-4 space-y-2">
+                    {preview.warnings.map((warning, idx) => (
+                      <Alert
+                        key={idx}
+                        variant="default"
+                        className="border-yellow-200 bg-yellow-50"
+                      >
+                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                        <AlertDescription className="text-yellow-800">
+                          {warning.message}
+                        </AlertDescription>
+                      </Alert>
+                    ))}
+                  </div>
+                )}
+
+                {/* Preview Table */}
+                {previewLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : preview && preview.sampleRows.length > 0 ? (
+                  <div className="rounded-md border overflow-x-auto max-h-[300px]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {preview.headers.slice(0, 4).map((header, idx) => (
+                            <TableHead key={idx} className="whitespace-nowrap">
+                              {header}
+                            </TableHead>
+                          ))}
+                          {preview.headers.length > 4 && (
+                            <TableHead className="text-muted-foreground">
+                              +{preview.headers.length - 4} more
+                            </TableHead>
+                          )}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {preview.sampleRows.map((row, rowIdx) => (
+                          <TableRow key={rowIdx}>
+                            {row.slice(0, 4).map((cell, cellIdx) => (
+                              <TableCell
+                                key={cellIdx}
+                                className="whitespace-nowrap"
+                              >
+                                {cell || (
+                                  <span className="text-muted-foreground">
+                                    —
+                                  </span>
+                                )}
+                              </TableCell>
+                            ))}
+                            {row.length > 4 && (
+                              <TableCell className="text-muted-foreground">
+                                ...
+                              </TableCell>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-center py-8">
+                    No records match your filter criteria
+                  </p>
+                )}
+
+                {/* Export Button */}
+                <div className="mt-6 flex items-center gap-4">
+                  <Button
+                    onClick={handleExport}
+                    disabled={isPending || !preview || preview.totalCount === 0}
+                    className="gap-2"
+                  >
+                    {isPending ? (
+                      <RefreshCw className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="h-4 w-4" />
+                    )}
+                    {isPending ? "Exporting..." : "Download CSV"}
+                  </Button>
+
+                  {exportSuccess && (
+                    <span className="text-sm text-green-600 flex items-center gap-1">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Export complete
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }

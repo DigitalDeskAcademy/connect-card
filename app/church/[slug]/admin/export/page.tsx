@@ -13,10 +13,12 @@ import { ExportClient } from "./client";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }
 
-export default async function ExportPage({ params }: PageProps) {
+export default async function ExportPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { tab } = await searchParams;
   const { organization, member } = await requireDashboardAccess(slug);
 
   // Only owners and admins can export data
@@ -28,9 +30,12 @@ export default async function ExportPage({ params }: PageProps) {
   // Fetch locations for filter dropdown
   const locations = await getOrganizationLocations(organization.id);
 
+  // Default to "export" tab
+  const activeTab = tab || "export";
+
   return (
-    <PageContainer as="main">
-      <ExportClient slug={slug} locations={locations} />
+    <PageContainer as="main" variant="tabs">
+      <ExportClient slug={slug} locations={locations} activeTab={activeTab} />
     </PageContainer>
   );
 }
