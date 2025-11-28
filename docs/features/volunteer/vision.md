@@ -3,7 +3,7 @@
 **Status:** 🟡 **IN PROGRESS** - Onboarding features in development
 **Worktree:** `/church-connect-hub/volunteer`
 **Branch:** `feature/volunteer-management`
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-27
 **Focus:** Onboarding Automation (Not Volunteer Management)
 
 ---
@@ -162,22 +162,6 @@
 
 ---
 
-## 🔄 Comparison to Prayer Request Feature
-
-Our volunteer onboarding mirrors the prayer request workflow:
-
-| **Prayer Requests**                      | **Volunteer Onboarding**                                  |
-| ---------------------------------------- | --------------------------------------------------------- |
-| Connect card: "Prayer for healing"       | Connect card: "Want to volunteer in Kids Ministry"        |
-| AI extracts prayer request               | AI extracts volunteer interest + category                 |
-| Assigned to prayer team member           | Assigned to volunteer leader                              |
-| Team member follows up manually          | Automated onboarding + leader follow-up                   |
-| Track prayer status (Pending → Answered) | Track onboarding status (Inquiry → Planning Center Ready) |
-
-**Key Difference:** Volunteer onboarding includes **automated workflows** (background checks, forms, calendar invites, leader intros) while prayer requests are purely manual follow-up.
-
----
-
 ## 🎨 What We're Building (Onboarding Pipeline)
 
 ### ✅ Phase 1: Connect Card Assignment & Automation Trigger
@@ -321,10 +305,11 @@ enum VolunteerNeedUrgency {
 
 5. **Background Check Integration**
 
-   - Kids Ministry auto-sends background check link (Checkr/Sterling)
-   - Track completion status
+   - Recommended partner: Protect My Ministry (most popular with churches)
+   - Affiliate model first, API integration later
+   - Track completion status + expiration
    - Notify leader when cleared
-   - Expiration reminders (typically 2-3 years)
+   - Automated reminders before expiry (30 days, 7 days)
 
 6. **Progress Tracking Pipeline**
 
@@ -372,6 +357,83 @@ enum VolunteerNeedUrgency {
 
 ---
 
+## ⚙️ Settings & Configuration
+
+Churches need a centralized settings area to configure volunteer management features.
+
+### Settings Areas
+
+**1. Volunteer Categories Management**
+`/church/[slug]/admin/settings/volunteers/categories`
+
+- View/add/edit custom categories beyond defaults
+- Set category-specific requirements (e.g., "Background check required")
+- Reorder categories (priority/display order)
+
+**2. Background Check Document Management**
+`/church/[slug]/admin/settings/volunteers/background-checks`
+
+- Upload background check instruction documents (PDF, DOCX)
+- Configure which categories require background checks
+- Set background check expiration periods (default: 2 years)
+- Email template editor for sending background check info
+
+**3. Leader Notification Templates**
+`/church/[slug]/admin/settings/volunteers/notifications`
+
+- Email template for "New volunteer assigned to you"
+- SMS template (optional) for leader notifications
+- Customize message based on volunteer category
+
+**4. Volunteer Category Leaders**
+`/church/[slug]/admin/settings/volunteers/category-leaders`
+
+- Assign team members to lead specific categories
+- Multi-category assignments
+- Primary vs backup leaders
+- Auto-assignment rules (round-robin, capacity-based)
+
+**5. Default Workflow Settings**
+`/church/[slug]/admin/settings/volunteers/defaults`
+
+- Default category (currently hardcoded to GENERAL)
+- Auto-assign to leader (yes/no)
+- Auto-send notifications (yes/no)
+
+### Settings Database Schema
+
+```prisma
+// Custom volunteer categories
+VolunteerCategoryCustom {
+  id, organizationId, categoryKey, displayName,
+  description, requiresBackgroundCheck,
+  isActive, displayOrder, createdAt, updatedAt
+}
+
+// Background check documents
+BackgroundCheckDocument {
+  id, organizationId, fileName, fileUrl,
+  documentType (INSTRUCTIONS | FORM | CONSENT),
+  isActive, version, uploadedAt, uploadedBy
+}
+
+// Notification templates
+NotificationTemplate {
+  id, organizationId, templateType,
+  subject, bodyHtml, bodyText,
+  applicableCategories[], isActive
+}
+
+// Category leader assignments
+CategoryLeaderAssignment {
+  id, organizationId, userId, categoryKey,
+  isPrimary, notificationPreference,
+  createdAt
+}
+```
+
+---
+
 ## 📊 Success Metrics
 
 ### Current State (Manual)
@@ -398,101 +460,6 @@ enum VolunteerNeedUrgency {
 
 ---
 
-## 🎯 Competitive Advantage
-
-**Why churches choose us over manual process:**
-
-1. **AI Vision Integration** - No manual data entry from paper cards
-2. **Automated Workflows** - Background checks, forms, leader intros sent instantly
-3. **Connect Card Native** - Built into existing connect card workflow (not separate system)
-4. **SMS Automation** - Text-based onboarding (churches love this)
-5. **Planning Center Integration** - Seamless handoff to their existing volunteer system
-
-**Why we don't compete with Planning Center:**
-
-- Different problem: **Onboarding vs Management**
-- Complementary: Our system feeds volunteers → Planning Center schedules them
-- Better together: Automated intake + specialized management
-
----
-
-## 🏗️ Architecture Notes
-
-### Database Schema (Onboarding-Focused)
-
-**Active Schema:**
-
-- `ConnectCard.volunteerCategory` - Which ministry area
-- `ConnectCard.assignedLeaderId` - Route to leader
-- `ConnectCard.smsAutomationEnabled` - Automation flag
-- `ConnectCard.volunteerOnboardingStatus` - Pipeline stage
-- `ConnectCard.volunteerDocumentsSent` - Track sent documents
-- `ConnectCard.volunteerOrientationDate` - Orientation scheduling
-- `ConnectCard.volunteerOnboardingNotes` - Timeline/notes
-- `User.volunteerCategories` - Staff volunteer leadership assignments
-
-**Onboarding Status Enum:**
-
-```prisma
-enum VolunteerOnboardingStatus {
-  INQUIRY           // Just expressed interest
-  WELCOME_SENT      // Automated welcome message sent
-  DOCUMENTS_SHARED  // Ministry docs/forms sent
-  LEADER_CONNECTED  // Introduced to ministry leader
-  ORIENTATION_SET   // Orientation scheduled
-  READY             // Ready for Planning Center
-  ADDED_TO_PCO      // Exported to Planning Center (final)
-}
-```
-
-**Why No Separate Volunteer Table:**
-
-- Onboarding is part of connect card workflow
-- Keeps data model simple
-- Once ready, volunteer lives in Planning Center (not our system)
-
----
-
-## 📝 Related Features
-
-### Similar Pattern: Prayer Requests
-
-- Connect card extraction → Assignment → Follow-up tracking
-- Staff assigns to prayer team member
-- Track status (Pending → Prayed For → Answered)
-- Manual follow-up (no automation)
-
-### Key Difference: Automation
-
-- Prayer = Manual follow-up only
-- Volunteer = **Automated onboarding** + manual follow-up
-- Volunteer onboarding requires forms, background checks, training
-- Prayer requests are purely relational (no paperwork)
-
----
-
-## 🎓 User Personas
-
-### Church Staff (Connect Card Reviewer)
-
-**Goal:** Quickly route volunteer inquiries to right leader
-**Pain:** Manual email forwarding, volunteers fall through cracks
-**Solution:** One-click assignment with automated onboarding kickoff
-
-### Volunteer Leader (Kids Ministry Coordinator)
-
-**Goal:** Get background-checked volunteers ready to serve
-**Pain:** Chasing volunteers for forms, background checks, scheduling orientation
-**Solution:** Automated form sending, leader intro, progress dashboard
-
-### Volunteer (New Member)
-
-**Goal:** Start serving without getting overwhelmed
-**Pain:** 10 different emails, unclear next steps, forms get lost
-**Solution:** Single welcome message with clear checklist, automated reminders
-
----
-
 ## 🚦 Implementation Status
 
 **✅ Complete (Phase 1):**
@@ -516,6 +483,7 @@ enum VolunteerOnboardingStatus {
 - Calendar invite automation (orientation)
 - Progress tracking with automated reminders
 - Planning Center API export
+- Settings & configuration UI
 
 **📋 Planned (Phase 4): Bulk Messaging**
 
@@ -538,7 +506,7 @@ enum VolunteerOnboardingStatus {
 
 ---
 
-**Last Updated:** 2025-11-26
+**Last Updated:** 2025-11-27
 **Document Purpose:** Clarify product vision - we're building onboarding automation, not volunteer management
 **Strategic Position:** Feed Planning Center, don't compete with it
 
