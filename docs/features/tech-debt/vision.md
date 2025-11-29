@@ -1,9 +1,9 @@
 # Tech Debt - Production Blockers
 
-**Status:** 🔴 **CRITICAL** - Blocks production launch
+**Status:** 🟢 **Phase 1 Complete** - Ready for Phase 2
 **Worktree:** `/church-connect-hub/tech-debt`
 **Branch:** `feature/tech-debt`
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-27
 
 ---
 
@@ -42,7 +42,7 @@ if (!["ACTIVE", "TRIAL"].includes(organization.subscriptionStatus)) {
 // THEN check roles...
 ```
 
-**Status:** [ ] Not started
+**Status:** [x] Complete (subscription check at lines 114-121)
 
 ---
 
@@ -70,13 +70,13 @@ console.log("Data:", extractedData); // Contains PII
 
 **Files to audit:**
 
-- [ ] `/actions/connect-card/*.ts`
-- [ ] `/actions/prayer-requests/*.ts`
-- [ ] `/actions/volunteers/*.ts`
-- [ ] `/actions/team/*.ts`
-- [ ] `/app/api/**/*.ts`
+- [x] `/actions/connect-card/*.ts`
+- [x] `/actions/prayer-requests/*.ts`
+- [x] `/actions/volunteers/*.ts`
+- [x] `/actions/team/*.ts`
+- [x] `/app/api/**/*.ts` (only test routes have logging)
 
-**Status:** [ ] Not started
+**Status:** [x] Complete (all server actions cleaned)
 
 ---
 
@@ -108,7 +108,7 @@ console.log("Data:", extractedData); // Contains PII
 @@index([email])
 ```
 
-**Status:** [ ] Not started
+**Status:** [x] Complete (20+ indexes added to schema.prisma)
 
 ---
 
@@ -141,15 +141,15 @@ const cards = await prisma.connectCard.findMany({
 
 **Files to fix:**
 
-- [ ] `/lib/data/connect-card-analytics.ts`
-- [ ] `/lib/data/connect-card-batch.ts`
-- [ ] `/lib/data/connect-card-review.ts`
-- [ ] `/lib/data/prayer-requests.ts`
-- [ ] `/lib/data/volunteers.ts`
-- [ ] `/lib/data/shifts.ts`
-- [ ] `/lib/data/serving-opportunities.ts`
+- [x] `/lib/data/connect-card-analytics.ts`
+- [x] `/lib/data/connect-card-batch.ts`
+- [x] `/lib/data/connect-card-review.ts`
+- [x] `/lib/data/prayer-requests.ts`
+- [x] `/lib/data/volunteers.ts`
+- [x] `/lib/data/shifts.ts`
+- [x] `/lib/data/serving-opportunities.ts`
 
-**Status:** [ ] Not started
+**Status:** [x] Complete (all queries have `take:` limits - PR #42)
 
 ---
 
@@ -223,10 +223,10 @@ try {
 
 | Phase | Issue               | Status | PR  |
 | ----- | ------------------- | ------ | --- |
-| 1     | Subscription bypass | [ ]    | -   |
-| 1     | PII in logs         | [ ]    | -   |
-| 1     | Missing indexes     | [ ]    | -   |
-| 1     | No pagination       | [ ]    | -   |
+| 1     | Subscription bypass | [x]    | -   |
+| 1     | PII in logs         | [x]    | -   |
+| 1     | Missing indexes     | [x]    | -   |
+| 1     | No pagination       | [x]    | #42 |
 | 2     | No caching          | [ ]    | -   |
 | 2     | No data abstraction | [ ]    | -   |
 | 3     | Type safety         | [ ]    | -   |
@@ -252,4 +252,4 @@ try {
 
 ---
 
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-27

@@ -244,6 +244,8 @@ function getPriorityBadge(priority: SuggestedTemplate["priority"]) {
 
 export function DocumentsTab({
   slug,
+  // TODO: Remove ESLint disable before prod - organizationId needed for planned features (see volunteer/vision.md)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   organizationId,
   documents: initialDocuments,
 }: DocumentsTabProps) {
