@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-11-26
+**Last Updated:** 2025-11-27
 **Update Frequency:** After each significant work session
 
 ---
@@ -14,7 +14,7 @@
 | **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready for work | ChMS Sync (CSV Export)           |
 | **prayer**       | 3002 | `feature/prayer-enhancements`  | 🔴 BLOCKING       | Server actions needed            |
 | **volunteer**    | 3003 | `feature/volunteer-management` | 🟡 In Progress    | Onboarding pipeline              |
-| **tech-debt**    | 3004 | `feature/tech-debt`            | 🔴 CRITICAL       | Production blockers              |
+| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done   | Phase 2: Performance             |
 
 ---
 
@@ -23,10 +23,10 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. tech-debt     → Production blockers (MUST FIX FIRST)
-2. prayer        → Server actions (feature unusable)
-3. volunteer     → Onboarding pipeline (in progress)
-4. connect-card  → ChMS sync (new feature)
+1. prayer        → Server actions (feature unusable)
+2. volunteer     → Onboarding pipeline (in progress)
+3. connect-card  → ChMS sync (new feature)
+4. tech-debt     → Phase 2: Performance (non-blocking)
 5. main          → Project management (ongoing)
 ```
 
@@ -36,43 +36,39 @@
 
 ---
 
-### 🔴 tech-debt (Port 3004)
+### 🟢 tech-debt (Port 3004)
 
-**Status:** CRITICAL - Blocks production launch
+**Status:** Phase 1 Complete - Ready for Phase 2
 **Branch:** `feature/tech-debt`
 **Vision Doc:** `/docs/features/tech-debt/vision.md`
 
+#### Phase 1 - Production Blockers (COMPLETE)
+
+| #   | Task                          | File                                                 | Status |
+| --- | ----------------------------- | ---------------------------------------------------- | ------ |
+| 1   | Fix subscription bypass       | `app/data/dashboard/require-dashboard-access.ts:114` | [x]    |
+| 2   | Remove PII from logs          | Server action files                                  | [x]    |
+| 3   | Add database indexes          | `prisma/schema.prisma`                               | [x]    |
+| 4   | Add pagination to all queries | `/lib/data/*.ts`                                     | [x]    |
+
 #### What You Should Be Working On
 
-**Phase 1 - Production Blockers (ALL MUST BE DONE):**
+**Phase 2 - Performance (when time permits):**
 
-| #   | Task                          | File                                                 | Time Est. | Status |
-| --- | ----------------------------- | ---------------------------------------------------- | --------- | ------ |
-| 1   | Fix subscription bypass       | `app/data/dashboard/require-dashboard-access.ts:175` | 30 min    | [ ]    |
-| 2   | Remove PII from logs          | 20+ server action files                              | 1 day     | [ ]    |
-| 3   | Add database indexes          | `prisma/schema.prisma`                               | 4 hours   | [ ]    |
-| 4   | Add pagination to all queries | `/lib/data/*.ts`                                     | 2-3 days  | [ ]    |
+| #   | Task             | Description                | Status |
+| --- | ---------------- | -------------------------- | ------ |
+| 5   | Add caching      | Redis/Upstash for hot data | [ ]    |
+| 6   | Data abstraction | Repository pattern (defer) | [ ]    |
 
-#### Start Here
+#### Definition of Done (Phase 1)
 
-```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/tech-debt
-pnpm dev  # Runs on port 3004
-
-# First task: Fix subscription bypass
-# Open: app/data/dashboard/require-dashboard-access.ts
-# Move subscription check BEFORE role returns (see vision doc)
-```
-
-#### Definition of Done
-
-- [ ] All 4 Phase 1 items complete
+- [x] All 4 Phase 1 items complete
 - [ ] PR created to main
 - [ ] PLAYBOOK.md updated with completion status
 
 #### Blockers
 
-None - this is the blocker for everything else.
+None - Phase 1 complete, no longer blocking production.
 
 ---
 
@@ -266,15 +262,6 @@ pnpm dev  # Runs on port 3000
 ## 🔄 Dependency Map
 
 ```
-                    ┌─────────────────┐
-                    │   tech-debt     │
-                    │  (MUST FIX)     │
-                    └────────┬────────┘
-                             │ blocks production
-                             ▼
-    ┌────────────────────────┼────────────────────────┐
-    │                        │                        │
-    ▼                        ▼                        ▼
 ┌─────────┐           ┌─────────────┐          ┌─────────────┐
 │ prayer  │           │  volunteer  │          │connect-card │
 │(server  │           │ (onboarding)│          │ (ChMS sync) │
@@ -289,11 +276,18 @@ pnpm dev  # Runs on port 3000
                     │      main       │
                     │ (coordination)  │
                     └─────────────────┘
+                             │
+                             │ optional improvements
+                             ▼
+                    ┌─────────────────┐
+                    │   tech-debt     │
+                    │  (Phase 2)      │
+                    └─────────────────┘
 ```
 
 **Key Dependencies:**
 
-- `tech-debt` → Must complete Phase 1 before production launch
+- `tech-debt` Phase 1 → ✅ COMPLETE (no longer blocking)
 - Feature worktrees (`prayer`, `volunteer`, `connect-card`) can work in parallel
 - All features merge to `main` when complete
 
@@ -301,20 +295,20 @@ pnpm dev  # Runs on port 3000
 
 ## 📊 Overall Project Progress
 
-| Phase   | Description             | Status | Target   |
-| ------- | ----------------------- | ------ | -------- |
-| Phase 1 | Production Fixes        | 🔴 0%  | Week 1   |
-| Phase 2 | Pilot Church            | 🟡 50% | Dec 2025 |
-| Phase 3 | Member Mgmt + ChMS Sync | ⬜ 0%  | Jan 2026 |
-| Phase 4 | Communication           | ⬜ 0%  | Feb 2026 |
-| Phase 5 | Scale                   | ⬜ 0%  | Mar 2026 |
+| Phase   | Description             | Status  | Target   |
+| ------- | ----------------------- | ------- | -------- |
+| Phase 1 | Production Fixes        | 🟢 100% | Complete |
+| Phase 2 | Pilot Church            | 🟡 50%  | Dec 2025 |
+| Phase 3 | Member Mgmt + ChMS Sync | ⬜ 0%   | Jan 2026 |
+| Phase 4 | Communication           | ⬜ 0%   | Feb 2026 |
+| Phase 5 | Scale                   | ⬜ 0%   | Mar 2026 |
 
-**Blockers to Production:**
+**Production Blockers: NONE** - All Phase 1 items complete!
 
-1. ❌ Subscription bypass not fixed
-2. ❌ PII in logs
-3. ❌ No pagination
-4. ❌ Missing indexes
+- ✅ Subscription bypass fixed
+- ✅ PII removed from logs
+- ✅ Pagination added to all queries
+- ✅ Database indexes added
 
 ---
 

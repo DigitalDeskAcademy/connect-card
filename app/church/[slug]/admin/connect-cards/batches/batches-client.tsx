@@ -273,7 +273,9 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
               onClick={() => {
                 setExportWarningOpen(false);
                 // Navigate to pending batches or show them
-                router.push(`/church/${slug}/admin/connect-cards/batches?status=pending`);
+                router.push(
+                  `/church/${slug}/admin/connect-cards/batches?status=pending`
+                );
               }}
             >
               Review Pending Batches
