@@ -55,6 +55,7 @@ import {
   IconUserPlus,
   IconUserCheck,
   IconMessageCircle,
+  IconDownload,
 } from "@tabler/icons-react";
 import { CreateVolunteerDialog } from "./create-volunteer-dialog";
 import { ProcessVolunteerDialog } from "./process-volunteer-dialog";
@@ -110,6 +111,7 @@ export function VolunteerDataTable<TData, TValue>({
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
+  const [bgCheckFilter, setBgCheckFilter] = useState<string>("ALL");
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] =
     useState<VolunteerWithRelations | null>(null);
@@ -145,6 +147,98 @@ export function VolunteerDataTable<TData, TValue>({
 
     toast.info(
       `Bulk SMS automation will be implemented in a future update. ${selectedCount} volunteer${selectedCount === 1 ? "" : "s"} selected.`
+    );
+  };
+
+  // Handle CSV export (PCO/Breeze compatible format)
+  const handleExportCSV = () => {
+    // Get either selected rows or all filtered rows
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const rowsToExport =
+      selectedRows.length > 0 ? selectedRows : table.getFilteredRowModel().rows;
+
+    if (rowsToExport.length === 0) {
+      toast.error("No volunteers to export");
+      return;
+    }
+
+    // CSV header matching Planning Center / Breeze format
+    const headers = [
+      "First Name",
+      "Last Name",
+      "Email",
+      "Phone",
+      "Background Check Status",
+      "Categories",
+      "Start Date",
+      "Status",
+    ];
+
+    // Generate CSV rows
+    const csvRows = rowsToExport.map(row => {
+      const volunteer = row.original as VolunteerWithRelations;
+      const fullName = volunteer.churchMember?.name || "";
+      const nameParts = fullName.trim().split(" ");
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+
+      const categories = (volunteer.categories || [])
+        .map(cat => formatVolunteerCategoryLabel(cat.category))
+        .join("; ");
+
+      const startDate = volunteer.startDate
+        ? new Date(volunteer.startDate).toISOString().split("T")[0]
+        : "";
+
+      return [
+        firstName,
+        lastName,
+        volunteer.churchMember?.email || "",
+        volunteer.churchMember?.phone || "",
+        volunteer.backgroundCheckStatus || "NOT_STARTED",
+        categories,
+        startDate,
+        volunteer.status,
+      ];
+    });
+
+    // Convert to CSV string
+    const csvContent = [
+      headers.join(","),
+      ...csvRows.map(row =>
+        row
+          .map(cell => {
+            // Escape quotes and wrap in quotes if contains comma or quote
+            const cellStr = String(cell);
+            if (
+              cellStr.includes(",") ||
+              cellStr.includes('"') ||
+              cellStr.includes("\n")
+            ) {
+              return `"${cellStr.replace(/"/g, '""')}"`;
+            }
+            return cellStr;
+          })
+          .join(",")
+      ),
+    ].join("\n");
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `volunteers-${new Date().toISOString().split("T")[0]}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success(
+      `Exported ${rowsToExport.length} volunteer${rowsToExport.length === 1 ? "" : "s"} to CSV`
     );
   };
 
@@ -191,6 +285,14 @@ export function VolunteerDataTable<TData, TValue>({
     setCategoryFilter(value);
   };
 
+  // Handle background check filter change
+  const handleBgCheckFilterChange = (value: string) => {
+    setBgCheckFilter(value);
+    table
+      .getColumn("backgroundCheckStatus")
+      ?.setFilterValue(value === "ALL" ? undefined : value);
+  };
+
   // Calculate pagination details
   const currentPage = table.getState().pagination.pageIndex + 1;
   const totalPages = table.getPageCount();
@@ -207,6 +309,14 @@ export function VolunteerDataTable<TData, TValue>({
         <div className="flex items-center justify-between">
           <CardTitle>{title}</CardTitle>
           <div className="flex items-center gap-2">
+            <Button
+              onClick={handleExportCSV}
+              variant="outline"
+              className="gap-2"
+            >
+              <IconDownload className="h-4 w-4" />
+              Export CSV
+            </Button>
             <Button onClick={handleBulkSMS} variant="outline" className="gap-2">
               <IconMessageCircle className="h-4 w-4" />
               Bulk SMS
@@ -241,7 +351,7 @@ export function VolunteerDataTable<TData, TValue>({
             value={categoryFilter}
             onValueChange={handleCategoryFilterChange}
           >
-            <SelectTrigger className="w-full sm:w-[200px] flex-shrink-0">
+            <SelectTrigger className="w-full sm:w-[180px] flex-shrink-0">
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
@@ -251,6 +361,24 @@ export function VolunteerDataTable<TData, TValue>({
                   {formatVolunteerCategoryLabel(category)}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+
+          {/* Background Check Status Filter */}
+          <Select
+            value={bgCheckFilter}
+            onValueChange={handleBgCheckFilterChange}
+          >
+            <SelectTrigger className="w-full sm:w-[180px] flex-shrink-0">
+              <SelectValue placeholder="Background check" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Statuses</SelectItem>
+              <SelectItem value="CLEARED">Cleared</SelectItem>
+              <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+              <SelectItem value="NOT_STARTED">Not Started</SelectItem>
+              <SelectItem value="FLAGGED">Flagged</SelectItem>
+              <SelectItem value="EXPIRED">Expired</SelectItem>
             </SelectContent>
           </Select>
 

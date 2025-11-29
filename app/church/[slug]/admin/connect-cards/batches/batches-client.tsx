@@ -55,15 +55,20 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
-  const [isPending, startTransition] = useTransition();
   const [exportWarningOpen, setExportWarningOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // Count pending batches for export warning
-  const pendingBatches = batches.filter(b => b.status === "PENDING");
-  const hasPendingBatches = pendingBatches.length > 0;
+  const pendingBatches = batches.filter(
+    b => b.status === "PENDING" || b.status === "IN_REVIEW"
+  );
+  const pendingCardCount = pendingBatches.reduce(
+    (sum, b) => sum + b._count.cards,
+    0
+  );
 
   const handleExportClick = () => {
-    if (hasPendingBatches) {
+    if (pendingBatches.length > 0) {
       setExportWarningOpen(true);
     } else {
       router.push(`/church/${slug}/admin/export`);
@@ -95,7 +100,7 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
             Connect Card Batches
@@ -230,7 +235,7 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Export Warning Dialog - Pending Batches */}
+      {/* Export Warning Dialog */}
       <AlertDialog open={exportWarningOpen} onOpenChange={setExportWarningOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -241,15 +246,23 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
             <AlertDialogDescription className="space-y-3">
               <p>
                 You have{" "}
-                <span className="font-semibold text-foreground">
+                <strong>
                   {pendingBatches.length} batch
                   {pendingBatches.length !== 1 ? "es" : ""}
-                </span>{" "}
-                that haven&apos;t been reviewed yet. Cards in pending batches
-                won&apos;t be included in the export.
+                </strong>{" "}
+                with{" "}
+                <strong>
+                  {pendingCardCount} card{pendingCardCount !== 1 ? "s" : ""}
+                </strong>{" "}
+                still pending review.
               </p>
-              <p className="text-sm">
-                Would you like to review them first or continue to export?
+              <p>
+                These cards won&apos;t be included in your export until
+                they&apos;re reviewed and processed.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can export now with only the processed cards, or review the
+                pending batches first.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -259,7 +272,7 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
               variant="outline"
               onClick={() => {
                 setExportWarningOpen(false);
-                // Navigate to first pending batch
+                // Navigate to first pending batch for review
                 if (pendingBatches[0]) {
                   router.push(
                     `/church/${slug}/admin/connect-cards/review/${pendingBatches[0].id}`
@@ -267,7 +280,7 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
                 }
               }}
             >
-              Review Batches
+              Review Pending Batches
             </Button>
             <AlertDialogAction
               onClick={() => {
