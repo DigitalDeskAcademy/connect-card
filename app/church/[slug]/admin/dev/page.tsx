@@ -8,11 +8,136 @@ import {
   IconBug,
   IconPlugConnected,
   IconDashboard,
+  IconRocket,
 } from "@tabler/icons-react";
 
 interface Task {
   label: string;
   completed: boolean;
+}
+
+interface ChecklistSection {
+  title: string;
+  items: Task[];
+}
+
+function DemoReadyChecklist() {
+  const sections: ChecklistSection[] = [
+    {
+      title: "Connect Cards",
+      items: [
+        {
+          label: "Scanner folder integration (File System Access API)",
+          completed: false,
+        },
+        { label: "Phone camera capture (fallback)", completed: false },
+        { label: "Auto-detect new scans in folder", completed: false },
+        { label: "Upload flow polished", completed: true },
+        { label: "AI extraction reliable", completed: true },
+        { label: "Review queue complete", completed: true },
+        { label: "Batch save/complete flow", completed: true },
+      ],
+    },
+    {
+      title: "Prayer Batches",
+      items: [
+        {
+          label: "Auto-bundle: all prayers since last session",
+          completed: false,
+        },
+        { label: "Create batch UI", completed: true },
+        { label: "Prayer session output (printable)", completed: false },
+      ],
+    },
+    {
+      title: "Volunteer Onboarding",
+      items: [
+        { label: "Onboarding pipeline UI", completed: false },
+        { label: "Automated welcome flow", completed: false },
+        { label: "Background check tracking", completed: false },
+        { label: "Leader assignment/notification", completed: false },
+      ],
+    },
+    {
+      title: "Export",
+      items: [
+        { label: "CSV export functional", completed: false },
+        { label: "API button (placeholder for demo)", completed: false },
+      ],
+    },
+    {
+      title: "Demo Polish",
+      items: [
+        { label: "Sample data seeded", completed: false },
+        { label: "End-to-end happy path tested", completed: false },
+        { label: "No console errors", completed: false },
+      ],
+    },
+  ];
+
+  const totalItems = sections.reduce((acc, s) => acc + s.items.length, 0);
+  const completedItems = sections.reduce(
+    (acc, s) => acc + s.items.filter(i => i.completed).length,
+    0
+  );
+  const percentage = Math.round((completedItems / totalItems) * 100);
+
+  return (
+    <Card className="mb-6 border-2 border-dashed border-primary/30">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <IconRocket className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Demo Ready Checklist</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                MVP features needed for church demo
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold">{percentage}%</div>
+            <div className="text-xs text-muted-foreground">
+              {completedItems}/{totalItems} complete
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+          {sections.map(section => (
+            <div key={section.title}>
+              <h4 className="font-medium text-sm mb-2">{section.title}</h4>
+              <div className="space-y-1.5">
+                {section.items.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-2">
+                    <Checkbox
+                      checked={item.completed}
+                      disabled
+                      className="h-4 w-4 mt-0.5"
+                    />
+                    <span
+                      className={`text-xs ${item.completed ? "line-through text-muted-foreground" : ""}`}
+                    >
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 pt-4 border-t">
+          <p className="text-xs text-muted-foreground">
+            <strong>Post-MVP:</strong> Scanner setup wizard for non-tech users •
+            Video walkthrough • Guided onboarding
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 interface WorktreeCardProps {
@@ -237,13 +362,16 @@ export default async function DevDashboardPage({
 
   return (
     <PageContainer as="main" backButton={{ href: `/church/${slug}/admin` }}>
+      <DemoReadyChecklist />
+
+      <h2 className="text-lg font-semibold mb-4">Worktree Progress</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {worktrees.map(worktree => (
           <WorktreeCard key={worktree.name} {...worktree} />
         ))}
       </div>
 
-      <p className="text-xs text-muted-foreground text-center">
+      <p className="text-xs text-muted-foreground text-center mt-6">
         Data sourced from /docs/features/*/vision.md • Update during PRs
       </p>
     </PageContainer>
