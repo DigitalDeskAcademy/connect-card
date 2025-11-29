@@ -98,7 +98,7 @@ export default function ConnectCardsClient({
           </TabsTrigger>
         </TabsList>
 
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="ghost" size="sm" asChild>
           <Link href={`/church/${slug}/admin`}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back

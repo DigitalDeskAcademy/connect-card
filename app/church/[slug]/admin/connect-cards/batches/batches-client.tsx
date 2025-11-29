@@ -10,6 +10,8 @@ import {
   FileText,
   Trash2,
   Loader2,
+  FileDown,
+  AlertTriangle,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -53,7 +55,25 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
+  const [exportWarningOpen, setExportWarningOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Count pending batches for export warning
+  const pendingBatches = batches.filter(
+    b => b.status === "PENDING" || b.status === "IN_REVIEW"
+  );
+  const pendingCardCount = pendingBatches.reduce(
+    (sum, b) => sum + b._count.cards,
+    0
+  );
+
+  const handleExportClick = () => {
+    if (pendingBatches.length > 0) {
+      setExportWarningOpen(true);
+    } else {
+      router.push(`/church/${slug}/admin/export`);
+    }
+  };
 
   const handleDeleteClick = (batch: Batch) => {
     setBatchToDelete(batch);
@@ -80,13 +100,19 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          Connect Card Batches
-        </h2>
-        <p className="text-muted-foreground">
-          Review and manage uploaded connect card batches
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Connect Card Batches
+          </h2>
+          <p className="text-muted-foreground">
+            Review and manage uploaded connect card batches
+          </p>
+        </div>
+        <Button onClick={handleExportClick} className="gap-2">
+          <FileDown className="h-4 w-4" />
+          Export to ChMS
+        </Button>
       </div>
 
       {/* Batch list */}
@@ -204,6 +230,60 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
               ) : (
                 "Delete Batch"
               )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Export Warning Dialog */}
+      <AlertDialog open={exportWarningOpen} onOpenChange={setExportWarningOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Pending Batches Detected
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-3">
+              <p>
+                You have{" "}
+                <strong>
+                  {pendingBatches.length} batch
+                  {pendingBatches.length !== 1 ? "es" : ""}
+                </strong>{" "}
+                with{" "}
+                <strong>
+                  {pendingCardCount} card{pendingCardCount !== 1 ? "s" : ""}
+                </strong>{" "}
+                still pending review.
+              </p>
+              <p>
+                These cards won&apos;t be included in your export until
+                they&apos;re reviewed and processed.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                You can export now with only the processed cards, or review the
+                pending batches first.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setExportWarningOpen(false);
+                // Navigate to pending batches or show them
+                router.push(
+                  `/church/${slug}/admin/connect-cards/batches?status=pending`
+                );
+              }}
+            >
+              Review Pending Batches
+            </Button>
+            <AlertDialogAction
+              onClick={() => router.push(`/church/${slug}/admin/export`)}
+            >
+              Export Anyway
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
