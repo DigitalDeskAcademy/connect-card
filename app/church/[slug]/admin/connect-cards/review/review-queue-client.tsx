@@ -415,7 +415,7 @@ export function ReviewQueueClient({
           disabled={isPending}
         >
           <ArrowLeft className="mr-2 w-5 h-5" />
-          Back to Batches
+          Back
         </Button>
       </div>
 

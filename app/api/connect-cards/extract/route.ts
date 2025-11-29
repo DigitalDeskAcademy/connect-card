@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import crypto from "crypto";
 import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import arcjet, { fixedWindow } from "@/lib/arcjet";
@@ -7,17 +8,25 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
 
+/**
+ * Calculate SHA-256 hash of image data for duplicate detection
+ * Done BEFORE Claude Vision call to save API costs on duplicates
+ */
+function calculateImageHash(base64Data: string): string {
+  return crypto.createHash("sha256").update(base64Data).digest("hex");
+}
+
 // Initialize Anthropic client
 const anthropic = new Anthropic({
   apiKey: env.ANTHROPIC_API_KEY,
 });
 
-// Rate limiting: Very strict for expensive AI API calls
+/// Rate limiting: Allow batch processing while preventing abuse
 const aj = arcjet.withRule(
   fixedWindow({
     mode: "LIVE",
     window: "1m",
-    max: 3, // Only 3 extractions per minute (Claude Vision is expensive)
+    max: 60, // 60 extractions per minute - supports batch uploads of 50+ cards
   })
 );
 
@@ -97,9 +106,45 @@ export async function POST(nextRequest: NextRequest) {
       );
     }
 
-    // Call Claude Vision API with base64 data
+    // 5. Calculate image hash BEFORE Claude Vision call (saves money on duplicates)
+    const imageHash = calculateImageHash(imageData);
+
+    // 6. Check for duplicate image in database
+    const existingCard = await prisma.connectCard.findFirst({
+      where: {
+        organizationId: user.organization.id,
+        imageHash,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        scannedAt: true,
+        status: true,
+      },
+    });
+
+    if (existingCard) {
+      return NextResponse.json(
+        {
+          error: "Duplicate image detected",
+          message: "This exact card has already been uploaded",
+          duplicate: true,
+          existingCard: {
+            id: existingCard.id,
+            name: existingCard.name,
+            email: existingCard.email,
+            scannedAt: existingCard.scannedAt,
+            status: existingCard.status,
+          },
+        },
+        { status: 409 }
+      );
+    }
+
+    // 7. Call Claude Vision API with base64 data (only for non-duplicates)
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20250929", // Latest Claude Sonnet 4.5 model
+      model: env.CLAUDE_VISION_MODEL, // Configurable via CLAUDE_VISION_MODEL env var
       max_tokens: 1024,
       messages: [
         {
@@ -190,6 +235,7 @@ Be thorough with handwritten content, even if messy, but strict about ignoring p
     return NextResponse.json({
       success: true,
       data: extractedData,
+      imageHash, // Include hash for save action to store
       raw_text: extractedText,
     });
   } catch (error) {

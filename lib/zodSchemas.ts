@@ -147,6 +147,7 @@ export const organizationSetupSchema = z.object({
 // Connect card extracted data schema
 export const connectCardSchema = z.object({
   imageKey: z.string().min(1, { message: "Image is required" }),
+  imageHash: z.string().min(1, { message: "Image hash is required" }), // SHA-256 hash from extract API
   extractedData: z.object({
     name: z.string().nullable(),
     email: z.string().nullable(),

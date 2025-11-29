@@ -12,7 +12,6 @@ import {
   getOrCreateActiveBatch,
   incrementBatchCardCount,
 } from "@/lib/data/connect-card-batch";
-import { calculateImageHash } from "@/lib/utils/image-hash";
 
 /**
  * Normalize Visit Status
@@ -167,45 +166,21 @@ export async function saveConnectCard(
   }
 
   try {
-    // 5. Calculate image hash for duplicate detection
-    const imageHash = calculateImageHash(validation.data.imageKey);
-
-    // 6. Check for duplicate image (same physical card scanned twice)
-    const duplicateImage = await prisma.connectCard.findFirst({
-      where: {
-        organizationId: organization.id,
-        imageHash,
-      },
-      select: {
-        id: true,
-        name: true,
-        scannedAt: true,
-      },
-    });
-
-    if (duplicateImage) {
-      return {
-        status: "error",
-        message:
-          "Duplicate image detected - this exact card has already been scanned",
-        data: {
-          duplicateType: "image",
-          existingCard: duplicateImage,
-        } as never,
-      };
-    }
+    // 5. Get imageHash from validated data (calculated in extract API)
+    // Duplicate check already done in extract API before Claude Vision call
+    const imageHash = validation.data.imageHash;
 
     // Note: We intentionally do NOT check for duplicate person data here.
     // Returning members filling out prayer requests or updating info should be allowed.
     // Future enhancement: Link to existing ChurchMember records instead of blocking.
 
-    // 7. Get or create active batch for this upload
+    // 6. Get or create active batch for this upload
     const batch = await getOrCreateActiveBatch(
       session.user.id,
       organization.id
     );
 
-    // 8. Save to database with batch assignment and image hash
+    // 7. Save to database with batch assignment and image hash
     const connectCard = await prisma.connectCard.create({
       data: {
         organizationId: organization.id,
@@ -242,7 +217,7 @@ export async function saveConnectCard(
       },
     });
 
-    // 9. Increment batch card count
+    // 8. Increment batch card count
     await incrementBatchCardCount(batch.id);
 
     return {

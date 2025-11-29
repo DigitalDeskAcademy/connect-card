@@ -23,6 +23,7 @@ export const env = createEnv({
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
+    CLAUDE_VISION_MODEL: z.string().default("claude-opus-4-5-20251101"), // Model for connect card extraction
     S3_UPLOAD_ALLOWED_DOMAINS: z.string().optional(), // Comma-separated production domains
     PLATFORM_ADMIN_EMAIL: z.string().email().optional(), // Platform admin email for auto-promotion
     GHL_CLIENT_ID: z.string().min(1).optional(), // GoHighLevel - Phase 5 feature

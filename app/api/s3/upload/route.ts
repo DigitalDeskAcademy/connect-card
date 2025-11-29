@@ -190,7 +190,7 @@ const aj = arcjet.withRule(
   fixedWindow({
     mode: "LIVE",
     window: "1m",
-    max: 5,
+    max: 100, // Support batch uploads of 50+ connect cards
   })
 );
 
