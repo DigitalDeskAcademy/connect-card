@@ -13,6 +13,12 @@ import { formatPhoneNumber } from "@/lib/utils";
 import { createPrayerRequestFromConnectCard } from "@/lib/data/prayer-requests";
 import { updateBatchStatus } from "@/lib/data/connect-card-batch";
 import { VolunteerCategoryType } from "@/lib/generated/prisma";
+import { resend, DEFAULT_FROM_EMAIL } from "@/lib/email/client";
+import {
+  getVolunteerLeaderNotificationEmail,
+  getVolunteerLeaderNotificationText,
+} from "@/lib/email/templates/volunteer-leader-notification";
+import { env } from "@/lib/env";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -386,7 +392,59 @@ export async function updateConnectCard(
       }
     }
 
-    // 9. Build response message
+    // 9. Send leader notification email if leader was assigned
+    let leaderNotified = false;
+    if (
+      validation.data.assignedLeaderId &&
+      validation.data.volunteerCategory &&
+      validation.data.sendMessageToLeader
+    ) {
+      try {
+        // Get the assigned leader's info
+        const leader = await prisma.user.findUnique({
+          where: { id: validation.data.assignedLeaderId },
+          select: { name: true, email: true },
+        });
+
+        if (leader?.email) {
+          const dashboardUrl = `${env.NEXT_PUBLIC_APP_URL}/church/${slug}/admin/volunteer`;
+
+          const emailHtml = getVolunteerLeaderNotificationEmail({
+            churchName: organization.name,
+            leaderName: leader.name || "Ministry Leader",
+            volunteerName: cardName || "New Volunteer",
+            volunteerEmail: cardEmail || null,
+            volunteerPhone: cardPhone || null,
+            volunteerCategory: validation.data.volunteerCategory,
+            dashboardUrl,
+          });
+
+          const emailText = getVolunteerLeaderNotificationText({
+            churchName: organization.name,
+            leaderName: leader.name || "Ministry Leader",
+            volunteerName: cardName || "New Volunteer",
+            volunteerEmail: cardEmail || null,
+            volunteerPhone: cardPhone || null,
+            volunteerCategory: validation.data.volunteerCategory,
+            dashboardUrl,
+          });
+
+          await resend.emails.send({
+            from: DEFAULT_FROM_EMAIL,
+            to: leader.email,
+            subject: `New Volunteer Assigned: ${cardName || "New Volunteer"} - ${organization.name}`,
+            html: emailHtml,
+            text: emailText,
+          });
+
+          leaderNotified = true;
+        }
+      } catch {
+        // Leader notification failed but card processing continues
+      }
+    }
+
+    // 10. Build response message
     const messages: string[] = ["Connect card processed successfully"];
 
     if (memberCreated) {
@@ -403,8 +461,12 @@ export async function updateConnectCard(
       messages.push("Warning: Name on card differs from existing member");
     }
 
+    if (leaderNotified) {
+      messages.push("Leader notification sent");
+    }
+
     if (updatedCard.smsAutomationEnabled) {
-      messages.push("SMS automation started (workflow not yet implemented)");
+      messages.push("SMS automation enabled");
     }
 
     return {
