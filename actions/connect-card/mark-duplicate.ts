@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/db";
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
 import { revalidatePath } from "next/cache";
+import { toDuplicateMarkerJson } from "@/lib/prisma/json-types";
 
 /**
  * Mark a connect card as a duplicate and skip it
@@ -40,12 +41,12 @@ export async function markDuplicate(slug: string, cardId: string) {
       where: { id: cardId },
       data: {
         status: "REVIEWED", // Remove from queue
-        validationIssues: {
+        validationIssues: toDuplicateMarkerJson({
           type: "DUPLICATE",
           message: "Marked as duplicate card",
           markedBy: session.user.id,
           timestamp: new Date(),
-        } as never,
+        }),
       },
     });
 
