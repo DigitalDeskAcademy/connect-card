@@ -11,10 +11,7 @@ import type {
 import { ConnectCardChart } from "./ConnectCardChart";
 import { TrendBadge } from "./TrendBadge";
 import { QuickActionsGrid } from "./QuickActionsGrid";
-import {
-  DashboardSettings,
-  type DashboardVisibility,
-} from "./DashboardSettings";
+import { CollapsibleSection } from "./CollapsibleSection";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface Location {
@@ -48,16 +45,20 @@ export function DashboardClient({
   const defaultTab = userDefaultLocationSlug ?? "cumulative";
   const [selectedTab, setSelectedTab] = useState(defaultTab);
 
-  // Dashboard visibility preferences (persisted to localStorage)
-  const [visibility, setVisibility] = useLocalStorage<DashboardVisibility>(
-    "dashboard-visibility",
+  // Section collapsed states (persisted to localStorage)
+  const [sections, setSections] = useLocalStorage<Record<string, boolean>>(
+    "dashboard-sections",
     {
-      showKpiCards: true,
-      showChart: true,
-      showPrayerCategories: true,
-      showQuickActions: true,
+      quickActions: true,
+      kpiCards: true,
+      chart: true,
+      prayerCategories: true,
     }
   );
+
+  const toggleSection = (key: string) => {
+    setSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   // For now, we'll just show cumulative data
   // In the future, we can add dynamic fetching per tab using organizationId + locationId
@@ -76,46 +77,48 @@ export function DashboardClient({
       className="w-full space-y-6"
     >
       {/* Location Filter Tabs - At the very top */}
-      <div className="flex items-center justify-between">
-        <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
-          {/* Only show "All Locations" tab if user has permission */}
-          {canSeeAllLocations && (
-            <TabsTrigger
-              value="cumulative"
-              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-            >
-              <Building2 className="mr-2 w-4 h-4" />
-              All Locations
-            </TabsTrigger>
-          )}
-          {visibleLocations.map(location => (
-            <TabsTrigger
-              key={location.id}
-              value={location.slug}
-              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-            >
-              {location.name}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        <DashboardSettings
-          visibility={visibility}
-          onVisibilityChange={setVisibility}
-        />
-      </div>
+      <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
+        {/* Only show "All Locations" tab if user has permission */}
+        {canSeeAllLocations && (
+          <TabsTrigger
+            value="cumulative"
+            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+          >
+            <Building2 className="mr-2 w-4 h-4" />
+            All Locations
+          </TabsTrigger>
+        )}
+        {visibleLocations.map(location => (
+          <TabsTrigger
+            key={location.id}
+            value={location.slug}
+            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
+          >
+            {location.name}
+          </TabsTrigger>
+        ))}
+      </TabsList>
 
-      {/* Quick Actions - Right below location tabs, conditionally visible */}
-      {visibility.showQuickActions && (
+      {/* Quick Actions */}
+      <CollapsibleSection
+        title="Quick Actions"
+        isOpen={sections.quickActions}
+        onToggle={() => toggleSection("quickActions")}
+      >
         <QuickActionsGrid
           slug={slug}
           defaultLocationSlug={userDefaultLocationSlug}
         />
-      )}
+      </CollapsibleSection>
 
       {/* Cumulative Tab Content */}
       <TabsContent value="cumulative" className="mt-0 space-y-6">
-        {/* KPI Cards - 4 columns, prominent at top */}
-        {visibility.showKpiCards && (
+        {/* KPI Cards */}
+        <CollapsibleSection
+          title="This Week's Metrics"
+          isOpen={sections.kpiCards}
+          onToggle={() => toggleSection("kpiCards")}
+        >
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -195,14 +198,24 @@ export function DashboardClient({
               </CardContent>
             </Card>
           </div>
-        )}
+        </CollapsibleSection>
 
-        {/* Chart - Full width */}
-        {visibility.showChart && <ConnectCardChart data={chartData} />}
+        {/* Activity Chart */}
+        <CollapsibleSection
+          title="Activity Chart"
+          isOpen={sections.chart}
+          onToggle={() => toggleSection("chart")}
+        >
+          <ConnectCardChart data={chartData} />
+        </CollapsibleSection>
 
-        {/* Top Prayer Categories - Full width below */}
-        {visibility.showPrayerCategories &&
-          analytics.topPrayerCategories.length > 0 && (
+        {/* Top Prayer Categories */}
+        {analytics.topPrayerCategories.length > 0 && (
+          <CollapsibleSection
+            title="Top Prayer Categories"
+            isOpen={sections.prayerCategories}
+            onToggle={() => toggleSection("prayerCategories")}
+          >
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-medium">
@@ -230,7 +243,8 @@ export function DashboardClient({
                 </div>
               </CardContent>
             </Card>
-          )}
+          </CollapsibleSection>
+        )}
       </TabsContent>
 
       {/* Location Tabs (same structure for each location) */}

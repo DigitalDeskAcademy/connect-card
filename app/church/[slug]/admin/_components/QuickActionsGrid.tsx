@@ -73,24 +73,19 @@ export function QuickActionsGrid({
   ];
 
   return (
-    <div>
-      <h3 className="text-sm font-medium text-muted-foreground mb-3">
-        Quick Actions
-      </h3>
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-        {actions.map(action => (
-          <Link key={action.label} href={action.href}>
-            <div className="h-20 flex flex-col items-center justify-center rounded-xl border bg-card shadow-sm hover:bg-accent hover:border-primary/50 transition-all cursor-pointer group">
-              <action.icon
-                className={`h-6 w-6 mb-1.5 ${action.color} group-hover:scale-110 transition-transform`}
-              />
-              <span className="text-xs font-medium text-center leading-tight px-2">
-                {action.label}
-              </span>
-            </div>
-          </Link>
-        ))}
-      </div>
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
+      {actions.map(action => (
+        <Link key={action.label} href={action.href}>
+          <div className="h-20 flex flex-col items-center justify-center rounded-xl border bg-card shadow-sm hover:bg-accent hover:border-primary/50 transition-all cursor-pointer group">
+            <action.icon
+              className={`h-6 w-6 mb-1.5 ${action.color} group-hover:scale-110 transition-transform`}
+            />
+            <span className="text-xs font-medium text-center leading-tight px-2">
+              {action.label}
+            </span>
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }
