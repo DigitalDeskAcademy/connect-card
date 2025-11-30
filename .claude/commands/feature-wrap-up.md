@@ -36,31 +36,47 @@ cp ../main/prisma/schema.prisma prisma/schema.prisma
 pnpm prisma generate
 ```
 
-### 1.2: Documentation Scope Check
+### 1.2: Documentation Scope Check (Auto-Defer)
 
-Verify feature branch hasn't modified core docs:
+Check for core doc changes and automatically defer them to Stage 8:
 
 ```bash
-# Check for forbidden changes
-git diff main...HEAD --name-only | grep -E "docs/(PROJECT|PLAYBOOK)\.md" && echo "WARNING: Core docs modified!"
+# Check for forbidden changes (staged or unstaged)
+FORBIDDEN_DOCS=$(git diff main --name-only | grep -E "docs/(PROJECT|PLAYBOOK)\.md" || true)
+```
 
-# Check for changes outside feature scope
-git diff main...HEAD --name-only | grep "^docs/" | grep -v "^docs/features/"
+**If forbidden docs found, AUTO-DEFER (no user interaction):**
+
+```bash
+# 1. Create pending-docs directory
+mkdir -p .claude/pending-docs
+
+# 2. For each forbidden file, create a patch and revert
+for doc in $FORBIDDEN_DOCS; do
+  FILENAME=$(basename "$doc")
+
+  # Create patch of the changes
+  git diff main -- "$doc" > ".claude/pending-docs/${FILENAME}.patch"
+
+  # Revert to main version
+  git checkout main -- "$doc"
+done
+
+# 3. Stage the reverts
+git add docs/PROJECT.md docs/PLAYBOOK.md 2>/dev/null || true
+
+# 4. Report what was deferred
+echo "📋 Deferred doc updates to Stage 8:"
+ls -1 .claude/pending-docs/*.patch 2>/dev/null | xargs -I {} basename {} .patch
 ```
 
 **Rules:**
 
-- NEVER edit PROJECT.md or PLAYBOOK.md in feature branches
-- ONLY edit `/docs/features/{your-feature}/` in feature branches
-- Core docs update AFTER merge in main
+- Core docs (PROJECT.md, PLAYBOOK.md) auto-defer to Stage 8
+- Feature docs (`/docs/features/{your-feature}/`) are allowed
+- Patches stored in `.claude/pending-docs/` for Stage 8
 
-If violations found, offer to revert:
-
-```bash
-git checkout main -- docs/PROJECT.md docs/PLAYBOOK.md
-git add docs/PROJECT.md docs/PLAYBOOK.md
-git commit -m "fix: revert forbidden changes to core documentation"
-```
+**No stopping, no questions - just handles it.**
 
 ---
 
@@ -193,8 +209,10 @@ Ask: "Need manual testing before merge? (yes/no)"
 ### 6.2: Merge PR
 
 ```bash
-gh pr merge <pr-number> --squash --delete-branch
+gh pr merge <pr-number> --squash
 ```
+
+**Note:** We do NOT use `--delete-branch` because worktrees keep feature branches for continued development. The branch stays on the remote and locally in the worktree.
 
 ### 6.3: Verify
 
@@ -266,6 +284,37 @@ git merge main --no-edit
 ## Stage 8: Documentation Update
 
 **REQUIRED** - Run in main worktree after merge.
+
+### 8.0: Apply Deferred Doc Updates (Auto)
+
+Check for and apply any patches deferred from Stage 1.2:
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/main
+
+# Check for pending patches from feature worktree
+FEATURE_WORKTREE="/home/digitaldesk/Desktop/church-connect-hub/<feature-name>"
+PENDING_DIR="$FEATURE_WORKTREE/.claude/pending-docs"
+
+if [ -d "$PENDING_DIR" ] && ls "$PENDING_DIR"/*.patch 1>/dev/null 2>&1; then
+  echo "📋 Applying deferred doc updates..."
+
+  for patch in "$PENDING_DIR"/*.patch; do
+    FILENAME=$(basename "$patch" .patch)
+    echo "  → Applying $FILENAME changes"
+
+    # Apply the patch
+    git apply "$patch"
+
+    # Remove the patch file
+    rm "$patch"
+  done
+
+  echo "✅ Deferred updates applied"
+else
+  echo "No deferred doc updates to apply"
+fi
+```
 
 ### 8.1: Analyze What Was Built
 
