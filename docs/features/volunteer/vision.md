@@ -3,7 +3,7 @@
 **Status:** 🟡 **IN PROGRESS** - Onboarding features in development
 **Worktree:** `/church-connect-hub/volunteer`
 **Branch:** `feature/volunteer-management`
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-11-29
 **Focus:** Onboarding Automation (Not Volunteer Management)
 
 ---
@@ -25,29 +25,42 @@
 
 ---
 
-### 2. Onboarding Status Tracking
+### 2. Leader Auto-Notification
 
-**Impact:** Can't track volunteer journey from inquiry to ready
+**Impact:** Ministry leaders don't know when someone wants to volunteer
 **Status:** 🔄 In progress
 
 **Required:**
 
-- [ ] Pipeline stage tracking (Inquiry → Welcome → Documents → Ready)
-- [ ] Visual pipeline dashboard
-- [ ] Status update actions
+- [ ] Auto-email ministry leader when volunteer assigned
+- [ ] Include volunteer info (name, email, phone, interests)
+- [ ] Optional SMS notification
 
 ---
 
-### 3. Onboarding Pipeline Dashboard
+### 3. Document Auto-Send
 
-**Impact:** No visibility into where volunteers are stuck
+**Impact:** Volunteers wait for someone to manually send them paperwork
 **Status:** [ ] Planned
 
 **Required:**
 
-- [ ] Pipeline view UI
-- [ ] Filter by stage
-- [ ] Stuck volunteer alerts
+- [ ] Auto-email volunteer their required docs based on ministry
+- [ ] Use ministry requirements config (already built)
+- [ ] Track that docs were sent
+
+---
+
+### 4. Ready for Export Flag
+
+**Impact:** No clear handoff point to ChMS
+**Status:** [ ] Planned
+
+**Required:**
+
+- [ ] Simple "ready for export" status on volunteer
+- [ ] Auto-set when BG check done + docs sent
+- [ ] CSV/API export filtered by ready status
 
 ---
 
@@ -56,8 +69,9 @@
 | Priority | Issue               | Status | PR  |
 | -------- | ------------------- | ------ | --- |
 | 1        | N+1 Query           | ✅ N/A | -   |
-| 2        | Onboarding tracking | 🔄     | -   |
-| 3        | Pipeline dashboard  | [ ]    | -   |
+| 2        | Leader notification | 🔄     | -   |
+| 3        | Document auto-send  | [ ]    | -   |
+| 4        | Ready for export    | [ ]    | -   |
 
 ---
 
@@ -464,51 +478,48 @@ CategoryLeaderAssignment {
 
 ## 🚦 Implementation Status
 
-**✅ Complete (Phase 1):**
+**✅ Complete:**
 
 - Connect card volunteer interest extraction (AI Vision)
 - Volunteer category assignment (Hospitality, Kids, Worship, etc.)
-- Assign to volunteer leader (filtered by category)
-- SMS automation toggle in review queue
-- Team volunteer category assignments
+- Volunteer directory with TanStack Table (sorting, search, filtering)
+- Background check status tracking (column + filter)
+- CSV export (PCO/Breeze compatible format)
+- Settings UI for volunteer onboarding:
+  - Document upload/management (S3 integration)
+  - Ministry requirements config (which ministries need BG checks, training)
+  - Background check provider settings (URL-based for liability)
+  - Template library (10 suggested docs with priority badges)
 
 **🔄 In Progress:**
 
-- Onboarding status tracking (Inquiry → Ready)
-- Onboarding pipeline dashboard
-- Document tracking (which forms sent)
+- Leader auto-notification (email ministry leader when volunteer assigned)
 
-**📋 Planned (Phase 2):**
+**📋 Planned (Focused Scope):**
 
-- Automated SMS/email workflows (welcome, documents, leader intro)
-- Background check integration (Checkr/Sterling)
-- Calendar invite automation (orientation)
-- Progress tracking with automated reminders
-- Planning Center API export
-- Settings & configuration UI
+1. **Document Auto-Send** - Email volunteer their required docs based on ministry config
+2. **Ready for Export Flag** - Simple status when BG check done + docs sent
+3. **ChMS Export** - CSV/API push to Planning Center when ready
 
-**📋 Planned (Phase 4): Bulk Messaging**
-
-**Spec:** `/docs/features/volunteer-management/bulk-messaging-spec.md`
+**📋 Future (Bulk Messaging):**
 
 - Filter volunteers by ministry/location/status/background check
 - Compose messages with merge tags ({first_name}, etc.)
-- Attach calendar links and documents
 - Send via GHL (SMS and/or Email)
-- Delivery tracking (sent, delivered, opened)
-- Message history and templates
 
-**❌ Not Planned:**
+**❌ Not Building (ChMS handles these):**
 
-- Permanent volunteer directory (Planning Center's job)
-- Skills/certification long-term tracking (Planning Center's job)
-- Shift scheduling system (Planning Center's job)
-- Availability management (Planning Center's job)
-- Check-in/check-out tracking (Planning Center's job)
+- Elaborate pipeline/kanban dashboard
+- Permanent volunteer directory
+- Skills/certification long-term tracking
+- Shift scheduling
+- Availability management
+- Check-in/check-out tracking
+- Volunteer hours tracking
 
 ---
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-11-29
 **Document Purpose:** Clarify product vision - we're building onboarding automation, not volunteer management
 **Strategic Position:** Feed Planning Center, don't compete with it
 
