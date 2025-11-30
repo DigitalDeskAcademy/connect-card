@@ -13,7 +13,6 @@ import type { Icon } from "@tabler/icons-react";
 
 interface QuickAction {
   label: string;
-  description: string;
   href: string;
   icon: Icon;
   color: string;
@@ -37,42 +36,36 @@ export function QuickActionsGrid({
   const actions: QuickAction[] = [
     {
       label: "Upload Cards",
-      description: "Scan connect cards",
       href: `/church/${slug}/admin/connect-cards${locationParam}`,
       icon: IconUpload,
       color: "text-blue-500",
     },
     {
       label: "Invite Staff",
-      description: "Add team members",
       href: `/church/${slug}/admin/team`,
       icon: IconUserPlus,
       color: "text-purple-500",
     },
     {
       label: "Assign Prayers",
-      description: "Route to prayer team",
       href: `/church/${slug}/admin/prayer${locationParam}`,
       icon: IconPray,
       color: "text-amber-500",
     },
     {
       label: "Find Volunteers",
-      description: "Match to ministries",
       href: `/church/${slug}/admin/volunteer${locationParam}`,
       icon: IconHeart,
       color: "text-red-500",
     },
     {
       label: "Message Volunteers",
-      description: "Bulk outreach",
       href: `/church/${slug}/admin/volunteer/message${locationParam}`,
       icon: IconSend,
       color: "text-teal-600 dark:text-teal-400",
     },
     {
       label: "Export Data",
-      description: "Sync to ChMS",
       href: `/church/${slug}/admin/integrations`,
       icon: IconRefresh,
       color: "text-cyan-500",
@@ -80,18 +73,15 @@ export function QuickActionsGrid({
   ];
 
   return (
-    <div className="grid grid-cols-5 gap-4">
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
       {actions.map(action => (
         <Link key={action.label} href={action.href}>
-          <div className="aspect-square flex flex-col items-center justify-center p-3 rounded-lg border bg-card hover:bg-accent hover:border-primary/50 transition-all cursor-pointer group">
+          <div className="h-20 flex flex-col items-center justify-center rounded-xl border bg-card shadow-sm hover:bg-accent hover:border-primary/50 transition-all cursor-pointer group">
             <action.icon
-              className={`h-8 w-8 mb-2 ${action.color} group-hover:scale-110 transition-transform`}
+              className={`h-6 w-6 mb-1.5 ${action.color} group-hover:scale-110 transition-transform`}
             />
-            <span className="text-sm font-medium text-center leading-tight">
+            <span className="text-xs font-medium text-center leading-tight px-2">
               {action.label}
-            </span>
-            <span className="text-xs text-muted-foreground text-center mt-1">
-              {action.description}
             </span>
           </div>
         </Link>
