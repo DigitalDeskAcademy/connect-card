@@ -6,7 +6,7 @@ import {
   IconUserPlus,
   IconPray,
   IconHeart,
-  IconRefresh,
+  IconFileExport,
   IconSend,
 } from "@tabler/icons-react";
 import type { Icon } from "@tabler/icons-react";
@@ -66,8 +66,8 @@ export function QuickActionsGrid({
     },
     {
       label: "Export Data",
-      href: `/church/${slug}/admin/integrations`,
-      icon: IconRefresh,
+      href: `/church/${slug}/admin/export`,
+      icon: IconFileExport,
       color: "text-cyan-500",
     },
   ];
