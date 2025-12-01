@@ -42,13 +42,14 @@
 ### 3. Document Auto-Send
 
 **Impact:** Volunteers wait for someone to manually send them paperwork
-**Status:** [ ] Planned
+**Status:** ✅ Complete
 
-**Required:**
+**Implemented:**
 
-- [ ] Auto-email volunteer their required docs based on ministry
-- [ ] Use ministry requirements config (already built)
-- [ ] Track that docs were sent
+- [x] Auto-email volunteer their required docs based on ministry
+- [x] Use ministry requirements config (GLOBAL + ministry-specific docs)
+- [x] Include background check URL if required
+- [x] Include training URL if required
 
 ---
 
@@ -71,8 +72,8 @@
 | -------- | ------------------- | ------ | --- |
 | 1        | N+1 Query           | ✅ N/A | -   |
 | 2        | Leader notification | ✅     | -   |
-| 3        | Document auto-send  | 🔄     | -   |
-| 4        | Ready for export    | [ ]    | -   |
+| 3        | Document auto-send  | ✅     | -   |
+| 4        | Ready for export    | 🔄     | -   |
 
 ---
 
@@ -492,15 +493,15 @@ CategoryLeaderAssignment {
   - Background check provider settings (URL-based for liability)
   - Template library (10 suggested docs with priority badges)
 - Leader auto-notification (email ministry leader when volunteer assigned)
+- Document auto-send (email volunteer their required docs based on ministry)
 
 **🔄 In Progress:**
 
-- Document auto-send (email volunteer their required docs based on ministry)
+- Ready for export flag + ChMS handoff workflow
 
 **📋 Planned (Focused Scope):**
 
-1. **Ready for Export Flag** - Simple status when BG check done + docs sent
-2. **ChMS Export** - CSV/API push to Planning Center when ready
+1. **ChMS Export** - CSV/API push to Planning Center when ready
 
 **📋 Future (Bulk Messaging):**
 
