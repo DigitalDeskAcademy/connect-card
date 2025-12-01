@@ -125,14 +125,14 @@ export function getChurchNavigation(slug: string): NavigationConfig {
             icon: IconChartBar,
           },
           {
-            title: "Training Center",
-            url: `/church/${slug}/admin/courses`,
-            icon: IconSchool,
-          },
-          {
             title: "Export Data",
             url: `/church/${slug}/admin/export`,
             icon: IconFileExport,
+          },
+          {
+            title: "Training Center",
+            url: `/church/${slug}/admin/courses`,
+            icon: IconSchool,
           },
           {
             title: "Connect Cards (Test)",
