@@ -5,17 +5,50 @@ import { prisma } from "@/lib/db";
 import { DataExportFormat, Prisma } from "@/lib/generated/prisma";
 import {
   ExportFilters,
-  ExportPreview,
   ExportWarning,
   getFormatHeaders,
   getPreviewRows,
+  ExportableConnectCard,
 } from "@/lib/export";
+
+/**
+ * Deduplicate cards by email, keeping the most recent card per email.
+ * Cards without email are kept as-is (cannot dedupe without identifier).
+ */
+function deduplicateByEmail(
+  cards: ExportableConnectCard[]
+): ExportableConnectCard[] {
+  const emailMap = new Map<string, ExportableConnectCard>();
+  const noEmailCards: ExportableConnectCard[] = [];
+
+  for (const card of cards) {
+    const email = card.email?.toLowerCase().trim();
+
+    if (!email) {
+      // Keep cards without email (can't dedupe)
+      noEmailCards.push(card);
+      continue;
+    }
+
+    const existing = emailMap.get(email);
+    if (!existing) {
+      emailMap.set(email, card);
+    } else {
+      // Keep the most recent card (cards are already sorted by scannedAt desc)
+      // So the first one we encounter is the most recent
+      // Already have the most recent, skip this one
+    }
+  }
+
+  // Return deduped cards (email-based) + cards without email
+  return [...emailMap.values(), ...noEmailCards];
+}
 
 /**
  * Get Export Preview
  *
- * Fetches a preview of records that will be exported based on filters.
- * Returns sample records and validation warnings for UI display.
+ * Fetches all records that will be exported based on filters.
+ * Deduplicates by email (keeping most recent) and returns all unique records.
  *
  * Security:
  * - Requires dashboard access (church_owner or church_admin)
@@ -24,7 +57,7 @@ import {
  * @param slug - Organization slug for multi-tenant context
  * @param format - Export format for column preview
  * @param filters - Filter options (location, date range, onlyNew)
- * @returns ExportPreview with total count, sample records, and warnings
+ * @returns ExportPreview with unique count, all records, and warnings
  */
 export async function getExportPreview(
   slug: string,
@@ -34,6 +67,8 @@ export async function getExportPreview(
   success: boolean;
   data?: {
     totalCount: number;
+    uniqueCount: number;
+    duplicatesSkipped: number;
     headers: string[];
     sampleRows: string[][];
     warnings: ExportWarning[];
@@ -56,9 +91,10 @@ export async function getExportPreview(
     // 3. Build filter conditions
     const where: Prisma.ConnectCardWhereInput = {
       organizationId: organization.id,
-      // Only export processed cards (EXTRACTED, REVIEWED, or PROCESSED status)
+      // Only export verified cards (REVIEWED or PROCESSED status)
+      // EXTRACTED cards have not been human reviewed and may contain errors/duplicates
       status: {
-        in: ["EXTRACTED", "REVIEWED", "PROCESSED"],
+        in: ["REVIEWED", "PROCESSED"],
       },
     };
 
@@ -83,11 +119,8 @@ export async function getExportPreview(
       where.lastExportedAt = null;
     }
 
-    // 4. Get total count
-    const totalCount = await prisma.connectCard.count({ where });
-
-    // 5. Get sample records for preview (first 5)
-    const sampleRecords = await prisma.connectCard.findMany({
+    // 4. Fetch ALL matching records (sorted by most recent first)
+    const allRecords = await prisma.connectCard.findMany({
       where,
       include: {
         location: {
@@ -95,65 +128,41 @@ export async function getExportPreview(
         },
       },
       orderBy: { scannedAt: "desc" },
-      take: 5,
     });
 
-    // 6. Generate validation warnings
+    const totalCount = allRecords.length;
+
+    // 5. Deduplicate by email (keep most recent per email)
+    const uniqueRecords = deduplicateByEmail(allRecords);
+    const uniqueCount = uniqueRecords.length;
+    const duplicatesSkipped = totalCount - uniqueCount;
+
+    // 6. Generate info messages
     const warnings: ExportWarning[] = [];
 
-    // Count records with missing emails
-    const missingEmailCount = await prisma.connectCard.count({
-      where: {
-        ...where,
-        OR: [{ email: null }, { email: "" }],
-      },
-    });
-    if (missingEmailCount > 0) {
+    // Notify about duplicates skipped
+    if (duplicatesSkipped > 0) {
       warnings.push({
-        type: "missing_email",
-        count: missingEmailCount,
-        message: `${missingEmailCount} record${missingEmailCount === 1 ? "" : "s"} missing email address`,
+        type: "duplicates_skipped",
+        count: duplicatesSkipped,
+        message: `${duplicatesSkipped} duplicate${duplicatesSkipped === 1 ? "" : "s"} skipped (same email, kept most recent)`,
       });
     }
 
-    // Count records with missing phone
-    const missingPhoneCount = await prisma.connectCard.count({
-      where: {
-        ...where,
-        OR: [{ phone: null }, { phone: "" }],
-      },
-    });
-    if (missingPhoneCount > 0) {
-      warnings.push({
-        type: "missing_phone",
-        count: missingPhoneCount,
-        message: `${missingPhoneCount} record${missingPhoneCount === 1 ? "" : "s"} missing phone number`,
-      });
-    }
-
-    // Count records with missing name
-    const missingNameCount = await prisma.connectCard.count({
-      where: {
-        ...where,
-        OR: [{ name: null }, { name: "" }],
-      },
-    });
-    if (missingNameCount > 0) {
-      warnings.push({
-        type: "missing_name",
-        count: missingNameCount,
-        message: `${missingNameCount} record${missingNameCount === 1 ? "" : "s"} missing name`,
-      });
-    }
-
-    // 7. Generate preview data
+    // 7. Generate preview data (all unique records, no limit)
     const headers = getFormatHeaders(format);
-    const sampleRows = getPreviewRows(sampleRecords, format, 5);
+    const sampleRows = getPreviewRows(
+      uniqueRecords,
+      format,
+      uniqueRecords.length
+    );
 
     return {
       success: true,
       data: {
         totalCount,
+        uniqueCount,
+        duplicatesSkipped,
         headers,
         sampleRows,
         warnings,

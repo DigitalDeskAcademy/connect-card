@@ -3,7 +3,7 @@
 **Status:** 🟠 **BLOCKING** - Server actions needed (65% Complete)
 **Worktree:** `/church-connect-hub/prayer`
 **Branch:** `feature/prayer-enhancements`
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-28
 **Owner:** Church Operations Team
 
 ---
@@ -136,10 +136,17 @@ model PrayerRequest {
 
 ### Privacy Model
 
-- **Public**: All staff can see (default)
-- **Private**: Only assigned team member + admins can see
+Three privacy levels (expanding from current boolean):
+
+| Level         | Who Sees Identity         | Who Sees Request       | Follow-up? |
+| ------------- | ------------------------- | ---------------------- | ---------- |
+| **PUBLIC**    | All prayer team           | All prayer team        | Yes        |
+| **PRIVATE**   | Assigned + admins only    | Assigned + admins only | Yes        |
+| **ANONYMOUS** | No one (PII never stored) | All prayer team        | No         |
+
 - **Auto-detection**: Sensitive keywords → auto-mark private
-- **Manual override**: Staff can change privacy
+- **Manual override**: Staff can change privacy (except cannot "un-anonymize")
+- **Anonymous = "Pray for me, don't contact me"**
 
 ### Multi-Tenant Scoping
 
@@ -286,18 +293,98 @@ model PrayerRequest {
 
 ---
 
+### Phase 5: Anonymous Prayer Support
+
+**Goal:** Allow prayer submissions without identity for privacy-sensitive requests
+
+**Key Insight:** Some people want prayer but don't want anyone reaching out. Anonymous means "pray for me, don't contact me."
+
+**Schema Changes:**
+
+```prisma
+model PrayerRequest {
+  // ... existing fields ...
+
+  // Privacy level (replaces boolean isPrivate)
+  privacyLevel           PrayerPrivacyLevel @default(PUBLIC)
+  isAnonymous            Boolean            @default(false)
+
+  // Analytics without PII
+  analyticsCorrelationId String?            @default(uuid())
+
+  // Submission source tracking
+  submissionSource       PrayerSubmissionSource @default(CONNECT_CARD)
+  connectCardAnonymous   Boolean            @default(false)
+}
+
+enum PrayerPrivacyLevel {
+  PUBLIC      // All staff see name + request
+  PRIVATE     // Only assigned + admins see identity
+  ANONYMOUS   // No one sees identity, PII never stored
+}
+
+enum PrayerSubmissionSource {
+  CONNECT_CARD    // From scanned card
+  PUBLIC_FORM     // Website/kiosk (no auth)
+  STAFF_ENTRY     // Manual staff entry
+  MEMBER_PORTAL   // Authenticated member
+}
+```
+
+**Two Anonymous Flows:**
+
+1. **Connect Card with Anonymous Prayer**
+
+   - Person fills out card (name, email, phone)
+   - Checks "Keep my prayer anonymous"
+   - ChurchMember created with full contact info
+   - PrayerRequest created WITHOUT linking PII
+   - Staff can follow up about OTHER things, just not the prayer
+
+2. **Public Prayer Form** (future)
+   - `/church/[slug]/prayer` - no auth required
+   - Just prayer text + optional category
+   - Rate limited by IP/fingerprint
+   - No PII stored at all
+
+**Analytics Without PII:**
+
+The `analyticsCorrelationId` enables trend tracking:
+
+- "40% of prayers this month were anonymous"
+- "Anonymous prayers more likely health-related"
+- Cannot identify individuals
+
+**Tasks:**
+
+1. Add `privacyLevel` enum to schema (migrate from `isPrivate` boolean)
+2. Add `isAnonymous`, `analyticsCorrelationId`, `submissionSource` fields
+3. Add "Keep prayer anonymous" checkbox to connect card review
+4. Update `createPrayerRequestFromConnectCard()` to handle anonymous
+5. Update prayer table to show "Anonymous" instead of name
+6. Add anonymous prayer analytics to dashboard
+
+**Deliverables:**
+
+- Connect card prayers can be marked anonymous
+- No follow-up capability for anonymous (by design)
+- Analytics track anonymous trends without PII
+- Migration path for existing `isPrivate` data
+
+---
+
 ## 🚫 Out of Scope (For MVP)
 
-**Not building (defer to Phase 5+):**
+**Not building (defer to Phase 6+):**
 
 - ❌ Prayer batch grouping (no batching needed)
 - ❌ Prayer team management (use existing team roles)
 - ❌ Bulk operations (CRUD operations are individual)
-- ❌ Advanced reporting/analytics
-- ❌ Prayer wall (public display)
+- ❌ Advanced reporting/analytics (beyond anonymous trends)
 - ❌ Export to PDF/email
 - ❌ GHL SMS notifications
 - ❌ Follow-up automation workflows
+- ❌ Public prayer wall (display answered prayers publicly)
 
 **Rationale:** Ship simple MVP first, add complexity based on church feedback.
 
@@ -409,6 +496,6 @@ Monday morning
 
 ---
 
-**Last Updated:** 2025-11-16
+**Last Updated:** 2025-11-28
 **Status:** Living document - Updated as vision evolves
 **Next Review:** After Phase 1 complete (server actions shipped)

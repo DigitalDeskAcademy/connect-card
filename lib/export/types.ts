@@ -51,8 +51,12 @@ export interface ExportFilters {
  * Export preview result
  */
 export interface ExportPreview {
-  /** Total records matching filters */
+  /** Total records matching filters (before deduplication) */
   totalCount: number;
+  /** Unique records after email deduplication */
+  uniqueCount: number;
+  /** Number of duplicate records skipped */
+  duplicatesSkipped: number;
   /** Sample of first N records */
   sampleRecords: ExportableConnectCard[];
   /** Validation warnings */
@@ -60,10 +64,10 @@ export interface ExportPreview {
 }
 
 /**
- * Export warning for data quality issues
+ * Export info message (e.g., deduplication results)
  */
 export interface ExportWarning {
-  type: "missing_email" | "missing_phone" | "missing_name";
+  type: "duplicates_skipped";
   count: number;
   message: string;
 }

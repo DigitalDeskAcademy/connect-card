@@ -3,7 +3,7 @@
 **Status:** 🟢 **Phase 1 Complete** - Ready for Phase 2
 **Worktree:** `/church-connect-hub/tech-debt`
 **Branch:** `feature/tech-debt`
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-11-28
 
 ---
 
@@ -219,6 +219,27 @@ try {
 
 ---
 
+### 9. Component Organization Cleanup
+
+**Pattern:** Misplaced components violating Single Use = Colocate rule
+**Risk:** Code discoverability, import confusion, duplication
+
+**Components to migrate:**
+
+| Component          | From                                   | To                                 | Reason                  |
+| ------------------ | -------------------------------------- | ---------------------------------- | ----------------------- |
+| `UserDropdown`     | `app/(public)/_components/`            | `/components/shared/`              | Used by 2+ navbars      |
+| `LoginForm`        | `app/(auth)/login/_components/`        | `/components/shared/`              | Used by 2 login pages   |
+| `TrendBadge`       | `app/church/[slug]/admin/_components/` | `/components/dashboard/analytics/` | Generic, reusable       |
+| `ConnectCardChart` | `app/church/[slug]/admin/_components/` | `/components/dashboard/analytics/` | Generic chart component |
+| `AgencyNavbar`     | `app/church/_components/`              | `/components/layout/`              | Shared layout component |
+
+**Convention documented in:** `docs/PLAYBOOK.md` (Component Organization section)
+
+**Status:** [ ] Not started
+
+---
+
 ## 📊 Progress Tracking
 
 | Phase | Issue               | Status | PR  |
@@ -231,6 +252,7 @@ try {
 | 2     | No data abstraction | [ ]    | -   |
 | 3     | Type safety         | [ ]    | -   |
 | 3     | Error swallowing    | [ ]    | -   |
+| 3     | Component cleanup   | [ ]    | -   |
 
 ---
 
@@ -252,4 +274,4 @@ try {
 
 ---
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-11-28

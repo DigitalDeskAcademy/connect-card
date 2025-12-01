@@ -135,11 +135,6 @@ export function getChurchNavigation(slug: string): NavigationConfig {
             icon: IconSchool,
           },
           {
-            title: "Export Data",
-            url: `/church/${slug}/admin/export`,
-            icon: IconFileExport,
-          },
-          {
             title: "Connect Cards (Test)",
             url: `/church/${slug}/admin/connect-cards/test`,
             icon: IconCode,

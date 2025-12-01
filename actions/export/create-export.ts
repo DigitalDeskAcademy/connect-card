@@ -8,6 +8,7 @@ import {
   generateCSV,
   generateExportFilename,
   getCSVByteSize,
+  ExportableConnectCard,
 } from "@/lib/export";
 import { S3 } from "@/lib/S3Client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
@@ -28,9 +29,40 @@ const aj = arcjet.withRule(
 );
 
 /**
+ * Deduplicate cards by email, keeping the most recent card per email.
+ * Cards without email are kept as-is (cannot dedupe without identifier).
+ */
+function deduplicateByEmail(
+  cards: ExportableConnectCard[]
+): ExportableConnectCard[] {
+  const emailMap = new Map<string, ExportableConnectCard>();
+  const noEmailCards: ExportableConnectCard[] = [];
+
+  for (const card of cards) {
+    const email = card.email?.toLowerCase().trim();
+
+    if (!email) {
+      // Keep cards without email (can't dedupe)
+      noEmailCards.push(card);
+      continue;
+    }
+
+    const existing = emailMap.get(email);
+    if (!existing) {
+      emailMap.set(email, card);
+    }
+    // If existing, skip this one (first encountered is most recent due to sort order)
+  }
+
+  // Return deduped cards (email-based) + cards without email
+  return [...emailMap.values(), ...noEmailCards];
+}
+
+/**
  * Create Export
  *
  * Generates a CSV export of connect cards, uploads to S3, and tracks in database.
+ * Deduplicates by email (keeping most recent) before export.
  * Marks exported records with timestamp for "not yet exported" filtering.
  *
  * Security:
@@ -53,6 +85,8 @@ export async function createExport(
     exportId: string;
     fileName: string;
     recordCount: number;
+    uniqueCount: number;
+    duplicatesSkipped: number;
     fileKey: string;
   };
   error?: string;
@@ -86,9 +120,10 @@ export async function createExport(
     // 4. Build filter conditions
     const where: Prisma.ConnectCardWhereInput = {
       organizationId: organization.id,
-      // Only export processed cards
+      // Only export verified cards (REVIEWED or PROCESSED status)
+      // EXTRACTED cards have not been human reviewed and may contain errors/duplicates
       status: {
-        in: ["EXTRACTED", "REVIEWED", "PROCESSED"],
+        in: ["REVIEWED", "PROCESSED"],
       },
     };
 
@@ -113,8 +148,8 @@ export async function createExport(
       where.lastExportedAt = null;
     }
 
-    // 5. Fetch all matching records
-    const cards = await prisma.connectCard.findMany({
+    // 5. Fetch all matching records (sorted by most recent first)
+    const allCards = await prisma.connectCard.findMany({
       where,
       include: {
         location: {
@@ -124,19 +159,23 @@ export async function createExport(
       orderBy: { scannedAt: "desc" },
     });
 
-    if (cards.length === 0) {
+    if (allCards.length === 0) {
       return {
         success: false,
         error: "No records match your filter criteria",
       };
     }
 
-    // 6. Generate CSV content
-    const csvContent = generateCSV(cards, format);
+    // 6. Deduplicate by email (keep most recent per email)
+    const uniqueCards = deduplicateByEmail(allCards);
+    const duplicatesSkipped = allCards.length - uniqueCards.length;
+
+    // 7. Generate CSV content (from unique cards only)
+    const csvContent = generateCSV(uniqueCards, format);
     const fileName = generateExportFilename(format);
     const fileSizeBytes = getCSVByteSize(csvContent);
 
-    // 7. Upload to S3
+    // 8. Upload to S3
     const fileKey = `exports/${organization.slug}/${fileName}`;
     const csvBuffer = Buffer.from(csvContent, "utf-8");
 
@@ -152,13 +191,13 @@ export async function createExport(
       })
     );
 
-    // 8. Create export record in database
+    // 9. Create export record in database
     const exportRecord = await prisma.dataExport.create({
       data: {
         organizationId: organization.id,
         format,
         filters: filters as Prisma.InputJsonValue,
-        recordCount: cards.length,
+        recordCount: uniqueCards.length, // Count unique cards, not total
         fileName,
         fileKey,
         fileSizeBytes,
@@ -166,13 +205,14 @@ export async function createExport(
       },
     });
 
-    // 9. Update lastExportedAt on all exported cards
-    const cardIds = cards.map(card => card.id);
+    // 10. Update lastExportedAt on ALL exported cards (including duplicates)
+    // This ensures duplicates won't appear in future "not yet exported" queries
+    const allCardIds = allCards.map(card => card.id);
     const formatName = format.toLowerCase().replace("_csv", "");
 
     await prisma.connectCard.updateMany({
       where: {
-        id: { in: cardIds },
+        id: { in: allCardIds },
         organizationId: organization.id, // Multi-tenant security
       },
       data: {
@@ -187,7 +227,9 @@ export async function createExport(
       data: {
         exportId: exportRecord.id,
         fileName,
-        recordCount: cards.length,
+        recordCount: allCards.length,
+        uniqueCount: uniqueCards.length,
+        duplicatesSkipped,
         fileKey,
       },
     };

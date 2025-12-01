@@ -11,16 +11,10 @@ import {
 } from "@/actions/export";
 import { ExportFilters, ExportWarning } from "@/lib/export/types";
 import { NavTabs } from "@/components/layout/nav-tabs";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -39,11 +33,20 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
+import {
   Download,
-  AlertTriangle,
   FileSpreadsheet,
   RefreshCw,
   CheckCircle2,
+  Clock,
+  Users,
+  Info,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -59,8 +62,6 @@ interface ExportClientProps {
   activeTab: string;
 }
 
-type RecordFilter = "new" | "all" | "date_range";
-
 export function ExportClient({
   slug,
   locations,
@@ -71,11 +72,12 @@ export function ExportClient({
     "PLANNING_CENTER_CSV"
   );
   const [locationId, setLocationId] = useState<string>("all");
-  const [recordFilter, setRecordFilter] = useState<RecordFilter>("new");
 
   // Preview state
   const [preview, setPreview] = useState<{
     totalCount: number;
+    uniqueCount: number;
+    duplicatesSkipped: number;
     headers: string[];
     sampleRows: string[][];
     warnings: ExportWarning[];
@@ -92,20 +94,18 @@ export function ExportClient({
 
   const formatOptions = getExportFormatOptions();
 
-  // Build filters from form state
+  // Build filters from form state - always sync-focused (only new records)
   const buildFilters = useCallback((): ExportFilters => {
-    const filters: ExportFilters = {};
+    const filters: ExportFilters = {
+      onlyNew: true, // Always show only unsynced records
+    };
 
     if (locationId !== "all") {
       filters.locationId = locationId;
     }
 
-    if (recordFilter === "new") {
-      filters.onlyNew = true;
-    }
-
     return filters;
-  }, [locationId, recordFilter]);
+  }, [locationId]);
 
   // Load preview when filters change
   useEffect(() => {
@@ -128,7 +128,7 @@ export function ExportClient({
     loadPreview();
   }, [slug, formatValue, buildFilters]);
 
-  // Load export history on mount and when tab changes to history
+  // Load export history on mount
   useEffect(() => {
     const loadHistory = async () => {
       setHistoryLoading(true);
@@ -145,6 +145,16 @@ export function ExportClient({
     loadHistory();
   }, [slug]);
 
+  // Trigger file download via programmatic anchor click (React Compiler safe)
+  const triggerDownload = (url: string, filename?: string) => {
+    const link = document.createElement("a");
+    link.href = url;
+    if (filename) link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Handle export
   const handleExport = () => {
     startTransition(async () => {
@@ -152,12 +162,14 @@ export function ExportClient({
       const result = await createExport(slug, formatValue, filters);
 
       if (result.success && result.data) {
-        // Trigger download
-        const downloadUrl = `/api/export/download?id=${result.data.exportId}`;
-        window.location.href = downloadUrl;
+        // Trigger download via anchor click (no page navigation)
+        triggerDownload(
+          `/api/export/download?id=${result.data.exportId}`,
+          result.data.fileName
+        );
 
         setExportSuccess(true);
-        toast.success(`Exported ${result.data.recordCount} records`);
+        toast.success(`Exported ${result.data.uniqueCount} records`);
 
         // Refresh preview and history
         const previewResult = await getExportPreview(
@@ -180,10 +192,8 @@ export function ExportClient({
   };
 
   // Handle re-download from history
-  const handleRedownload = (exportId: string) => {
-    const link = document.createElement("a");
-    link.href = `/api/export/download?id=${exportId}`;
-    link.click();
+  const handleRedownload = (exportId: string, fileName?: string) => {
+    triggerDownload(`/api/export/download?id=${exportId}`, fileName);
   };
 
   const formatLabel = (f: DataExportFormat) => {
@@ -210,320 +220,350 @@ export function ExportClient({
         baseUrl={`/church/${slug}/admin/export`}
         tabs={[
           { label: "Export", value: "export" },
-          { label: "History", value: "history", count: history.length },
+          { label: "History", value: "history" },
         ]}
       />
 
       {activeTab === "history" ? (
         // History Tab Content
-        <div className="p-4 lg:p-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Export History</CardTitle>
-              <CardDescription>
-                Download previous exports or view export details
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {historyLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                  <Skeleton className="h-12 w-full" />
-                </div>
-              ) : history.length > 0 ? (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Format</TableHead>
-                        <TableHead>Records</TableHead>
-                        <TableHead>Size</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className="w-[100px]">Actions</TableHead>
+        <Card className="flex flex-col h-full">
+          <CardHeader>
+            <CardTitle>Export History</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col flex-1 min-h-0">
+            {historyLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            ) : history.length > 0 ? (
+              <div className="rounded-md border flex-1 overflow-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="px-4 border-r last:border-r-0 border-border">
+                        Format
+                      </TableHead>
+                      <TableHead className="px-4 border-r last:border-r-0 border-border">
+                        Records
+                      </TableHead>
+                      <TableHead className="px-4 border-r last:border-r-0 border-border">
+                        Size
+                      </TableHead>
+                      <TableHead className="px-4 border-r last:border-r-0 border-border">
+                        Date
+                      </TableHead>
+                      <TableHead className="px-4 border-r last:border-r-0 border-border w-[100px]">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody className="[&_tr:last-child]:border-b">
+                    {history.map(item => (
+                      <TableRow key={item.id}>
+                        <TableCell className="px-4 border-r last:border-r-0 border-border">
+                          <div className="flex items-center gap-2">
+                            <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+                            <span className="font-medium">
+                              {formatLabel(item.format)}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-4 border-r last:border-r-0 border-border">
+                          {item.recordCount}
+                        </TableCell>
+                        <TableCell className="px-4 border-r last:border-r-0 border-border">
+                          {formatBytes(item.fileSizeBytes)}
+                        </TableCell>
+                        <TableCell className="px-4 border-r last:border-r-0 border-border">
+                          <div className="flex flex-col">
+                            <span className="text-sm">
+                              {format(new Date(item.exportedAt), "MMM d, yyyy")}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(item.exportedAt), {
+                                addSuffix: true,
+                              })}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="px-4 border-r last:border-r-0 border-border">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              handleRedownload(item.id, item.fileName)
+                            }
+                            className="gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </Button>
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {history.map(item => (
-                        <TableRow key={item.id}>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-medium">
-                                {formatLabel(item.format)}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{item.recordCount}</TableCell>
-                          <TableCell>
-                            {formatBytes(item.fileSizeBytes)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col">
-                              <span className="text-sm">
-                                {format(
-                                  new Date(item.exportedAt),
-                                  "MMM d, yyyy"
-                                )}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {formatDistanceToNow(
-                                  new Date(item.exportedAt),
-                                  {
-                                    addSuffix: true,
-                                  }
-                                )}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleRedownload(item.id)}
-                              className="gap-2"
-                            >
-                              <Download className="h-4 w-4" />
-                              Download
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-12 text-center">
-                  <FileSpreadsheet className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No exports yet</h3>
-                  <p className="text-sm text-muted-foreground max-w-md">
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <FileSpreadsheet className="h-8 w-8" />
+                  </EmptyMedia>
+                  <EmptyTitle>No exports yet</EmptyTitle>
+                  <EmptyDescription>
                     Export your connect cards to see them here. You can
                     re-download any previous export.
-                  </p>
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        // Export Tab Content - Sync-focused UI
+        <div className="space-y-4">
+          {/* Sync Status Summary Card */}
+          <Card className="border-l-4 border-l-primary">
+            <CardContent className="pt-6">
+              <div className="flex justify-between items-center">
+                {/* Last Synced */}
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-muted rounded-lg">
+                    <Clock className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                      Last Synced
+                    </p>
+                    {historyLoading ? (
+                      <Skeleton className="h-6 w-24 mt-1" />
+                    ) : history.length > 0 ? (
+                      <>
+                        <p className="text-lg font-semibold">
+                          {formatDistanceToNow(
+                            new Date(history[0].exportedAt),
+                            {
+                              addSuffix: true,
+                            }
+                          )}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(
+                            new Date(history[0].exportedAt),
+                            "MMM d, h:mm a"
+                          )}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-lg font-semibold text-muted-foreground">
+                        Never
+                      </p>
+                    )}
+                  </div>
                 </div>
-              )}
+
+                {/* Pending Count */}
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">
+                      Ready to Sync
+                    </p>
+                    {previewLoading ? (
+                      <Skeleton className="h-8 w-16 mt-1 ml-auto" />
+                    ) : (
+                      <p className="text-3xl font-bold text-primary text-right">
+                        {preview?.uniqueCount ?? 0}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground text-right">
+                      new visitor{(preview?.uniqueCount ?? 0) !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-        </div>
-      ) : (
-        // Export Tab Content
-        <div className="p-4 lg:p-6 space-y-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Export Settings */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Export Settings</CardTitle>
-                <CardDescription>
-                  Choose your export format and filter options
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+
+          {/* Export Settings & Preview */}
+          <Card className="flex flex-col h-full">
+            <CardHeader className="flex-shrink-0 space-y-4">
+              {/* Title and Download Button */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <CardTitle>Export to ChMS</CardTitle>
+                  {exportSuccess && (
+                    <Badge
+                      variant="outline"
+                      className="border-green-200 bg-green-50 text-green-700"
+                    >
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      Exported
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  onClick={handleExport}
+                  disabled={isPending || !preview || preview.uniqueCount === 0}
+                  className="gap-2"
+                >
+                  {isPending ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                  {isPending ? "Exporting..." : "Download CSV"}
+                </Button>
+              </div>
+
+              {/* Filters Row */}
+              <div className="flex flex-wrap items-end gap-4">
                 {/* Format Selection */}
-                <div className="space-y-3">
-                  <Label>Export Format</Label>
-                  <RadioGroup
+                <div className="space-y-2">
+                  <Label>Format</Label>
+                  <Select
                     value={formatValue}
                     onValueChange={(v: string) =>
                       setFormatValue(v as DataExportFormat)
                     }
-                    className="grid gap-3"
                   >
-                    {formatOptions.map(option => (
-                      <div
-                        key={option.value}
-                        className="flex items-start space-x-3"
-                      >
-                        <RadioGroupItem
-                          value={option.value}
-                          id={option.value}
-                          className="mt-1"
-                        />
-                        <div className="grid gap-1">
-                          <Label
-                            htmlFor={option.value}
-                            className="font-medium cursor-pointer"
-                          >
-                            {option.label}
-                          </Label>
-                          <p className="text-sm text-muted-foreground">
-                            {option.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
-
-                {/* Location Filter */}
-                <div className="space-y-2">
-                  <Label htmlFor="location">Location</Label>
-                  <Select value={locationId} onValueChange={setLocationId}>
-                    <SelectTrigger id="location">
-                      <SelectValue placeholder="All locations" />
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Locations</SelectItem>
-                      {locations.map(loc => (
-                        <SelectItem key={loc.id} value={loc.id}>
-                          {loc.name}
+                      {formatOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Record Filter */}
-                <div className="space-y-3">
-                  <Label>Records to Export</Label>
-                  <RadioGroup
-                    value={recordFilter}
-                    onValueChange={(v: string) =>
-                      setRecordFilter(v as RecordFilter)
-                    }
-                    className="space-y-2"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="new" id="new" />
-                      <Label
-                        htmlFor="new"
-                        className="font-normal cursor-pointer"
-                      >
-                        Not yet exported
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="all" id="all" />
-                      <Label
-                        htmlFor="all"
-                        className="font-normal cursor-pointer"
-                      >
-                        All records
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Preview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  Preview
-                  {previewLoading && (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  {preview ? (
-                    <>
-                      {preview.totalCount} record
-                      {preview.totalCount !== 1 ? "s" : ""} will be exported
-                    </>
-                  ) : (
-                    "Loading preview..."
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {/* Warnings */}
-                {preview && preview.warnings.length > 0 && (
-                  <div className="mb-4 space-y-2">
-                    {preview.warnings.map((warning, idx) => (
-                      <Alert
-                        key={idx}
-                        variant="default"
-                        className="border-yellow-200 bg-yellow-50"
-                      >
-                        <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                        <AlertDescription className="text-yellow-800">
-                          {warning.message}
-                        </AlertDescription>
-                      </Alert>
-                    ))}
-                  </div>
-                )}
-
-                {/* Preview Table */}
-                {previewLoading ? (
+                {/* Location Filter */}
+                {locations.length > 1 && (
                   <div className="space-y-2">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ) : preview && preview.sampleRows.length > 0 ? (
-                  <div className="rounded-md border overflow-x-auto max-h-[300px]">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          {preview.headers.slice(0, 4).map((header, idx) => (
-                            <TableHead key={idx} className="whitespace-nowrap">
-                              {header}
-                            </TableHead>
-                          ))}
-                          {preview.headers.length > 4 && (
-                            <TableHead className="text-muted-foreground">
-                              +{preview.headers.length - 4} more
-                            </TableHead>
-                          )}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {preview.sampleRows.map((row, rowIdx) => (
-                          <TableRow key={rowIdx}>
-                            {row.slice(0, 4).map((cell, cellIdx) => (
-                              <TableCell
-                                key={cellIdx}
-                                className="whitespace-nowrap"
-                              >
-                                {cell || (
-                                  <span className="text-muted-foreground">
-                                    —
-                                  </span>
-                                )}
-                              </TableCell>
-                            ))}
-                            {row.length > 4 && (
-                              <TableCell className="text-muted-foreground">
-                                ...
-                              </TableCell>
-                            )}
-                          </TableRow>
+                    <Label>Location</Label>
+                    <Select value={locationId} onValueChange={setLocationId}>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="All locations" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {locations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            {loc.name}
+                          </SelectItem>
                         ))}
-                      </TableBody>
-                    </Table>
+                      </SelectContent>
+                    </Select>
                   </div>
-                ) : (
-                  <p className="text-muted-foreground text-center py-8">
-                    No records match your filter criteria
-                  </p>
                 )}
+              </div>
 
-                {/* Export Button */}
-                <div className="mt-6 flex items-center gap-4">
-                  <Button
-                    onClick={handleExport}
-                    disabled={isPending || !preview || preview.totalCount === 0}
-                    className="gap-2"
-                  >
-                    {isPending ? (
-                      <RefreshCw className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Download className="h-4 w-4" />
+              {/* Status Badges */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {previewLoading ? (
+                  <Skeleton className="h-6 w-32" />
+                ) : preview ? (
+                  <>
+                    <Badge variant="default">
+                      {preview.uniqueCount} record
+                      {preview.uniqueCount !== 1 ? "s" : ""} ready
+                    </Badge>
+                    {preview.duplicatesSkipped > 0 && (
+                      <Badge variant="secondary">
+                        {preview.duplicatesSkipped} duplicate
+                        {preview.duplicatesSkipped !== 1 ? "s" : ""} merged
+                      </Badge>
                     )}
-                    {isPending ? "Exporting..." : "Download CSV"}
-                  </Button>
+                  </>
+                ) : null}
+              </div>
 
-                  {exportSuccess && (
-                    <span className="text-sm text-green-600 flex items-center gap-1">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Export complete
-                    </span>
-                  )}
+              {/* ChMS-specific tip */}
+              {formatValue === "PLANNING_CENTER_CSV" && (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    Planning Center matches contacts by email. If you import the
+                    same email twice, it will update the existing contact.
+                  </AlertDescription>
+                </Alert>
+              )}
+              {formatValue === "BREEZE_CSV" && (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    Breeze uses email to match existing people. New emails
+                    create new profiles automatically.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </CardHeader>
+
+            <CardContent className="flex flex-col flex-1 min-h-0">
+              {/* Preview Table */}
+              {previewLoading ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              ) : preview && preview.uniqueCount > 0 ? (
+                <div className="rounded-md border flex-1 overflow-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {preview.headers.map((header, idx) => (
+                          <TableHead
+                            key={idx}
+                            className="px-4 border-r last:border-r-0 border-border whitespace-nowrap"
+                          >
+                            {header}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="[&_tr:last-child]:border-b">
+                      {preview.sampleRows.map((row, rowIdx) => (
+                        <TableRow key={rowIdx}>
+                          {row.map((cell, cellIdx) => (
+                            <TableCell
+                              key={cellIdx}
+                              className="px-4 border-r last:border-r-0 border-border whitespace-nowrap"
+                            >
+                              {cell || (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <Empty>
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <CheckCircle2 className="h-8 w-8 text-green-500" />
+                    </EmptyMedia>
+                    <EmptyTitle>All caught up!</EmptyTitle>
+                    <EmptyDescription>
+                      No new connect cards to export. All visitors have been
+                      synced to your ChMS.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
     </>
