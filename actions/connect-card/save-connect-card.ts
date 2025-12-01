@@ -13,6 +13,10 @@ import {
   incrementBatchCardCount,
 } from "@/lib/data/connect-card-batch";
 import { calculateImageHash } from "@/lib/utils/image-hash";
+import {
+  toValidationIssuesJson,
+  validateJsonSize,
+} from "@/lib/prisma/json-types";
 
 /**
  * Normalize Visit Status
@@ -120,6 +124,22 @@ export async function saveConnectCard(
     };
   }
 
+  // 3b. JSON Size Validation (prevents storage exhaustion attacks)
+  const sizeCheck = validateJsonSize(validation.data.extractedData);
+  if (!sizeCheck.valid) {
+    return {
+      status: "error",
+      message: "Extracted data exceeds maximum size limit",
+    };
+  }
+  // Log warning for large payloads (monitoring)
+  if (sizeCheck.warning) {
+    console.warn(
+      `[MONITORING] Large extractedData payload: ${sizeCheck.bytes} bytes`,
+      { organizationId: organization.id, userId: session.user.id }
+    );
+  }
+
   // 4. Data Quality Validation
   const validationResult = validateConnectCardData(
     validation.data.extractedData
@@ -184,14 +204,17 @@ export async function saveConnectCard(
     });
 
     if (duplicateImage) {
+      // Note: Error responses don't include data field (typed for success only)
+      // Include duplicate info in the message for user context
       return {
         status: "error",
-        message:
-          "Duplicate image detected - this exact card has already been scanned",
-        data: {
-          duplicateType: "image",
-          existingCard: duplicateImage,
-        } as never,
+        message: `Duplicate image detected - this card was already scanned${
+          duplicateImage.name ? ` for ${duplicateImage.name}` : ""
+        }${
+          duplicateImage.scannedAt
+            ? ` on ${new Date(duplicateImage.scannedAt).toLocaleDateString()}`
+            : ""
+        }`,
       };
     }
 
@@ -228,8 +251,8 @@ export async function saveConnectCard(
         // Status: All cards go to review queue initially (EXTRACTED)
         // Staff can batch approve or review individually
         status: "EXTRACTED",
-        // Store validation issues for review UI (cast to JSON for Prisma)
-        validationIssues: validationResult.issues as never,
+        // Store validation issues for review UI (type-safe JSON conversion)
+        validationIssues: toValidationIssuesJson(validationResult.issues),
         scannedBy: session.user.id,
         scannedAt: new Date(),
         // Use provided locationId or staff member's default campus

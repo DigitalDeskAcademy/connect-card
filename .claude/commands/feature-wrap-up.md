@@ -209,8 +209,10 @@ Ask: "Need manual testing before merge? (yes/no)"
 ### 6.2: Merge PR
 
 ```bash
-gh pr merge <pr-number> --squash --delete-branch
+gh pr merge <pr-number> --squash
 ```
+
+**Note:** We do NOT use `--delete-branch` because worktrees keep feature branches for continued development. The branch stays on the remote and locally in the worktree.
 
 ### 6.3: Verify
 
