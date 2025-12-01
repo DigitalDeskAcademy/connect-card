@@ -3,7 +3,7 @@
 **Status:** 🟡 **IN PROGRESS** - Onboarding features in development
 **Worktree:** `/church-connect-hub/volunteer`
 **Branch:** `feature/volunteer-management`
-**Last Updated:** 2025-11-28
+**Last Updated:** 2025-11-30
 **Focus:** Onboarding Automation (Not Volunteer Management)
 
 ---
@@ -28,26 +28,28 @@
 ### 2. Leader Auto-Notification
 
 **Impact:** Ministry leaders don't know when someone wants to volunteer
-**Status:** 🔄 In progress
+**Status:** ✅ Complete
 
-**Required:**
+**Implemented:**
 
-- [ ] Auto-email ministry leader when volunteer assigned
-- [ ] Include volunteer info (name, email, phone, interests)
-- [ ] Optional SMS notification
+- [x] Auto-email ministry leader when volunteer assigned
+- [x] Include volunteer info (name, email, phone, category)
+- [x] Dashboard link for quick access
+- [ ] Optional SMS notification (future)
 
 ---
 
 ### 3. Document Auto-Send
 
 **Impact:** Volunteers wait for someone to manually send them paperwork
-**Status:** [ ] Planned
+**Status:** ✅ Complete
 
-**Required:**
+**Implemented:**
 
-- [ ] Auto-email volunteer their required docs based on ministry
-- [ ] Use ministry requirements config (already built)
-- [ ] Track that docs were sent
+- [x] Auto-email volunteer their required docs based on ministry
+- [x] Use ministry requirements config (GLOBAL + ministry-specific docs)
+- [x] Include background check URL if required
+- [x] Include training URL if required
 
 ---
 
@@ -69,9 +71,9 @@
 | Priority | Issue               | Status | PR  |
 | -------- | ------------------- | ------ | --- |
 | 1        | N+1 Query           | ✅ N/A | -   |
-| 2        | Leader notification | 🔄     | -   |
-| 3        | Document auto-send  | [ ]    | -   |
-| 4        | Ready for export    | [ ]    | -   |
+| 2        | Leader notification | ✅     | -   |
+| 3        | Document auto-send  | ✅     | -   |
+| 4        | Ready for export    | 🔄     | -   |
 
 ---
 
@@ -490,16 +492,16 @@ CategoryLeaderAssignment {
   - Ministry requirements config (which ministries need BG checks, training)
   - Background check provider settings (URL-based for liability)
   - Template library (10 suggested docs with priority badges)
+- Leader auto-notification (email ministry leader when volunteer assigned)
+- Document auto-send (email volunteer their required docs based on ministry)
 
 **🔄 In Progress:**
 
-- Leader auto-notification (email ministry leader when volunteer assigned)
+- Ready for export flag + ChMS handoff workflow
 
 **📋 Planned (Focused Scope):**
 
-1. **Document Auto-Send** - Email volunteer their required docs based on ministry config
-2. **Ready for Export Flag** - Simple status when BG check done + docs sent
-3. **ChMS Export** - CSV/API push to Planning Center when ready
+1. **ChMS Export** - CSV/API push to Planning Center when ready
 
 **📋 Future (Bulk Messaging):**
 
@@ -519,7 +521,7 @@ CategoryLeaderAssignment {
 
 ---
 
-**Last Updated:** 2025-11-28
+**Last Updated:** 2025-11-30
 **Document Purpose:** Clarify product vision - we're building onboarding automation, not volunteer management
 **Strategic Position:** Feed Planning Center, don't compete with it
 
