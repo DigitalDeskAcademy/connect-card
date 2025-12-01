@@ -119,9 +119,39 @@ export async function actionName(
 
 #### Component Organization
 
+**Rule: Single Use = Colocate, Multiple Use = Centralize**
+
 ```
-/components/dashboard/{feature}/     # Shared components
-/app/church/[slug]/admin/{feature}/  # Pages only, no _components folders
+/components/
+├── ui/                    # shadcn/ui primitives (DO NOT MODIFY)
+├── layout/                # Navbars, page containers, wrappers
+├── sidebar/               # Sidebar navigation components
+├── shared/                # Cross-cutting reusable components (UserDropdown, LoginForm)
+└── dashboard/{feature}/   # Feature-specific shared components (tables, forms, dialogs)
+
+/app/{route}/_components/  # Page-specific components ONLY (Next.js private folder convention)
+```
+
+**When to use `_components/` (colocated):**
+
+- Component is used by exactly ONE page
+- Component is a "client wrapper" for a server page (e.g., `DashboardClient.tsx`)
+- Component contains page-specific business logic
+
+**When to use `/components/` (centralized):**
+
+- Component is used by 2+ unrelated pages
+- Component is a reusable UI pattern (forms, tables, dialogs)
+- Component could be used by platform AND church admin
+
+**Import patterns:**
+
+```typescript
+// Colocated (relative import)
+import { DashboardClient } from "./_components/DashboardClient";
+
+// Centralized (absolute import)
+import { VolunteersTable } from "@/components/dashboard/volunteers/volunteers-table";
 ```
 
 #### Data Access
