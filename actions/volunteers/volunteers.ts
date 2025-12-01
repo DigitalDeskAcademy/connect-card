@@ -690,12 +690,18 @@ export async function processVolunteer(
     }
 
     // 5. Update volunteer status to ACTIVE and optionally update background check
+    const bgCheckCleared = backgroundCheckStatus === "CLEARED";
     await prisma.volunteer.update({
       where: { id: volunteerId },
       data: {
         status: "ACTIVE",
         ...(backgroundCheckStatus && {
           backgroundCheckStatus: backgroundCheckStatus as BackgroundCheckStatus,
+        }),
+        // Mark as ready for export when BG check is cleared
+        ...(bgCheckCleared && {
+          readyForExport: true,
+          readyForExportDate: new Date(),
         }),
       },
     });

@@ -557,6 +557,37 @@ export async function updateConnectCard(
           });
 
           documentsSent = true;
+
+          // Check if volunteer can be marked as ready for export
+          // Ready = docs sent + (BG check not required OR BG check cleared)
+          if (churchMemberId) {
+            const bgCheckNotRequired =
+              !ministryRequirements?.backgroundCheckRequired;
+
+            // Find the volunteer and check their BG check status
+            const volunteer = await prisma.volunteer.findFirst({
+              where: {
+                churchMemberId,
+                organizationId: organization.id,
+              },
+              select: { id: true, backgroundCheckStatus: true },
+            });
+
+            if (volunteer) {
+              const bgCheckCleared =
+                volunteer.backgroundCheckStatus === "CLEARED";
+
+              if (bgCheckNotRequired || bgCheckCleared) {
+                await prisma.volunteer.update({
+                  where: { id: volunteer.id },
+                  data: {
+                    readyForExport: true,
+                    readyForExportDate: new Date(),
+                  },
+                });
+              }
+            }
+          }
         }
       } catch {
         // Document send failed but card processing continues

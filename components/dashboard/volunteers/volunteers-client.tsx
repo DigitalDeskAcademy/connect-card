@@ -14,6 +14,8 @@ export type VolunteerWithRelations = {
   status: string;
   startDate: Date;
   backgroundCheckStatus: string;
+  readyForExport: boolean;
+  readyForExportDate: Date | null;
   churchMember: {
     name: string;
     email: string | null;

@@ -112,6 +112,7 @@ export function VolunteerDataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL");
   const [bgCheckFilter, setBgCheckFilter] = useState<string>("ALL");
+  const [exportReadyFilter, setExportReadyFilter] = useState<string>("ALL");
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
   const [selectedVolunteer, setSelectedVolunteer] =
     useState<VolunteerWithRelations | null>(null);
@@ -169,6 +170,7 @@ export function VolunteerDataTable<TData, TValue>({
       "Email",
       "Phone",
       "Background Check Status",
+      "Export Ready",
       "Categories",
       "Start Date",
       "Status",
@@ -196,6 +198,7 @@ export function VolunteerDataTable<TData, TValue>({
         volunteer.churchMember?.email || "",
         volunteer.churchMember?.phone || "",
         volunteer.backgroundCheckStatus || "NOT_STARTED",
+        volunteer.readyForExport ? "Yes" : "No",
         categories,
         startDate,
         volunteer.status,
@@ -293,6 +296,14 @@ export function VolunteerDataTable<TData, TValue>({
       ?.setFilterValue(value === "ALL" ? undefined : value);
   };
 
+  // Handle export ready filter changes
+  const handleExportReadyFilterChange = (value: string) => {
+    setExportReadyFilter(value);
+    table
+      .getColumn("readyForExport")
+      ?.setFilterValue(value === "ALL" ? undefined : value);
+  };
+
   // Calculate pagination details
   const currentPage = table.getState().pagination.pageIndex + 1;
   const totalPages = table.getPageCount();
@@ -379,6 +390,21 @@ export function VolunteerDataTable<TData, TValue>({
               <SelectItem value="NOT_STARTED">Not Started</SelectItem>
               <SelectItem value="FLAGGED">Flagged</SelectItem>
               <SelectItem value="EXPIRED">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Export Ready Filter */}
+          <Select
+            value={exportReadyFilter}
+            onValueChange={handleExportReadyFilterChange}
+          >
+            <SelectTrigger className="w-full sm:w-[150px] flex-shrink-0">
+              <SelectValue placeholder="Export status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All</SelectItem>
+              <SelectItem value="READY">Ready to Export</SelectItem>
+              <SelectItem value="PENDING">Not Ready</SelectItem>
             </SelectContent>
           </Select>
 

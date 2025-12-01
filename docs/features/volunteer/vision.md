@@ -56,13 +56,14 @@
 ### 4. Ready for Export Flag
 
 **Impact:** No clear handoff point to ChMS
-**Status:** [ ] Planned
+**Status:** ✅ Complete
 
-**Required:**
+**Implemented:**
 
-- [ ] Simple "ready for export" status on volunteer
-- [ ] Auto-set when BG check done + docs sent
-- [ ] CSV/API export filtered by ready status
+- [x] `readyForExport` boolean field on Volunteer model
+- [x] Auto-set when BG check done + docs sent (or BG not required)
+- [x] "Export Ready" column in volunteer table with filter
+- [x] CSV export includes Export Ready status
 
 ---
 
@@ -71,9 +72,9 @@
 | Priority | Issue               | Status | PR  |
 | -------- | ------------------- | ------ | --- |
 | 1        | N+1 Query           | ✅ N/A | -   |
-| 2        | Leader notification | ✅     | -   |
-| 3        | Document auto-send  | ✅     | -   |
-| 4        | Ready for export    | 🔄     | -   |
+| 2        | Leader notification | ✅     | #47 |
+| 3        | Document auto-send  | ✅     | #47 |
+| 4        | Ready for export    | ✅     | -   |
 
 ---
 
@@ -494,14 +495,11 @@ CategoryLeaderAssignment {
   - Template library (10 suggested docs with priority badges)
 - Leader auto-notification (email ministry leader when volunteer assigned)
 - Document auto-send (email volunteer their required docs based on ministry)
+- Ready for export flag + filter (auto-set when BG check done or not required)
 
-**🔄 In Progress:**
+**📋 Planned (Future):**
 
-- Ready for export flag + ChMS handoff workflow
-
-**📋 Planned (Focused Scope):**
-
-1. **ChMS Export** - CSV/API push to Planning Center when ready
+1. **ChMS API Integration** - Direct API push to Planning Center when ready
 
 **📋 Future (Bulk Messaging):**
 

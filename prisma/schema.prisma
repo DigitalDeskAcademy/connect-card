@@ -835,6 +835,10 @@ model Volunteer {
   backgroundCheckDate   DateTime?
   /// Background check expiration date (typically 2-3 years)
   backgroundCheckExpiry DateTime?
+  /// Whether volunteer is ready to be exported to ChMS (BG check done + docs sent)
+  readyForExport        Boolean                    @default(false)
+  /// Date when volunteer was marked ready for export
+  readyForExportDate    DateTime?
   /// Notes about the volunteer (preferences, restrictions, etc.)
   notes                 String?
   /// Custom fields for church-specific data
