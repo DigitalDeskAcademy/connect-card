@@ -3,7 +3,7 @@
 **Status:** 🟢 **Phase 1 Complete** - Ready for Phase 2
 **Worktree:** `/church-connect-hub/tech-debt`
 **Branch:** `feature/tech-debt`
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-11-29
 
 ---
 
@@ -197,7 +197,46 @@ const cards = await prisma.connectCard.findMany({
 **Pattern:** `as never` casts throughout codebase
 **Risk:** Runtime errors, silent failures
 
-**Status:** [ ] Not started
+**The Problem:**
+
+```typescript
+// BAD - bypasses all type checking
+validationIssues: result.issues as never,
+extractedData: z.any().nullable(),  // Accepts anything - security risk!
+```
+
+**The Fix (Industry Standard):**
+
+1. **Created branded types for Prisma Json fields** (`lib/prisma/json-types.ts`):
+
+   - `ValidationIssuesJson` - type-safe validation issues
+   - `DuplicateMarkerJson` - type-safe duplicate markers
+   - Converter functions with runtime validation
+
+2. **Replaced `z.any()` with strict schema** (`lib/zodSchemas.ts`):
+
+   - `extractedDataSchema` with size limits on all fields
+   - Prevents storage exhaustion attacks
+   - Compile-time type inference
+
+3. **Added JSON size validation** (`lib/prisma/json-types.ts`):
+
+   - `validateJsonSize()` - prevents >1MB payloads
+   - `validateJsonDepth()` - prevents deep nesting attacks
+   - Monitoring for large payloads
+
+4. **Data normalization at boundaries** (`upload-client.tsx`):
+   - `normalizeExtractedData()` - coerces AI responses to typed schema
+
+**Files Fixed:**
+
+- [x] `lib/zodSchemas.ts` - strict `extractedDataSchema`
+- [x] `lib/prisma/json-types.ts` - NEW: branded types + converters
+- [x] `actions/connect-card/save-connect-card.ts` - uses type-safe converters
+- [x] `actions/connect-card/mark-duplicate.ts` - uses type-safe converters
+- [x] `app/church/[slug]/admin/connect-cards/upload/upload-client.tsx` - normalizes AI data
+
+**Status:** [x] Complete
 
 ---
 
@@ -229,7 +268,7 @@ try {
 | 1     | No pagination       | [x]    | #42 |
 | 2     | No caching          | [ ]    | -   |
 | 2     | No data abstraction | [ ]    | -   |
-| 3     | Type safety         | [ ]    | -   |
+| 3     | Type safety         | [x]    | -   |
 | 3     | Error swallowing    | [ ]    | -   |
 
 ---
@@ -252,4 +291,4 @@ try {
 
 ---
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-11-29
