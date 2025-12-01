@@ -10,7 +10,7 @@ import {
   FileText,
   Trash2,
   Loader2,
-  FileDown,
+  Download,
   AlertTriangle,
 } from "lucide-react";
 import {
@@ -110,7 +110,7 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
           </p>
         </div>
         <Button onClick={handleExportClick} className="gap-2">
-          <FileDown className="h-4 w-4" />
+          <Download className="h-4 w-4" />
           Export to ChMS
         </Button>
       </div>
@@ -272,16 +272,21 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
               variant="outline"
               onClick={() => {
                 setExportWarningOpen(false);
-                // Navigate to pending batches or show them
-                router.push(
-                  `/church/${slug}/admin/connect-cards/batches?status=pending`
-                );
+                // Navigate to first pending batch for review
+                if (pendingBatches[0]) {
+                  router.push(
+                    `/church/${slug}/admin/connect-cards/review/${pendingBatches[0].id}`
+                  );
+                }
               }}
             >
               Review Pending Batches
             </Button>
             <AlertDialogAction
-              onClick={() => router.push(`/church/${slug}/admin/export`)}
+              onClick={() => {
+                setExportWarningOpen(false);
+                router.push(`/church/${slug}/admin/export`);
+              }}
             >
               Export Anyway
             </AlertDialogAction>

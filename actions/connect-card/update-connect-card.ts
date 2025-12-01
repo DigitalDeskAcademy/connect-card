@@ -12,7 +12,17 @@ import { request } from "@arcjet/next";
 import { formatPhoneNumber } from "@/lib/utils";
 import { createPrayerRequestFromConnectCard } from "@/lib/data/prayer-requests";
 import { updateBatchStatus } from "@/lib/data/connect-card-batch";
-import { VolunteerCategoryType } from "@/lib/generated/prisma";
+import { VolunteerCategoryType, DocumentScope } from "@/lib/generated/prisma";
+import { resend, DEFAULT_FROM_EMAIL } from "@/lib/email/client";
+import {
+  getVolunteerLeaderNotificationEmail,
+  getVolunteerLeaderNotificationText,
+} from "@/lib/email/templates/volunteer-leader-notification";
+import {
+  getVolunteerDocumentsEmail,
+  getVolunteerDocumentsText,
+} from "@/lib/email/templates/volunteer-documents";
+import { env } from "@/lib/env";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -386,7 +396,174 @@ export async function updateConnectCard(
       }
     }
 
-    // 9. Build response message
+    // 9. Send leader notification email if leader was assigned
+    let leaderNotified = false;
+    if (
+      validation.data.assignedLeaderId &&
+      validation.data.volunteerCategory &&
+      validation.data.sendMessageToLeader
+    ) {
+      try {
+        // Get the assigned leader's info
+        const leader = await prisma.user.findUnique({
+          where: { id: validation.data.assignedLeaderId },
+          select: { name: true, email: true },
+        });
+
+        if (leader?.email) {
+          const dashboardUrl = `${env.NEXT_PUBLIC_APP_URL}/church/${slug}/admin/volunteer`;
+
+          const emailHtml = getVolunteerLeaderNotificationEmail({
+            churchName: organization.name,
+            leaderName: leader.name || "Ministry Leader",
+            volunteerName: cardName || "New Volunteer",
+            volunteerEmail: cardEmail || null,
+            volunteerPhone: cardPhone || null,
+            volunteerCategory: validation.data.volunteerCategory,
+            dashboardUrl,
+          });
+
+          const emailText = getVolunteerLeaderNotificationText({
+            churchName: organization.name,
+            leaderName: leader.name || "Ministry Leader",
+            volunteerName: cardName || "New Volunteer",
+            volunteerEmail: cardEmail || null,
+            volunteerPhone: cardPhone || null,
+            volunteerCategory: validation.data.volunteerCategory,
+            dashboardUrl,
+          });
+
+          await resend.emails.send({
+            from: DEFAULT_FROM_EMAIL,
+            to: leader.email,
+            subject: `New Volunteer Assigned: ${cardName || "New Volunteer"} - ${organization.name}`,
+            html: emailHtml,
+            text: emailText,
+          });
+
+          leaderNotified = true;
+        }
+      } catch {
+        // Leader notification failed but card processing continues
+      }
+    }
+
+    // 10. Send documents to volunteer if sendBackgroundCheckInfo is enabled
+    let documentsSent = false;
+    if (
+      validation.data.volunteerCategory &&
+      validation.data.sendBackgroundCheckInfo &&
+      cardEmail
+    ) {
+      try {
+        const categoryType = mapToVolunteerCategoryType(
+          validation.data.volunteerCategory
+        );
+
+        // Get ministry requirements for this category
+        const ministryRequirements = categoryType
+          ? await prisma.ministryRequirements.findUnique({
+              where: {
+                organizationId_category: {
+                  organizationId: organization.id,
+                  category: categoryType,
+                },
+              },
+            })
+          : null;
+
+        // Get documents for this category (GLOBAL + MINISTRY_SPECIFIC)
+        const documents = await prisma.volunteerDocument.findMany({
+          where: {
+            organizationId: organization.id,
+            OR: [
+              { scope: DocumentScope.GLOBAL },
+              categoryType
+                ? {
+                    scope: DocumentScope.MINISTRY_SPECIFIC,
+                    category: categoryType,
+                  }
+                : { scope: DocumentScope.MINISTRY_SPECIFIC, category: null },
+            ],
+          },
+          select: {
+            name: true,
+            description: true,
+            fileUrl: true,
+          },
+        });
+
+        // Get background check config if required
+        let bgCheckConfig = null;
+        if (ministryRequirements?.backgroundCheckRequired) {
+          bgCheckConfig = await prisma.backgroundCheckConfig.findUnique({
+            where: { organizationId: organization.id },
+          });
+        }
+
+        // Only send email if there's something to send
+        const hasContent =
+          documents.length > 0 ||
+          (ministryRequirements?.backgroundCheckRequired &&
+            bgCheckConfig?.applicationUrl) ||
+          (ministryRequirements?.trainingRequired &&
+            ministryRequirements?.trainingUrl);
+
+        if (hasContent) {
+          const emailHtml = getVolunteerDocumentsEmail({
+            churchName: organization.name,
+            volunteerName: cardName || "Volunteer",
+            volunteerCategory: validation.data.volunteerCategory,
+            documents: documents.map(d => ({
+              name: d.name,
+              description: d.description,
+              fileUrl: d.fileUrl,
+            })),
+            backgroundCheckRequired:
+              ministryRequirements?.backgroundCheckRequired ?? false,
+            backgroundCheckUrl: bgCheckConfig?.applicationUrl ?? null,
+            backgroundCheckInstructions: bgCheckConfig?.instructions ?? null,
+            trainingRequired: ministryRequirements?.trainingRequired ?? false,
+            trainingUrl: ministryRequirements?.trainingUrl ?? null,
+            trainingDescription:
+              ministryRequirements?.trainingDescription ?? null,
+          });
+
+          const emailText = getVolunteerDocumentsText({
+            churchName: organization.name,
+            volunteerName: cardName || "Volunteer",
+            volunteerCategory: validation.data.volunteerCategory,
+            documents: documents.map(d => ({
+              name: d.name,
+              description: d.description,
+              fileUrl: d.fileUrl,
+            })),
+            backgroundCheckRequired:
+              ministryRequirements?.backgroundCheckRequired ?? false,
+            backgroundCheckUrl: bgCheckConfig?.applicationUrl ?? null,
+            backgroundCheckInstructions: bgCheckConfig?.instructions ?? null,
+            trainingRequired: ministryRequirements?.trainingRequired ?? false,
+            trainingUrl: ministryRequirements?.trainingUrl ?? null,
+            trainingDescription:
+              ministryRequirements?.trainingDescription ?? null,
+          });
+
+          await resend.emails.send({
+            from: DEFAULT_FROM_EMAIL,
+            to: cardEmail,
+            subject: `Welcome to ${validation.data.volunteerCategory.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())} - ${organization.name}`,
+            html: emailHtml,
+            text: emailText,
+          });
+
+          documentsSent = true;
+        }
+      } catch {
+        // Document send failed but card processing continues
+      }
+    }
+
+    // 11. Build response message
     const messages: string[] = ["Connect card processed successfully"];
 
     if (memberCreated) {
@@ -403,8 +580,16 @@ export async function updateConnectCard(
       messages.push("Warning: Name on card differs from existing member");
     }
 
+    if (leaderNotified) {
+      messages.push("Leader notification sent");
+    }
+
+    if (documentsSent) {
+      messages.push("Onboarding documents sent to volunteer");
+    }
+
     if (updatedCard.smsAutomationEnabled) {
-      messages.push("SMS automation started (workflow not yet implemented)");
+      messages.push("SMS automation enabled");
     }
 
     return {

@@ -144,23 +144,41 @@ export const organizationSetupSchema = z.object({
   }),
 });
 
+/**
+ * Extracted Data Schema
+ *
+ * Validates AI Vision extracted data with size limits to prevent:
+ * - Storage exhaustion attacks
+ * - Data pollution
+ * - Oversized payloads
+ *
+ * Size limits are generous to accommodate AI extraction variance
+ * while preventing abuse.
+ */
+export const extractedDataSchema = z.object({
+  name: z.string().max(200).nullable(),
+  email: z.string().max(255).nullable(),
+  phone: z.string().max(50).nullable(),
+  prayer_request: z.string().max(5000).nullable(), // Generous for long prayers
+  visit_status: z.string().max(100).nullish(),
+  first_time_visitor: z.boolean().nullish(),
+  interests: z.array(z.string().max(100)).max(20).nullable(),
+  address: z.string().max(500).nullable(),
+  age_group: z.string().max(50).nullable(),
+  family_info: z.string().max(500).nullable(),
+  // Structured notes with size limits (replaces z.any())
+  additional_notes: z.string().max(2000).nullable(),
+});
+
+export type ExtractedData = z.infer<typeof extractedDataSchema>;
+
 // Connect card extracted data schema
 export const connectCardSchema = z.object({
-  imageKey: z.string().min(1, { message: "Image is required" }),
-  imageHash: z.string().min(1, { message: "Image hash is required" }), // SHA-256 hash from extract API
-  extractedData: z.object({
-    name: z.string().nullable(),
-    email: z.string().nullable(),
-    phone: z.string().nullable(),
-    prayer_request: z.string().nullable(),
-    visit_status: z.string().nullish(), // Extract actual text from card (null or undefined OK)
-    first_time_visitor: z.boolean().nullish(), // Legacy field (null or undefined OK)
-    interests: z.array(z.string()).nullable(),
-    address: z.string().nullable(),
-    age_group: z.string().nullable(),
-    family_info: z.string().nullable(),
-    additional_notes: z.any().nullable(), // Allow any JSON structure
-  }),
+  imageKey: z.string().min(1, { message: "Front image is required" }),
+  imageHash: z.string().min(1, { message: "Front image hash is required" }), // SHA-256 hash from extract API
+  backImageKey: z.string().optional().nullable(), // Back image S3 key (optional for two-sided cards)
+  backImageHash: z.string().optional().nullable(), // Back image SHA-256 hash
+  extractedData: extractedDataSchema,
 });
 
 // Connect card update schema for review queue corrections
