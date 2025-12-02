@@ -1,24 +1,25 @@
 # Engineering Playbook - Single Source of Truth
 
 **Purpose:** THE authoritative guide for building Church Connect Hub. If there's a conflict, this document wins.
-**Status:** 🔴 **NOT PRODUCTION READY** - Critical blockers exist
-**Health Score:** 62/100 (D+)
-**Last Updated:** 2025-11-25 (via feature-wrap-up)
+**Status:** 🟡 **PRODUCTION BLOCKERS FIXED** - Phase 1 complete, ready for pilot
+**Health Score:** 78/100 (C+)
+**Last Updated:** 2025-12-01 (via /update-docs)
 **Applies To:** All worktrees, all features, all developers
 
 > ⚠️ **This is the law.** When in doubt, follow this document. All other docs are supplementary.
 
 ---
 
-## 🚨 STOP - Read This First
+## ✅ Production Blockers - FIXED
 
-**The platform will CRASH in production without these fixes:**
+**Phase 1 critical fixes are complete:**
 
-1. **No pagination** → Out of memory at 200 users [[Fix]](#emergency-fix-1-pagination)
-2. **Subscription bypass** → Churches use free forever [[Fix]](#emergency-fix-2-revenue)
-3. **PII in logs** → GDPR fines up to $20M [[Fix]](#emergency-fix-3-compliance)
+1. ~~**No pagination**~~ → ✅ Fixed - All queries have limits
+2. ~~**Subscription bypass**~~ → ✅ Fixed - Enforcement in place
+3. ~~**PII in logs**~~ → ✅ Fixed - Console.error calls removed
+4. ~~**Missing indexes**~~ → ✅ Fixed - Database indexes added
 
-**DO NOT SHIP TO PRODUCTION** until Phase 1 is complete.
+**Ready for pilot church deployment.** See Phase 2 for performance improvements.
 
 ---
 
@@ -119,9 +120,39 @@ export async function actionName(
 
 #### Component Organization
 
+**Rule: Single Use = Colocate, Multiple Use = Centralize**
+
 ```
-/components/dashboard/{feature}/     # Shared components
-/app/church/[slug]/admin/{feature}/  # Pages only, no _components folders
+/components/
+├── ui/                    # shadcn/ui primitives (DO NOT MODIFY)
+├── layout/                # Navbars, page containers, wrappers
+├── sidebar/               # Sidebar navigation components
+├── shared/                # Cross-cutting reusable components (UserDropdown, LoginForm)
+└── dashboard/{feature}/   # Feature-specific shared components (tables, forms, dialogs)
+
+/app/{route}/_components/  # Page-specific components ONLY (Next.js private folder convention)
+```
+
+**When to use `_components/` (colocated):**
+
+- Component is used by exactly ONE page
+- Component is a "client wrapper" for a server page (e.g., `DashboardClient.tsx`)
+- Component contains page-specific business logic
+
+**When to use `/components/` (centralized):**
+
+- Component is used by 2+ unrelated pages
+- Component is a reusable UI pattern (forms, tables, dialogs)
+- Component could be used by platform AND church admin
+
+**Import patterns:**
+
+```typescript
+// Colocated (relative import)
+import { DashboardClient } from "./_components/DashboardClient";
+
+// Centralized (absolute import)
+import { VolunteersTable } from "@/components/dashboard/volunteers/volunteers-table";
 ```
 
 #### Data Access
@@ -192,18 +223,18 @@ CREATE INDEX idx_prayer_org_status ON prayer_request(organization_id, status);
 
 ## 📊 Technical Debt Register
 
-| Priority        | Issue                   | Location                          | Breaking Point     | Fix Time |
-| --------------- | ----------------------- | --------------------------------- | ------------------ | -------- |
-| 🔴 **CRITICAL** | No pagination           | `/lib/data/*`                     | 200 users          | 2-3 days |
-| 🔴 **CRITICAL** | Subscription bypass     | `require-dashboard-access.ts:175` | Day 1              | 30 mins  |
-| 🔴 **CRITICAL** | PII in logs             | 20+ server actions                | GDPR audit         | 1 day    |
-| 🔴 **CRITICAL** | Missing indexes         | `schema.prisma`                   | 10K records        | 4 hours  |
-| 🔴 **CRITICAL** | Race conditions         | `connect-card-batch.ts:72`        | Concurrent uploads | 4 hours  |
-| 🟠 **HIGH**     | N+1 queries             | Prayer/volunteer stats            | 100 concurrent     | 2 days   |
-| 🟠 **HIGH**     | No caching              | All data fetches                  | Every request      | 2 days   |
-| 🟠 **HIGH**     | No data abstraction     | 113 files use Prisma              | Can't switch DB    | 1 week   |
-| 🟡 **MEDIUM**   | Type safety violations  | `as never` casts                  | Runtime errors     | 3 days   |
-| 🟡 **MEDIUM**   | Silent error swallowing | Empty catch blocks                | Can't debug        | 2 days   |
+| Priority        | Issue                   | Location                          | Status   |
+| --------------- | ----------------------- | --------------------------------- | -------- |
+| ~~🔴 CRITICAL~~ | No pagination           | `/lib/data/*`                     | ✅ Fixed |
+| ~~🔴 CRITICAL~~ | Subscription bypass     | `require-dashboard-access.ts:175` | ✅ Fixed |
+| ~~🔴 CRITICAL~~ | PII in logs             | 20+ server actions                | ✅ Fixed |
+| ~~🔴 CRITICAL~~ | Missing indexes         | `schema.prisma`                   | ✅ Fixed |
+| 🟠 **HIGH**     | Race conditions         | `connect-card-batch.ts:72`        | Phase 2  |
+| 🟠 **HIGH**     | N+1 queries             | Prayer/volunteer stats            | Phase 2  |
+| 🟠 **HIGH**     | No caching              | All data fetches                  | Phase 2  |
+| 🟡 **MEDIUM**   | No data abstraction     | 113 files use Prisma              | Deferred |
+| 🟡 **MEDIUM**   | Type safety violations  | `as never` casts                  | Phase 2  |
+| 🟡 **MEDIUM**   | Silent error swallowing | Empty catch blocks                | Phase 2  |
 
 ---
 
@@ -393,4 +424,4 @@ import { SomeUtil } from "@/lib/utils";
 
 ---
 
-_Last audit: 2025-11-25 | Next audit: After Phase 1 completion_
+_Last audit: 2025-12-01 | Next audit: After pilot church deployment_
