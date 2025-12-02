@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-12-01
 
 ---
 
@@ -95,16 +95,16 @@ Churches lose 70% of first-time visitors because:
 
 ## 🗓️ Roadmap
 
-### Phase 1: Production Fixes (NOW - 1 week)
+### Phase 1: Production Fixes ✅ COMPLETE
 
-**BLOCKED - Critical technical issues**
+**All critical blockers fixed:**
 
-- [ ] Add pagination (crashes at 200 users) → `tech-debt` worktree
-- [ ] Fix subscription enforcement → `tech-debt` worktree
-- [ ] Remove PII from logs → `tech-debt` worktree
-- [ ] Add database indexes → `tech-debt` worktree
+- [x] Add pagination (crashes at 200 users) → ✅ Fixed
+- [x] Fix subscription enforcement → ✅ Fixed
+- [x] Remove PII from logs → ✅ Fixed
+- [x] Add database indexes → ✅ Fixed
 
-See ENGINEERING-PLAYBOOK.md for details.
+See PLAYBOOK.md for Phase 2 performance improvements.
 
 ### Phase 2: Pilot Church (December 2025)
 
@@ -239,18 +239,19 @@ See ENGINEERING-PLAYBOOK.md for details.
 
 ## 📝 Recent Updates
 
+### Week of Dec 1, 2025
+
+- ✅ ChMS Export (Phase 1) complete - Planning Center, Breeze, Generic CSV
+- ✅ Volunteer email automation - Leader notification + document auto-send
+- ✅ Type safety improvements for Prisma Json fields
+- ✅ Production blockers (Phase 1) all fixed
+
 ### Week of Nov 25, 2025
 
 - ✅ Completed comprehensive security & performance audit
 - ✅ Identified 5 critical production blockers
 - ✅ Consolidated documentation (10 docs → 2)
-- 🚧 Starting emergency fixes for production
-
-### Week of Nov 18, 2025
-
-- ✅ Prayer batch management with bulk assignment
-- ✅ Volunteer onboarding pipeline complete
-- ✅ Documentation restructure
+- ✅ Dashboard quick actions + collapsible sections
 
 ---
 
