@@ -1,573 +1,290 @@
 ---
 description: Comprehensive documentation audit - sync, verify consistency, remove outdated content
-argument-hint: [what changed]
+allowed-arguments: what changed
 ---
 
-# Update Documentation
+# Documentation Update & Audit
 
-Complete documentation audit: analyze changes, update all docs, detect contradictions, consolidate duplicates, remove obsolete content.
+Audit all documentation across worktrees, detect stale content, and update the dev dashboard for project visibility.
 
-**Usage:** `/update-docs [what changed]`
+**Purpose:** Keep docs in sync with reality. Prevents AI confusion and wasted hours.
 
-**Note:** This is the documentation-only portion of `/feature-wrap-up`. Use this when you want to update docs without committing or creating PRs.
+---
 
-## Your Tasks:
+## Stage 1: Gather Project State
 
-### Phase 1: Analyze What Changed
-
-**Step 1: Review Recent Changes**
+### 1.1: Worktree Status
 
 ```bash
-git diff --stat
-git status
+# List all worktrees and their branches
+git -C /home/digitaldesk/Desktop/church-connect-hub/.bare worktree list
 ```
 
-Based on `$ARGUMENTS` and git diff, understand what was modified.
-
-**Step 2: Categorize Changes**
-
-- [ ] New routes/pages
-- [ ] Server actions
-- [ ] Database schema
-- [ ] New components
-- [ ] New patterns introduced
-- [ ] Old patterns removed
-- [ ] Integrations added/removed
-- [ ] Bug fixes
-- [ ] Refactoring
-
-**Step 3: Read Changed Files**
-
-Read the actual code to understand:
-
-- What patterns were used
-- What new patterns were introduced
-- What old patterns were deprecated
-- What architectural decisions were made
-
----
-
-### Phase 2: Scan All Documentation
-
-**Step 4: Read All Documentation Files**
+For each worktree, gather:
 
 ```bash
-find docs -name "*.md" -type f
+# For each worktree
+cd /home/digitaldesk/Desktop/church-connect-hub/<worktree>
+echo "=== $(basename $(pwd)) ==="
+echo "Branch: $(git branch --show-current)"
+echo "Uncommitted: $(git status --short | wc -l) files"
+echo "Last commit: $(git log -1 --format='%s (%ar)')"
 ```
 
-Read completely:
-
-- docs/STATUS.md
-- docs/ROADMAP.md
-- docs/essentials/coding-patterns.md
-- docs/essentials/architecture.md
-- docs/essentials/development.md
-- docs/essentials/deployment.md
-- docs/essentials/shadcn.md
-- docs/technical/architecture-decisions.md
-- docs/technical/integrations.md
-- CLAUDE.md
-- docs/FORK_SETUP_GUIDE.md
-- docs/PROJECT_OVERVIEW.md
-- All other .md files
-
----
-
-### Phase 3: Detect Contradictions
-
-**Step 5: Find Conflicting Guidance**
-
-Search for contradictions:
-
-- coding-patterns.md says one thing, CLAUDE.md says another
-- STATUS.md shows complete, ROADMAP.md shows in progress
-- architecture.md describes old pattern, code uses new pattern
-- Examples that violate rules in same document
-
-**For each contradiction:**
-
-1. **Document it:**
-
-   ```
-   Contradiction #1:
-   - File 1: coding-patterns.md line 245
-     Says: "Use variant='padded' for tables"
-   - File 2: CLAUDE.md line 128
-     Says: "Use variant='default' for standard pages"
-   - Issue: Unclear which variant for table pages
-   ```
-
-2. **Determine truth by checking actual code**
-
-3. **Resolve:**
-   - Update incorrect doc
-   - Add clarifying decision tree if both correct in context
-
-**Step 6: Create Contradiction Report**
-
-```markdown
-Contradictions Found: X
-
-1. <Contradiction summary>
-   - Resolution: <how fixed>
-   - Files updated: <list>
-
-2. <Another contradiction>
-   - Resolution: <how fixed>
-```
-
----
-
-### Phase 4: Consolidate Duplicates
-
-**Step 7: Find Duplicate Code Examples**
-
-Search for repeated examples across docs:
-
-- Server action template in multiple files
-- PageContainer example repeated
-- Authentication example duplicated
-- Same pattern explained in 3 places
-
-**Step 8: Consolidate**
-
-For each duplicate:
-
-1. **Choose canonical location:**
-
-   - Detailed patterns → coding-patterns.md
-   - Architecture → architecture.md
-   - Quick reference → CLAUDE.md
-
-2. **Keep ONE detailed version**
-
-3. **Replace others with references:**
-   ```markdown
-   For full pattern, see [Server Actions](essentials/coding-patterns.md#server-actions-pattern).
-   ```
-
-**Step 9: Update Cross-References**
-
-Add "See also" sections linking to canonical sources.
-
----
-
-### Phase 5: Remove Obsolete Content
-
-**Step 10: Identify Outdated Content**
-
-Check for content that no longer applies:
-
-- [ ] Features removed from codebase
-- [ ] Old file paths (app/agency → app/church)
-- [ ] Deprecated patterns (Named Slots)
-- [ ] Removed dependencies
-- [ ] Unused environment variables
-- [ ] Old integrations
-
-**Verify by checking codebase:**
+### 1.2: Recent Merged PRs
 
 ```bash
-# For each file path in docs, verify exists
-find app -name "page.tsx" | grep agency  # Should be empty
-grep -r "@header" app/  # Should be empty (Named Slots removed)
+# Get recent merged PRs (last 2 weeks)
+gh pr list --state merged --limit 10 --json number,title,mergedAt
 ```
 
-**Step 11: Remove or Archive**
+### 1.3: Read Current Documentation
 
-For obsolete content:
+Read these files to understand current documented state:
 
-- **Completely irrelevant:** Remove entirely
-- **Historically relevant:** Move to archive section with "DEPRECATED" marker
-
-**Example:**
-
-```markdown
-<!-- REMOVE -->
-
-## Using Named Slots for Headers
-
-...
-
-<!-- REPLACE WITH -->
-
-Headers now handled via /lib/navigation.ts config.
-Named Slots pattern deprecated October 2025.
-See [Navigation Pattern](essentials/coding-patterns.md#navigation-configuration-pattern).
-```
-
-**Step 12: Update File Path References**
-
-```bash
-grep -r "app/agency" docs/  # Find old paths
-grep -r "@header" docs/     # Find Named Slots references
-```
-
-Update all obsolete paths to current structure.
-
-**Step 13: Clean Up TODOs**
-
-```bash
-grep -r "TODO" docs/
-grep -r "FIXME" docs/
-```
-
-For each TODO:
-
-- Done? Remove and update doc
-- Still relevant? Keep
-- Obsolete? Remove
+- `docs/PROJECT.md` - Project overview, features, roadmap
+- `docs/PLAYBOOK.md` - Technical decisions, patterns, debt
+- `docs/WORKTREE-STATUS.md` - Worktree progress tracking
+- `CLAUDE.md` - AI instructions
+- `README.md` - Public-facing overview
 
 ---
 
-### Phase 6: Verify Pattern Compliance
+## Stage 2: Analyze Feature Documentation
 
-**Step 14: Check Code Matches Documented Patterns**
+### 2.1: List All Feature Docs
 
-For the changes, verify compliance:
+```bash
+find docs/features -name "*.md" -type f 2>/dev/null | sort
+```
 
-**Multi-Tenant:**
+### 2.2: Check Each Feature Doc
 
-- [ ] All queries filter by organizationId
-- [ ] No cross-tenant leakage
-- [ ] Multi-tenant fingerprinting
+For each feature doc, check:
 
-**Server Actions:**
+1. **Last modified date** vs recent commits to that feature
+2. **Status markers** (IN PROGRESS, COMPLETE, etc.) vs actual code state
+3. **Checkboxes** - are completed items marked?
+4. **Stale TODOs** - references to completed work
 
-- [ ] Rate limiting (Arcjet)
-- [ ] Authentication checks
-- [ ] ApiResponse type
-- [ ] Zod validation
-- [ ] Generic errors
+```bash
+# Example: Check volunteer feature
+ls -la docs/features/volunteer-management/
+git log -3 --oneline -- "docs/features/volunteer-management/"
 
-**UI:**
+# Check for stale status markers
+grep -r "IN PROGRESS\|🔄\|TODO" docs/features/volunteer-management/
+```
 
-- [ ] PageContainer correct variant
-- [ ] No duplicate headers
-- [ ] Navigation config updated
-- [ ] Shadcn components used
+### 2.3: Cross-Reference with Code
 
-**If not followed:**
+For each feature area, verify docs match reality:
 
-- Document deviation in ADR
-- Update pattern if intentional evolution
-- Flag as technical debt
+| Feature       | Doc Location                           | Code Location                             | Check           |
+| ------------- | -------------------------------------- | ----------------------------------------- | --------------- |
+| Connect Cards | `/docs/features/connect-cards/`        | `/app/church/[slug]/admin/connect-cards/` | Status matches? |
+| Prayer        | `/docs/features/prayer-management/`    | `/app/church/[slug]/admin/prayer/`        | Status matches? |
+| Volunteer     | `/docs/features/volunteer-management/` | `/app/church/[slug]/admin/volunteer/`     | Status matches? |
+| Integrations  | `/docs/features/integrations/`         | `/app/church/[slug]/admin/integrations/`  | Status matches? |
 
 ---
 
-### Phase 7: Document New Patterns
+## Stage 3: Staleness Detection
 
-**Step 15: Identify New Patterns**
+### 3.1: Find Stale References
 
-Check if code introduces:
+```bash
+# TODOs for completed features
+grep -r "TODO.*connect.card\|TODO.*prayer\|TODO.*volunteer" docs/ --include="*.md" -i
 
-- [ ] New component pattern
-- [ ] New PageContainer variant
-- [ ] New server action approach
-- [ ] New authentication pattern
-- [ ] New database pattern
-- [ ] New integration pattern
+# "Planned" references that might be built
+grep -r "planned\|will be\|future" docs/ --include="*.md" -i | head -20
 
-**Step 16: Document in coding-patterns.md**
+# Old status markers
+grep -r "🔄\|⚠️\|IN PROGRESS" docs/ --include="*.md"
+```
 
-For each new pattern:
+### 3.2: Check Last Updated Dates
 
-````markdown
-## 🎯 <Pattern Name>
+```bash
+# Files with "Last Updated" headers
+grep -r "Last Updated" docs/ --include="*.md" -l | while read f; do
+  echo "$f: $(grep 'Last Updated' $f | head -1)"
+done
+```
 
-### Overview
+Flag any docs not updated in 2+ weeks.
 
-<What problem this solves>
+### 3.3: Orphaned Documentation
 
-### When to Use
+Check for docs referencing non-existent code:
 
-<Decision criteria>
+```bash
+# Feature docs without corresponding code
+for feature_dir in docs/features/*/; do
+  feature=$(basename $feature_dir)
+  if [ ! -d "app/church/[slug]/admin/$feature" ]; then
+    echo "⚠️ Orphaned doc? $feature_dir (no matching route)"
+  fi
+done
+```
 
-### Implementation
+---
+
+## Stage 4: Generate Audit Report
+
+Create a comprehensive report:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 DOCUMENTATION AUDIT REPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generated: <date>
+
+## Worktree Status
+
+| Worktree | Branch | Status | Last Commit |
+|----------|--------|--------|-------------|
+| main | main | Clean | <commit> |
+| connect-card | feature/connect-card | 25 uncommitted | <commit> |
+| ... | ... | ... | ... |
+
+## Documentation Health
+
+| Document | Last Updated | Status |
+|----------|--------------|--------|
+| PROJECT.md | 2025-11-30 | ✅ Current |
+| PLAYBOOK.md | 2025-11-25 | ⚠️ 5 days old |
+| WORKTREE-STATUS.md | 2025-11-27 | ⚠️ 3 days old |
+
+## Feature Docs
+
+| Feature | Doc Status | Code Status | Sync? |
+|---------|------------|-------------|-------|
+| Connect Cards | COMPLETE | Has active work | ⚠️ Check |
+| Prayer | 65% BLOCKING | Needs server actions | ✅ Matches |
+| Volunteer | IN PROGRESS | Has uncommitted | ✅ Matches |
+
+## Stale Content Found
+
+- [ ] docs/PROJECT.md:45 - "TODO: Add prayer batches" (completed)
+- [ ] docs/features/volunteer/vision.md:102 - Status says "IN PROGRESS" but UI complete
+- [ ] docs/PLAYBOOK.md:200 - References old auth pattern
+
+## Recommended Actions
+
+1. Update WORKTREE-STATUS.md with current state
+2. Mark volunteer UI as COMPLETE in vision doc
+3. Remove stale TODOs from PROJECT.md
+4. Update dev dashboard with current progress
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+
+## Stage 5: Update Dev Dashboard
+
+### 5.1: Read Current Dev Page
+
+```bash
+cat app/church/[slug]/admin/dev/page.tsx
+```
+
+### 5.2: Update Worktree Progress Data
+
+The dev page at `/app/church/[slug]/admin/dev/page.tsx` has hardcoded worktree status. Update based on audit findings:
 
 ```typescript
-// Real code from actual feature (include file path)
+const worktrees: WorktreeCardProps[] = [
+  {
+    name: "Connect Cards",
+    branch: "feature/connect-card",
+    status: "ready", // Update based on actual state
+    statusLabel: "Ready for PR",
+    tasks: [
+      { label: "CSV Export (Phase 3A)", completed: false }, // Update checkboxes
+      // ...
+    ],
+  },
+  // ... other worktrees
+];
 ```
-````
 
-### Rules
+### 5.3: Update Demo Ready Checklist
 
-✅ DO: <best practices>
-❌ DON'T: <common mistakes>
-
-### Example
-
-<Real code with file:line reference>
-```
-
-**Step 17: Create ADR if Architectural Decision**
-
-In docs/technical/architecture-decisions.md:
-
-```markdown
-## ADR-XXX: <Decision Title>
-
-**Date:** <Month Year>
-**Status:** Accepted
-
-**Context:** <Why needed>
-**Decision:** <What decided>
-**Consequences:** <Trade-offs>
-**Alternatives:** <Other options>
-**Implementation:** <Where in code>
-```
+Review `DemoReadyChecklist` component and update completion status based on what's actually built.
 
 ---
 
-### Phase 8: Update All Relevant Docs
+## Stage 6: Apply Updates
 
-**Step 18: STATUS.md**
+### 6.1: Show Proposed Changes
 
-```markdown
-## 🎯 RECENT COMPLETIONS
+For each file that needs updating, show:
 
-### <Feature> ✅ COMPLETED (<Month Year>)
+- Current content
+- Proposed change
+- Reason for change
 
-- <What built>
-- <Patterns used>
-- PR #<number>
-```
+### 6.2: Get User Approval
 
-**Step 19: ROADMAP.md**
+Ask: "Apply these documentation updates? (yes/no/edit)"
 
-- Mark [x] complete
-- Update metrics
-- Add lessons learned
-
-**Step 20: coding-patterns.md**
-
-- Add new patterns
-- Remove deprecated
-- Update examples to current code
-- Fix contradictions
-- Consolidate duplicates
-
-**Step 21: CLAUDE.md**
-
-- Update priorities
-- Add new rules
-- Update examples
-- Remove obsolete
-- Fix contradictions
-
-**Step 22: architecture.md**
-
-- Update schema if changed
-- Update auth flows
-- Update integrations
-- Remove obsolete
-
-**Step 23: Other docs as needed**
-
-- shadcn.md - Add used components
-- integrations.md - Update APIs
-- development.md - Update setup
-- deployment.md - Update config
-
----
-
-### Phase 9: Consistency Verification
-
-**Step 24: Cross-Reference Check**
-
-Verify consistency:
-
-- [ ] Dates match (STATUS.md ↔ ROADMAP.md)
-- [ ] Feature status aligned
-- [ ] Pattern guidance consistent
-- [ ] File paths exist
-- [ ] Tech stack current
-
-**Step 25: Validate Examples Are Real**
-
-For every code example:
-
-- [ ] File exists at path
-- [ ] Code matches actual implementation
-- [ ] Still follows current patterns
-- [ ] No obsolete syntax
-
-**Step 26: Check Links Work**
+### 6.3: Commit Changes
 
 ```bash
-grep -r "\[.*\](.*\.md" docs/
+git add docs/ app/church/[slug]/admin/dev/page.tsx
+git commit -m "docs: sync documentation with current project state
+
+- Update WORKTREE-STATUS.md with current progress
+- Update feature vision docs status markers
+- Remove stale TODOs and planning text
+- Update dev dashboard worktree cards
+- Update last updated dates
+
+Audit performed: <date>"
+
+git push origin main
 ```
 
-Verify all internal links resolve.
-
 ---
 
-### Phase 10: Generate Reports
+## Stage 7: Summary
 
-**Step 27: Create Audit Report**
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ DOCUMENTATION AUDIT COMPLETE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-```markdown
-# Documentation Audit Report
+Files Updated:
+- docs/WORKTREE-STATUS.md
+- docs/features/volunteer/vision.md
+- app/church/[slug]/admin/dev/page.tsx
 
-Feature: <feature-name>
+Stale Content Removed: 5 items
+Status Markers Updated: 3 items
+Dev Dashboard Synced: Yes
 
-## Updates Applied (X files)
-
-- docs/STATUS.md - Moved to RECENT COMPLETIONS
-- docs/ROADMAP.md - Marked tasks complete
-- docs/essentials/coding-patterns.md - Added pattern
-- CLAUDE.md - Updated priorities
-
-## New Patterns Documented (X)
-
-- <Pattern 1>: <description>
-- <Pattern 2>: <description>
-
-## Contradictions Resolved (X)
-
-1. <Contradiction> → <Resolution>
-2. <Contradiction> → <Resolution>
-
-## Duplicates Consolidated (X)
-
-1. Server action template in 3 files → coding-patterns.md
-2. PageContainer example duplicated → consolidated
-
-## Obsolete Content Removed (X)
-
-1. Named Slots documentation → removed
-2. app/agency references → updated to app/church
-3. IV therapy examples → removed
-
-## Pattern Compliance
-
-✅ Feature follows documented patterns
-✅ Multi-tenant safety verified
-✅ Security patterns applied
-
-## Consistency Check
-
-✅ All docs aligned
-✅ Examples are real code
-✅ File paths verified
-✅ Dates consistent
-✅ No contradictions
-✅ Links work
-
-Ready for review.
+Next audit recommended: 1 week
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Step 28: Show Changes Summary**
-
-```bash
-# Show what would be committed
-git add docs/ CLAUDE.md
-git diff --cached --stat
-```
-
-**Step 29: Present to User**
-
-Show user:
-
-- Files that will be updated
-- Contradictions resolved
-- Duplicates consolidated
-- Obsolete content removed
-- New patterns documented
-- Consistency verified
-
-Ask: **"Documentation audit complete. These changes are staged. Review the report above."**
-
 ---
 
-## What This Command Does:
+## When to Run This Command
 
-**1. Analyzes** - Understands what code changed
-**2. Reads** - Scans ALL documentation files
-**3. Detects** - Finds contradictions across docs
-**4. Consolidates** - Removes duplicate examples
-**5. Removes** - Deletes obsolete content
-**6. Documents** - Adds new patterns
-**7. Verifies** - Checks consistency
-**8. Reports** - Comprehensive summary
-**9. Stages** - Prepares changes for commit
+**Run weekly or after:**
 
-**Does NOT:**
+- Merging a feature PR
+- Completing a major milestone
+- Starting a new sprint/week
+- Before demos or presentations
+- When docs feel "off" or outdated
 
-- Run builds
-- Run linters
-- Create commits (just stages changes)
-- Create PRs
-- Merge anything
-- Switch branches
+**This command helps:**
 
-Use `/commit` after this to commit the documentation changes.
-Use `/feature-wrap-up` for complete workflow including build/commit/PR/merge.
-
----
-
-## Important Rules:
-
-**Comprehensive:**
-
-- ✅ Read ALL docs completely
-- ✅ Check for contradictions
-- ✅ Consolidate duplicates
-- ✅ Remove obsolete content
-- ✅ Verify all examples
-
-**Resolution:**
-
-- ✅ Check actual code for truth
-- ✅ Update all conflicting docs
-- ✅ Add clarifying decision trees
-- ✅ Document resolution
-
-**Consolidation:**
-
-- ✅ One canonical detailed example
-- ✅ Replace duplicates with references
-- ✅ Maintain quick ref vs detailed guide
-
-**Removal:**
-
-- ✅ Check files/patterns exist
-- ✅ Remove irrelevant content
-- ✅ Archive deprecated if historical
-- ✅ Update old paths
-
-**Documentation:**
-
-- ✅ Use real code examples
-- ✅ Include file:line paths
-- ✅ Document why, not just what
-- ✅ Create ADRs for decisions
-
-**Never:**
-
-- ❌ Leave contradictions
-- ❌ Keep duplicates
-- ❌ Document obsolete patterns
-- ❌ Use hypothetical examples
-- ❌ Skip consistency checks
-
----
-
-## When to Use:
-
-✅ **After completing feature** (before commit)
-✅ **After introducing new patterns**
-✅ **After major refactoring**
-✅ **Weekly documentation maintenance**
-✅ **When docs feel out of sync**
-✅ **Before creating PR**
-
-**Workflow:**
-
-1. Complete feature code
-2. Run `/update-docs <feature-name>`
-3. Review audit report
-4. Run `/commit` to commit doc changes
-5. Run `/feature-wrap-up` for full workflow
-
-OR just run `/feature-wrap-up` which calls this automatically.
+- Keep AI sessions accurate (no confusion from stale docs)
+- Maintain dev dashboard visibility
+- Track actual vs documented progress
+- Clean up planning artifacts after completion

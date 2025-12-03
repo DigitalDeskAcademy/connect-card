@@ -11,6 +11,8 @@ import type {
 import { ConnectCardChart } from "./ConnectCardChart";
 import { TrendBadge } from "./TrendBadge";
 import { QuickActionsGrid } from "./QuickActionsGrid";
+import { CollapsibleSection } from "./CollapsibleSection";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface Location {
   id: string;
@@ -42,6 +44,21 @@ export function DashboardClient({
   // Default to user's location if they have one assigned, otherwise show cumulative
   const defaultTab = userDefaultLocationSlug ?? "cumulative";
   const [selectedTab, setSelectedTab] = useState(defaultTab);
+
+  // Section collapsed states (persisted to localStorage)
+  const [sections, setSections] = useLocalStorage<Record<string, boolean>>(
+    "dashboard-sections",
+    {
+      quickActions: true,
+      kpiCards: true,
+      chart: true,
+      prayerCategories: true,
+    }
+  );
+
+  const toggleSection = (key: string) => {
+    setSections(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   // For now, we'll just show cumulative data
   // In the future, we can add dynamic fetching per tab using organizationId + locationId
@@ -82,134 +99,151 @@ export function DashboardClient({
         ))}
       </TabsList>
 
+      {/* Quick Actions */}
+      <CollapsibleSection
+        title="Quick Actions"
+        isOpen={sections.quickActions}
+        onToggle={() => toggleSection("quickActions")}
+      >
+        <QuickActionsGrid
+          slug={slug}
+          defaultLocationSlug={userDefaultLocationSlug}
+        />
+      </CollapsibleSection>
+
       {/* Cumulative Tab Content */}
       <TabsContent value="cumulative" className="mt-0 space-y-6">
-        {/* KPI Cards - 4 columns, prominent at top */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">This Week</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {analytics.thisWeek.totalCards}
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-muted-foreground">
-                  vs {analytics.fourWeekAverage.totalCards} avg
-                </p>
-                <TrendBadge trend={analytics.trends.totalCards} />
-              </div>
-            </CardContent>
-          </Card>
+        {/* KPI Cards */}
+        <CollapsibleSection
+          title="This Week's Metrics"
+          isOpen={sections.kpiCards}
+          onToggle={() => toggleSection("kpiCards")}
+        >
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">This Week</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {analytics.thisWeek.totalCards}
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    vs {analytics.fourWeekAverage.totalCards} avg
+                  </p>
+                  <TrendBadge trend={analytics.trends.totalCards} />
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                First-Time Visitors
-              </CardTitle>
-              <UserPlus className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {analytics.thisWeek.firstTimeVisitors}
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-muted-foreground">
-                  vs {analytics.fourWeekAverage.firstTimeVisitors} avg
-                </p>
-                <TrendBadge trend={analytics.trends.firstTimeVisitors} />
-              </div>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  First-Time Visitors
+                </CardTitle>
+                <UserPlus className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {analytics.thisWeek.firstTimeVisitors}
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    vs {analytics.fourWeekAverage.firstTimeVisitors} avg
+                  </p>
+                  <TrendBadge trend={analytics.trends.firstTimeVisitors} />
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Prayer Requests
-              </CardTitle>
-              <Heart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {analytics.thisWeek.prayerRequests}
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-muted-foreground">
-                  vs {analytics.fourWeekAverage.prayerRequests} avg
-                </p>
-                <TrendBadge trend={analytics.trends.prayerRequests} />
-              </div>
-            </CardContent>
-          </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Prayer Requests
+                </CardTitle>
+                <Heart className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {analytics.thisWeek.prayerRequests}
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    vs {analytics.fourWeekAverage.prayerRequests} avg
+                  </p>
+                  <TrendBadge trend={analytics.trends.prayerRequests} />
+                </div>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Volunteer Interest
-              </CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {analytics.thisWeek.volunteersInterested}
-              </div>
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-muted-foreground">
-                  vs {analytics.fourWeekAverage.volunteersInterested} avg
-                </p>
-                <TrendBadge trend={analytics.trends.volunteersInterested} />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Two Column Layout: Quick Actions + Chart */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Quick Actions - Left column (1/3 width on lg) */}
-          <div className="lg:col-span-1">
-            <QuickActionsGrid
-              slug={slug}
-              defaultLocationSlug={userDefaultLocationSlug}
-            />
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Volunteer Interest
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {analytics.thisWeek.volunteersInterested}
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-xs text-muted-foreground">
+                    vs {analytics.fourWeekAverage.volunteersInterested} avg
+                  </p>
+                  <TrendBadge trend={analytics.trends.volunteersInterested} />
+                </div>
+              </CardContent>
+            </Card>
           </div>
+        </CollapsibleSection>
 
-          {/* Chart - Right column (2/3 width on lg) */}
-          <div className="lg:col-span-2">
-            <ConnectCardChart data={chartData} />
-          </div>
-        </div>
+        {/* Activity Chart */}
+        <CollapsibleSection
+          title="Activity Chart"
+          isOpen={sections.chart}
+          onToggle={() => toggleSection("chart")}
+        >
+          <ConnectCardChart data={chartData} />
+        </CollapsibleSection>
 
-        {/* Top Prayer Categories - Full width below */}
+        {/* Top Prayer Categories */}
         {analytics.topPrayerCategories.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">
-                Top Prayer Categories This Week
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-4">
-                {analytics.topPrayerCategories.map((category, index) => (
-                  <div
-                    key={category.category}
-                    className="flex items-center gap-2"
-                  >
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {index + 1}.
-                    </span>
-                    <span className="text-sm font-medium capitalize">
-                      {category.category}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      ({category.count})
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <CollapsibleSection
+            title="Top Prayer Categories"
+            isOpen={sections.prayerCategories}
+            onToggle={() => toggleSection("prayerCategories")}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">
+                  Top Prayer Categories This Week
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-4">
+                  {analytics.topPrayerCategories.map((category, index) => (
+                    <div
+                      key={category.category}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-sm font-medium text-muted-foreground">
+                        {index + 1}.
+                      </span>
+                      <span className="text-sm font-medium capitalize">
+                        {category.category}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        ({category.count})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </CollapsibleSection>
         )}
       </TabsContent>
 

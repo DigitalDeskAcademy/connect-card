@@ -17,6 +17,32 @@ Follow these steps **sequentially** - each step builds on the previous one.
 
 ---
 
+## Step 0: Gather Feature Description (REQUIRED FIRST)
+
+**Before doing ANYTHING else, ask the user:**
+
+> "What is this feature meant to accomplish? Please describe:
+>
+> 1. The problem it solves
+> 2. The key functionality it provides
+> 3. Any specific requirements or constraints"
+
+**Wait for user response.** Do not proceed until you have a clear understanding of:
+
+- What the feature does
+- Why it's needed
+- How it fits into the project
+
+**Use this description to:**
+
+- Validate the feature name makes sense
+- Pre-populate the vision doc in Step 9
+- Guide any technical decisions
+
+**Once you have a clear description, proceed to Step 1.**
+
+---
+
 ## Step 1: Validate Feature Name
 
 **Feature Name Provided:** `$ARGUMENTS`
@@ -26,6 +52,7 @@ Follow these steps **sequentially** - each step builds on the previous one.
 - Must be kebab-case (lowercase with hyphens)
 - No spaces or special characters
 - Descriptive (e.g., "analytics-dashboard", "email-campaigns", "reporting-module")
+- Name should align with the description provided in Step 0
 
 **If validation fails:**
 

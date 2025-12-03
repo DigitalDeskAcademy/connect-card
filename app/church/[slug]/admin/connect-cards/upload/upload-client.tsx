@@ -42,7 +42,7 @@ import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
 import { getActiveBatchAction } from "@/actions/connect-card/batch-actions";
 import { useDropzone } from "react-dropzone";
 
-// Type for extracted connect card data (matches Zod schema)
+// Type for extracted connect card data (matches Zod schema in lib/zodSchemas.ts)
 interface ExtractedData {
   name: string | null;
   email: string | null;
@@ -54,7 +54,42 @@ interface ExtractedData {
   address: string | null;
   age_group: string | null;
   family_info: string | null;
-  additional_notes?: unknown;
+  // Changed from unknown to string | null for type safety
+  // AI may return any shape - we coerce to string in normalizeExtractedData()
+  additional_notes: string | null;
+}
+
+/**
+ * Normalizes AI-extracted data to match schema requirements
+ * Handles edge cases where AI returns unexpected types
+ */
+function normalizeExtractedData(data: Record<string, unknown>): ExtractedData {
+  return {
+    name: typeof data.name === "string" ? data.name : null,
+    email: typeof data.email === "string" ? data.email : null,
+    phone: typeof data.phone === "string" ? data.phone : null,
+    prayer_request:
+      typeof data.prayer_request === "string" ? data.prayer_request : null,
+    visit_status:
+      typeof data.visit_status === "string" ? data.visit_status : null,
+    first_time_visitor:
+      typeof data.first_time_visitor === "boolean"
+        ? data.first_time_visitor
+        : null,
+    interests: Array.isArray(data.interests)
+      ? data.interests.filter((i): i is string => typeof i === "string")
+      : null,
+    address: typeof data.address === "string" ? data.address : null,
+    age_group: typeof data.age_group === "string" ? data.age_group : null,
+    family_info: typeof data.family_info === "string" ? data.family_info : null,
+    // Coerce any additional_notes to string (JSON stringify if object)
+    additional_notes:
+      data.additional_notes === null || data.additional_notes === undefined
+        ? null
+        : typeof data.additional_notes === "string"
+          ? data.additional_notes
+          : JSON.stringify(data.additional_notes),
+  };
 }
 
 interface UploadedImage {
@@ -267,7 +302,9 @@ export function ConnectCardUploadClient({
 
     const result = await response.json();
     console.log("✅ Extraction complete:", result);
-    return result.data;
+    // Normalize AI response to typed ExtractedData schema
+    // This ensures unpredictable AI output is coerced to our strict types
+    return normalizeExtractedData(result.data as Record<string, unknown>);
   }
 
   // Process all images

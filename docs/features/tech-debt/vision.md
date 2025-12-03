@@ -1,9 +1,9 @@
 # Tech Debt - Production Blockers
 
-**Status:** 🔴 **CRITICAL** - Blocks production launch
+**Status:** 🟢 **Phase 1 Complete** - Ready for Phase 2
 **Worktree:** `/church-connect-hub/tech-debt`
 **Branch:** `feature/tech-debt`
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-30
 
 ---
 
@@ -42,7 +42,7 @@ if (!["ACTIVE", "TRIAL"].includes(organization.subscriptionStatus)) {
 // THEN check roles...
 ```
 
-**Status:** [ ] Not started
+**Status:** [x] Complete (subscription check at lines 114-121)
 
 ---
 
@@ -70,13 +70,13 @@ console.log("Data:", extractedData); // Contains PII
 
 **Files to audit:**
 
-- [ ] `/actions/connect-card/*.ts`
-- [ ] `/actions/prayer-requests/*.ts`
-- [ ] `/actions/volunteers/*.ts`
-- [ ] `/actions/team/*.ts`
-- [ ] `/app/api/**/*.ts`
+- [x] `/actions/connect-card/*.ts`
+- [x] `/actions/prayer-requests/*.ts`
+- [x] `/actions/volunteers/*.ts`
+- [x] `/actions/team/*.ts`
+- [x] `/app/api/**/*.ts` (only test routes have logging)
 
-**Status:** [ ] Not started
+**Status:** [x] Complete (all server actions cleaned)
 
 ---
 
@@ -108,7 +108,7 @@ console.log("Data:", extractedData); // Contains PII
 @@index([email])
 ```
 
-**Status:** [ ] Not started
+**Status:** [x] Complete (20+ indexes added to schema.prisma)
 
 ---
 
@@ -141,15 +141,15 @@ const cards = await prisma.connectCard.findMany({
 
 **Files to fix:**
 
-- [ ] `/lib/data/connect-card-analytics.ts`
-- [ ] `/lib/data/connect-card-batch.ts`
-- [ ] `/lib/data/connect-card-review.ts`
-- [ ] `/lib/data/prayer-requests.ts`
-- [ ] `/lib/data/volunteers.ts`
-- [ ] `/lib/data/shifts.ts`
-- [ ] `/lib/data/serving-opportunities.ts`
+- [x] `/lib/data/connect-card-analytics.ts`
+- [x] `/lib/data/connect-card-batch.ts`
+- [x] `/lib/data/connect-card-review.ts`
+- [x] `/lib/data/prayer-requests.ts`
+- [x] `/lib/data/volunteers.ts`
+- [x] `/lib/data/shifts.ts`
+- [x] `/lib/data/serving-opportunities.ts`
 
-**Status:** [ ] Not started
+**Status:** [x] Complete (all queries have `take:` limits - PR #42)
 
 ---
 
@@ -197,7 +197,46 @@ const cards = await prisma.connectCard.findMany({
 **Pattern:** `as never` casts throughout codebase
 **Risk:** Runtime errors, silent failures
 
-**Status:** [ ] Not started
+**The Problem:**
+
+```typescript
+// BAD - bypasses all type checking
+validationIssues: result.issues as never,
+extractedData: z.any().nullable(),  // Accepts anything - security risk!
+```
+
+**The Fix (Industry Standard):**
+
+1. **Created branded types for Prisma Json fields** (`lib/prisma/json-types.ts`):
+
+   - `ValidationIssuesJson` - type-safe validation issues
+   - `DuplicateMarkerJson` - type-safe duplicate markers
+   - Converter functions with runtime validation
+
+2. **Replaced `z.any()` with strict schema** (`lib/zodSchemas.ts`):
+
+   - `extractedDataSchema` with size limits on all fields
+   - Prevents storage exhaustion attacks
+   - Compile-time type inference
+
+3. **Added JSON size validation** (`lib/prisma/json-types.ts`):
+
+   - `validateJsonSize()` - prevents >1MB payloads
+   - `validateJsonDepth()` - prevents deep nesting attacks
+   - Monitoring for large payloads
+
+4. **Data normalization at boundaries** (`upload-client.tsx`):
+   - `normalizeExtractedData()` - coerces AI responses to typed schema
+
+**Files Fixed:**
+
+- [x] `lib/zodSchemas.ts` - strict `extractedDataSchema`
+- [x] `lib/prisma/json-types.ts` - NEW: branded types + converters
+- [x] `actions/connect-card/save-connect-card.ts` - uses type-safe converters
+- [x] `actions/connect-card/mark-duplicate.ts` - uses type-safe converters
+- [x] `app/church/[slug]/admin/connect-cards/upload/upload-client.tsx` - normalizes AI data
+
+**Status:** [x] Complete
 
 ---
 
@@ -219,18 +258,40 @@ try {
 
 ---
 
+### 9. Component Organization Cleanup
+
+**Pattern:** Misplaced components violating Single Use = Colocate rule
+**Risk:** Code discoverability, import confusion, duplication
+
+**Components to migrate:**
+
+| Component          | From                                   | To                                 | Reason                  |
+| ------------------ | -------------------------------------- | ---------------------------------- | ----------------------- |
+| `UserDropdown`     | `app/(public)/_components/`            | `/components/shared/`              | Used by 2+ navbars      |
+| `LoginForm`        | `app/(auth)/login/_components/`        | `/components/shared/`              | Used by 2 login pages   |
+| `TrendBadge`       | `app/church/[slug]/admin/_components/` | `/components/dashboard/analytics/` | Generic, reusable       |
+| `ConnectCardChart` | `app/church/[slug]/admin/_components/` | `/components/dashboard/analytics/` | Generic chart component |
+| `AgencyNavbar`     | `app/church/_components/`              | `/components/layout/`              | Shared layout component |
+
+**Convention documented in:** `docs/PLAYBOOK.md` (Component Organization section)
+
+**Status:** [ ] Not started
+
+---
+
 ## 📊 Progress Tracking
 
 | Phase | Issue               | Status | PR  |
 | ----- | ------------------- | ------ | --- |
-| 1     | Subscription bypass | [ ]    | -   |
-| 1     | PII in logs         | [ ]    | -   |
-| 1     | Missing indexes     | [ ]    | -   |
-| 1     | No pagination       | [ ]    | -   |
+| 1     | Subscription bypass | [x]    | -   |
+| 1     | PII in logs         | [x]    | -   |
+| 1     | Missing indexes     | [x]    | -   |
+| 1     | No pagination       | [x]    | #42 |
 | 2     | No caching          | [ ]    | -   |
 | 2     | No data abstraction | [ ]    | -   |
-| 3     | Type safety         | [ ]    | -   |
+| 3     | Type safety         | [x]    | -   |
 | 3     | Error swallowing    | [ ]    | -   |
+| 3     | Component cleanup   | [ ]    | -   |
 
 ---
 
@@ -252,4 +313,4 @@ try {
 
 ---
 
-**Last Updated:** 2025-11-25
+**Last Updated:** 2025-11-30

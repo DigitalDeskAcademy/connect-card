@@ -51,6 +51,12 @@ model Organization {
   prayerRequests        PrayerRequest[]
   volunteerCategories   VolunteerCategory[]
   prayerBatches         PrayerBatch[]
+  dataExports           DataExport[]
+  // Volunteer Onboarding System
+  ministryRequirements   MinistryRequirements[]
+  volunteerDocuments     VolunteerDocument[]
+  backgroundCheckConfig  BackgroundCheckConfig?
+  messageTemplates       MessageTemplate[]
 
   @@map("organization")
 }
@@ -500,6 +506,12 @@ model ConnectCard {
   volunteerOrientationDate  DateTime?
   /// Timeline notes for volunteer onboarding process
   volunteerOnboardingNotes  String?
+  /// Export tracking - when this card was last exported to external system
+  lastExportedAt            DateTime?
+  /// User who performed the last export
+  lastExportedBy            String?
+  /// Format of the last export (planning_center, breeze, generic)
+  lastExportFormat          String?
   /// Processing status of the card
   status           ConnectCardStatus  @default(PENDING)
   /// Validation issues found during quality check (JSON array)
@@ -529,7 +541,49 @@ model ConnectCard {
   @@index([organizationId, locationId])
   @@index([scannedAt])
   @@index([imageHash])
+  @@index([lastExportedAt])
   @@map("connect_card")
+}
+
+/// Data export job tracking for CSV exports and future API syncs
+/// Stores export history with S3 file references for re-download capability
+model DataExport {
+  id             String           @id @default(cuid())
+  /// Organization that owns this export
+  organizationId String
+  /// Export format (determines column mapping)
+  format         DataExportFormat
+  /// Filters applied to this export (JSON: locationId, dateFrom, dateTo, onlyNew)
+  filters        Json?
+  /// Number of records exported
+  recordCount    Int
+  /// Generated filename (e.g., "connect-cards-2025-11-26.csv")
+  fileName       String
+  /// S3/Tigris storage key for the exported file
+  fileKey        String
+  /// File size in bytes
+  fileSizeBytes  Int?
+  /// User who initiated the export
+  exportedBy     String
+  /// When the export was created
+  exportedAt     DateTime         @default(now())
+  /// When the file was downloaded (null if not yet downloaded)
+  downloadedAt   DateTime?
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, exportedAt])
+  @@map("data_export")
+}
+
+/// Export format options for CSV generation
+enum DataExportFormat {
+  /// Planning Center People import format
+  PLANNING_CENTER_CSV
+  /// Breeze ChMS import format
+  BREEZE_CSV
+  /// Generic CSV with all fields
+  GENERIC_CSV
 }
 
 /// Church member profiles - unified model for all people in the church system
@@ -578,6 +632,8 @@ model ChurchMember {
   payments       Payment[]
   /// Volunteer profile (one-to-one relationship)
   volunteer      Volunteer?
+  /// Document deliveries for onboarding
+  documentDeliveries DocumentDelivery[]
   /// Member creation timestamp
   createdAt      DateTime              @default(now())
   /// Last profile update
@@ -1507,4 +1563,157 @@ model PrayerBatch {
   @@index([organizationId, batchDate])
   @@index([batchDate])
   @@map("prayer_batch")
+}
+
+// ============================================================================
+// VOLUNTEER ONBOARDING SYSTEM
+// ============================================================================
+
+/// Document scope for volunteer documents
+enum DocumentScope {
+  /// Applies to all volunteers
+  GLOBAL
+  /// Applies to specific ministry category
+  MINISTRY_SPECIFIC
+}
+
+/// Document delivery method
+enum DeliveryMethod {
+  /// Sent via email
+  EMAIL
+  /// SMS with document link
+  SMS_LINK
+  /// Included in welcome packet
+  WELCOME_PACKET
+}
+
+/// Background check provider options
+enum BGCheckProvider {
+  /// Protect My Ministry
+  PROTECT_MY_MINISTRY
+  /// Sterling Volunteers
+  STERLING_VOLUNTEERS
+  /// Ministry Safe
+  MINISTRY_SAFE
+  /// Checkr
+  CHECKR
+  /// Custom provider
+  CUSTOM
+}
+
+/// Background check payment model
+enum BGCheckPayment {
+  /// Church pays for background check
+  CHURCH_PAID
+  /// Volunteer pays for background check
+  VOLUNTEER_PAID
+  /// Cost is split/subsidized
+  SUBSIDIZED
+}
+
+/// Ministry requirements configuration per category
+/// Defines what each ministry category requires for volunteers
+model MinistryRequirements {
+  id                       String                @id @default(cuid())
+  organizationId           String
+  category                 VolunteerCategoryType
+  backgroundCheckRequired  Boolean               @default(false)
+  backgroundCheckValidMonths Int?                @default(24)
+  trainingRequired         Boolean               @default(false)
+  trainingDescription      String?
+  trainingUrl              String?
+  customRequirements       Json?
+  isActive                 Boolean               @default(true)
+  sortOrder                Int                   @default(0)
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, category])
+  @@index([organizationId])
+  @@map("ministry_requirements")
+}
+
+/// Volunteer document storage and tracking
+/// Stores documents to share with volunteers during onboarding
+model VolunteerDocument {
+  id              String                 @id @default(cuid())
+  organizationId  String
+  name            String
+  fileName        String
+  fileUrl         String
+  fileSize        Int
+  mimeType        String
+  scope           DocumentScope          @default(GLOBAL)
+  category        VolunteerCategoryType?
+  description     String?
+  isTemplate      Boolean                @default(false)
+  version         Int                    @default(1)
+  uploadedBy      String?
+  uploadedAt      DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  organization Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  deliveries   DocumentDelivery[]
+
+  @@index([organizationId])
+  @@index([organizationId, scope])
+  @@index([organizationId, category])
+  @@map("volunteer_document")
+}
+
+/// Track document delivery to volunteers
+model DocumentDelivery {
+  id           String         @id @default(cuid())
+  documentId   String
+  volunteerId  String
+  method       DeliveryMethod
+  sentAt       DateTime       @default(now())
+  openedAt     DateTime?
+  downloadedAt DateTime?
+
+  document  VolunteerDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  volunteer ChurchMember      @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([volunteerId])
+  @@map("document_delivery")
+}
+
+/// Background check provider configuration per organization
+model BackgroundCheckConfig {
+  id                String         @id @default(cuid())
+  organizationId    String         @unique
+  provider          BGCheckProvider
+  providerAccountId String?
+  applicationUrl    String?
+  validityMonths    Int            @default(24)
+  paymentModel      BGCheckPayment @default(CHURCH_PAID)
+  reminderDays      Int[]          @default([30, 7])
+  instructions      String?
+  isEnabled         Boolean        @default(false)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("background_check_config")
+}
+
+/// Message template for volunteer communications
+model MessageTemplate {
+  id              String   @id @default(cuid())
+  organizationId  String
+  name            String
+  subject         String?
+  body            String
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@map("message_template")
 }

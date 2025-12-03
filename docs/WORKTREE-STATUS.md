@@ -1,20 +1,21 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-11-26
+**Last Updated:** 2025-12-01
 **Update Frequency:** After each significant work session
 
 ---
 
 ## 🚦 Project Health at a Glance
 
-| Worktree         | Port | Branch                         | Status            | Current Focus                    |
-| ---------------- | ---- | ------------------------------ | ----------------- | -------------------------------- |
-| **main**         | 3000 | `main`                         | 🟢 Active         | Project management, Dashboard UI |
-| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready for work | ChMS Sync (CSV Export)           |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🔴 BLOCKING       | Server actions needed            |
-| **volunteer**    | 3003 | `feature/volunteer-management` | 🟡 In Progress    | Onboarding pipeline              |
-| **tech-debt**    | 3004 | `feature/tech-debt`            | 🔴 CRITICAL       | Production blockers              |
+| Worktree         | Port | Branch                         | Status          | Current Focus                    |
+| ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
+| **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Dashboard UI |
+| **connect-card** | 3001 | `feature/connect-card`         | 🟡 Active Work  | Card format onboarding           |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🔴 BLOCKING     | Server actions needed            |
+| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 75% Complete | Ready for export flag            |
+| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
+| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | CSV Export complete              |
 
 ---
 
@@ -23,11 +24,12 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. tech-debt     → Production blockers (MUST FIX FIRST)
-2. prayer        → Server actions (feature unusable)
-3. volunteer     → Onboarding pipeline (in progress)
-4. connect-card  → ChMS sync (new feature)
-5. main          → Project management (ongoing)
+1. prayer        → Server actions (feature unusable)
+2. volunteer     → Ready for export flag (75% complete)
+3. connect-card  → Card format onboarding (active work)
+4. integrations  → Phase 2: API integration (Phase 1 done)
+5. tech-debt     → Phase 2: Performance (Phase 1 done)
+6. main          → Project management (ongoing)
 ```
 
 ---
@@ -36,43 +38,39 @@
 
 ---
 
-### 🔴 tech-debt (Port 3004)
+### 🟢 tech-debt (Port 3004)
 
-**Status:** CRITICAL - Blocks production launch
+**Status:** Phase 1 Complete - Ready for Phase 2
 **Branch:** `feature/tech-debt`
 **Vision Doc:** `/docs/features/tech-debt/vision.md`
 
+#### Phase 1 - Production Blockers (COMPLETE)
+
+| #   | Task                          | File                                                 | Status |
+| --- | ----------------------------- | ---------------------------------------------------- | ------ |
+| 1   | Fix subscription bypass       | `app/data/dashboard/require-dashboard-access.ts:114` | [x]    |
+| 2   | Remove PII from logs          | Server action files                                  | [x]    |
+| 3   | Add database indexes          | `prisma/schema.prisma`                               | [x]    |
+| 4   | Add pagination to all queries | `/lib/data/*.ts`                                     | [x]    |
+
 #### What You Should Be Working On
 
-**Phase 1 - Production Blockers (ALL MUST BE DONE):**
+**Phase 2 - Performance (when time permits):**
 
-| #   | Task                          | File                                                 | Time Est. | Status |
-| --- | ----------------------------- | ---------------------------------------------------- | --------- | ------ |
-| 1   | Fix subscription bypass       | `app/data/dashboard/require-dashboard-access.ts:175` | 30 min    | [ ]    |
-| 2   | Remove PII from logs          | 20+ server action files                              | 1 day     | [ ]    |
-| 3   | Add database indexes          | `prisma/schema.prisma`                               | 4 hours   | [ ]    |
-| 4   | Add pagination to all queries | `/lib/data/*.ts`                                     | 2-3 days  | [ ]    |
+| #   | Task             | Description                | Status |
+| --- | ---------------- | -------------------------- | ------ |
+| 5   | Add caching      | Redis/Upstash for hot data | [ ]    |
+| 6   | Data abstraction | Repository pattern (defer) | [ ]    |
 
-#### Start Here
+#### Definition of Done (Phase 1)
 
-```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/tech-debt
-pnpm dev  # Runs on port 3004
-
-# First task: Fix subscription bypass
-# Open: app/data/dashboard/require-dashboard-access.ts
-# Move subscription check BEFORE role returns (see vision doc)
-```
-
-#### Definition of Done
-
-- [ ] All 4 Phase 1 items complete
+- [x] All 4 Phase 1 items complete
 - [ ] PR created to main
 - [ ] PLAYBOOK.md updated with completion status
 
 #### Blockers
 
-None - this is the blocker for everything else.
+None - Phase 1 complete, no longer blocking production.
 
 ---
 
@@ -125,27 +123,30 @@ None - can work independently.
 
 ---
 
-### 🟡 volunteer (Port 3003)
+### 🟢 volunteer (Port 3003)
 
-**Status:** In Progress - Onboarding pipeline
+**Status:** 75% Complete - Ready for export flag
 **Branch:** `feature/volunteer-management`
-**Vision Doc:** `/docs/features/volunteer-management/vision.md`
+**Vision Doc:** `/docs/features/volunteer/vision.md`
+
+#### What's Complete
+
+| #   | Task                             | Status |
+| --- | -------------------------------- | ------ |
+| 1   | Leader auto-notification (email) | ✅     |
+| 2   | Document auto-send (email)       | ✅     |
+| 3   | Background check tracking        | ✅     |
 
 #### What You Should Be Working On
 
-**Current Phase - Onboarding Pipeline:**
+| #   | Task                  | Status         |
+| --- | --------------------- | -------------- |
+| 4   | Ready for export flag | 🔄 In Progress |
+| 5   | ChMS handoff workflow | [ ]            |
 
-| #   | Task                                         | Status         |
-| --- | -------------------------------------------- | -------------- |
-| 1   | Onboarding status tracking (Inquiry → Ready) | 🔄 In Progress |
-| 2   | Visual pipeline dashboard                    | [ ]            |
-| 3   | Status update actions                        | [ ]            |
-| 4   | N+1 query optimization                       | [ ]            |
+**Future (Bulk Messaging):**
 
-**After Onboarding Complete - Bulk Messaging (Phase 4):**
-
-- See `/docs/features/volunteer-management/bulk-messaging-spec.md`
-- Route: `/church/[slug]/admin/volunteer/message`
+- See `/docs/features/volunteer/vision.md`
 
 #### Start Here
 
@@ -153,15 +154,15 @@ None - can work independently.
 cd /home/digitaldesk/Desktop/church-connect-hub/volunteer
 pnpm dev  # Runs on port 3003
 
-# Current focus: Complete onboarding pipeline
+# Current focus: Ready for export flag
 # Check vision doc for detailed requirements
 ```
 
-#### Definition of Done (Onboarding)
+#### Definition of Done
 
-- [ ] Pipeline stages visible in UI
-- [ ] Status transitions working
-- [ ] N+1 queries fixed
+- [x] Leader auto-notification working
+- [x] Document auto-send working
+- [ ] Ready for export flag + ChMS handoff
 - [ ] PR created to main
 
 #### Blockers
@@ -170,27 +171,18 @@ None - can work independently.
 
 ---
 
-### 🟢 connect-card (Port 3001)
+### 🟡 connect-card (Port 3001)
 
-**Status:** Ready for new work - Phase 3 complete
+**Status:** Active Work - Card format onboarding
 **Branch:** `feature/connect-card`
 **Vision Doc:** `/docs/features/connect-cards/vision.md`
 
 #### What You Should Be Working On
 
-**Next Feature - Church Software Sync (Phase 3):**
-
-- See `/docs/features/integrations/church-software-sync-spec.md`
-- Route: `/church/[slug]/admin/integrations`
-
-| #   | Task                               | Status |
-| --- | ---------------------------------- | ------ |
-| 1   | Create integrations page UI        | [ ]    |
-| 2   | Planning Center CSV format export  | [ ]    |
-| 3   | Breeze CSV format export           | [ ]    |
-| 4   | Generic CSV format export          | [ ]    |
-| 5   | Export tracking (mark as exported) | [ ]    |
-| 6   | Export history log                 | [ ]    |
+| #   | Task                                      | Status |
+| --- | ----------------------------------------- | ------ |
+| 1   | Card format onboarding (AI field mapping) | [ ]    |
+| 2   | Send background check checkbox in Review  | [ ]    |
 
 #### Start Here
 
@@ -198,16 +190,14 @@ None - can work independently.
 cd /home/digitaldesk/Desktop/church-connect-hub/connect-card
 pnpm dev  # Runs on port 3001
 
-# First task: Create integrations page
-# Create: /app/church/[slug]/admin/integrations/page.tsx
-# Follow the UI wireframes in the spec doc
+# Current focus: Card format variance handling
+# See /docs/features/connect-cards/card-format-variance.md
 ```
 
 #### Definition of Done
 
-- [ ] CSV export working for all 3 formats
-- [ ] Export tracking in database
-- [ ] Route added to navigation
+- [ ] Card format onboarding complete
+- [ ] Background check checkbox working
 - [ ] PR created to main
 
 #### Blockers
@@ -216,7 +206,53 @@ None - can work independently.
 
 #### Note
 
-This worktree has uncommitted changes. Run `git status` to review before starting new work.
+This worktree has 58 uncommitted files. Run `git status` to review.
+
+---
+
+### 🟢 integrations (Port 3005)
+
+**Status:** Phase 1 Complete - CSV Export Done
+**Branch:** `feature/integrations`
+**Vision Doc:** `/docs/features/integrations/vision.md`
+
+#### What's Complete (Phase 1)
+
+| #   | Task                               | Status |
+| --- | ---------------------------------- | ------ |
+| 1   | Export page UI with filters        | ✅     |
+| 2   | Planning Center CSV format         | ✅     |
+| 3   | Breeze CSV format                  | ✅     |
+| 4   | Generic CSV format                 | ✅     |
+| 5   | Export tracking (mark as exported) | ✅     |
+| 6   | Email deduplication                | ✅     |
+| 7   | Export history with re-download    | ✅     |
+
+#### What's Next (Phase 2 - Future)
+
+| #   | Task                  | Status |
+| --- | --------------------- | ------ |
+| 8   | Planning Center OAuth | [ ]    |
+| 9   | Breeze OAuth          | [ ]    |
+| 10  | Scheduled exports     | [ ]    |
+
+#### Start Here
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/integrations
+pnpm dev  # Runs on port 3005
+```
+
+#### Definition of Done (Phase 1)
+
+- [x] CSV export working for all 3 formats
+- [x] Export tracking in database
+- [x] Export history with re-download
+- [ ] PR created to main
+
+#### Blockers
+
+None - Phase 1 complete, ready for PR.
 
 ---
 
@@ -266,15 +302,6 @@ pnpm dev  # Runs on port 3000
 ## 🔄 Dependency Map
 
 ```
-                    ┌─────────────────┐
-                    │   tech-debt     │
-                    │  (MUST FIX)     │
-                    └────────┬────────┘
-                             │ blocks production
-                             ▼
-    ┌────────────────────────┼────────────────────────┐
-    │                        │                        │
-    ▼                        ▼                        ▼
 ┌─────────┐           ┌─────────────┐          ┌─────────────┐
 │ prayer  │           │  volunteer  │          │connect-card │
 │(server  │           │ (onboarding)│          │ (ChMS sync) │
@@ -289,11 +316,18 @@ pnpm dev  # Runs on port 3000
                     │      main       │
                     │ (coordination)  │
                     └─────────────────┘
+                             │
+                             │ optional improvements
+                             ▼
+                    ┌─────────────────┐
+                    │   tech-debt     │
+                    │  (Phase 2)      │
+                    └─────────────────┘
 ```
 
 **Key Dependencies:**
 
-- `tech-debt` → Must complete Phase 1 before production launch
+- `tech-debt` Phase 1 → ✅ COMPLETE (no longer blocking)
 - Feature worktrees (`prayer`, `volunteer`, `connect-card`) can work in parallel
 - All features merge to `main` when complete
 
@@ -301,20 +335,20 @@ pnpm dev  # Runs on port 3000
 
 ## 📊 Overall Project Progress
 
-| Phase   | Description             | Status | Target   |
-| ------- | ----------------------- | ------ | -------- |
-| Phase 1 | Production Fixes        | 🔴 0%  | Week 1   |
-| Phase 2 | Pilot Church            | 🟡 50% | Dec 2025 |
-| Phase 3 | Member Mgmt + ChMS Sync | ⬜ 0%  | Jan 2026 |
-| Phase 4 | Communication           | ⬜ 0%  | Feb 2026 |
-| Phase 5 | Scale                   | ⬜ 0%  | Mar 2026 |
+| Phase   | Description             | Status  | Target   |
+| ------- | ----------------------- | ------- | -------- |
+| Phase 1 | Production Fixes        | 🟢 100% | Complete |
+| Phase 2 | Pilot Church            | 🟡 50%  | Dec 2025 |
+| Phase 3 | Member Mgmt + ChMS Sync | ⬜ 0%   | Jan 2026 |
+| Phase 4 | Communication           | ⬜ 0%   | Feb 2026 |
+| Phase 5 | Scale                   | ⬜ 0%   | Mar 2026 |
 
-**Blockers to Production:**
+**Production Blockers: NONE** - All Phase 1 items complete!
 
-1. ❌ Subscription bypass not fixed
-2. ❌ PII in logs
-3. ❌ No pagination
-4. ❌ Missing indexes
+- ✅ Subscription bypass fixed
+- ✅ PII removed from logs
+- ✅ Pagination added to all queries
+- ✅ Database indexes added
 
 ---
 
