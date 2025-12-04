@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-01
+**Last Updated:** 2025-12-04
 
 ---
 
@@ -62,6 +62,8 @@ Churches lose 70% of first-time visitors because:
 - Assignment to ministry leaders
 - Skills and background check tracking
 - Directory with TanStack Table UI
+- Export tracking for ChMS sync (PR #52)
+- Two-pool model: specific ministry vs general volunteer
 
 **Team Management (COMPLETE)**
 
