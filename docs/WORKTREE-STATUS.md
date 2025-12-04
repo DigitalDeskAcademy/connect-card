@@ -8,14 +8,14 @@
 
 ## 🚦 Project Health at a Glance
 
-| Worktree         | Port | Branch                         | Status          | Current Focus                     |
-| ---------------- | ---- | ------------------------------ | --------------- | --------------------------------- |
-| **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Dashboard UI  |
-| **connect-card** | 3001 | `feature/connect-card`         | 🟡 Active Work  | Duplicate detection, S3 structure |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE** | PR #49 merged Dec 4               |
-| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 Phase 1 Done | PR #47 merged Dec 1               |
-| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance              |
-| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | PR #48 merged Dec 1               |
+| Worktree         | Port | Branch                         | Status          | Current Focus                    |
+| ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
+| **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Dashboard UI |
+| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready        | Phase 3.5 complete (PR #50)      |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE** | PR #49 merged Dec 4              |
+| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 Phase 1 Done | PR #47 merged Dec 1              |
+| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
+| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | PR #48 merged Dec 1              |
 
 ---
 
@@ -24,13 +24,14 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. connect-card  → Duplicate detection + S3 structure (active work)
+1. connect-card  → Phase 4: CSV Export (next)
 2. tech-debt     → Phase 2: Performance (non-blocking)
 3. main          → Project management (ongoing)
 ```
 
 **Recently Completed (PRs Merged):**
 
+- ✅ connect-card #50 - Fuzzy duplicate detection + S3 org-scoped paths (Dec 3)
 - ✅ prayer #49 - Complete prayer request management system (Dec 4)
 - ✅ integrations #48 - ChMS export with email deduplication (Dec 1)
 - ✅ volunteer #47 - Email automation for leader notification (Dec 1)
@@ -84,52 +85,43 @@ None - Phase 1 complete, no longer blocking production.
 
 ---
 
-### 🔴 prayer (Port 3002)
+### 🟢 prayer (Port 3002)
 
-**Status:** BLOCKING - Feature 65% complete but unusable
+**Status:** COMPLETE - PR #49 merged Dec 4
 **Branch:** `feature/prayer-enhancements`
 **Vision Doc:** `/docs/features/prayer-management/vision.md`
 
-#### What You Should Be Working On
+#### Completed Work (PR #49)
 
-**Phase 1 - Server Actions (CRITICAL):**
+**Phase 1 - Server Actions:**
 
 | #   | Task                         | Status |
 | --- | ---------------------------- | ------ |
-| 1   | `createPrayerRequest` action | [ ]    |
-| 2   | `updatePrayerRequest` action | [ ]    |
-| 3   | `assignPrayerRequest` action | [ ]    |
-| 4   | `markAnswered` action        | [ ]    |
-| 5   | `deletePrayerRequest` action | [ ]    |
+| 1   | `createPrayerRequest` action | [x]    |
+| 2   | `updatePrayerRequest` action | [x]    |
+| 3   | `assignPrayerRequest` action | [x]    |
+| 4   | `markAnswered` action        | [x]    |
+| 5   | `deletePrayerRequest` action | [x]    |
+| 6   | `togglePrivacy` action       | [x]    |
 
-**Each action requires:**
+**UI Components:**
 
-- Zod validation schema
-- Arcjet rate limiting
-- Multi-tenant `organizationId` scoping
-- Privacy checks for private prayers
+| #   | Task                 | Status |
+| --- | -------------------- | ------ |
+| 1   | Create prayer dialog | [x]    |
+| 2   | Edit prayer dialog   | [x]    |
+| 3   | Detail view dialog   | [x]    |
 
-#### Start Here
+#### Future Enhancements (Wishlist)
 
-```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/prayer
-pnpm dev  # Runs on port 3002
-
-# First task: Create server action file
-# Create: /actions/prayer-requests/create.ts
-# Follow pattern from /actions/connect-card/save-connect-card.ts
-```
+- [ ] N+1 Query optimization (10 COUNT queries)
+- [ ] Dedicated assignment dialog
 
 #### Definition of Done
 
-- [ ] All 5 server actions implemented
-- [ ] UI components for create/edit/assign dialogs
-- [ ] N+1 query fix in prayer-requests.ts
-- [ ] PR created to main
-
-#### Blockers
-
-None - can work independently.
+- [x] All 6 server actions implemented
+- [x] UI components for create/edit/detail dialogs
+- [x] PR #49 merged to main
 
 ---
 
@@ -180,13 +172,28 @@ None - can work independently.
 
 ### 🟢 connect-card (Port 3001)
 
-**Status:** Ready for new work - Phase 3 complete
+**Status:** Phase 3.5 Complete - Ready for Phase 4
 **Branch:** `feature/connect-card`
 **Vision Doc:** `/docs/features/connect-cards/vision.md`
 
+#### Recently Completed (PR #50)
+
+| #   | Task                                   | Status |
+| --- | -------------------------------------- | ------ |
+| 1   | Mobile Camera Wizard (live viewfinder) | [x]    |
+| 2   | Background queue processing            | [x]    |
+| 3   | Two-sided card support (front/back)    | [x]    |
+| 4   | Auto-crop to card bounds               | [x]    |
+| 5   | Upload flow polished                   | [x]    |
+| 6   | AI extraction reliable                 | [x]    |
+| 7   | Review queue complete                  | [x]    |
+| 8   | Batch save/complete flow               | [x]    |
+| 9   | Fuzzy duplicate detection              | [x]    |
+| 10  | S3 org-scoped paths                    | [x]    |
+
 #### What You Should Be Working On
 
-**Next Feature - Church Software Sync (Phase 3):**
+**Next Feature - CSV Export (Phase 4):**
 
 - See `/docs/features/integrations/church-software-sync-spec.md`
 - Route: `/church/[slug]/admin/integrations`
@@ -221,10 +228,6 @@ pnpm dev  # Runs on port 3001
 #### Blockers
 
 None - can work independently.
-
-#### Note
-
-This worktree has uncommitted changes. Run `git status` to review before starting new work.
 
 ---
 
