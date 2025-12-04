@@ -549,9 +549,26 @@ export default function TeamManagementClient({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Team Member</DialogTitle>
-            <DialogDescription>
-              Update {selectedMember?.name}&apos;s role and assigned location.
-            </DialogDescription>
+            {selectedMember && (
+              <div className="flex items-center gap-3 pt-2 pb-1">
+                <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                  <span className="text-sm font-semibold text-primary">
+                    {selectedMember.name
+                      .split(" ")
+                      .map(n => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </span>
+                </div>
+                <div>
+                  <p className="font-medium">{selectedMember.name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedMember.email}
+                  </p>
+                </div>
+              </div>
+            )}
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -605,12 +622,36 @@ export default function TeamManagementClient({
 
             {/* Volunteer Categories Section */}
             <div className="space-y-3">
-              <div>
-                <Label>Volunteer Categories (Optional)</Label>
-                <p className="text-sm text-muted-foreground">
-                  Assign volunteer leadership categories for the assignment
-                  workflow
-                </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Volunteer Categories (Optional)</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Assign volunteer leadership categories for the assignment
+                    workflow
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const allSelected =
+                      editForm.volunteerCategories.length ===
+                      VOLUNTEER_CATEGORIES.length;
+                    setEditForm({
+                      ...editForm,
+                      volunteerCategories: allSelected
+                        ? []
+                        : [...VOLUNTEER_CATEGORIES],
+                    });
+                  }}
+                  disabled={isSubmitting}
+                >
+                  {editForm.volunteerCategories.length ===
+                  VOLUNTEER_CATEGORIES.length
+                    ? "Clear All"
+                    : "Check All"}
+                </Button>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {VOLUNTEER_CATEGORIES.map(category => (
