@@ -3,8 +3,170 @@
 **Status:** 🟡 **IN PROGRESS** - Onboarding features in development
 **Worktree:** `/church-connect-hub/volunteer`
 **Branch:** `feature/volunteer-management`
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-12-03
 **Focus:** Onboarding Automation (Not Volunteer Management)
+
+---
+
+## 🔄 Worktree Coordination: Export Feature
+
+**Export UI lives in `feature/integrations` worktree.** This worktree provides the data layer.
+
+### This Worktree Owns
+
+| Item                             | Status      |
+| -------------------------------- | ----------- |
+| Volunteer data model             | ✅ Complete |
+| `readyForExport` business logic  | ✅ Complete |
+| `documentsSentAt` tracking       | 📋 Pending  |
+| `automationStatus` for general   | 📋 Pending  |
+| General volunteer automation seq | 📋 Pending  |
+| `getExportableVolunteers()` fn   | 📋 Pending  |
+
+### Integrations Worktree Owns
+
+| Item                               | Status      |
+| ---------------------------------- | ----------- |
+| Export page UI (`/admin/export`)   | ✅ Complete |
+| "Volunteers" tab on export page    | 📋 Pending  |
+| Volunteer CSV formats (PCO/Breeze) | 📋 Pending  |
+| `createVolunteerExport()` action   | 📋 Pending  |
+
+### Merge Order
+
+1. **Volunteer worktree merges first** → Provides data model + `getExportableVolunteers()`
+2. **Integrations worktree merges second** → Adds Volunteers tab, calls data function
+
+### Interface Contract
+
+```typescript
+// lib/data/volunteers.ts - This worktree provides this function
+export async function getExportableVolunteers(
+  organizationId: string,
+  filters?: {
+    locationId?: string;
+    category?: VolunteerCategoryType;
+    onlyNew?: boolean; // Not yet exported
+  }
+): Promise<ExportableVolunteer[]>;
+
+export type ExportableVolunteer = {
+  id: string;
+  category: string;
+  backgroundCheckStatus: string;
+  readyForExport: boolean;
+  readyForExportDate: Date | null;
+  exportedAt: Date | null;
+  // From churchMember relation
+  name: string;
+  email: string | null;
+  phone: string | null;
+  location: { name: string } | null;
+};
+```
+
+---
+
+## 🎯 Two-Pool Volunteer Model
+
+Volunteers are handled differently based on whether they selected a specific ministry:
+
+```
+"I want to volunteer"
+        │
+        ├── SPECIFIC MINISTRY ──► Onboarding Pipeline
+        │   (Kids, Worship, etc.)  • Auto-send docs
+        │                          • Auto-notify leader
+        │                          • BG check if required
+        │                          • Export when complete
+        │
+        └── GENERAL ──► Automation Sequence (if enabled)
+                        • Day 1: Welcome + top 3 needs
+                        • Day 3: Follow-up reminder
+                        • Day 7: Timeout → export to ChMS
+
+                        Response 1-3 → Move to specific pipeline
+                        Response 4 or timeout → Export to ChMS general
+```
+
+### Pool 1: Specific Ministry (Full Onboarding)
+
+| Step | Trigger                        | Action                              |
+| ---- | ------------------------------ | ----------------------------------- |
+| 1    | Volunteer assigned to ministry | Auto-send ministry-specific docs    |
+| 2    | Volunteer assigned to ministry | Auto-notify ministry leader         |
+| 3    | BG check required              | Track status until CLEARED          |
+| 4    | Docs sent + BG complete        | `readyForExport = true`             |
+| 5    | Export                         | Include in volunteer export to ChMS |
+
+### Pool 2: General (Automation Sequence)
+
+| Day   | Action                     | If Response   | If No Response         |
+| ----- | -------------------------- | ------------- | ---------------------- |
+| **1** | Send welcome + top 3 needs | Process reply | Wait                   |
+| **3** | Send friendly follow-up    | Process reply | Wait                   |
+| **7** | Timeout                    | —             | Export to ChMS general |
+
+**Response Options:**
+
+- **1, 2, or 3**: Move to specific ministry pipeline (full onboarding)
+- **4**: "Add me to list for later" → Export to ChMS general bucket
+- **No reply**: Same as 4 after Day 7 timeout
+
+### General Volunteer Message Template
+
+```
+Hi {first_name}! Thanks for wanting to volunteer at {church_name}!
+
+We currently have needs in these areas:
+
+1. {need_1_category} - {need_1_description}
+2. {need_2_category} - {need_2_description}
+3. {need_3_category} - {need_3_description}
+
+Reply 1, 2, or 3 to get connected with a leader.
+
+Reply 4 if none of these fit right now - we'll add you to our
+volunteer list and reach out when new opportunities come up!
+```
+
+### Data Model Additions Needed
+
+```prisma
+model Volunteer {
+  // Existing fields...
+
+  // Document tracking (for readyForExport logic)
+  documentsSentAt          DateTime?   // When docs were emailed
+
+  // General volunteer automation tracking
+  automationStatus         AutomationStatus?  // PENDING | DAY1_SENT | DAY3_SENT | RESPONDED | EXPIRED
+  automationStartedAt      DateTime?          // When sequence began
+  automationResponseAt     DateTime?          // When they replied
+
+  // Export tracking
+  exportedAt               DateTime?          // When exported to ChMS
+}
+
+enum AutomationStatus {
+  PENDING      // Queued for Day 1 message
+  DAY1_SENT    // Day 1 sent, waiting for response
+  DAY3_SENT    // Day 3 follow-up sent, waiting
+  RESPONDED    // They replied (processing)
+  EXPIRED      // Day 7 timeout, exported
+}
+```
+
+### Church Settings Needed
+
+```prisma
+model Organization {
+  // ... existing fields
+
+  // General volunteer automation toggle
+  generalVolunteerAutomationEnabled  Boolean @default(false)
+}
+```
 
 ---
 
