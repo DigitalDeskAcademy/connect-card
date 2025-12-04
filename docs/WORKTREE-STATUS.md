@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-01
+**Last Updated:** 2025-12-03
 **Update Frequency:** After each significant work session
 
 ---
@@ -12,7 +12,7 @@
 | ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
 | **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Dashboard UI |
 | **connect-card** | 3001 | `feature/connect-card`         | 🟡 Active Work  | Card format onboarding           |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🔴 BLOCKING     | Server actions needed            |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 Ready for PR | All server actions complete      |
 | **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 75% Complete | Ready for export flag            |
 | **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
 | **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | CSV Export complete              |
@@ -24,7 +24,7 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. prayer        → Server actions (feature unusable)
+1. prayer        → Ready for PR (create PR and merge)
 2. volunteer     → Ready for export flag (75% complete)
 3. connect-card  → Card format onboarding (active work)
 4. integrations  → Phase 2: API integration (Phase 1 done)
@@ -74,52 +74,51 @@ None - Phase 1 complete, no longer blocking production.
 
 ---
 
-### 🔴 prayer (Port 3002)
+### 🟢 prayer (Port 3002)
 
-**Status:** BLOCKING - Feature 65% complete but unusable
+**Status:** Ready for PR - All server actions complete
 **Branch:** `feature/prayer-enhancements`
-**Vision Doc:** `/docs/features/prayer-management/vision.md`
+**Vision Doc:** `/docs/features/prayer/vision.md`
 
-#### What You Should Be Working On
-
-**Phase 1 - Server Actions (CRITICAL):**
+#### What's Complete
 
 | #   | Task                         | Status |
 | --- | ---------------------------- | ------ |
-| 1   | `createPrayerRequest` action | [ ]    |
-| 2   | `updatePrayerRequest` action | [ ]    |
-| 3   | `assignPrayerRequest` action | [ ]    |
-| 4   | `markAnswered` action        | [ ]    |
-| 5   | `deletePrayerRequest` action | [ ]    |
+| 1   | `createPrayerRequest` action | ✅     |
+| 2   | `updatePrayerRequest` action | ✅     |
+| 3   | `assignPrayerRequest` action | ✅     |
+| 4   | `markAnswered` action        | ✅     |
+| 5   | `deletePrayerRequest` action | ✅     |
+| 6   | `togglePrivacy` action       | ✅     |
+| 7   | Create prayer dialog         | ✅     |
+| 8   | Edit prayer dialog           | ✅     |
+| 9   | Detail view dialog           | ✅     |
 
-**Each action requires:**
+**Each action includes:**
 
 - Zod validation schema
 - Arcjet rate limiting
 - Multi-tenant `organizationId` scoping
 - Privacy checks for private prayers
 
-#### Start Here
+#### What's Next
 
 ```bash
 cd /home/digitaldesk/Desktop/church-connect-hub/prayer
-pnpm dev  # Runs on port 3002
-
-# First task: Create server action file
-# Create: /actions/prayer-requests/create.ts
-# Follow pattern from /actions/connect-card/save-connect-card.ts
+git push origin feature/prayer-enhancements
+gh pr create --title "feat(prayer): complete prayer request management"
 ```
 
 #### Definition of Done
 
-- [ ] All 5 server actions implemented
-- [ ] UI components for create/edit/assign dialogs
-- [ ] N+1 query fix in prayer-requests.ts
+- [x] All 6 server actions implemented
+- [x] UI components for create/edit/detail dialogs
+- [ ] N+1 query optimization (optional - 10 COUNT queries)
 - [ ] PR created to main
 
 #### Blockers
 
-None - can work independently.
+None - ready to merge!
 
 ---
 
