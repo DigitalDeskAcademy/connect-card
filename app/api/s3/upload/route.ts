@@ -150,9 +150,13 @@ const fileUploadSchema = z.object({
   contentType: z.string().min(1, { message: "Content type is required" }),
   size: z.number().min(1, { message: "Size is required" }),
   isImage: z.boolean(),
-  fileType: z.enum(["thumbnail", "banner", "asset"]).default("asset"),
+  fileType: z
+    .enum(["thumbnail", "banner", "asset", "connect-card"])
+    .default("asset"),
   organizationSlug: z.string().optional(),
   courseName: z.string().optional(),
+  // Connect card specific metadata
+  cardSide: z.enum(["front", "back"]).optional(),
 });
 
 /**
@@ -190,7 +194,7 @@ const aj = arcjet.withRule(
   fixedWindow({
     mode: "LIVE",
     window: "1m",
-    max: 5,
+    max: 100, // Support batch uploads of 50+ connect cards
   })
 );
 
@@ -356,6 +360,7 @@ export async function POST(request: Request) {
       fileType,
       organizationSlug,
       courseName,
+      cardSide,
     } = validation.data;
 
     // Generate human-readable, multi-tenant file path with secure uniqueness
@@ -364,7 +369,14 @@ export async function POST(request: Request) {
     const timestamp = Date.now();
     const secureId = generateSecureId(8); // 8 chars = ~48 bits of entropy
 
-    if (courseName) {
+    if (fileType === "connect-card" && organizationSlug) {
+      // Connect cards: organizations/{org-slug}/connect-cards/{YYYY-MM}/{side}-{timestamp}-{secureId}.{ext}
+      // Organized by month for easy cleanup/archival
+      const now = new Date();
+      const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const side = cardSide || "front";
+      uniqueKey = `organizations/${organizationSlug}/connect-cards/${yearMonth}/${side}-${timestamp}-${secureId}.${fileExtension}`;
+    } else if (courseName) {
       // Convert course name to URL-safe slug (e.g., "GHL Onboarding" -> "ghl-onboarding")
       const courseSlug = courseName
         .toLowerCase()
@@ -378,8 +390,11 @@ export async function POST(request: Request) {
         // Platform course: platform/courses/{course-slug}/{type}-{timestamp}-{secureId}.{ext}
         uniqueKey = `platform/courses/${courseSlug}/${fileType}-${timestamp}-${secureId}.${fileExtension}`;
       }
+    } else if (organizationSlug) {
+      // Organization assets without course context
+      uniqueKey = `organizations/${organizationSlug}/assets/${fileType}-${timestamp}-${secureId}.${fileExtension}`;
     } else {
-      // General uploads without course context (shouldn't happen in production)
+      // General uploads without org context (shouldn't happen in production)
       uniqueKey = `uploads/general/${fileType}-${timestamp}-${secureId}.${fileExtension}`;
     }
 

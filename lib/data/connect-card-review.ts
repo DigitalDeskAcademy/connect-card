@@ -14,7 +14,9 @@ import type { VolunteerOnboardingStatus } from "@/lib/generated/prisma";
 export interface ConnectCardForReview {
   id: string;
   imageKey: string;
-  imageUrl: string; // Signed S3 URL for image display
+  imageUrl: string; // Signed S3 URL for front image display
+  backImageKey: string | null; // S3 key for back of card (two-sided cards)
+  backImageUrl: string | null; // Signed S3 URL for back image display
   extractedData: ExtractedData | null;
   name: string | null;
   email: string | null;
@@ -61,6 +63,7 @@ export async function getConnectCardsForReview(
     select: {
       id: true,
       imageKey: true,
+      backImageKey: true, // Back image for two-sided cards
       extractedData: true,
       name: true,
       email: true,
@@ -79,13 +82,17 @@ export async function getConnectCardsForReview(
     },
   });
 
-  // Generate signed URLs for all images
+  // Generate signed URLs for all images (front and back)
   const cardsWithUrls = await Promise.all(
     cards.map(async card => {
       const imageUrl = await generateSignedImageUrl(card.imageKey);
+      const backImageUrl = card.backImageKey
+        ? await generateSignedImageUrl(card.backImageKey)
+        : null;
       return {
         ...card,
         imageUrl,
+        backImageUrl,
         extractedData: card.extractedData as ExtractedData | null,
       };
     })
@@ -117,6 +124,7 @@ export async function getConnectCardForReview(
     select: {
       id: true,
       imageKey: true,
+      backImageKey: true, // Back image for two-sided cards
       extractedData: true,
       name: true,
       email: true,
@@ -138,10 +146,14 @@ export async function getConnectCardForReview(
   if (!card) return null;
 
   const imageUrl = await generateSignedImageUrl(card.imageKey);
+  const backImageUrl = card.backImageKey
+    ? await generateSignedImageUrl(card.backImageKey)
+    : null;
 
   return {
     ...card,
     imageUrl,
+    backImageUrl,
     extractedData: card.extractedData as ExtractedData | null,
   };
 }
@@ -245,6 +257,7 @@ export async function getConnectCardsForBatchReview(
     select: {
       id: true,
       imageKey: true,
+      backImageKey: true, // Back image for two-sided cards
       extractedData: true,
       name: true,
       email: true,
@@ -263,13 +276,17 @@ export async function getConnectCardsForBatchReview(
     },
   });
 
-  // Generate signed URLs for all images
+  // Generate signed URLs for all images (front and back)
   const cardsWithUrls = await Promise.all(
     cards.map(async card => {
       const imageUrl = await generateSignedImageUrl(card.imageKey);
+      const backImageUrl = card.backImageKey
+        ? await generateSignedImageUrl(card.backImageKey)
+        : null;
       return {
         ...card,
         imageUrl,
+        backImageUrl,
         extractedData: card.extractedData as ExtractedData | null,
       };
     })

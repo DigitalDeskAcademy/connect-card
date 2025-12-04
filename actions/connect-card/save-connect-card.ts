@@ -12,7 +12,6 @@ import {
   getOrCreateActiveBatch,
   incrementBatchCardCount,
 } from "@/lib/data/connect-card-batch";
-import { calculateImageHash } from "@/lib/utils/image-hash";
 import {
   toValidationIssuesJson,
   validateJsonSize,
@@ -27,17 +26,20 @@ import {
  * Standard options: "First Visit", "Second Visit", "Regular attendee", "Other"
  *
  * @param visitStatus - Raw text extracted by AI from connect card
- * @returns Normalized visit status or null if unrecognized
+ * @returns Normalized visit status or null if unrecognized/not marked
  */
 function normalizeVisitStatus(visitStatus: string | null): string | null {
   if (!visitStatus) return null;
 
   const normalized = visitStatus.toLowerCase().trim();
 
-  // First Visit variations
+  // First Visit variations (common checkbox labels across churches)
   if (
     normalized.includes("first") ||
-    normalized.includes("new") ||
+    normalized.includes("i'm new") ||
+    normalized.includes("im new") ||
+    normalized.includes("new here") ||
+    normalized.includes("new guest") ||
     (normalized.includes("guest") && !normalized.includes("return"))
   ) {
     return "First Visit";
@@ -53,7 +55,8 @@ function normalizeVisitStatus(visitStatus: string | null): string | null {
     normalized.includes("regular") ||
     normalized.includes("member") ||
     normalized.includes("returning") ||
-    normalized.includes("frequent")
+    normalized.includes("frequent") ||
+    normalized.includes("attend")
   ) {
     return "Regular attendee";
   }
@@ -61,6 +64,106 @@ function normalizeVisitStatus(visitStatus: string | null): string | null {
   // If we can't confidently map it, store the original text
   // Staff will correct it during review
   return visitStatus;
+}
+
+/**
+ * Normalize Interests
+ *
+ * Maps AI-extracted interest checkbox labels to our standard interest options.
+ * Different churches use different labels for similar interests.
+ *
+ * @param interests - Raw array of checkbox labels from AI extraction
+ * @returns Normalized array of interests matching our standard options
+ */
+function normalizeInterests(interests: string[] | null): string[] {
+  if (!interests || interests.length === 0) return [];
+
+  const normalized: string[] = [];
+
+  for (const interest of interests) {
+    const lower = interest.toLowerCase().trim();
+
+    // Volunteering variations
+    if (
+      lower.includes("volunteer") ||
+      lower.includes("serve") ||
+      lower.includes("serving") ||
+      lower.includes("get involved") ||
+      lower.includes("help out")
+    ) {
+      if (!normalized.includes("Volunteering")) {
+        normalized.push("Volunteering");
+      }
+      continue;
+    }
+
+    // Small Groups variations
+    if (
+      lower.includes("small group") ||
+      lower.includes("life group") ||
+      lower.includes("connect group") ||
+      lower.includes("community group") ||
+      lower.includes("bible study")
+    ) {
+      if (!normalized.includes("Small Groups")) {
+        normalized.push("Small Groups");
+      }
+      continue;
+    }
+
+    // Youth Ministry variations
+    if (
+      lower.includes("youth") ||
+      lower.includes("student") ||
+      lower.includes("teen")
+    ) {
+      if (!normalized.includes("Youth Ministry")) {
+        normalized.push("Youth Ministry");
+      }
+      continue;
+    }
+
+    // Kids Ministry variations
+    if (
+      lower.includes("kid") ||
+      lower.includes("child") ||
+      lower.includes("nursery")
+    ) {
+      if (!normalized.includes("Kids Ministry")) {
+        normalized.push("Kids Ministry");
+      }
+      continue;
+    }
+
+    // Worship variations
+    if (
+      lower.includes("worship") ||
+      lower.includes("music") ||
+      lower.includes("band") ||
+      lower.includes("choir")
+    ) {
+      if (!normalized.includes("Worship")) {
+        normalized.push("Worship");
+      }
+      continue;
+    }
+
+    // Missions variations
+    if (lower.includes("mission") || lower.includes("outreach")) {
+      if (!normalized.includes("Missions")) {
+        normalized.push("Missions");
+      }
+      continue;
+    }
+
+    // If we can't map it, keep the original (staff can review)
+    // But only if it's not already in the list
+    if (!normalized.includes(interest)) {
+      normalized.push(interest);
+    }
+  }
+
+  return normalized;
 }
 
 const aj = arcjet.withRule(
@@ -187,53 +290,30 @@ export async function saveConnectCard(
   }
 
   try {
-    // 5. Calculate image hash for duplicate detection
-    const imageHash = calculateImageHash(validation.data.imageKey);
-
-    // 6. Check for duplicate image (same physical card scanned twice)
-    const duplicateImage = await prisma.connectCard.findFirst({
-      where: {
-        organizationId: organization.id,
-        imageHash,
-      },
-      select: {
-        id: true,
-        name: true,
-        scannedAt: true,
-      },
-    });
-
-    if (duplicateImage) {
-      // Note: Error responses don't include data field (typed for success only)
-      // Include duplicate info in the message for user context
-      return {
-        status: "error",
-        message: `Duplicate image detected - this card was already scanned${
-          duplicateImage.name ? ` for ${duplicateImage.name}` : ""
-        }${
-          duplicateImage.scannedAt
-            ? ` on ${new Date(duplicateImage.scannedAt).toLocaleDateString()}`
-            : ""
-        }`,
-      };
-    }
+    // 5. Get imageHash from validated data (calculated in extract API)
+    // Duplicate check already done in extract API before Claude Vision call
+    const imageHash = validation.data.imageHash;
+    const backImageKey = validation.data.backImageKey || null;
+    const backImageHash = validation.data.backImageHash || null;
 
     // Note: We intentionally do NOT check for duplicate person data here.
     // Returning members filling out prayer requests or updating info should be allowed.
     // Future enhancement: Link to existing ChurchMember records instead of blocking.
 
-    // 7. Get or create active batch for this upload
+    // 6. Get or create active batch for this upload
     const batch = await getOrCreateActiveBatch(
       session.user.id,
       organization.id
     );
 
-    // 8. Save to database with batch assignment and image hash
+    // 7. Save to database with batch assignment and image hash
     const connectCard = await prisma.connectCard.create({
       data: {
         organizationId: organization.id,
         imageKey: validation.data.imageKey,
         imageHash,
+        backImageKey,
+        backImageHash,
         extractedData: validation.data.extractedData,
         // Map extracted fields to database columns
         name: validation.data.extractedData.name,
@@ -241,13 +321,12 @@ export async function saveConnectCard(
         phone: formatPhoneNumber(validation.data.extractedData.phone),
         address: validation.data.extractedData.address,
         prayerRequest: validation.data.extractedData.prayer_request,
+        // Only use AI-detected visit_status - no fallback to "First Visit"
+        // Staff will select during review if not detected
         visitType: normalizeVisitStatus(
-          validation.data.extractedData.visit_status ||
-            (validation.data.extractedData.first_time_visitor
-              ? "First Visit"
-              : null)
+          validation.data.extractedData.visit_status || null
         ),
-        interests: validation.data.extractedData.interests || [],
+        interests: normalizeInterests(validation.data.extractedData.interests),
         // Status: All cards go to review queue initially (EXTRACTED)
         // Staff can batch approve or review individually
         status: "EXTRACTED",
@@ -265,7 +344,7 @@ export async function saveConnectCard(
       },
     });
 
-    // 9. Increment batch card count
+    // 8. Increment batch card count
     await incrementBatchCardCount(batch.id);
 
     return {
