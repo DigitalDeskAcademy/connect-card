@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
+import { leaderMatchesCategory } from "@/lib/volunteer-category-mapping";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -897,7 +898,8 @@ export function ReviewQueueClient({
                               <SelectContent>
                                 {volunteerLeaders
                                   .filter(leader =>
-                                    leader.volunteerCategories.includes(
+                                    leaderMatchesCategory(
+                                      leader.volunteerCategories,
                                       formData.volunteerCategory
                                     )
                                   )
@@ -910,7 +912,8 @@ export function ReviewQueueClient({
                                     </SelectItem>
                                   ))}
                                 {volunteerLeaders.filter(leader =>
-                                  leader.volunteerCategories.includes(
+                                  leaderMatchesCategory(
+                                    leader.volunteerCategories,
                                     formData.volunteerCategory
                                   )
                                 ).length === 0 && (
