@@ -242,6 +242,8 @@ export async function getPrayerRequestById(
  * Get prayer request statistics for dashboard
  *
  * Returns aggregate counts for various prayer request categories.
+ * Optimized: Uses groupBy + Promise.all to reduce from 9 sequential queries
+ * to 5 parallel queries (effectively 1 round-trip latency).
  *
  * @param dataScope - User's data scope
  * @param userId - Current user ID for privacy filtering
@@ -261,52 +263,51 @@ export async function getPrayerRequestStats(
     where.OR = [{ isPrivate: false }, { assignedToId: userId }];
   }
 
-  // Get total count
-  const total = await prisma.prayerRequest.count({ where });
-
-  // Get status counts
-  const pending = await prisma.prayerRequest.count({
-    where: { ...where, status: "PENDING" },
-  });
-
-  const assigned = await prisma.prayerRequest.count({
-    where: { ...where, status: "ASSIGNED" },
-  });
-
-  const praying = await prisma.prayerRequest.count({
-    where: { ...where, status: "PRAYING" },
-  });
-
-  const answered = await prisma.prayerRequest.count({
-    where: { ...where, status: "ANSWERED" },
-  });
-
-  // Get privacy and urgency counts
-  const privateCount = await prisma.prayerRequest.count({
-    where: { ...where, isPrivate: true },
-  });
-
-  const urgent = await prisma.prayerRequest.count({
-    where: { ...where, isUrgent: true },
-  });
-
-  // Get this week's count
+  // Calculate date thresholds once
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-  const thisWeek = await prisma.prayerRequest.count({
-    where: { ...where, createdAt: { gte: oneWeekAgo } },
-  });
 
-  // Get answered this month
   const oneMonthAgo = new Date();
   oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-  const answeredThisMonth = await prisma.prayerRequest.count({
-    where: {
-      ...where,
-      status: "ANSWERED",
-      answeredDate: { gte: oneMonthAgo },
-    },
-  });
+
+  // Run all queries in parallel for optimal performance
+  const [statusCounts, privateCount, urgent, thisWeek, answeredThisMonth] =
+    await Promise.all([
+      // Status counts via groupBy (1 query for all status values)
+      prisma.prayerRequest.groupBy({
+        by: ["status"],
+        where,
+        _count: { _all: true },
+      }),
+      // Private count
+      prisma.prayerRequest.count({ where: { ...where, isPrivate: true } }),
+      // Urgent count
+      prisma.prayerRequest.count({ where: { ...where, isUrgent: true } }),
+      // This week's count
+      prisma.prayerRequest.count({
+        where: { ...where, createdAt: { gte: oneWeekAgo } },
+      }),
+      // Answered this month
+      prisma.prayerRequest.count({
+        where: {
+          ...where,
+          status: "ANSWERED",
+          answeredDate: { gte: oneMonthAgo },
+        },
+      }),
+    ]);
+
+  // Parse status counts from groupBy result
+  const statusMap = new Map(statusCounts.map(s => [s.status, s._count._all]));
+
+  const pending = statusMap.get("PENDING") ?? 0;
+  const assigned = statusMap.get("ASSIGNED") ?? 0;
+  const praying = statusMap.get("PRAYING") ?? 0;
+  const answered = statusMap.get("ANSWERED") ?? 0;
+  const archived = statusMap.get("ARCHIVED") ?? 0;
+
+  // Total is sum of all statuses
+  const total = pending + assigned + praying + answered + archived;
 
   return {
     total,
