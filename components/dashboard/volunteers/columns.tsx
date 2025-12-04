@@ -240,6 +240,29 @@ export function getVolunteerColumns({
       },
     },
     {
+      id: "readyForExport",
+      accessorKey: "readyForExport",
+      header: "Export Ready",
+      cell: ({ row }) => {
+        const isReady = row.original.readyForExport;
+        return (
+          <Badge
+            variant={isReady ? "default" : "outline"}
+            className={isReady ? "bg-blue-600 hover:bg-blue-700" : ""}
+          >
+            {isReady ? "Ready" : "Pending"}
+          </Badge>
+        );
+      },
+      filterFn: (row, id, value) => {
+        if (!value || value === "ALL") return true;
+        const isReady = row.getValue(id);
+        if (value === "READY") return isReady === true;
+        if (value === "PENDING") return isReady === false;
+        return true;
+      },
+    },
+    {
       id: "actions",
       cell: ({ row }) => (
         <ActionsCell

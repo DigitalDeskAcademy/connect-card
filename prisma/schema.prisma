@@ -57,6 +57,9 @@ model Organization {
   volunteerDocuments     VolunteerDocument[]
   backgroundCheckConfig  BackgroundCheckConfig?
   messageTemplates       MessageTemplate[]
+  /// Enable general volunteer automation sequence (Day 1/3/7 messages)
+  /// When disabled, GENERAL volunteers are marked readyForExport immediately
+  generalVolunteerAutomationEnabled Boolean @default(false)
 
   @@map("organization")
 }
@@ -840,6 +843,20 @@ model Volunteer {
   backgroundCheckDate   DateTime?
   /// Background check expiration date (typically 2-3 years)
   backgroundCheckExpiry DateTime?
+  /// Whether volunteer is ready to be exported to ChMS (BG check done + docs sent)
+  readyForExport        Boolean                    @default(false)
+  /// Date when volunteer was marked ready for export
+  readyForExportDate    DateTime?
+  /// When onboarding documents were emailed to volunteer
+  documentsSentAt       DateTime?
+  /// When volunteer was exported to ChMS
+  exportedAt            DateTime?
+  /// General volunteer automation sequence status
+  automationStatus      AutomationStatus?
+  /// When automation sequence started
+  automationStartedAt   DateTime?
+  /// When volunteer responded to automation sequence
+  automationResponseAt  DateTime?
   /// Notes about the volunteer (preferences, restrictions, etc.)
   notes                 String?
   /// Custom fields for church-specific data
@@ -1106,6 +1123,21 @@ enum BackgroundCheckStatus {
   /// Background check failed or flagged
   FLAGGED
   /// Background check expired and needs renewal
+  EXPIRED
+}
+
+/// General volunteer automation sequence status
+/// Tracks progress through the Day 1/3/7 automation workflow
+enum AutomationStatus {
+  /// Queued for Day 1 welcome message
+  PENDING
+  /// Day 1 welcome sent, waiting for response
+  DAY1_SENT
+  /// Day 3 follow-up sent, waiting for response
+  DAY3_SENT
+  /// Volunteer responded to automation sequence
+  RESPONDED
+  /// Day 7 timeout reached, exported to ChMS general
   EXPIRED
 }
 
