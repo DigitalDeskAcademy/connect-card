@@ -62,7 +62,7 @@ export function QuickActionsGrid({
       label: "Message Volunteers",
       href: `/church/${slug}/admin/volunteer/message${locationParam}`,
       icon: IconSend,
-      color: "text-teal-600 dark:text-teal-400",
+      color: "text-teal-500",
     },
     {
       label: "Export Data",

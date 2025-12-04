@@ -4,7 +4,7 @@
   "description": "Multi-tenant church management platform with connect card scanning",
   "private": true,
   "scripts": {
-    "dev": "dotenv -e .env.local -- next dev --turbopack",
+    "dev": "dotenv -e .env.local -- next dev --turbopack -p ${PORT:-3000}",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
