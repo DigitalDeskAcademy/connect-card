@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-01
+**Last Updated:** 2025-12-04
 **Update Frequency:** After each significant work session
 
 ---
@@ -12,7 +12,7 @@
 | ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
 | **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Dashboard UI |
 | **connect-card** | 3001 | `feature/connect-card`         | 🟡 Active Work  | Card format onboarding           |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🔴 BLOCKING     | Server actions needed            |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 Merged       | PR #49 merged to main            |
 | **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 75% Complete | Ready for export flag            |
 | **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
 | **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | CSV Export complete              |
@@ -24,12 +24,12 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. prayer        → Server actions (feature unusable)
-2. volunteer     → Ready for export flag (75% complete)
-3. connect-card  → Card format onboarding (active work)
-4. integrations  → Phase 2: API integration (Phase 1 done)
-5. tech-debt     → Phase 2: Performance (Phase 1 done)
-6. main          → Project management (ongoing)
+1. volunteer     → Ready for export flag (75% complete)
+2. connect-card  → Card format onboarding (active work)
+3. integrations  → Phase 2: API integration (Phase 1 done)
+4. tech-debt     → Phase 2: Performance (Phase 1 done)
+5. main          → Project management (ongoing)
+6. prayer        → ✅ MERGED (PR #49)
 ```
 
 ---
@@ -74,52 +74,42 @@ None - Phase 1 complete, no longer blocking production.
 
 ---
 
-### 🔴 prayer (Port 3002)
+### 🟢 prayer (Port 3002)
 
-**Status:** BLOCKING - Feature 65% complete but unusable
+**Status:** ✅ MERGED - PR #49 merged to main (Dec 4, 2025)
 **Branch:** `feature/prayer-enhancements`
-**Vision Doc:** `/docs/features/prayer-management/vision.md`
+**Vision Doc:** `/docs/features/prayer/vision.md`
 
-#### What You Should Be Working On
-
-**Phase 1 - Server Actions (CRITICAL):**
+#### What Was Completed
 
 | #   | Task                         | Status |
 | --- | ---------------------------- | ------ |
-| 1   | `createPrayerRequest` action | [ ]    |
-| 2   | `updatePrayerRequest` action | [ ]    |
-| 3   | `assignPrayerRequest` action | [ ]    |
-| 4   | `markAnswered` action        | [ ]    |
-| 5   | `deletePrayerRequest` action | [ ]    |
+| 1   | `createPrayerRequest` action | ✅     |
+| 2   | `updatePrayerRequest` action | ✅     |
+| 3   | `assignPrayerRequest` action | ✅     |
+| 4   | `markAnswered` action        | ✅     |
+| 5   | `deletePrayerRequest` action | ✅     |
+| 6   | `togglePrivacy` action       | ✅     |
+| 7   | Create prayer dialog         | ✅     |
+| 8   | Edit prayer dialog           | ✅     |
+| 9   | Detail view dialog           | ✅     |
+| 10  | PR #49 merged to main        | ✅     |
 
-**Each action requires:**
+**Each action includes:**
 
 - Zod validation schema
 - Arcjet rate limiting
 - Multi-tenant `organizationId` scoping
 - Privacy checks for private prayers
 
-#### Start Here
+#### Future Enhancements (Phase 2)
 
-```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/prayer
-pnpm dev  # Runs on port 3002
-
-# First task: Create server action file
-# Create: /actions/prayer-requests/create.ts
-# Follow pattern from /actions/connect-card/save-connect-card.ts
-```
-
-#### Definition of Done
-
-- [ ] All 5 server actions implemented
-- [ ] UI components for create/edit/assign dialogs
-- [ ] N+1 query fix in prayer-requests.ts
-- [ ] PR created to main
+- [ ] N+1 query optimization (10 COUNT queries)
+- [ ] Dedicated assignment dialog
 
 #### Blockers
 
-None - can work independently.
+None - this feature is complete and merged!
 
 ---
 

@@ -40,15 +40,80 @@ Based on the feature description, identify which areas of the codebase are relev
 - `/actions/*` - Server actions
 - `/prisma/schema.prisma` - Database models
 
-### 4. Provide Summary
+### 4. Create Phase Plan & PR Goal
+
+**Extract phases from documentation:**
+
+- Check `/docs/WORKTREE-STATUS.md` for current worktree status and task lists
+- Check the relevant vision doc in `/docs/features/*/vision.md`
+- Identify what's already complete vs what remains
+
+**Establish a clear PR goal:**
+
+- Pick ONE achievable milestone that warrants a PR
+- The goal should be:
+  - Small enough to complete in one session (1-3 hours of work)
+  - Large enough to be a meaningful unit of work
+  - Self-contained (doesn't leave broken/half-done features)
+- Examples of good PR goals:
+  - "Implement all 5 prayer server actions"
+  - "Add export tracking to database"
+  - "Complete card format onboarding UI"
+- Examples of BAD goals:
+  - "Work on prayer feature" (too vague)
+  - "Fix everything" (too big)
+  - "Add one action" (too small, not self-contained)
+
+### 5. Provide Summary
 
 After loading context and exploring code, provide:
 
-- **Branch created:** [name]
-- **Feature scope:** Brief description of what we're building
-- **Relevant files identified:** List key files that will be modified
-- **Existing patterns to follow:** Note any similar features to reference
-- **Ready to proceed:** Confirm understanding and ask for approval to start implementation
+- **Branch:** [name]
+- **Current State:** What's already done in this worktree
+- **PR Goal:** The specific milestone we're working toward
+- **Tasks to Complete:**
+  - [ ] Task 1
+  - [ ] Task 2
+  - [ ] Task 3
+- **Relevant files:** Key files that will be modified
+- **Patterns to follow:** Similar implementations to reference
+
+**Ask for confirmation before starting implementation.**
+
+---
+
+## Session Workflow
+
+```
+┌─────────────────┐
+│  /session-start │
+│  (set PR goal)  │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   Work toward   │
+│    PR goal      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Goal complete? │──No──▶ Keep working
+└────────┬────────┘
+         │Yes
+         ▼
+┌─────────────────┐
+│  Create PR      │
+│  /feature-wrap-up│
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│     /clear      │
+│  Start new      │
+│  session        │
+└─────────────────┘
+```
 
 ## Notes:
 
