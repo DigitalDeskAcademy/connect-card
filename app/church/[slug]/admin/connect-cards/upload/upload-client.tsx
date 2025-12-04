@@ -2,6 +2,7 @@
 // Force rebuild for tab styling
 import { useState, useTransition, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -36,6 +37,8 @@ import {
   ClipboardCheck,
   MapPin,
   Package,
+  ArrowRight,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
@@ -237,8 +240,9 @@ export function ConnectCardUploadClient({
           contentType: image.file.type,
           size: image.file.size,
           isImage: true,
-          fileType: "asset",
+          fileType: "connect-card",
           organizationSlug: slug,
+          cardSide: "front", // Bulk upload treats each image as front (TODO: front/back pairing)
         }),
       });
 
@@ -646,8 +650,9 @@ export function ConnectCardUploadClient({
               contentType: testImage.type,
               size: testImage.size,
               isImage: true,
-              fileType: "asset",
+              fileType: "connect-card",
               organizationSlug: slug,
+              cardSide: "front",
             }),
           });
 
@@ -875,10 +880,10 @@ export function ConnectCardUploadClient({
             </TabsTrigger>
             <TabsTrigger
               value="camera"
-              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary md:hidden"
+              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
             >
               <Camera className="mr-2 w-4 h-4" />
-              Scan with Camera
+              Mobile Scan
             </TabsTrigger>
             <TabsTrigger
               value="test"
@@ -953,64 +958,28 @@ export function ConnectCardUploadClient({
           </TabsContent>
 
           <TabsContent value="camera">
-            {/* Batch Creation Info */}
-            <Alert className="mb-4">
-              <Package className="h-4 w-4" />
-              <AlertDescription>
-                {(() => {
-                  const selectedLocation = locations.find(
-                    loc => loc.id === selectedLocationId
-                  );
-                  const today = new Date();
-                  const monthNames = [
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
-                  ];
-                  const batchName = selectedLocation
-                    ? `${selectedLocation.name} - ${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
-                    : "Select a location to create a batch";
-                  return (
-                    <>
-                      Uploading cards will create batch:{" "}
-                      <span className="font-semibold text-primary">
-                        {batchName}
-                      </span>
-                    </>
-                  );
-                })()}
-              </AlertDescription>
-            </Alert>
-
-            <Card className="border-2 border-dashed border-border">
+            <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Camera className="w-12 h-12 mb-4 text-muted-foreground" />
-                <p className="text-lg font-medium mb-2">
-                  Use Your Phone Camera
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                  <Smartphone className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Mobile Scanner</h3>
+                <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
+                  Scan connect cards using your device&apos;s camera with a live
+                  viewfinder. Supports both single and two-sided cards.
                 </p>
-                <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
-                  Click the button below to open your camera. Take a photo of
-                  each connect card (front and back if needed).
-                </p>
-                <Button
-                  size="lg"
-                  onClick={() => cameraInputRef.current?.click()}
-                >
-                  <Camera className="mr-2 w-5 h-5" />
-                  Open Camera
-                </Button>
-                <p className="text-xs text-muted-foreground mt-4">
-                  Tip: Take multiple photos in sequence
-                </p>
+                <div className="flex flex-col gap-3 items-center">
+                  <Button size="lg" asChild>
+                    <Link href={`/church/${slug}/admin/connect-cards/scan`}>
+                      <Camera className="mr-2 w-5 h-5" />
+                      Launch Scanner
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Link>
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Best on mobile devices
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

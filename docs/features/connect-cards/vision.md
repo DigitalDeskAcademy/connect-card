@@ -1,10 +1,16 @@
 # Connect Card Management - Product Vision
 
-**Status:** 🟢 **READY FOR PR** - All critical fixes complete
-**Current Phase:** Phase 3 Complete, Ready for Production
+**Status:** ✅ **FEATURE COMPLETE** - Ready for Production Testing
+**Current Phase:** Phase 3.5 Complete - Mobile Camera Wizard + Duplicate Detection
 **Worktree:** `/church-connect-hub/connect-card`
 **Branch:** `feature/connect-card`
-**Last Updated:** 2025-11-26
+**Last Updated:** 2025-12-03
+
+### Recent Work (Dec 2025)
+
+- ✅ **Fuzzy Duplicate Detection** - Checks ChurchMember table, email as strong identifier
+- ✅ **80% Confidence Threshold** - Don't bother reviewer with OCR errors
+- 🔄 **S3 Org-Scoped Paths** - `organizations/{slug}/connect-cards/{YYYY-MM}/`
 
 ---
 
@@ -173,7 +179,68 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 
 ---
 
-## 🔮 Future Enhancements (Phase 3-4)
+## ✅ Mobile Camera Wizard (Phase 3.5) - COMPLETE
+
+**Status:** Complete
+**Goal:** Bank-deposit-style mobile camera wizard for scanning physical connect cards
+
+### Features Implemented
+
+- **Live viewfinder** using getUserMedia API (in-app camera)
+- **Step-by-step capture** with accept/retake for each image
+- **Two-sided card support** - Front + back captured as single unit
+- **Background processing queue** - Scan continuously while cards process
+- **Auto-crop to card bounds** - Captures only the card area, not surrounding area
+- **Real-time progress indicator** - Shows processing/complete/failed counts
+- **Failed card retry** - Retry or remove failed cards from queue
+- **Session persistence** - Resume interrupted scanning sessions
+
+### Technical Implementation
+
+#### Background Queue Architecture
+
+Instead of blocking after each capture, cards are queued and processed in background:
+
+```
+Capture → Add to Queue → Immediately capture next card
+                ↓
+         Background processor uploads + extracts + saves
+                ↓
+         Progress indicator updates in real-time
+```
+
+#### Camera Crop Feature
+
+The `useCamera` hook supports cropping to card bounds:
+
+- Crops to the 85% width, 3:2 aspect ratio card alignment guide
+- Removes surrounding area from captured images
+- Cleaner images for AI extraction and demo presentations
+
+#### Files Created
+
+- `app/church/[slug]/admin/connect-cards/scan/page.tsx` ✅
+- `app/church/[slug]/admin/connect-cards/scan/scan-wizard-client.tsx` ✅
+- `hooks/use-camera.ts` ✅
+
+#### Files Modified
+
+- `prisma/schema.prisma` - Added backImageKey, backImageHash ✅
+- `lib/zodSchemas.ts` - Added back image fields ✅
+- `app/api/connect-cards/extract/route.ts` - Handles two images ✅
+- `actions/connect-card/save-connect-card.ts` - Accepts back image ✅
+- `lib/data/connect-card-review.ts` - Added backImageUrl ✅
+- `review-queue-client.tsx` - Front/back toggle button ✅
+- `next.config.ts` - Fixed Permissions-Policy for camera access ✅
+
+### Known Limitations / Future Improvements
+
+- **Bulk upload pairing** - Currently bulk upload treats each file as separate card. Future: detect front/back pairs by filename convention or AI matching
+- **Camera crop accuracy** - Crop calculation assumes card is centered in guide. Works well for demos but may need refinement for production use
+
+---
+
+## 🔮 Future Enhancements (Phase 4+)
 
 ### Church Software Sync (Phase 3) → This Worktree
 
@@ -223,7 +290,8 @@ Churches manually enter connect card data (visitor info, prayer requests), which
 - **Data Layer**: `/lib/data/connect-card-*.ts` - Analytics, review queue, batches
 - **UI Components**: `/components/dashboard/connect-cards/` - Table, upload, review
 - **E2E Tests**: `/tests/e2e/02-connect-cards.spec.ts` - Upload and workflow tests
+- **Implementation Plan**: `/.claude/plans/dynamic-mixing-zebra.md` - Full mobile camera wizard plan
 
 ---
 
-**Last Updated:** 2025-11-16 (Phase 3 Complete - Production Ready)
+**Last Updated:** 2025-11-29 (Phase 3.5 - Mobile Camera Wizard in Development)

@@ -43,7 +43,7 @@ interface ExtractedData {
   address: string | null;
   age_group: string | null;
   family_info: string | null;
-  additional_notes?: unknown;
+  additional_notes: string | null;
 }
 
 // Wizard steps - simplified for continuous scanning
@@ -202,8 +202,8 @@ export function ScanWizardClient({
 
   // Handle capture button press - crops to card alignment guide
   const handleCapture = async () => {
-    // Capture with crop to card bounds for cleaner images
-    const result = await captureImage(true);
+    // Capture image from camera
+    const result = await captureImage();
     if (!result) {
       toast.error("Failed to capture image");
       return;
