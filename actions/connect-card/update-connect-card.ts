@@ -316,6 +316,41 @@ export async function updateConnectCard(
       }
     }
 
+    // 5b. Handle GENERAL volunteers when automation is disabled
+    // If GENERAL + automation disabled → readyForExport = true immediately
+    if (
+      volunteerCreated &&
+      validation.data.volunteerCategory?.toUpperCase() === "GENERAL" &&
+      churchMemberId
+    ) {
+      // Check if organization has automation disabled
+      const orgSettings = await prisma.organization.findUnique({
+        where: { id: organization.id },
+        select: { generalVolunteerAutomationEnabled: true },
+      });
+
+      if (!orgSettings?.generalVolunteerAutomationEnabled) {
+        // Automation disabled - mark GENERAL volunteer as ready for export immediately
+        const volunteer = await prisma.volunteer.findFirst({
+          where: {
+            churchMemberId,
+            organizationId: organization.id,
+          },
+          select: { id: true },
+        });
+
+        if (volunteer) {
+          await prisma.volunteer.update({
+            where: { id: volunteer.id },
+            data: {
+              readyForExport: true,
+              readyForExportDate: new Date(),
+            },
+          });
+        }
+      }
+    }
+
     // 6. Update card with corrected data, link to member, and mark as PROCESSED
     const updatedCard = await prisma.connectCard.update({
       where: {
@@ -558,7 +593,7 @@ export async function updateConnectCard(
 
           documentsSent = true;
 
-          // Check if volunteer can be marked as ready for export
+          // Track documentsSentAt and check if volunteer can be marked as ready for export
           // Ready = docs sent + (BG check not required OR BG check cleared)
           if (churchMemberId) {
             const bgCheckNotRequired =
@@ -576,16 +611,21 @@ export async function updateConnectCard(
             if (volunteer) {
               const bgCheckCleared =
                 volunteer.backgroundCheckStatus === "CLEARED";
+              const now = new Date();
 
-              if (bgCheckNotRequired || bgCheckCleared) {
-                await prisma.volunteer.update({
-                  where: { id: volunteer.id },
-                  data: {
-                    readyForExport: true,
-                    readyForExportDate: new Date(),
-                  },
-                });
-              }
+              await prisma.volunteer.update({
+                where: { id: volunteer.id },
+                data: {
+                  documentsSentAt: now,
+                  // Only mark ready if BG check not required OR already cleared
+                  ...(bgCheckNotRequired || bgCheckCleared
+                    ? {
+                        readyForExport: true,
+                        readyForExportDate: now,
+                      }
+                    : {}),
+                },
+              });
             }
           }
         }

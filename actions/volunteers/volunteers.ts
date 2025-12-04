@@ -676,9 +676,11 @@ export async function processVolunteer(
         id: volunteerId,
         organizationId: organization.id, // Multi-tenant isolation
       },
-      include: {
-        churchMember: true,
-        categories: true,
+      select: {
+        id: true,
+        documentsSentAt: true,
+        churchMember: { select: { name: true } },
+        categories: { select: { category: true } },
       },
     });
 
@@ -691,6 +693,10 @@ export async function processVolunteer(
 
     // 5. Update volunteer status to ACTIVE and optionally update background check
     const bgCheckCleared = backgroundCheckStatus === "CLEARED";
+    // Only mark ready for export if BG check cleared AND docs were already sent
+    const canMarkReadyForExport =
+      bgCheckCleared && volunteer.documentsSentAt !== null;
+
     await prisma.volunteer.update({
       where: { id: volunteerId },
       data: {
@@ -698,8 +704,8 @@ export async function processVolunteer(
         ...(backgroundCheckStatus && {
           backgroundCheckStatus: backgroundCheckStatus as BackgroundCheckStatus,
         }),
-        // Mark as ready for export when BG check is cleared
-        ...(bgCheckCleared && {
+        // Mark as ready for export when BG check is cleared AND docs were sent
+        ...(canMarkReadyForExport && {
           readyForExport: true,
           readyForExportDate: new Date(),
         }),
