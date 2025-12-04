@@ -276,7 +276,7 @@ export default async function DevDashboardPage({
       name: "Prayer",
       branch: "feature/prayer-enhancements",
       status: "ready",
-      statusLabel: "Ready for PR",
+      statusLabel: "✅ Merged",
       icon: <IconPray className="h-5 w-5" />,
       tasks: [
         { label: "Server action: createPrayerRequest", completed: true },
@@ -288,6 +288,7 @@ export default async function DevDashboardPage({
         { label: "UI: Create prayer dialog", completed: true },
         { label: "UI: Edit prayer dialog", completed: true },
         { label: "UI: Detail view dialog", completed: true },
+        { label: "PR #49 merged to main", completed: true },
       ],
       wishlist: [
         {
