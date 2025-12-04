@@ -2,6 +2,7 @@
 // Force rebuild for tab styling
 import { useState, useTransition, useRef, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -36,6 +37,8 @@ import {
   ClipboardCheck,
   MapPin,
   Package,
+  ArrowRight,
+  Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
 import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
@@ -97,6 +100,7 @@ interface UploadedImage {
   file: File;
   preview: string;
   key?: string;
+  imageHash?: string; // SHA-256 hash from extract API for duplicate detection
   uploading: boolean;
   uploaded: boolean;
   error: boolean;
@@ -157,6 +161,7 @@ export function ConnectCardUploadClient({
   const [testImage, setTestImage] = useState<File | null>(null);
   const [testPreview, setTestPreview] = useState<string | null>(null);
   const [testImageKey, setTestImageKey] = useState<string | null>(null);
+  const [testImageHash, setTestImageHash] = useState<string | null>(null);
   const [testExtracting, setTestExtracting] = useState(false);
   const [testExtractedData, setTestExtractedData] =
     useState<ExtractedData | null>(null);
@@ -235,8 +240,9 @@ export function ConnectCardUploadClient({
           contentType: image.file.type,
           size: image.file.size,
           isImage: true,
-          fileType: "asset",
+          fileType: "connect-card",
           organizationSlug: slug,
+          cardSide: "front", // Bulk upload treats each image as front (TODO: front/back pairing)
         }),
       });
 
@@ -265,10 +271,11 @@ export function ConnectCardUploadClient({
   }
 
   // Extract data from image using base64
+  // Returns both extracted data and imageHash for duplicate detection
   async function extractData(
     imageKey: string,
     imageFile: File
-  ): Promise<ExtractedData> {
+  ): Promise<{ data: ExtractedData; imageHash: string }> {
     console.log("🔍 Extracting data from image:", imageFile.name);
 
     // Convert image to base64
@@ -294,17 +301,33 @@ export function ConnectCardUploadClient({
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("❌ Extraction API error:", errorData);
-      throw new Error(errorData.error || "Extraction failed");
+    const result = await response.json();
+
+    // Handle duplicate detection (409 response)
+    if (response.status === 409 && result.duplicate) {
+      console.warn("⚠️ Duplicate image detected:", result.existingCard);
+      const error = new Error(
+        result.message || "Duplicate image detected"
+      ) as Error & {
+        isDuplicate: boolean;
+        existingCard: { id: string; name: string; scannedAt: string };
+      };
+      error.isDuplicate = true;
+      error.existingCard = result.existingCard;
+      throw error;
     }
 
-    const result = await response.json();
+    if (!response.ok) {
+      console.error("❌ Extraction API error:", result);
+      throw new Error(result.error || "Extraction failed");
+    }
+
     console.log("✅ Extraction complete:", result);
-    // Normalize AI response to typed ExtractedData schema
-    // This ensures unpredictable AI output is coerced to our strict types
-    return normalizeExtractedData(result.data as Record<string, unknown>);
+    // Return both normalized data and imageHash from extract API
+    return {
+      data: normalizeExtractedData(result.data as Record<string, unknown>),
+      imageHash: result.imageHash,
+    };
   }
 
   // Process all images
@@ -344,7 +367,7 @@ export function ConnectCardUploadClient({
           )
         );
 
-        // Step 2: Extract data with Claude
+        // Step 2: Extract data with Claude (duplicate check happens here BEFORE Claude call)
         setImages(prev =>
           prev.map(img =>
             img.id === image.id ? { ...img, extracting: true } : img
@@ -352,7 +375,10 @@ export function ConnectCardUploadClient({
         );
 
         try {
-          const extractedData = await extractData(key, image.file);
+          const { data: extractedData, imageHash } = await extractData(
+            key,
+            image.file
+          );
 
           // Validate extracted data
           const warnings = validateExtractedData(extractedData);
@@ -369,7 +395,13 @@ export function ConnectCardUploadClient({
           setImages(prev =>
             prev.map(img =>
               img.id === image.id
-                ? { ...img, extracting: false, extracted: true, extractedData }
+                ? {
+                    ...img,
+                    extracting: false,
+                    extracted: true,
+                    extractedData,
+                    imageHash,
+                  }
                 : img
             )
           );
@@ -379,6 +411,7 @@ export function ConnectCardUploadClient({
             slug,
             {
               imageKey: key,
+              imageHash, // Pass the hash from extract API
               extractedData,
             },
             selectedLocationId
@@ -436,14 +469,41 @@ export function ConnectCardUploadClient({
             }
           }
         } catch (error) {
-          console.error("Processing error:", error);
-          setImages(prev =>
-            prev.map(img =>
-              img.id === image.id
-                ? { ...img, extracting: false, error: true }
-                : img
-            )
-          );
+          // Check if it's a duplicate error from extract API
+          const isDuplicateError =
+            error instanceof Error &&
+            (error as Error & { isDuplicate?: boolean }).isDuplicate;
+
+          if (isDuplicateError) {
+            setImages(prev =>
+              prev.map(img =>
+                img.id === image.id
+                  ? {
+                      ...img,
+                      extracting: false,
+                      error: true,
+                      isDuplicate: true,
+                      duplicateType: "image",
+                      duplicateMessage:
+                        error instanceof Error
+                          ? error.message
+                          : "Duplicate detected",
+                    }
+                  : img
+              )
+            );
+            toast.warning(
+              error instanceof Error ? error.message : "Duplicate card detected"
+            );
+          } else {
+            setImages(prev =>
+              prev.map(img =>
+                img.id === image.id
+                  ? { ...img, extracting: false, error: true }
+                  : img
+              )
+            );
+          }
         }
       }
 
@@ -463,6 +523,7 @@ export function ConnectCardUploadClient({
     setTestImage(file);
     setTestPreview(URL.createObjectURL(file));
     setTestImageKey(null);
+    setTestImageHash(null);
     setTestExtractedData(null);
     setTestError(null);
     setTestSavedId(null);
@@ -512,6 +573,7 @@ export function ConnectCardUploadClient({
     setTestExtracting(true);
     setTestError(null);
     setTestExtractedData(null);
+    setTestImageHash(null);
 
     try {
       console.log("🔍 Extracting data from test image:", testImage.name);
@@ -538,12 +600,17 @@ export function ConnectCardUploadClient({
         }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Extraction failed");
+      const result = await response.json();
+
+      // Handle duplicate detection (409 response)
+      if (response.status === 409 && result.duplicate) {
+        throw new Error(result.message || "Duplicate image detected");
       }
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result.error || "Extraction failed");
+      }
+
       console.log("✅ Test extraction complete:", result);
 
       // Validate extracted data
@@ -558,6 +625,7 @@ export function ConnectCardUploadClient({
       }
 
       setTestExtractedData(result.data);
+      setTestImageHash(result.imageHash); // Store hash for save action
     } catch (error) {
       console.error("❌ Test extraction error:", error);
       setTestError(error instanceof Error ? error.message : "Unknown error");
@@ -567,7 +635,7 @@ export function ConnectCardUploadClient({
   }
 
   async function handleTestSave() {
-    if (!testImage || !testExtractedData) return;
+    if (!testImage || !testExtractedData || !testImageHash) return;
 
     startTestSaving(async () => {
       try {
@@ -582,8 +650,9 @@ export function ConnectCardUploadClient({
               contentType: testImage.type,
               size: testImage.size,
               isImage: true,
-              fileType: "asset",
+              fileType: "connect-card",
               organizationSlug: slug,
+              cardSide: "front",
             }),
           });
 
@@ -612,6 +681,7 @@ export function ConnectCardUploadClient({
           slug,
           {
             imageKey: imageKey!,
+            imageHash: testImageHash, // Pass the hash from extract API
             extractedData: testExtractedData,
           },
           selectedLocationId
@@ -645,13 +715,17 @@ export function ConnectCardUploadClient({
     setTestImage(null);
     setTestPreview(null);
     setTestImageKey(null);
+    setTestImageHash(null);
     setTestExtractedData(null);
     setTestError(null);
     setTestSavedId(null);
   }
 
   const savedCount = images.filter(img => img.saved).length;
-  const errorCount = images.filter(img => img.error).length;
+  const duplicateCount = images.filter(img => img.isDuplicate).length;
+  const errorCount = images.filter(img => img.error && !img.isDuplicate).length;
+  const processedCount = savedCount + duplicateCount + errorCount;
+  const isAllProcessed = images.length > 0 && processedCount === images.length;
 
   // Reset to start new upload session
   function handleNewUploadSession() {
@@ -666,7 +740,7 @@ export function ConnectCardUploadClient({
         {/* Left side - Primary actions */}
         <div className="flex gap-3">
           {/* State 1: Images added, not all processed yet */}
-          {images.length > 0 && savedCount < images.length && !isProcessing && (
+          {images.length > 0 && !isAllProcessed && !isProcessing && (
             <>
               {/* Add More Images - Only before processing */}
               {uploadMode === "files" ? (
@@ -704,35 +778,20 @@ export function ConnectCardUploadClient({
             </Button>
           )}
 
-          {/* State 3: Processing complete - Navigate to review */}
-          {savedCount > 0 && savedCount === images.length && !isProcessing && (
-            <>
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleNewUploadSession}
-              >
-                <Upload className="mr-2 w-4 h-4" />
-                Start New Batch
-              </Button>
-              <Button
-                size="lg"
-                onClick={() =>
-                  router.push(
-                    activeBatch
-                      ? `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
-                      : `/church/${slug}/admin/connect-cards?tab=batches`
-                  )
-                }
-              >
-                <ClipboardCheck className="mr-2 w-5 h-5" />
-                Review Cards ({savedCount})
-              </Button>
-            </>
+          {/* State 3: Processing complete */}
+          {isAllProcessed && !isProcessing && (
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={handleNewUploadSession}
+            >
+              <Upload className="mr-2 w-4 h-4" />
+              Upload More
+            </Button>
           )}
         </div>
 
-        {/* Right side - Cancel button */}
+        {/* Right side - Cancel button (clears upload session) */}
         {images.length > 0 && (
           <Button
             variant="outline"
@@ -821,10 +880,10 @@ export function ConnectCardUploadClient({
             </TabsTrigger>
             <TabsTrigger
               value="camera"
-              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary md:hidden"
+              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
             >
               <Camera className="mr-2 w-4 h-4" />
-              Scan with Camera
+              Mobile Scan
             </TabsTrigger>
             <TabsTrigger
               value="test"
@@ -899,64 +958,28 @@ export function ConnectCardUploadClient({
           </TabsContent>
 
           <TabsContent value="camera">
-            {/* Batch Creation Info */}
-            <Alert className="mb-4">
-              <Package className="h-4 w-4" />
-              <AlertDescription>
-                {(() => {
-                  const selectedLocation = locations.find(
-                    loc => loc.id === selectedLocationId
-                  );
-                  const today = new Date();
-                  const monthNames = [
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
-                  ];
-                  const batchName = selectedLocation
-                    ? `${selectedLocation.name} - ${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
-                    : "Select a location to create a batch";
-                  return (
-                    <>
-                      Uploading cards will create batch:{" "}
-                      <span className="font-semibold text-primary">
-                        {batchName}
-                      </span>
-                    </>
-                  );
-                })()}
-              </AlertDescription>
-            </Alert>
-
-            <Card className="border-2 border-dashed border-border">
+            <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <Camera className="w-12 h-12 mb-4 text-muted-foreground" />
-                <p className="text-lg font-medium mb-2">
-                  Use Your Phone Camera
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                  <Smartphone className="w-8 h-8 text-primary" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">Mobile Scanner</h3>
+                <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
+                  Scan connect cards using your device&apos;s camera with a live
+                  viewfinder. Supports both single and two-sided cards.
                 </p>
-                <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
-                  Click the button below to open your camera. Take a photo of
-                  each connect card (front and back if needed).
-                </p>
-                <Button
-                  size="lg"
-                  onClick={() => cameraInputRef.current?.click()}
-                >
-                  <Camera className="mr-2 w-5 h-5" />
-                  Open Camera
-                </Button>
-                <p className="text-xs text-muted-foreground mt-4">
-                  Tip: Take multiple photos in sequence
-                </p>
+                <div className="flex flex-col gap-3 items-center">
+                  <Button size="lg" asChild>
+                    <Link href={`/church/${slug}/admin/connect-cards/scan`}>
+                      <Camera className="mr-2 w-5 h-5" />
+                      Launch Scanner
+                      <ArrowRight className="ml-2 w-4 h-4" />
+                    </Link>
+                  </Button>
+                  <p className="text-xs text-muted-foreground">
+                    Best on mobile devices
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -1171,70 +1194,59 @@ export function ConnectCardUploadClient({
             </Alert>
           )}
 
-          {/* Batch Summary - Only show after processing complete */}
-          {activeBatch &&
-            !loadingBatch &&
-            savedCount === images.length &&
-            savedCount > 0 && (
-              <Card className="mb-6">
-                <CardContent className="py-4">
-                  {/* Top row: Batch name + Review button */}
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                        <CheckCircle2 className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          Batch &quot;{activeBatch.name}&quot; complete
-                        </p>
-                      </div>
+          {/* Batch Summary - Only show after all cards processed (saved, duplicate, or error) */}
+          {activeBatch && !loadingBatch && isAllProcessed && (
+            <Card className="mb-6">
+              <CardContent className="py-4">
+                {/* Header row: Batch name + Review button */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <CheckCircle2 className="h-5 w-5" />
                     </div>
+                    <p className="text-sm font-medium">
+                      Batch &quot;{activeBatch.name}&quot; complete
+                    </p>
+                  </div>
+                  {savedCount > 0 && (
                     <Button
                       onClick={() =>
                         router.push(
-                          activeBatch
-                            ? `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
-                            : `/church/${slug}/admin/connect-cards?tab=batches`
+                          `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
                         )
                       }
                     >
                       <ClipboardCheck className="mr-2 w-4 h-4" />
                       Review Batch
                     </Button>
-                  </div>
+                  )}
+                </div>
 
-                  {/* Stats row - compact inline display */}
-                  <div className="flex items-center gap-6 text-sm border-t pt-3">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-500" />
-                      <span className="text-muted-foreground">Saved:</span>
-                      <span className="font-semibold">{savedCount}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <ClipboardCheck className="h-4 w-4 text-blue-500" />
-                      <span className="text-muted-foreground">
-                        Awaiting Review:
-                      </span>
-                      <span className="font-semibold">{savedCount}</span>
-                    </div>
+                {/* Stats row - compact inline display */}
+                <div className="flex items-center flex-wrap gap-4 text-sm border-t pt-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <span className="text-muted-foreground">Saved:</span>
+                    <span className="font-semibold">{savedCount}</span>
                   </div>
-
-                  {/* Failed alert - only show if there are errors */}
-                  {errorCount > 0 && (
-                    <div className="mt-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-                      <div className="flex items-center gap-2 text-destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <span className="font-medium">
-                          {errorCount} card{errorCount !== 1 ? "s" : ""} failed
-                          to process
-                        </span>
-                      </div>
+                  {duplicateCount > 0 && (
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-yellow-500" />
+                      <span className="text-muted-foreground">Duplicates:</span>
+                      <span className="font-semibold">{duplicateCount}</span>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            )}
+                  {errorCount > 0 && (
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-destructive" />
+                      <span className="text-muted-foreground">Failed:</span>
+                      <span className="font-semibold">{errorCount}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Progress */}
           {isProcessing && (
@@ -1260,17 +1272,20 @@ export function ConnectCardUploadClient({
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {images.map(image => (
               <Card key={image.id} className="overflow-hidden relative group">
-                {/* Delete Button - Only show before processing */}
-                {!isProcessing && !image.saved && !image.uploading && (
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 z-10 transition-all hover:scale-110 hover:shadow-lg"
-                    onClick={() => handleDeleteImage(image.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                )}
+                {/* Delete Button - Only show for unprocessed cards */}
+                {!isProcessing &&
+                  !image.saved &&
+                  !image.error &&
+                  !image.uploading && (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 z-10 transition-all hover:scale-110 hover:shadow-lg"
+                      onClick={() => handleDeleteImage(image.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
 
                 <div className="aspect-square relative">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1311,33 +1326,45 @@ export function ConnectCardUploadClient({
                   <p className="text-xs text-muted-foreground truncate mb-2">
                     {image.file.name}
                   </p>
-                  <p className="text-xs font-medium flex items-center gap-1.5">
-                    {image.uploading && "Uploading..."}
-                    {image.uploaded && !image.extracting && "Uploaded"}
-                    {image.extracting && "Analyzing..."}
-                    {image.extracted &&
-                      !image.saved &&
-                      !image.error &&
-                      "Saving..."}
-                    {image.saved && (
-                      <>
-                        <CheckCircle2 className="w-3 h-3 text-primary" />
-                        <span>Saved</span>
-                      </>
-                    )}
-                    {image.error && !image.isDuplicate && "❌ Failed"}
+                  <div className="text-xs font-medium space-y-1">
+                    <p className="flex items-center gap-1.5">
+                      {image.uploading && "Uploading..."}
+                      {image.uploaded &&
+                        !image.extracting &&
+                        !image.isDuplicate &&
+                        !image.error &&
+                        "Uploaded"}
+                      {image.extracting && "Analyzing..."}
+                      {image.extracted &&
+                        !image.saved &&
+                        !image.error &&
+                        "Saving..."}
+                      {image.saved && (
+                        <>
+                          <CheckCircle2 className="w-3 h-3 text-primary" />
+                          <span>Saved</span>
+                        </>
+                      )}
+                      {(image.isDuplicate || (image.error && image.uploaded)) &&
+                        "Uploaded"}
+                    </p>
                     {image.isDuplicate && (
-                      <span
-                        className="text-yellow-600"
+                      <p
+                        className="text-yellow-600 flex items-center gap-1"
                         title={image.duplicateMessage}
                       >
                         ⚠️{" "}
                         {image.duplicateType === "image"
                           ? "Duplicate Image"
                           : "Duplicate Person"}
-                      </span>
+                      </p>
                     )}
-                  </p>
+                    {image.error && !image.isDuplicate && (
+                      <p className="text-destructive flex items-center gap-1">
+                        ❌ Failed
+                      </p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))}

@@ -30,9 +30,10 @@ const securityHeaders = [
   },
   {
     // Restrict browser features to reduce attack surface
-    // Disables camera, microphone, geolocation, and FLoC tracking
+    // camera=(self) - Required for Mobile Scanner feature
+    // Disables microphone, geolocation, and FLoC tracking
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+    value: "camera=(self), microphone=(), geolocation=(), interest-cohort=()",
   },
   {
     // Force HTTPS connections and prevent protocol downgrade attacks

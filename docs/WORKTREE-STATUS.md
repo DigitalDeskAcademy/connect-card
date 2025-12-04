@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-01
+**Last Updated:** 2025-12-03
 **Update Frequency:** After each significant work session
 
 ---
@@ -11,11 +11,11 @@
 | Worktree         | Port | Branch                         | Status          | Current Focus                    |
 | ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
 | **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Dashboard UI |
-| **connect-card** | 3001 | `feature/connect-card`         | 🟡 Active Work  | Card format onboarding           |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🔴 BLOCKING     | Server actions needed            |
-| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 75% Complete | Ready for export flag            |
+| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready        | Phase 3.5 complete (PR #50)      |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE** | PR #49 merged Dec 4              |
+| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 Phase 1 Done | PR #47 merged Dec 1              |
 | **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
-| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | CSV Export complete              |
+| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | PR #48 merged Dec 1              |
 
 ---
 
@@ -24,13 +24,17 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. prayer        → Server actions (feature unusable)
-2. volunteer     → Ready for export flag (75% complete)
-3. connect-card  → Card format onboarding (active work)
-4. integrations  → Phase 2: API integration (Phase 1 done)
-5. tech-debt     → Phase 2: Performance (Phase 1 done)
-6. main          → Project management (ongoing)
+1. connect-card  → Phase 4: CSV Export (next)
+2. tech-debt     → Phase 2: Performance (non-blocking)
+3. main          → Project management (ongoing)
 ```
+
+**Recently Completed (PRs Merged):**
+
+- ✅ connect-card #50 - Fuzzy duplicate detection + S3 org-scoped paths (Dec 3)
+- ✅ prayer #49 - Complete prayer request management system (Dec 4)
+- ✅ integrations #48 - ChMS export with email deduplication (Dec 1)
+- ✅ volunteer #47 - Email automation for leader notification (Dec 1)
 
 ---
 
@@ -55,12 +59,19 @@
 
 #### What You Should Be Working On
 
-**Phase 2 - Performance (when time permits):**
+**Phase 2 - Infrastructure & Performance:**
 
-| #   | Task             | Description                | Status |
-| --- | ---------------- | -------------------------- | ------ |
-| 5   | Add caching      | Redis/Upstash for hot data | [ ]    |
-| 6   | Data abstraction | Repository pattern (defer) | [ ]    |
+| #   | Task                     | Description                          | Status |
+| --- | ------------------------ | ------------------------------------ | ------ |
+| 5   | S3 bucket structure init | Admin UI to create org folders       | [ ]    |
+| 6   | Migrate legacy S3 paths  | Move `uploads/general/` to org paths | [ ]    |
+| 7   | Add caching              | Redis/Upstash for hot data           | [ ]    |
+| 8   | Data abstraction         | Repository pattern (defer)           | [ ]    |
+
+**New Documentation:**
+
+- `/docs/features/tech-debt/s3-bucket-structure.md` - S3 organization spec
+- `/docs/features/tech-debt/environment-configuration.md` - Env vars for forked projects
 
 #### Definition of Done (Phase 1)
 
@@ -74,79 +85,67 @@ None - Phase 1 complete, no longer blocking production.
 
 ---
 
-### 🔴 prayer (Port 3002)
+### 🟢 prayer (Port 3002)
 
-**Status:** BLOCKING - Feature 65% complete but unusable
+**Status:** COMPLETE - PR #49 merged Dec 4
 **Branch:** `feature/prayer-enhancements`
 **Vision Doc:** `/docs/features/prayer-management/vision.md`
 
-#### What You Should Be Working On
+#### Completed Work (PR #49)
 
-**Phase 1 - Server Actions (CRITICAL):**
+**Phase 1 - Server Actions:**
 
 | #   | Task                         | Status |
 | --- | ---------------------------- | ------ |
-| 1   | `createPrayerRequest` action | [ ]    |
-| 2   | `updatePrayerRequest` action | [ ]    |
-| 3   | `assignPrayerRequest` action | [ ]    |
-| 4   | `markAnswered` action        | [ ]    |
-| 5   | `deletePrayerRequest` action | [ ]    |
+| 1   | `createPrayerRequest` action | [x]    |
+| 2   | `updatePrayerRequest` action | [x]    |
+| 3   | `assignPrayerRequest` action | [x]    |
+| 4   | `markAnswered` action        | [x]    |
+| 5   | `deletePrayerRequest` action | [x]    |
+| 6   | `togglePrivacy` action       | [x]    |
 
-**Each action requires:**
+**UI Components:**
 
-- Zod validation schema
-- Arcjet rate limiting
-- Multi-tenant `organizationId` scoping
-- Privacy checks for private prayers
+| #   | Task                 | Status |
+| --- | -------------------- | ------ |
+| 1   | Create prayer dialog | [x]    |
+| 2   | Edit prayer dialog   | [x]    |
+| 3   | Detail view dialog   | [x]    |
 
-#### Start Here
+#### Future Enhancements (Wishlist)
 
-```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/prayer
-pnpm dev  # Runs on port 3002
-
-# First task: Create server action file
-# Create: /actions/prayer-requests/create.ts
-# Follow pattern from /actions/connect-card/save-connect-card.ts
-```
+- [ ] N+1 Query optimization (10 COUNT queries)
+- [ ] Dedicated assignment dialog
 
 #### Definition of Done
 
-- [ ] All 5 server actions implemented
-- [ ] UI components for create/edit/assign dialogs
-- [ ] N+1 query fix in prayer-requests.ts
-- [ ] PR created to main
-
-#### Blockers
-
-None - can work independently.
+- [x] All 6 server actions implemented
+- [x] UI components for create/edit/detail dialogs
+- [x] PR #49 merged to main
 
 ---
 
-### 🟢 volunteer (Port 3003)
+### 🟡 volunteer (Port 3003)
 
-**Status:** 75% Complete - Ready for export flag
+**Status:** In Progress - Onboarding pipeline
 **Branch:** `feature/volunteer-management`
-**Vision Doc:** `/docs/features/volunteer/vision.md`
-
-#### What's Complete
-
-| #   | Task                             | Status |
-| --- | -------------------------------- | ------ |
-| 1   | Leader auto-notification (email) | ✅     |
-| 2   | Document auto-send (email)       | ✅     |
-| 3   | Background check tracking        | ✅     |
+**Vision Doc:** `/docs/features/volunteer-management/vision.md`
 
 #### What You Should Be Working On
 
-| #   | Task                  | Status         |
-| --- | --------------------- | -------------- |
-| 4   | Ready for export flag | 🔄 In Progress |
-| 5   | ChMS handoff workflow | [ ]            |
+**Current Phase - Onboarding Pipeline:**
 
-**Future (Bulk Messaging):**
+| #   | Task                                         | Status         |
+| --- | -------------------------------------------- | -------------- |
+| 1   | Onboarding status tracking (Inquiry → Ready) | 🔄 In Progress |
+| 2   | Visual pipeline dashboard                    | [ ]            |
+| 3   | Status update actions                        | [ ]            |
+| 4   | N+1 query optimization                       | [ ]            |
 
-- See `/docs/features/volunteer/vision.md`
+**After Onboarding Complete - Bulk Messaging (Phase 4):**
+
+- See `/docs/features/volunteer-management/bulk-messaging-spec.md`
+- Route: `/church/[slug]/admin/volunteer/message`
 
 #### Start Here
 
@@ -154,15 +153,15 @@ None - can work independently.
 cd /home/digitaldesk/Desktop/church-connect-hub/volunteer
 pnpm dev  # Runs on port 3003
 
-# Current focus: Ready for export flag
+# Current focus: Complete onboarding pipeline
 # Check vision doc for detailed requirements
 ```
 
-#### Definition of Done
+#### Definition of Done (Onboarding)
 
-- [x] Leader auto-notification working
-- [x] Document auto-send working
-- [ ] Ready for export flag + ChMS handoff
+- [ ] Pipeline stages visible in UI
+- [ ] Status transitions working
+- [ ] N+1 queries fixed
 - [ ] PR created to main
 
 #### Blockers
@@ -171,18 +170,42 @@ None - can work independently.
 
 ---
 
-### 🟡 connect-card (Port 3001)
+### 🟢 connect-card (Port 3001)
 
-**Status:** Active Work - Card format onboarding
+**Status:** Phase 3.5 Complete - Ready for Phase 4
 **Branch:** `feature/connect-card`
 **Vision Doc:** `/docs/features/connect-cards/vision.md`
 
+#### Recently Completed (PR #50)
+
+| #   | Task                                   | Status |
+| --- | -------------------------------------- | ------ |
+| 1   | Mobile Camera Wizard (live viewfinder) | [x]    |
+| 2   | Background queue processing            | [x]    |
+| 3   | Two-sided card support (front/back)    | [x]    |
+| 4   | Auto-crop to card bounds               | [x]    |
+| 5   | Upload flow polished                   | [x]    |
+| 6   | AI extraction reliable                 | [x]    |
+| 7   | Review queue complete                  | [x]    |
+| 8   | Batch save/complete flow               | [x]    |
+| 9   | Fuzzy duplicate detection              | [x]    |
+| 10  | S3 org-scoped paths                    | [x]    |
+
 #### What You Should Be Working On
 
-| #   | Task                                      | Status |
-| --- | ----------------------------------------- | ------ |
-| 1   | Card format onboarding (AI field mapping) | [ ]    |
-| 2   | Send background check checkbox in Review  | [ ]    |
+**Next Feature - CSV Export (Phase 4):**
+
+- See `/docs/features/integrations/church-software-sync-spec.md`
+- Route: `/church/[slug]/admin/integrations`
+
+| #   | Task                               | Status |
+| --- | ---------------------------------- | ------ |
+| 1   | Create integrations page UI        | [ ]    |
+| 2   | Planning Center CSV format export  | [ ]    |
+| 3   | Breeze CSV format export           | [ ]    |
+| 4   | Generic CSV format export          | [ ]    |
+| 5   | Export tracking (mark as exported) | [ ]    |
+| 6   | Export history log                 | [ ]    |
 
 #### Start Here
 
@@ -190,69 +213,21 @@ None - can work independently.
 cd /home/digitaldesk/Desktop/church-connect-hub/connect-card
 pnpm dev  # Runs on port 3001
 
-# Current focus: Card format variance handling
-# See /docs/features/connect-cards/card-format-variance.md
+# First task: Create integrations page
+# Create: /app/church/[slug]/admin/integrations/page.tsx
+# Follow the UI wireframes in the spec doc
 ```
 
 #### Definition of Done
 
-- [ ] Card format onboarding complete
-- [ ] Background check checkbox working
+- [ ] CSV export working for all 3 formats
+- [ ] Export tracking in database
+- [ ] Route added to navigation
 - [ ] PR created to main
 
 #### Blockers
 
 None - can work independently.
-
-#### Note
-
-This worktree has 58 uncommitted files. Run `git status` to review.
-
----
-
-### 🟢 integrations (Port 3005)
-
-**Status:** Phase 1 Complete - CSV Export Done
-**Branch:** `feature/integrations`
-**Vision Doc:** `/docs/features/integrations/vision.md`
-
-#### What's Complete (Phase 1)
-
-| #   | Task                               | Status |
-| --- | ---------------------------------- | ------ |
-| 1   | Export page UI with filters        | ✅     |
-| 2   | Planning Center CSV format         | ✅     |
-| 3   | Breeze CSV format                  | ✅     |
-| 4   | Generic CSV format                 | ✅     |
-| 5   | Export tracking (mark as exported) | ✅     |
-| 6   | Email deduplication                | ✅     |
-| 7   | Export history with re-download    | ✅     |
-
-#### What's Next (Phase 2 - Future)
-
-| #   | Task                  | Status |
-| --- | --------------------- | ------ |
-| 8   | Planning Center OAuth | [ ]    |
-| 9   | Breeze OAuth          | [ ]    |
-| 10  | Scheduled exports     | [ ]    |
-
-#### Start Here
-
-```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/integrations
-pnpm dev  # Runs on port 3005
-```
-
-#### Definition of Done (Phase 1)
-
-- [x] CSV export working for all 3 formats
-- [x] Export tracking in database
-- [x] Export history with re-download
-- [ ] PR created to main
-
-#### Blockers
-
-None - Phase 1 complete, ready for PR.
 
 ---
 
@@ -414,6 +389,8 @@ git merge origin/main
 | Tech debt spec      | `/docs/features/tech-debt/vision.md`                         |
 | Bulk messaging spec | `/docs/features/volunteer-management/bulk-messaging-spec.md` |
 | ChMS sync spec      | `/docs/features/integrations/church-software-sync-spec.md`   |
+| S3 structure        | `/docs/features/tech-debt/s3-bucket-structure.md`            |
+| Environment config  | `/docs/features/tech-debt/environment-configuration.md`      |
 
 ---
 

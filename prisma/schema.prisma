@@ -466,10 +466,14 @@ model ConnectCard {
   id               String             @id @default(uuid())
   /// Organization that owns this connect card
   organizationId   String
-  /// S3/Tigris storage key for scanned card image
+  /// S3/Tigris storage key for scanned card image (front side)
   imageKey         String
-  /// SHA-256 hash of image for duplicate detection
+  /// SHA-256 hash of front image for duplicate detection
   imageHash        String?
+  /// S3/Tigris storage key for back side of card (optional, for two-sided cards)
+  backImageKey     String?
+  /// SHA-256 hash of back image for duplicate detection
+  backImageHash    String?
   /// Raw OCR text output from scanning service
   rawText          String?
   /// Structured extracted data (JSON format)
@@ -541,6 +545,7 @@ model ConnectCard {
   @@index([organizationId, locationId])
   @@index([scannedAt])
   @@index([imageHash])
+  @@index([backImageHash])
   @@index([lastExportedAt])
   @@map("connect_card")
 }
