@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useState } from "react";
 import {
   Select,
   SelectContent,
@@ -8,18 +8,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  THEME_CLASSES,
+  setStoredTheme,
+  getStoredTheme,
+} from "./theme-variant-provider";
 
 /**
  * Theme Variant Switcher - Dev only
  *
  * Dropdown to switch between theme variants during development.
+ * Persists choice to localStorage for cross-navigation persistence.
  * Only visible in development mode.
  */
 export function ThemeVariantSwitcher() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const currentTheme = searchParams.get("theme") || "primary";
+  // Lazy initialize from localStorage
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    if (typeof window === "undefined") return "primary";
+    return getStoredTheme() || "primary";
+  });
 
   // Only show in development
   if (process.env.NODE_ENV === "production") {
@@ -27,14 +34,22 @@ export function ThemeVariantSwitcher() {
   }
 
   const handleThemeChange = (value: string) => {
-    const params = new URLSearchParams(searchParams.toString());
+    const html = document.documentElement;
+
+    // Remove all theme classes
+    Object.values(THEME_CLASSES).forEach(cls => {
+      html.classList.remove(cls);
+    });
+
+    // Apply new theme
     if (value === "primary") {
-      params.delete("theme");
+      setStoredTheme(null);
     } else {
-      params.set("theme", value);
+      html.classList.add(THEME_CLASSES[value]);
+      setStoredTheme(value);
     }
-    const queryString = params.toString();
-    router.push(queryString ? `${pathname}?${queryString}` : pathname);
+
+    setCurrentTheme(value);
   };
 
   return (
