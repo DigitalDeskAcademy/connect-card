@@ -1,9 +1,9 @@
 # Volunteer Onboarding Pipeline - Product Vision
 
-**Status:** 🟡 **IN PROGRESS** - Onboarding features in development
+**Status:** 🟢 **Phase 1 Complete** - Core automation merged (PR #47, #52, #53)
 **Worktree:** `/church-connect-hub/volunteer`
 **Branch:** `feature/volunteer-management`
-**Last Updated:** 2025-12-03
+**Last Updated:** 2025-12-04
 **Focus:** Onboarding Automation (Not Volunteer Management)
 
 ---
@@ -14,23 +14,26 @@
 
 ### This Worktree Owns
 
-| Item                             | Status      |
-| -------------------------------- | ----------- |
-| Volunteer data model             | ✅ Complete |
-| `readyForExport` business logic  | ✅ Complete |
-| `documentsSentAt` tracking       | 📋 Pending  |
-| `automationStatus` for general   | 📋 Pending  |
-| General volunteer automation seq | 📋 Pending  |
-| `getExportableVolunteers()` fn   | 📋 Pending  |
+| Item                             | Status               |
+| -------------------------------- | -------------------- |
+| Volunteer data model             | ✅ Complete          |
+| `readyForExport` business logic  | ✅ Complete          |
+| `getExportableVolunteers()` fn   | ✅ Complete (PR #52) |
+| Leader auto-notification         | ✅ Complete (PR #47) |
+| Document auto-send               | ✅ Complete (PR #47) |
+| `documentsSentAt` tracking       | 📋 Phase 2           |
+| `automationStatus` for general   | 📋 Phase 2           |
+| General volunteer automation seq | 📋 Phase 2           |
 
 ### Integrations Worktree Owns
 
-| Item                               | Status      |
-| ---------------------------------- | ----------- |
-| Export page UI (`/admin/export`)   | ✅ Complete |
-| "Volunteers" tab on export page    | 📋 Pending  |
-| Volunteer CSV formats (PCO/Breeze) | 📋 Pending  |
-| `createVolunteerExport()` action   | 📋 Pending  |
+| Item                               | Status               |
+| ---------------------------------- | -------------------- |
+| Export page UI (`/admin/export`)   | ✅ Complete (PR #48) |
+| Visitors CSV export (PCO/Breeze)   | ✅ Complete (PR #48) |
+| "Volunteers" tab on export page    | 📋 Phase 2           |
+| Volunteer CSV formats (PCO/Breeze) | 📋 Phase 2           |
+| `createVolunteerExport()` action   | 📋 Phase 2           |
 
 ### Merge Order
 
@@ -231,12 +234,189 @@ model Organization {
 
 ## 📊 Fix Progress
 
-| Priority | Issue               | Status | PR  |
-| -------- | ------------------- | ------ | --- |
-| 1        | N+1 Query           | ✅ N/A | -   |
-| 2        | Leader notification | ✅     | #47 |
-| 3        | Document auto-send  | ✅     | #47 |
-| 4        | Ready for export    | ✅     | -   |
+| Priority | Issue                     | Status | PR  |
+| -------- | ------------------------- | ------ | --- |
+| 1        | N+1 Query                 | ✅ N/A | -   |
+| 2        | Leader notification       | ✅     | #47 |
+| 3        | Document auto-send        | ✅     | #47 |
+| 4        | Ready for export flag     | ✅     | #52 |
+| 5        | getExportableVolunteers() | ✅     | #52 |
+| 6        | Check All toggle fix      | ✅     | #53 |
+
+---
+
+## 🎯 Phase 2: MVP Onboarding Automation (Dec 2025)
+
+**Status:** 📋 Planning Complete - Ready for Implementation
+**Decided:** 2025-12-05
+
+### Design Decisions
+
+These decisions were made through structured Q&A to define the MVP automation system:
+
+| #   | Question            | Decision                                                                                                                   |
+| --- | ------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Entry point         | Connect card (physical + digital) is primary entry                                                                         |
+| 2   | Who processes       | Small centralized team; system handles ministry-specific logic based on category                                           |
+| 3   | Who owns onboarding | **System owns entire process**; leaders informed, not tasked                                                               |
+| 4   | Leader involvement  | Dashboard pull, not email push. Opt-in alerts per category (email/SMS/both)                                                |
+| 5   | BG check tracking   | Volunteer self-reports → staff review queue. Manual override available. Future: we process directly (revenue opportunity)  |
+| 6   | Who pays for BG     | Simple toggle: Church pays / Volunteer pays (no subsidized option)                                                         |
+| 7   | BG providers        | Protect My Ministry, Sterling, Ministry Safe, Custom. Explore affiliate partnerships.                                      |
+| 8   | Ideal sequence      | 10-step automated flow, only 3 manual touchpoints                                                                          |
+| 9   | Staff dashboard     | Stats banner (Awaiting BG, Pending Review, Ready to Export, Stalled 7+d). Clickable filters. No elaborate pipeline/kanban. |
+| 10  | Our role            | Onboarding bridge → export to ChMS (including BG status, date, expiry)                                                     |
+
+### Automation Flow
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  Step 1: CONNECT CARD PROCESSED                                      │
+│  Staff assigns volunteer category, clicks "Process"                  │
+│  Owner: Staff (manual)                                               │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  Step 2-4: AUTOMATION TRIGGERS (immediate)                           │
+│  • Welcome email: docs + BG check link (if required)                 │
+│  • Payment info included ("no cost" vs "$XX fee")                    │
+│  • documentsSentAt timestamp recorded                                │
+│  Owner: System (automatic)                                           │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  Step 5: FOLLOW-UP (5-7 days later)                                  │
+│  • Volunteer receives "Have you completed your BG check?"            │
+│  • Includes unique confirmation link                                 │
+│  Owner: System (automatic) - refinement TBD                          │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  Step 6: VOLUNTEER SELF-REPORTS                                      │
+│  • Clicks confirmation link                                          │
+│  • Status → PENDING_REVIEW (not auto-cleared)                        │
+│  Owner: Volunteer                                                    │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  Step 7-8: STAFF VERIFICATION                                        │
+│  • Appears in review queue                                           │
+│  • Staff checks provider portal, clicks "Confirm Cleared"            │
+│  Owner: Staff (manual)                                               │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  Step 9: READY FOR EXPORT                                            │
+│  • readyForExport: true (auto-set)                                   │
+│  • Appears in export queue                                           │
+│  Owner: System (automatic)                                           │
+└──────────────────────────────┬───────────────────────────────────────┘
+                               │
+                               ▼
+┌──────────────────────────────────────────────────────────────────────┐
+│  Step 10: EXPORT TO CHMS                                             │
+│  • Staff exports batch (CSV with BG status, date, expiry)            │
+│  • Volunteer moves to Planning Center for scheduling                 │
+│  Owner: Staff (manual)                                               │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+**Total manual touchpoints:** 3 (process card, verify BG check, export)
+**Everything else is automated.**
+
+### Stats Banner Design
+
+Staff sees at-a-glance numbers on the volunteers page:
+
+```
+┌─────────────────┬──────────────────┬─────────────────┬─────────────────┐
+│ Awaiting BG     │ Pending Review   │ Ready to Export │ Stalled (7+ d)  │
+│ Check           │ (needs verify)   │                 │                 │
+│      5          │       3          │       8         │       2         │
+└─────────────────┴──────────────────┴─────────────────┴─────────────────┘
+```
+
+- **Awaiting BG Check:** Docs sent, waiting on volunteer to complete
+- **Pending Review:** Volunteer self-reported completion, needs staff verification
+- **Ready to Export:** Cleared and ready for ChMS
+- **Stalled (7+ days):** Docs sent but no response
+
+Each stat clickable → filters the table below.
+
+### Leader Notification System
+
+- **Default:** No automatic emails (prevents inbox fatigue)
+- **Dashboard:** Leaders see their category's volunteers on-demand
+- **Opt-in alerts:** Per-category toggle with preference (email / SMS / both)
+- Leaders choose to get notified when there's a crunch/event coming
+
+### Implementation Phases
+
+#### Phase 1: Schema & Foundation
+
+| Task | Description                                                                         |
+| ---- | ----------------------------------------------------------------------------------- |
+| 1.1  | Add `PENDING_REVIEW` to BackgroundCheckStatus enum                                  |
+| 1.2  | Simplify payment toggle: remove `SUBSIDIZED`, keep `CHURCH_PAID` / `VOLUNTEER_PAID` |
+
+#### Phase 2: Core Automation
+
+| Task | Description                                                      |
+| ---- | ---------------------------------------------------------------- |
+| 2.1  | Wire `processVolunteer` → send welcome email with docs + BG link |
+| 2.2  | Update welcome email to include payment info                     |
+| 2.3  | Set `documentsSentAt` timestamp when email sent                  |
+
+#### Phase 3: Volunteer Self-Report
+
+| Task | Description                                                 |
+| ---- | ----------------------------------------------------------- |
+| 3.1  | Generate unique token-based confirmation link               |
+| 3.2  | Build public endpoint to mark volunteer as `PENDING_REVIEW` |
+| 3.3  | Add follow-up email template with confirm link              |
+
+#### Phase 4: Staff Review Queue
+
+| Task | Description                                                     |
+| ---- | --------------------------------------------------------------- |
+| 4.1  | Build review queue UI (volunteers with `PENDING_REVIEW` status) |
+| 4.2  | One-click verification action ("Confirm Cleared" / "Not Yet")   |
+| 4.3  | Bulk verification support                                       |
+
+#### Phase 5: Dashboard Stats
+
+| Task | Description                             |
+| ---- | --------------------------------------- |
+| 5.1  | Build stats banner component            |
+| 5.2  | Add stats data query (count per bucket) |
+| 5.3  | Wire clickable filters                  |
+
+#### Phase 6: Leader Notifications
+
+| Task | Description                                                            |
+| ---- | ---------------------------------------------------------------------- |
+| 6.1  | Add leader notification preferences (per-category: off/email/SMS/both) |
+| 6.2  | Trigger notifications when enabled                                     |
+
+#### Phase 7: Export Enhancement
+
+| Task | Description                                                            |
+| ---- | ---------------------------------------------------------------------- |
+| 7.1  | Update CSV export to include BG status, cleared date, expiry, provider |
+
+### Future Revenue Opportunity
+
+**Direct BG Check Processing:**
+
+- Partner with providers (affiliate model)
+- Church pays us, we handle submission + tracking
+- Full integration - status updates automatically
+- Premium feature with margin built in
 
 ---
 
@@ -681,9 +861,10 @@ CategoryLeaderAssignment {
 
 ---
 
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-12-04
 **Document Purpose:** Clarify product vision - we're building onboarding automation, not volunteer management
 **Strategic Position:** Feed Planning Center, don't compete with it
+**Recent PRs:** #47 (email automation), #52 (export tracking), #53 (Check All fix)
 
 ---
 
