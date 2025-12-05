@@ -45,9 +45,11 @@
  */
 
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ui/theme-provider";
+import { ThemeVariantProvider } from "@/components/ui/theme-variant-provider";
 import { Toaster } from "sonner";
 
 // Configure Geist Sans font with CSS variable
@@ -84,6 +86,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <Suspense fallback={null}>
+            <ThemeVariantProvider />
+          </Suspense>
           {children}
           <Toaster
             closeButton
