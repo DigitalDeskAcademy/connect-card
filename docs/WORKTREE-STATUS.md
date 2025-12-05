@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-04
+**Last Updated:** 2025-12-05
 **Update Frequency:** After each significant work session
 
 ---
@@ -11,7 +11,7 @@
 | Worktree         | Port | Branch                         | Status          | Current Focus                    |
 | ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
 | **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Theme system |
-| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready        | Phase 3.5 complete (PR #50)      |
+| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready for PR | Phase 4 complete (CSV Export)    |
 | **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE** | PR #49, #51, #56 merged          |
 | **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 Phase 1 Done | PR #47, #52, #53 merged          |
 | **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
@@ -24,9 +24,10 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. connect-card  → Phase 4: CSV Export (next)
-2. tech-debt     → Phase 2: Performance (non-blocking)
-3. main          → Project management (ongoing)
+1. connect-card  → Create PR for Phase 4 (CSV Export complete!)
+2. volunteer     → Phase 2: MVP Automation (next priority)
+3. tech-debt     → Phase 2: Performance (non-blocking)
+4. main          → Project management (ongoing)
 ```
 
 **Recently Completed (PRs Merged):**
@@ -247,11 +248,11 @@ None - can work independently.
 
 ### 🟢 connect-card (Port 3001)
 
-**Status:** Phase 3.5 Complete - Ready for Phase 4
+**Status:** Phase 4 Complete - Ready for PR
 **Branch:** `feature/connect-card`
 **Vision Doc:** `/docs/features/connect-cards/vision.md`
 
-#### Recently Completed (PR #50)
+#### Phase 3.5 Complete (PR #50)
 
 | #   | Task                                   | Status |
 | --- | -------------------------------------- | ------ |
@@ -266,43 +267,48 @@ None - can work independently.
 | 9   | Fuzzy duplicate detection              | [x]    |
 | 10  | S3 org-scoped paths                    | [x]    |
 
-#### What You Should Be Working On
+#### Phase 4 Complete - CSV Export
 
-**Next Feature - CSV Export (Phase 4):**
-
-- See `/docs/features/integrations/church-software-sync-spec.md`
-- Route: `/church/[slug]/admin/integrations`
+- Route: `/church/[slug]/admin/export`
+- Spec: `/docs/features/integrations/church-software-sync-spec.md`
 
 | #   | Task                               | Status |
 | --- | ---------------------------------- | ------ |
-| 1   | Create integrations page UI        | [ ]    |
-| 2   | Planning Center CSV format export  | [ ]    |
-| 3   | Breeze CSV format export           | [ ]    |
-| 4   | Generic CSV format export          | [ ]    |
-| 5   | Export tracking (mark as exported) | [ ]    |
-| 6   | Export history log                 | [ ]    |
+| 1   | Export page UI with tabs           | [x]    |
+| 2   | Planning Center CSV format export  | [x]    |
+| 3   | Breeze CSV format export           | [x]    |
+| 4   | Generic CSV format export          | [x]    |
+| 5   | Export tracking (mark as exported) | [x]    |
+| 6   | Export history log with S3 storage | [x]    |
+| 7   | Route added to navigation          | [x]    |
 
-#### Start Here
+#### Demo Polish (Current Session)
 
-```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/connect-card
-pnpm dev  # Runs on port 3001
+| #   | Task                           | Status |
+| --- | ------------------------------ | ------ |
+| 1   | Per-location dashboard tabs    | [x]    |
+| 2   | Demo seed data (52 weeks)      | [x]    |
+| 3   | Volunteer leaders for dropdown | [x]    |
+| 4   | DRY refactor (KPICard extract) | [x]    |
 
-# First task: Create integrations page
-# Create: /app/church/[slug]/admin/integrations/page.tsx
-# Follow the UI wireframes in the spec doc
-```
+#### What You Should Be Working On
 
-#### Definition of Done
+**Future - API Integrations (Phase 5+):**
 
-- [ ] CSV export working for all 3 formats
-- [ ] Export tracking in database
-- [ ] Route added to navigation
+- Planning Center OAuth API sync
+- Breeze OAuth API sync
+- See spec for details
+
+#### Definition of Done (Phase 4)
+
+- [x] CSV export working for all 3 formats
+- [x] Export tracking in database
+- [x] Route added to navigation
 - [ ] PR created to main
 
 #### Blockers
 
-None - can work independently.
+None - ready for PR.
 
 ---
 

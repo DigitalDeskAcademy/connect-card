@@ -241,6 +241,13 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 
 ## 📝 Recent Updates
 
+### Week of Dec 4, 2025
+
+- ✅ Prayer management 100% complete (PR #49, #51, #56)
+- ✅ Theme switching system with persistence (PR #54, #55)
+- ✅ Volunteer export tracking + Check All fix (PR #52, #53)
+- ✅ Fuzzy duplicate detection for connect cards (PR #50)
+
 ### Week of Dec 1, 2025
 
 - ✅ ChMS Export (Phase 1) complete - Planning Center, Breeze, Generic CSV
