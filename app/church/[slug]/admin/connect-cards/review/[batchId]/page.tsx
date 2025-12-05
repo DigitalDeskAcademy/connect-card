@@ -74,7 +74,7 @@ export default async function BatchReviewPage({ params }: PageProps) {
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/church/${slug}/admin/connect-cards?tab=batches`}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Batches
+              Back
             </Link>
           </Button>
         </div>
@@ -87,7 +87,7 @@ export default async function BatchReviewPage({ params }: PageProps) {
             <div className="mt-4">
               <Button asChild variant="default">
                 <Link href={`/church/${slug}/admin/connect-cards?tab=batches`}>
-                  Back to Batches
+                  Back
                 </Link>
               </Button>
             </div>

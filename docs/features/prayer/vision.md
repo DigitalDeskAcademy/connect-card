@@ -1,74 +1,68 @@
 # Prayer Management - Product Vision
 
-**Status:** 🟠 **BLOCKING** - Server actions needed (65% Complete)
+**Status:** ✅ **COMPLETE** - PR #49 merged Dec 4, PR #51 fixed N+1, PR #56 added privacy redaction
 **Worktree:** `/church-connect-hub/prayer`
 **Branch:** `feature/prayer-enhancements`
-**Last Updated:** 2025-11-28
+**Last Updated:** 2025-12-04
 **Owner:** Church Operations Team
 
 ---
 
-## 🚨 Assigned Fixes (BLOCKING Feature Completion)
+## ✅ Completed Work
 
-**These issues are assigned to this worktree. Feature is unusable until complete.**
+### 1. Server Actions (COMPLETE)
 
-### 1. Server Actions (CRITICAL - 35% of feature)
+All 6 server actions implemented with full security:
 
-**Impact:** Users cannot create, edit, assign, or complete prayers
-**Risk:** Feature is display-only, no functionality
+| Action                | File                        | Status  |
+| --------------------- | --------------------------- | ------- |
+| `createPrayerRequest` | `/actions/prayer-requests/` | ✅ Done |
+| `updatePrayerRequest` | `/actions/prayer-requests/` | ✅ Done |
+| `assignPrayerRequest` | `/actions/prayer-requests/` | ✅ Done |
+| `markAnswered`        | `/actions/prayer-requests/` | ✅ Done |
+| `deletePrayerRequest` | `/actions/prayer-requests/` | ✅ Done |
+| `togglePrivacy`       | `/actions/prayer-requests/` | ✅ Done |
 
-**Required Actions:**
-
-| Action                | File                        | Status          |
-| --------------------- | --------------------------- | --------------- |
-| `createPrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
-| `updatePrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
-| `assignPrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
-| `markAnswered`        | `/actions/prayer-requests/` | [ ] Not started |
-| `deletePrayerRequest` | `/actions/prayer-requests/` | [ ] Not started |
-
-**Each action must include:**
+**Each action includes:**
 
 - Zod validation schema
 - Arcjet rate limiting
 - Multi-tenant `organizationId` scoping
 - Privacy checks for private prayers
+- Location-based access control
 
 ---
 
-### 2. UI Components (Depends on Server Actions)
+### 2. UI Components (COMPLETE)
 
-| Component            | Status          |
-| -------------------- | --------------- |
-| Create prayer form   | [ ] Not started |
-| Assignment dialog    | [ ] Not started |
-| Detail view dialog   | [ ] Not started |
-| Edit form            | [ ] Not started |
-| Mark answered dialog | [ ] Not started |
+| Component            | Status  |
+| -------------------- | ------- |
+| Create prayer dialog | ✅ Done |
+| Edit prayer dialog   | ✅ Done |
+| Detail view dialog   | ✅ Done |
 
 ---
 
-### 3. Performance: N+1 Query Fix
+### 3. Performance: N+1 Query ✅ FIXED
 
-**File:** `lib/data/prayer-requests.ts:228-300`
-**Impact:** 8 sequential COUNT queries = 400ms minimum latency
-**Risk:** Slow dashboard
+**File:** `lib/data/prayer-requests.ts`
+**Impact:** Was 10 sequential COUNT queries
+**Status:** ✅ Fixed in PR #51 (Dec 4)
 
-**The Fix:** Replace 8 COUNT queries with single GROUP BY query.
-
-**Status:** [ ] Not started
+**The Fix:** Replaced 10 COUNT queries with single GROUP BY query.
 
 ---
 
-## 📊 Fix Progress
+## 📊 Progress Summary
 
-| Priority | Issue              | Status | PR  |
-| -------- | ------------------ | ------ | --- |
-| 1        | Server Actions (5) | [ ]    | -   |
-| 2        | UI Components (5)  | [ ]    | -   |
-| 3        | N+1 Query          | [ ]    | -   |
+| Priority | Issue              | Status  | PR  |
+| -------- | ------------------ | ------- | --- |
+| 1        | Server Actions (6) | ✅ Done | #49 |
+| 2        | UI Components (3)  | ✅ Done | #49 |
+| 3        | N+1 Query          | ✅ Done | #51 |
+| 4        | Privacy redaction  | ✅ Done | #56 |
 
-**Overall:** 65% → Target 100%
+**Overall:** ✅ 100% Complete - All PRs merged to main
 
 ---
 
@@ -159,7 +153,7 @@ Three privacy levels (expanding from current boolean):
 
 ## 🚀 Feature Scope
 
-### ✅ What's Built (65% Complete)
+### ✅ What's Built (100% Complete)
 
 **Database Layer:**
 
@@ -169,6 +163,15 @@ Three privacy levels (expanding from current boolean):
 - ✅ Category auto-detection (8 categories)
 - ✅ Sensitive keyword detection
 
+**Server Actions (PR #49):**
+
+- ✅ Create prayer request (manual entry)
+- ✅ Update prayer request (edit text/category)
+- ✅ Assign to team member
+- ✅ Mark as answered (with testimony)
+- ✅ Delete/archive prayer request
+- ✅ Toggle privacy
+
 **UI Layer:**
 
 - ✅ Prayer requests table (TanStack Table)
@@ -177,6 +180,17 @@ Three privacy levels (expanding from current boolean):
 - ✅ Status badges
 - ✅ Location filtering (multi-campus)
 - ✅ Empty states
+- ✅ Create prayer dialog
+- ✅ Edit prayer dialog
+- ✅ Detail view dialog
+
+**Performance (PR #51):**
+
+- ✅ N+1 query optimization (GROUP BY)
+
+**Privacy (PR #56):**
+
+- ✅ Redact submittedBy for private prayers from unauthorized staff
 
 **Testing:**
 
@@ -184,26 +198,11 @@ Three privacy levels (expanding from current boolean):
 - ✅ Multi-tenant isolation verified
 - ✅ Privacy controls validated
 
-### ❌ What's Missing (35% - Critical)
-
-**Server Actions (BLOCKING):**
-
-- ❌ Create prayer request (manual entry)
-- ❌ Update prayer request (edit text/category)
-- ❌ Assign to team member
-- ❌ Mark as answered (with testimony)
-- ❌ Delete/archive prayer request
-
-**UI Components:**
-
-- ❌ Simple creation form (name, request, privacy toggle)
-- ❌ Assignment dialog
-- ❌ Detail view dialog
-- ❌ Edit forms
+### 📋 Future Enhancements (Wishlist)
 
 **Integration:**
 
-- ❌ Connect card review → auto-create prayer
+- [ ] Connect card review → auto-create prayer (when connect card is saved with prayer text)
 
 ---
 
@@ -397,12 +396,14 @@ The `analyticsCorrelationId` enables trend tracking:
 - Database: ✅ Complete
 - UI: ✅ Complete
 - E2E Tests: ✅ Complete
-- Server Actions: ❌ Not started (BLOCKING)
-- Connect Card Integration: ❌ Not started
+- Server Actions: ✅ Complete (PR #49)
+- N+1 Optimization: ✅ Complete (PR #51)
+- Privacy Redaction: ✅ Complete (PR #56)
+- Connect Card Integration: 📋 Future wishlist item
 
-**Overall Completion:** 65%
+**Overall Completion:** 100%
 
-**Next Milestone:** Server actions complete → 85% complete
+**Merged PRs:** #49, #51, #56
 
 ---
 
@@ -496,6 +497,6 @@ Monday morning
 
 ---
 
-**Last Updated:** 2025-11-28
-**Status:** Living document - Updated as vision evolves
-**Next Review:** After Phase 1 complete (server actions shipped)
+**Last Updated:** 2025-12-04
+**Status:** ✅ Feature complete - All PRs merged
+**Next Review:** When connect card integration is prioritized

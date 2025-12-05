@@ -174,7 +174,10 @@ export type ExtractedData = z.infer<typeof extractedDataSchema>;
 
 // Connect card extracted data schema
 export const connectCardSchema = z.object({
-  imageKey: z.string().min(1, { message: "Image is required" }),
+  imageKey: z.string().min(1, { message: "Front image is required" }),
+  imageHash: z.string().min(1, { message: "Front image hash is required" }), // SHA-256 hash from extract API
+  backImageKey: z.string().optional().nullable(), // Back image S3 key (optional for two-sided cards)
+  backImageHash: z.string().optional().nullable(), // Back image SHA-256 hash
   extractedData: extractedDataSchema,
 });
 

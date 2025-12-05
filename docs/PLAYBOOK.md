@@ -3,7 +3,7 @@
 **Purpose:** THE authoritative guide for building Church Connect Hub. If there's a conflict, this document wins.
 **Status:** 🟡 **PRODUCTION BLOCKERS FIXED** - Phase 1 complete, ready for pilot
 **Health Score:** 78/100 (C+)
-**Last Updated:** 2025-12-01 (via /update-docs)
+**Last Updated:** 2025-12-04 (via /update-docs)
 **Applies To:** All worktrees, all features, all developers
 
 > ⚠️ **This is the law.** When in doubt, follow this document. All other docs are supplementary.
@@ -223,18 +223,18 @@ CREATE INDEX idx_prayer_org_status ON prayer_request(organization_id, status);
 
 ## 📊 Technical Debt Register
 
-| Priority        | Issue                   | Location                          | Status   |
-| --------------- | ----------------------- | --------------------------------- | -------- |
-| ~~🔴 CRITICAL~~ | No pagination           | `/lib/data/*`                     | ✅ Fixed |
-| ~~🔴 CRITICAL~~ | Subscription bypass     | `require-dashboard-access.ts:175` | ✅ Fixed |
-| ~~🔴 CRITICAL~~ | PII in logs             | 20+ server actions                | ✅ Fixed |
-| ~~🔴 CRITICAL~~ | Missing indexes         | `schema.prisma`                   | ✅ Fixed |
-| 🟠 **HIGH**     | Race conditions         | `connect-card-batch.ts:72`        | Phase 2  |
-| 🟠 **HIGH**     | N+1 queries             | Prayer/volunteer stats            | Phase 2  |
-| 🟠 **HIGH**     | No caching              | All data fetches                  | Phase 2  |
-| 🟡 **MEDIUM**   | No data abstraction     | 113 files use Prisma              | Deferred |
-| 🟡 **MEDIUM**   | Type safety violations  | `as never` casts                  | Phase 2  |
-| 🟡 **MEDIUM**   | Silent error swallowing | Empty catch blocks                | Phase 2  |
+| Priority        | Issue                   | Location                          | Status            |
+| --------------- | ----------------------- | --------------------------------- | ----------------- |
+| ~~🔴 CRITICAL~~ | No pagination           | `/lib/data/*`                     | ✅ Fixed          |
+| ~~🔴 CRITICAL~~ | Subscription bypass     | `require-dashboard-access.ts:175` | ✅ Fixed          |
+| ~~🔴 CRITICAL~~ | PII in logs             | 20+ server actions                | ✅ Fixed          |
+| ~~🔴 CRITICAL~~ | Missing indexes         | `schema.prisma`                   | ✅ Fixed          |
+| ~~🟠 HIGH~~     | Race conditions         | `connect-card-batch.ts`           | ✅ Fixed (PR #50) |
+| ~~🟠 HIGH~~     | N+1 queries (prayer)    | `prayer-requests.ts`              | ✅ Fixed (PR #51) |
+| 🟠 **HIGH**     | No caching              | All data fetches                  | Phase 2           |
+| 🟡 **MEDIUM**   | No data abstraction     | 113 files use Prisma              | Deferred          |
+| ~~🟡 MEDIUM~~   | Type safety violations  | `as never` casts                  | ✅ Fixed          |
+| 🟡 **MEDIUM**   | Silent error swallowing | Empty catch blocks                | Phase 2           |
 
 ---
 
@@ -332,23 +332,23 @@ import { SomeUtil } from "@/lib/utils";
 
 ## 🔄 Current Performance Issues
 
-### Issue: Dashboard fetches ALL TIME data
+### ✅ FIXED: Dashboard fetches ALL TIME data
 
-**Location:** `/lib/data/connect-card-analytics.ts:80-115`
-**Impact:** 40MB+ per load after 1 year
-**Fix:** Limit to 4 weeks, use aggregates for totals
+**Location:** `/lib/data/connect-card-analytics.ts`
+**Impact:** Was 40MB+ per load after 1 year
+**Fix:** Limited to 4 weeks, uses aggregates for totals
 
-### Issue: 8 Sequential COUNT queries
+### ✅ FIXED: 8 Sequential COUNT queries (PR #51)
 
-**Location:** `/lib/data/prayer-requests.ts:228-300`
-**Impact:** 400ms latency minimum
+**Location:** `/lib/data/prayer-requests.ts`
+**Impact:** Was 400ms latency minimum
 **Fix:** Single GROUP BY query
 
-### Issue: Raw images in review queue
+### ✅ FIXED: Raw images in review queue
 
-**Location:** Review queue using `<img>` not `<Image>`
-**Impact:** 30-50MB page loads
-**Fix:** Use Next.js Image component
+**Location:** Review queue
+**Impact:** Was 30-50MB page loads
+**Fix:** Added lazy loading and decoding async
 
 ---
 
@@ -424,4 +424,4 @@ import { SomeUtil } from "@/lib/utils";
 
 ---
 
-_Last audit: 2025-12-01 | Next audit: After pilot church deployment_
+_Last audit: 2025-12-04 | Next audit: After pilot church deployment_

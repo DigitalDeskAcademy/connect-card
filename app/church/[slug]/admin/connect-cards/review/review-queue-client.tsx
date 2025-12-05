@@ -4,6 +4,7 @@ import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Zoom from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
+import { leaderMatchesCategory } from "@/lib/volunteer-category-mapping";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +19,16 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Collapsible,
   CollapsibleContent,
@@ -43,6 +54,7 @@ import {
   Trash2,
   ArrowLeft,
   ChevronDown,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
@@ -87,7 +99,8 @@ export function ReviewQueueClient({
     if (!currentCard) return null;
 
     // Normalize visitType - handle legacy "First Time Visitor" value
-    let normalizedVisitType = currentCard.visitType || "First Visit";
+    // Don't default to "First Visit" - let staff select based on card
+    let normalizedVisitType = currentCard.visitType || "";
     if (normalizedVisitType === "First Time Visitor") {
       normalizedVisitType = "First Visit";
     }
@@ -116,9 +129,26 @@ export function ReviewQueueClient({
     };
   });
 
-  // Duplicate detection state
-  const [, setDuplicateInfo] = useState<{
+  // Duplicate detection state - stores match info for potential future UI display
+  // Currently used to auto-check "existing member" checkbox; hasDiscrepancies
+  // available for future use when we want to show reviewers significant differences
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [duplicateInfo, setDuplicateInfo] = useState<{
     isDuplicate: boolean;
+    matchType?:
+      | "member_email"
+      | "card_email"
+      | "member_name_phone"
+      | "card_name_phone";
+    confidence?: number;
+    hasDiscrepancies?: boolean;
+    existingMember?: {
+      id: string;
+      name: string | null;
+      email: string | null;
+      phone: string | null;
+      memberType: string;
+    };
     existingCard?: {
       id: string;
       name: string | null;
@@ -126,11 +156,16 @@ export function ReviewQueueClient({
       phone: string | null;
       scannedAt: Date;
     };
+    similarity?: {
+      name: number;
+      phone: number;
+    };
   } | null>(null);
   const [, setCheckingDuplicate] = useState(false);
 
-  // Image error state
+  // Image state
   const [imageError, setImageError] = useState(false);
+  const [showBackImage, setShowBackImage] = useState(false); // Toggle for two-sided cards
 
   // Validation error state
   const [validationErrors, setValidationErrors] = useState<{
@@ -139,6 +174,9 @@ export function ReviewQueueClient({
 
   // Volunteer assignment collapsible state
   const [isAssignmentOpen, setIsAssignmentOpen] = useState(false);
+
+  // Discard confirmation dialog state
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
   // Auto-expand volunteer assignment section for non-GENERAL categories
   useEffect(() => {
@@ -163,11 +201,18 @@ export function ReviewQueueClient({
         });
 
         if (result.status === "success" && result.isDuplicate) {
+          // Store full duplicate info for potential UI display
           setDuplicateInfo({
             isDuplicate: true,
+            matchType: result.matchType,
+            confidence: result.confidence,
+            hasDiscrepancies: result.hasDiscrepancies,
+            existingMember: result.existingMember,
             existingCard: result.existingCard,
+            similarity: result.similarity,
           });
           // Auto-check the existing member checkbox
+          // This happens regardless of discrepancies - email match = same person
           setFormData(prev =>
             prev ? { ...prev, isExistingMember: true } : null
           );
@@ -197,7 +242,8 @@ export function ReviewQueueClient({
   // Update form data when card changes
   const resetFormForCard = (card: ConnectCardForReview) => {
     // Normalize visitType - handle legacy "First Time Visitor" value
-    let normalizedVisitType = card.visitType || "First Visit";
+    // Don't default to "First Visit" - let staff select based on card
+    let normalizedVisitType = card.visitType || "";
     if (normalizedVisitType === "First Time Visitor") {
       normalizedVisitType = "First Visit";
     }
@@ -225,7 +271,9 @@ export function ReviewQueueClient({
       sendBackgroundCheckInfo: false,
     });
     setImageError(false); // Reset image error state for new card
+    setShowBackImage(false); // Reset to front image for new card
     setValidationErrors({}); // Clear validation errors for new card
+    setDuplicateInfo(null); // Reset duplicate info - will be rechecked by useEffect
   };
 
   // Handle save and move to next card
@@ -330,17 +378,16 @@ export function ReviewQueueClient({
     }
   }
 
-  // Handle discarding a card (delete from database)
-  async function handleDiscard() {
+  // Open discard confirmation dialog
+  function handleDiscard() {
     if (!currentCard) return;
+    setShowDiscardDialog(true);
+  }
 
-    if (
-      !confirm(
-        "Are you sure you want to discard this card? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
+  // Actually discard the card after confirmation
+  async function confirmDiscard() {
+    if (!currentCard) return;
+    setShowDiscardDialog(false);
 
     startTransition(async () => {
       try {
@@ -415,7 +462,7 @@ export function ReviewQueueClient({
           disabled={isPending}
         >
           <ArrowLeft className="mr-2 w-5 h-5" />
-          Back to Batches
+          Back
         </Button>
       </div>
 
@@ -539,51 +586,81 @@ export function ReviewQueueClient({
         {/* Left side - Image display */}
         <Card className="flex flex-col h-full">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ImageIcon className="w-5 h-5" />
-              Scanned Connect Card
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="w-5 h-5" />
+                Scanned Connect Card
+              </CardTitle>
+              {/* Front/Back toggle for two-sided cards */}
+              {currentCard.backImageUrl && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBackImage(!showBackImage)}
+                  className="gap-2"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  {showBackImage ? "Front" : "Back"}
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
-            {currentCard.imageUrl?.trim() && !imageError ? (
-              <>
-                <Zoom>
-                  <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={currentCard.imageUrl.trim() || undefined}
-                      alt="Connect card scan"
-                      className="w-full h-full object-contain"
-                      loading="lazy"
-                      decoding="async"
-                      onError={() => setImageError(true)}
-                    />
+            {(() => {
+              const displayUrl = showBackImage
+                ? currentCard.backImageUrl
+                : currentCard.imageUrl;
+              const displayLabel = showBackImage ? "Back" : "Front";
+
+              return displayUrl?.trim() && !imageError ? (
+                <>
+                  <Zoom>
+                    <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={displayUrl.trim() || undefined}
+                        alt={`Connect card ${displayLabel.toLowerCase()}`}
+                        className="w-full h-full object-contain"
+                        loading="lazy"
+                        decoding="async"
+                        onError={() => setImageError(true)}
+                      />
+                      {/* Side indicator for two-sided cards */}
+                      {currentCard.backImageUrl && (
+                        <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs font-medium">
+                          {displayLabel}
+                        </div>
+                      )}
+                    </div>
+                  </Zoom>
+                  <div className="mt-3 space-y-1">
+                    <p className="text-xs text-muted-foreground text-center">
+                      Scanned{" "}
+                      {new Date(currentCard.scannedAt).toLocaleDateString()}
+                      {currentCard.backImageUrl && " (2-sided card)"}
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
+                      <ZoomIn className="w-4 h-4" />
+                      <span>Click image to zoom</span>
+                    </div>
                   </div>
-                </Zoom>
-                <div className="mt-3 space-y-1">
-                  <p className="text-xs text-muted-foreground text-center">
-                    Scanned{" "}
-                    {new Date(currentCard.scannedAt).toLocaleDateString()}
-                  </p>
-                  <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
-                    <ZoomIn className="w-4 h-4" />
-                    <span>Click image to zoom</span>
+                </>
+              ) : (
+                <div className="relative w-full aspect-[3/4] bg-muted rounded-lg overflow-hidden border flex items-center justify-center">
+                  <div className="text-center text-muted-foreground p-6">
+                    <ImageIcon className="w-16 h-16 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm font-medium mb-1">
+                      Image not available
+                    </p>
+                    <p className="text-xs opacity-75">
+                      {imageError
+                        ? "Failed to load image"
+                        : "No image uploaded"}
+                    </p>
                   </div>
                 </div>
-              </>
-            ) : (
-              <div className="relative w-full aspect-[3/4] bg-muted rounded-lg overflow-hidden border flex items-center justify-center">
-                <div className="text-center text-muted-foreground p-6">
-                  <ImageIcon className="w-16 h-16 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm font-medium mb-1">
-                    Image not available
-                  </p>
-                  <p className="text-xs opacity-75">
-                    {imageError ? "Failed to load image" : "No image uploaded"}
-                  </p>
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </CardContent>
         </Card>
 
@@ -821,7 +898,8 @@ export function ReviewQueueClient({
                               <SelectContent>
                                 {volunteerLeaders
                                   .filter(leader =>
-                                    leader.volunteerCategories.includes(
+                                    leaderMatchesCategory(
+                                      leader.volunteerCategories,
                                       formData.volunteerCategory
                                     )
                                   )
@@ -834,7 +912,8 @@ export function ReviewQueueClient({
                                     </SelectItem>
                                   ))}
                                 {volunteerLeaders.filter(leader =>
-                                  leader.volunteerCategories.includes(
+                                  leaderMatchesCategory(
+                                    leader.volunteerCategories,
                                     formData.volunteerCategory
                                   )
                                 ).length === 0 && (
@@ -979,6 +1058,28 @@ export function ReviewQueueClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* Discard Confirmation Dialog */}
+      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Discard Connect Card?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to discard this card? This action cannot be
+              undone and the card will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDiscard}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Discard
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

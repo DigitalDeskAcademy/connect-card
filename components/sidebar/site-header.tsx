@@ -1,8 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { ThemeToggle } from "../ui/themeToggle";
+import { ThemeVariantSwitcher } from "../ui/theme-variant-switcher";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -102,6 +104,9 @@ export function SiteHeader({
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <IconBell className="h-4 w-4" />
           </Button>
+          <Suspense fallback={null}>
+            <ThemeVariantSwitcher />
+          </Suspense>
           <ThemeToggle />
 
           {/* User avatar - visible on mobile when sidebar is closed, always on far right */}

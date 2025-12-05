@@ -81,10 +81,29 @@ export async function getPrayerBatchById(
 }
 
 /**
- * Get prayer batch with all prayer requests
+ * Privacy options for prayer batch queries
  */
-export async function getPrayerBatchWithRequests(batchId: string) {
-  return prisma.prayerBatch.findUnique({
+interface PrivacyOptions {
+  /** Current user ID for assignment check */
+  userId: string;
+  /** Whether user can manage users (admin/owner) */
+  canManageUsers: boolean;
+}
+
+/**
+ * Get prayer batch with all prayer requests
+ *
+ * Privacy: Redacts submittedBy for private prayers when user is not admin/owner
+ * and not assigned to that specific prayer request.
+ *
+ * @param batchId - The batch ID to fetch
+ * @param privacyOptions - Optional privacy filtering (if omitted, shows all - for admins)
+ */
+export async function getPrayerBatchWithRequests(
+  batchId: string,
+  privacyOptions?: PrivacyOptions
+) {
+  const batch = await prisma.prayerBatch.findUnique({
     where: {
       id: batchId,
     },
@@ -131,4 +150,22 @@ export async function getPrayerBatchWithRequests(batchId: string) {
       },
     },
   });
+
+  if (!batch) return null;
+
+  // Apply privacy redaction if options provided and user is not admin/owner
+  if (privacyOptions && !privacyOptions.canManageUsers) {
+    batch.prayerRequests = batch.prayerRequests.map(prayer => {
+      // Redact submittedBy for private prayers unless user is assigned
+      if (prayer.isPrivate && prayer.assignedToId !== privacyOptions.userId) {
+        return {
+          ...prayer,
+          submittedBy: null, // Redact the name
+        };
+      }
+      return prayer;
+    });
+  }
+
+  return batch;
 }

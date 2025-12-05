@@ -38,6 +38,7 @@ export default function ConnectCardTestPage() {
   const slug = params.slug as string;
 
   const [imageKey, setImageKey] = useState<string | null>(null);
+  const [imageHash, setImageHash] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedData | null>(
     null
@@ -81,6 +82,7 @@ export default function ConnectCardTestPage() {
       console.log("✅ Extraction complete:", result);
 
       setExtractedData(result.data);
+      setImageHash(result.imageHash || null);
     } catch (err) {
       console.error("❌ Error:", err);
       setError(err instanceof Error ? err.message : "Unknown error occurred");
@@ -95,9 +97,15 @@ export default function ConnectCardTestPage() {
       return;
     }
 
+    if (!imageHash) {
+      toast.error("Image hash missing - please re-extract the data");
+      return;
+    }
+
     startSaving(async () => {
       const result = await saveConnectCard(slug, {
         imageKey,
+        imageHash,
         extractedData,
       });
 
