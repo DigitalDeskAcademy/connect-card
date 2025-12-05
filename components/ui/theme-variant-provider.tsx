@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 // Map of theme names to CSS class names
 const THEME_CLASSES: Record<string, string> = {
   "jetbrains-blue": "theme-jetbrains-blue",
+  "soft-pop": "theme-soft-pop",
 };
 
 /**

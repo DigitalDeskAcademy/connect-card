@@ -47,6 +47,7 @@ export function ThemeVariantSwitcher() {
         <SelectContent>
           <SelectItem value="primary">Primary</SelectItem>
           <SelectItem value="jetbrains-blue">JetBrains Blue</SelectItem>
+          <SelectItem value="soft-pop">Soft Pop</SelectItem>
         </SelectContent>
       </Select>
     </div>
