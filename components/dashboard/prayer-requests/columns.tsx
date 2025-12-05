@@ -315,6 +315,18 @@ export const prayerRequestColumns: ColumnDef<PrayerRequestListItem>[] = [
     },
     cell: ({ row }) => {
       const submittedBy = row.getValue("submittedBy") as string | null;
+      const isPrivate = row.original.isPrivate;
+
+      // For private prayers with no submittedBy (redacted by backend), show "Private"
+      if (isPrivate && !submittedBy) {
+        return (
+          <div className="text-sm text-muted-foreground italic flex items-center gap-1">
+            <IconLock className="h-3 w-3" />
+            Private
+          </div>
+        );
+      }
+
       return (
         <div className="text-sm">
           {submittedBy || <span className="text-muted-foreground">—</span>}

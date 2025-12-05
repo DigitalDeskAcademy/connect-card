@@ -3,6 +3,9 @@
  *
  * View and assign prayers within a specific batch to prayer team members.
  * Supports bulk assignment workflow with checkbox selection.
+ *
+ * Privacy: Submitter names are redacted for private prayers when viewed by
+ * non-admin staff who are not assigned to that specific prayer.
  */
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
@@ -21,10 +24,14 @@ interface PageProps {
 
 export default async function PrayerBatchDetailPage({ params }: PageProps) {
   const { slug, batchId } = await params;
-  const { organization } = await requireDashboardAccess(slug);
+  const { organization, dataScope, session } =
+    await requireDashboardAccess(slug);
 
-  // Fetch batch with all prayer requests
-  const batch = await getPrayerBatchWithRequests(batchId);
+  // Fetch batch with all prayer requests (with privacy redaction)
+  const batch = await getPrayerBatchWithRequests(batchId, {
+    userId: session.user.id,
+    canManageUsers: dataScope.filters.canManageUsers,
+  });
 
   // Verify batch exists and belongs to this organization
   if (!batch || batch.organizationId !== organization.id) {
