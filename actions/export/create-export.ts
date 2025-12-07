@@ -170,8 +170,8 @@ export async function createExport(
     const uniqueCards = deduplicateByEmail(allCards);
     const duplicatesSkipped = allCards.length - uniqueCards.length;
 
-    // 7. Generate CSV content (from unique cards only)
-    const csvContent = generateCSV(uniqueCards, format);
+    // 7. Generate CSV content (from unique cards only, with selected fields)
+    const csvContent = generateCSV(uniqueCards, format, filters.selectedFields);
     const fileName = generateExportFilename(format);
     const fileSizeBytes = getCSVByteSize(csvContent);
 
