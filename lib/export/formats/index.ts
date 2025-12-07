@@ -47,4 +47,12 @@ export function getExportFormatOptions(): Array<{
   ];
 }
 
+/**
+ * Get available fields (column headers) for a format
+ * Used for field selection UI
+ */
+export function getFormatFields(format: DataExportFormat): string[] {
+  return exportFormats[format].columns.map(col => col.header);
+}
+
 export { planningCenterFormat, breezeFormat, genericFormat };

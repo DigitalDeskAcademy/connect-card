@@ -37,14 +37,19 @@ function generateRow(values: string[]): string {
  *
  * @param cards - Array of connect cards with location data
  * @param format - Export format determining column structure
+ * @param selectedFields - Optional array of field headers to include (if undefined, include all)
  * @returns CSV string content
  */
 export function generateCSV(
   cards: ExportableConnectCard[],
-  format: DataExportFormat
+  format: DataExportFormat,
+  selectedFields?: string[]
 ): string {
   const formatConfig = getExportFormat(format);
-  const columns = formatConfig.columns;
+  // Filter columns if selectedFields is provided
+  const columns = selectedFields
+    ? formatConfig.columns.filter(col => selectedFields.includes(col.header))
+    : formatConfig.columns;
 
   // Generate header row
   const headerRow = generateRow(columns.map(col => col.header));
@@ -88,22 +93,40 @@ export function getCSVByteSize(csvContent: string): number {
 
 /**
  * Get column headers for preview UI
+ *
+ * @param format - Export format
+ * @param selectedFields - Optional array of field headers to include (if undefined, include all)
  */
-export function getFormatHeaders(format: DataExportFormat): string[] {
+export function getFormatHeaders(
+  format: DataExportFormat,
+  selectedFields?: string[]
+): string[] {
   const formatConfig = getExportFormat(format);
-  return formatConfig.columns.map(col => col.header);
+  const headers = formatConfig.columns.map(col => col.header);
+  return selectedFields
+    ? headers.filter(h => selectedFields.includes(h))
+    : headers;
 }
 
 /**
  * Get preview data for UI (transform cards to row arrays)
+ *
+ * @param cards - Array of connect cards
+ * @param format - Export format
+ * @param limit - Maximum number of rows to return
+ * @param selectedFields - Optional array of field headers to include (if undefined, include all)
  */
 export function getPreviewRows(
   cards: ExportableConnectCard[],
   format: DataExportFormat,
-  limit: number = 5
+  limit: number = 5,
+  selectedFields?: string[]
 ): string[][] {
   const formatConfig = getExportFormat(format);
-  const columns = formatConfig.columns;
+  // Filter columns if selectedFields is provided
+  const columns = selectedFields
+    ? formatConfig.columns.filter(col => selectedFields.includes(col.header))
+    : formatConfig.columns;
 
   return cards.slice(0, limit).map(card => {
     return columns.map(col => col.getValue(card));

@@ -1,8 +1,14 @@
 "use client";
 
-import { useState, useEffect, useTransition, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useTransition,
+  useCallback,
+  useMemo,
+} from "react";
 import { DataExportFormat } from "@/lib/generated/prisma";
-import { getExportFormatOptions } from "@/lib/export";
+import { getExportFormatOptions, getFormatFields } from "@/lib/export";
 import {
   createExport,
   getExportPreview,
@@ -14,6 +20,12 @@ import { NavTabs } from "@/components/layout/nav-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -30,6 +42,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { PreviewTable } from "@/components/data-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -47,6 +60,8 @@ import {
   Clock,
   Users,
   Info,
+  ChevronDown,
+  Settings2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -73,6 +88,16 @@ export function ExportClient({
   );
   const [locationId, setLocationId] = useState<string>("all");
 
+  // Field selection state - derive availableFields from format
+  const availableFields = useMemo(
+    () => getFormatFields(formatValue),
+    [formatValue]
+  );
+  const [selectedFields, setSelectedFields] = useState<string[]>(() =>
+    getFormatFields("PLANNING_CENTER_CSV")
+  );
+  const [fieldsOpen, setFieldsOpen] = useState(false);
+
   // Preview state
   const [preview, setPreview] = useState<{
     totalCount: number;
@@ -94,6 +119,12 @@ export function ExportClient({
 
   const formatOptions = getExportFormatOptions();
 
+  // Handle format change - updates format and resets field selection together
+  const handleFormatChange = useCallback((newFormat: DataExportFormat) => {
+    setFormatValue(newFormat);
+    setSelectedFields(getFormatFields(newFormat));
+  }, []);
+
   // Build filters from form state - always sync-focused (only new records)
   const buildFilters = useCallback((): ExportFilters => {
     const filters: ExportFilters = {
@@ -104,8 +135,13 @@ export function ExportClient({
       filters.locationId = locationId;
     }
 
+    // Only include selectedFields if not all fields are selected
+    if (selectedFields.length < availableFields.length) {
+      filters.selectedFields = selectedFields;
+    }
+
     return filters;
-  }, [locationId]);
+  }, [locationId, selectedFields, availableFields.length]);
 
   // Load preview when filters change
   useEffect(() => {
@@ -196,6 +232,22 @@ export function ExportClient({
     triggerDownload(`/api/export/download?id=${exportId}`, fileName);
   };
 
+  // Field selection helpers
+  const toggleField = (field: string) => {
+    setSelectedFields(prev =>
+      prev.includes(field) ? prev.filter(f => f !== field) : [...prev, field]
+    );
+  };
+
+  const selectAllFields = () => {
+    setSelectedFields(availableFields);
+  };
+
+  const deselectAllFields = () => {
+    // Keep at least one field selected (first one)
+    setSelectedFields([availableFields[0]]);
+  };
+
   const formatLabel = (f: DataExportFormat) => {
     switch (f) {
       case "PLANNING_CENTER_CSV":
@@ -222,6 +274,7 @@ export function ExportClient({
           { label: "Export", value: "export" },
           { label: "History", value: "history" },
         ]}
+        className="border-b-0"
       />
 
       {activeTab === "history" ? (
@@ -325,24 +378,45 @@ export function ExportClient({
       ) : (
         // Export Tab Content - Sync-focused UI
         <div className="space-y-4">
-          {/* Sync Status Summary Card */}
-          <Card className="border-l-4 border-l-primary">
-            <CardContent className="pt-6">
-              <div className="flex justify-between items-center">
-                {/* Last Synced */}
+          {/* Sync Status Summary */}
+          <div className="grid grid-cols-2 gap-4">
+            {/* Ready to Sync - Primary action, on left */}
+            <Card className="bg-primary/5">
+              <CardContent className="py-4">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-muted rounded-lg">
+                  <div className="p-2.5 bg-primary/10 rounded-lg shrink-0">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    {previewLoading ? (
+                      <Skeleton className="h-7 w-12" />
+                    ) : (
+                      <p className="text-2xl font-bold text-primary">
+                        {preview?.uniqueCount ?? 0}
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      record{(preview?.uniqueCount ?? 0) !== 1 ? "s" : ""} to
+                      export
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Last Synced */}
+            <Card>
+              <CardContent className="py-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-muted rounded-lg shrink-0">
                     <Clock className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                      Last Synced
-                    </p>
+                  <div className="min-w-0">
                     {historyLoading ? (
-                      <Skeleton className="h-6 w-24 mt-1" />
+                      <Skeleton className="h-6 w-24" />
                     ) : history.length > 0 ? (
                       <>
-                        <p className="text-lg font-semibold">
+                        <p className="text-lg font-semibold truncate">
                           {formatDistanceToNow(
                             new Date(history[0].exportedAt),
                             {
@@ -358,37 +432,20 @@ export function ExportClient({
                         </p>
                       </>
                     ) : (
-                      <p className="text-lg font-semibold text-muted-foreground">
-                        Never
-                      </p>
+                      <>
+                        <p className="text-lg font-semibold text-muted-foreground">
+                          Never
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          last synced
+                        </p>
+                      </>
                     )}
                   </div>
                 </div>
-
-                {/* Pending Count */}
-                <div className="flex items-center gap-3">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide text-right">
-                      Ready to Sync
-                    </p>
-                    {previewLoading ? (
-                      <Skeleton className="h-8 w-16 mt-1 ml-auto" />
-                    ) : (
-                      <p className="text-3xl font-bold text-primary text-right">
-                        {preview?.uniqueCount ?? 0}
-                      </p>
-                    )}
-                    <p className="text-xs text-muted-foreground text-right">
-                      new visitor{(preview?.uniqueCount ?? 0) !== 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Export Settings & Preview */}
           <Card className="flex flex-col h-full">
@@ -429,7 +486,7 @@ export function ExportClient({
                   <Select
                     value={formatValue}
                     onValueChange={(v: string) =>
-                      setFormatValue(v as DataExportFormat)
+                      handleFormatChange(v as DataExportFormat)
                     }
                   >
                     <SelectTrigger className="w-[180px]">
@@ -466,26 +523,6 @@ export function ExportClient({
                 )}
               </div>
 
-              {/* Status Badges */}
-              <div className="flex items-center gap-2 flex-wrap">
-                {previewLoading ? (
-                  <Skeleton className="h-6 w-32" />
-                ) : preview ? (
-                  <>
-                    <Badge variant="default">
-                      {preview.uniqueCount} record
-                      {preview.uniqueCount !== 1 ? "s" : ""} ready
-                    </Badge>
-                    {preview.duplicatesSkipped > 0 && (
-                      <Badge variant="secondary">
-                        {preview.duplicatesSkipped} duplicate
-                        {preview.duplicatesSkipped !== 1 ? "s" : ""} merged
-                      </Badge>
-                    )}
-                  </>
-                ) : null}
-              </div>
-
               {/* ChMS-specific tip */}
               {formatValue === "PLANNING_CENTER_CSV" && (
                 <Alert className="border-blue-200 bg-blue-50">
@@ -507,7 +544,98 @@ export function ExportClient({
               )}
             </CardHeader>
 
-            <CardContent className="flex flex-col flex-1 min-h-0">
+            <CardContent className="flex flex-col flex-1 min-h-0 space-y-4">
+              {/* Field Selection & Status Badges Row */}
+              <Collapsible open={fieldsOpen} onOpenChange={setFieldsOpen}>
+                <div className="flex items-center justify-between">
+                  <CollapsibleTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="gap-2 text-muted-foreground hover:text-foreground -ml-2"
+                    >
+                      <Settings2 className="h-4 w-4" />
+                      Customize Fields
+                      {selectedFields.length < availableFields.length && (
+                        <Badge variant="secondary" className="ml-1">
+                          {selectedFields.length}/{availableFields.length}
+                        </Badge>
+                      )}
+                      <ChevronDown
+                        className={`h-4 w-4 transition-transform ${fieldsOpen ? "rotate-180" : ""}`}
+                      />
+                    </Button>
+                  </CollapsibleTrigger>
+
+                  {/* Status Badges */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {previewLoading ? (
+                      <Skeleton className="h-6 w-24" />
+                    ) : preview ? (
+                      <>
+                        <Badge variant="default">
+                          {preview.uniqueCount} record
+                          {preview.uniqueCount !== 1 ? "s" : ""} ready
+                        </Badge>
+                        {preview.duplicatesSkipped > 0 && (
+                          <Badge variant="secondary">
+                            {preview.duplicatesSkipped} duplicate
+                            {preview.duplicatesSkipped !== 1 ? "s" : ""} merged
+                          </Badge>
+                        )}
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+                <CollapsibleContent className="pt-3">
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">
+                        Select which fields to include in the export
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={selectAllFields}
+                          disabled={
+                            selectedFields.length === availableFields.length
+                          }
+                        >
+                          Select All
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={deselectAllFields}
+                          disabled={selectedFields.length === 1}
+                        >
+                          Deselect All
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {availableFields.map(field => (
+                        <label
+                          key={field}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={selectedFields.includes(field)}
+                            onCheckedChange={() => toggleField(field)}
+                            disabled={
+                              selectedFields.length === 1 &&
+                              selectedFields.includes(field)
+                            }
+                          />
+                          <span className="text-sm">{field}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+
               {/* Preview Table */}
               {previewLoading ? (
                 <div className="space-y-2">
@@ -515,52 +643,20 @@ export function ExportClient({
                   <Skeleton className="h-10 w-full" />
                   <Skeleton className="h-10 w-full" />
                 </div>
-              ) : preview && preview.uniqueCount > 0 ? (
-                <div className="rounded-md border flex-1 overflow-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {preview.headers.map((header, idx) => (
-                          <TableHead
-                            key={idx}
-                            className="px-4 border-r last:border-r-0 border-border whitespace-nowrap"
-                          >
-                            {header}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody className="[&_tr:last-child]:border-b">
-                      {preview.sampleRows.map((row, rowIdx) => (
-                        <TableRow key={rowIdx}>
-                          {row.map((cell, cellIdx) => (
-                            <TableCell
-                              key={cellIdx}
-                              className="px-4 border-r last:border-r-0 border-border whitespace-nowrap"
-                            >
-                              {cell || (
-                                <span className="text-muted-foreground">—</span>
-                              )}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
               ) : (
-                <Empty>
-                  <EmptyHeader>
-                    <EmptyMedia variant="icon">
-                      <CheckCircle2 className="h-8 w-8 text-green-500" />
-                    </EmptyMedia>
-                    <EmptyTitle>All caught up!</EmptyTitle>
-                    <EmptyDescription>
-                      No new connect cards to export. All visitors have been
-                      synced to your ChMS.
-                    </EmptyDescription>
-                  </EmptyHeader>
-                </Empty>
+                <PreviewTable
+                  headers={preview?.headers ?? []}
+                  rows={preview?.sampleRows ?? []}
+                  totalCount={preview?.uniqueCount ?? 0}
+                  maxRows={10}
+                  maxHeight="400px"
+                  emptyState={{
+                    icon: <CheckCircle2 className="h-8 w-8 text-green-500" />,
+                    title: "All caught up!",
+                    description:
+                      "No new connect cards to export. All records have been synced to your ChMS.",
+                  }}
+                />
               )}
             </CardContent>
           </Card>
