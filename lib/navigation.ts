@@ -81,6 +81,23 @@ export function getChurchNavigation(slug: string): NavigationConfig {
         title: "Prayer",
         url: `/church/${slug}/admin/prayer`,
         icon: IconPray,
+        items: [
+          {
+            title: "All Requests",
+            url: `/church/${slug}/admin/prayer`,
+            icon: IconPray,
+          },
+          {
+            title: "Prayer Batches",
+            url: `/church/${slug}/admin/prayer-batches`,
+            icon: IconPray,
+          },
+          {
+            title: "My Prayer Sheet",
+            url: `/church/${slug}/my-prayers`,
+            icon: IconPray,
+          },
+        ],
       },
       {
         title: "Team",
@@ -322,6 +339,12 @@ export function getPageTitle(
     segments[segments.length - 2] === "volunteer"
   ) {
     return "Volunteer Profile";
+  }
+  if (normalizedPath.includes("/my-prayers")) {
+    return "My Prayer Sheet";
+  }
+  if (normalizedPath.includes("/prayer-batches/")) {
+    return "Prayer Batch";
   }
 
   // Convert kebab-case to Title Case
