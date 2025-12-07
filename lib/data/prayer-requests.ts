@@ -642,3 +642,78 @@ export async function getPrayerTeamMembers(
 
   return users;
 }
+
+/**
+ * Get prayers assigned to a specific user
+ *
+ * Returns all prayer requests assigned to the user, grouped for their prayer session.
+ * Filters to only ASSIGNED status prayers (not ANSWERED or PENDING).
+ *
+ * @param organizationId - Organization ID for multi-tenant isolation
+ * @param userId - User ID to get assigned prayers for
+ * @returns Array of prayer requests assigned to the user
+ */
+export async function getMyAssignedPrayers(
+  organizationId: string,
+  userId: string
+) {
+  const prayers = await prisma.prayerRequest.findMany({
+    where: {
+      organizationId,
+      assignedToId: userId,
+      // Only get prayers that are assigned (not answered yet)
+      status: {
+        in: ["ASSIGNED", "PENDING"], // Include pending in case they were assigned without status update
+      },
+    },
+    include: {
+      location: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: [
+      { isUrgent: "desc" }, // Urgent first
+      { createdAt: "desc" }, // Then newest
+    ],
+  });
+
+  // Transform to match PrayerCardData shape
+  return prayers.map(p => ({
+    id: p.id,
+    request: p.request,
+    category: p.category,
+    status: p.status,
+    isPrivate: p.isPrivate,
+    isUrgent: p.isUrgent,
+    submittedBy: p.submittedBy,
+    locationName: p.location?.name || null,
+    createdAt: p.createdAt,
+  }));
+}
+
+/**
+ * Get count of prayers assigned to user
+ *
+ * Quick count for dashboard widgets without fetching all data.
+ *
+ * @param organizationId - Organization ID
+ * @param userId - User ID
+ * @returns Count of assigned prayers
+ */
+export async function getMyAssignedPrayerCount(
+  organizationId: string,
+  userId: string
+): Promise<number> {
+  return prisma.prayerRequest.count({
+    where: {
+      organizationId,
+      assignedToId: userId,
+      status: {
+        in: ["ASSIGNED", "PENDING"],
+      },
+    },
+  });
+}

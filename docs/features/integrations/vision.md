@@ -1,8 +1,8 @@
 # ChMS Integration - Feature Vision
 
-**Status:** In Development
+**Status:** 🟢 Phase 1 Complete (PR #48 merged)
 **Worktree:** `feature/integrations`
-**Last Updated:** 2025-12-03
+**Last Updated:** 2025-12-04
 
 ---
 
@@ -350,7 +350,20 @@ But CSV export remains the universal fallback for churches using any ChMS.
 - [x] "All caught up" state when no records pending
 - [x] Badge styling for status counts
 
-### 📋 Phase 2 Planned (Volunteer Export)
+### ✅ Phase 2 Complete
+
+- [x] Field selection (include/exclude columns)
+  - Collapsible "Customize Fields" section
+  - Checkboxes for each field per format
+  - Select All / Deselect All shortcuts
+  - Preview table updates in real-time
+  - Badge shows field count when customized
+- [x] Unified DataTable system (`components/data-table/`)
+  - PreviewTable for export previews
+  - DataTable for full-featured tables
+  - Consistent height/scroll handling
+
+### 📋 Phase 3 Planned (Volunteer Export)
 
 **Depends on:** `feature/volunteer-management` merging first with `getExportableVolunteers()`.
 
@@ -363,12 +376,11 @@ But CSV export remains the universal fallback for churches using any ChMS.
 - [ ] Update sync status card with dual counts (visitors + volunteers)
 - [ ] Combined export history (type indicator for visitor vs volunteer)
 
-### 📋 Phase 3 Planned
+### 📋 Phase 4 Planned
 
-- [ ] Field selection (include/exclude columns)
 - [ ] Planning Center API integration (direct sync)
 
-### 📋 Phase 4 Future
+### 📋 Phase 5 Future
 
 - [ ] Breeze API integration
 - [ ] Scheduled exports (auto-email weekly CSV)
