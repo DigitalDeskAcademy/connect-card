@@ -13,6 +13,7 @@ export {
   exportFormats,
   getExportFormat,
   getExportFormatOptions,
+  getFormatFields,
   planningCenterFormat,
   breezeFormat,
   genericFormat,

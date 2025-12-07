@@ -45,6 +45,8 @@ export interface ExportFilters {
   onlyNew?: boolean;
   /** Filter by card status */
   status?: string[];
+  /** Selected field headers to include (if undefined, include all) */
+  selectedFields?: string[];
 }
 
 /**
