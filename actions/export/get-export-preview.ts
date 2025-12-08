@@ -149,12 +149,14 @@ export async function getExportPreview(
       });
     }
 
-    // 7. Generate preview data (all unique records, no limit)
-    const headers = getFormatHeaders(format);
+    // 7. Generate preview data (limit to 10 rows for performance)
+    const PREVIEW_ROW_LIMIT = 10;
+    const headers = getFormatHeaders(format, filters.selectedFields);
     const sampleRows = getPreviewRows(
       uniqueRecords,
       format,
-      uniqueRecords.length
+      PREVIEW_ROW_LIMIT,
+      filters.selectedFields
     );
 
     return {
