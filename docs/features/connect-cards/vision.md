@@ -1,16 +1,17 @@
 # Connect Card Management - Product Vision
 
 **Status:** ✅ **FEATURE COMPLETE** - Ready for Production Testing
-**Current Phase:** Phase 3.5 Complete - Mobile Camera Wizard + Duplicate Detection
+**Current Phase:** Phase 4 Complete - CSV Export + Duplicate Detection
 **Worktree:** `/church-connect-hub/connect-card`
 **Branch:** `feature/connect-card`
-**Last Updated:** 2025-12-03
+**Last Updated:** 2025-12-07
 
 ### Recent Work (Dec 2025)
 
-- ✅ **Fuzzy Duplicate Detection** - Checks ChurchMember table, email as strong identifier
+- ✅ **CSV Export (Phase 4)** - Planning Center, Breeze, Generic formats (PR #48, #58)
+- ✅ **Fuzzy Duplicate Detection** - Checks ChurchMember table, email as strong identifier (PR #50)
 - ✅ **80% Confidence Threshold** - Don't bother reviewer with OCR errors
-- 🔄 **S3 Org-Scoped Paths** - `organizations/{slug}/connect-cards/{YYYY-MM}/`
+- ✅ **S3 Org-Scoped Paths** - `organizations/{slug}/connect-cards/{YYYY-MM}/`
 
 ---
 
@@ -240,22 +241,24 @@ The `useCamera` hook supports cropping to card bounds:
 
 ---
 
-## 🔮 Future Enhancements (Phase 4+)
+## 🔮 Future Enhancements (Phase 5+)
 
-### Church Software Sync (Phase 3) → This Worktree
+### Church Software Sync (Phase 4) → COMPLETE ✅
 
 **Spec:** `/docs/features/integrations/church-software-sync-spec.md`
 
-**Phase 3A: CSV Export (MVP)**
+**CSV Export (Complete - PR #48, #58):**
 
-- [ ] Export page UI with filters (location, date range, export status)
-- [ ] Planning Center CSV format (ready for People → Import)
-- [ ] Breeze CSV format (ready for People → Import People)
-- [ ] Generic CSV format
-- [ ] Export tracking (mark records as exported)
-- [ ] Export history log
+- [x] Export page UI with filters (location, date range, export status)
+- [x] Planning Center CSV format (ready for People → Import)
+- [x] Breeze CSV format (ready for People → Import People)
+- [x] Generic CSV format
+- [x] Export tracking (mark records as exported)
+- [x] Export history log
+- [x] Field selection (include/exclude columns)
+- [x] Unified DataTable component system
 
-**Phase 4: Direct API Integration**
+**Phase 5: Direct API Integration (Future)**
 
 - [ ] Planning Center OAuth connection
 - [ ] Breeze OAuth connection
@@ -294,4 +297,4 @@ The `useCamera` hook supports cropping to card bounds:
 
 ---
 
-**Last Updated:** 2025-11-29 (Phase 3.5 - Mobile Camera Wizard in Development)
+**Last Updated:** 2025-12-07 (Phase 4 CSV Export Complete)

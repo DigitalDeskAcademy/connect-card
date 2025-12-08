@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-05
+**Last Updated:** 2025-12-07
 **Update Frequency:** After each significant work session
 
 ---
@@ -10,12 +10,12 @@
 
 | Worktree         | Port | Branch                         | Status          | Current Focus                    |
 | ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
-| **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Theme system |
+| **main**         | 3000 | `main`                         | 🟢 Active       | Onboarding feature, Theme system |
 | **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready for PR | Phase 4 complete (CSV Export)    |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE** | PR #49, #51, #56 merged          |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 Phase 1 Done | Phase 2 planned (workflow gaps)  |
 | **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 Phase 1 Done | PR #47, #52, #53 merged          |
 | **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
-| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | PR #48 merged Dec 1              |
+| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | PR #48, #58 merged               |
 
 ---
 
@@ -32,6 +32,9 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ main #59 - Docs & theme updates, onboarding plan, Starry Night theme (Dec 7)
+- ✅ integrations #58 - DataTable consolidation for export (Dec 6)
+- ✅ prayer #57 - My Prayer Sheet devotional UI (Dec 6)
 - ✅ prayer #56 - Redact submittedBy for private prayers (Dec 5)
 - ✅ main #55 - Persist theme choice across navigation (Dec 5)
 - ✅ main #54 - Theme switching system with multiple variants (Dec 5)
@@ -94,11 +97,11 @@ None - Phase 1 complete, no longer blocking production.
 
 ### 🟢 prayer (Port 3002)
 
-**Status:** ✅ COMPLETE - All PRs merged (Dec 4-5)
+**Status:** ✅ Phase 1 COMPLETE | 📋 Phase 2 Planned
 **Branch:** `feature/prayer-enhancements`
 **Vision Doc:** `/docs/features/prayer/vision.md`
 
-#### Completed Work
+#### Phase 1 - Completed Work
 
 **PR #49 - Server Actions & UI:**
 
@@ -126,17 +129,35 @@ None - Phase 1 complete, no longer blocking production.
 | --- | ----------------------------------------- | ------ |
 | 1   | Redact submittedBy for unauthorized staff | [x]    |
 
-#### Future Enhancements (Wishlist)
+**PR #57 - My Prayer Sheet:**
 
-- [ ] Dedicated assignment dialog
-- [ ] Connect card → auto-create prayer integration
+| #   | Task                      | Status |
+| --- | ------------------------- | ------ |
+| 1   | Critical prayer detection | [x]    |
+| 2   | Category grouping         | [x]    |
+| 3   | Print stylesheet          | [x]    |
+| 4   | Session completion        | [x]    |
 
-#### Definition of Done
+#### Phase 2 - Prayer Team Workflow (NEXT)
+
+**Problem:** Prayers flow into system but don't reach prayer team automatically.
+
+| #   | Task                                   | Status |
+| --- | -------------------------------------- | ------ |
+| 1   | Auto-create PrayerRequest from cards   | [ ]    |
+| 2   | Dashboard widget for assigned prayers  | [ ]    |
+| 3   | Batch creation (auto or manual)        | [ ]    |
+| 4   | Full-screen prayer mode (nice to have) | [ ]    |
+
+See `/docs/features/prayer/vision.md` for full Phase 2 spec.
+
+#### Definition of Done (Phase 1)
 
 - [x] All 6 server actions implemented
 - [x] UI components for create/edit/detail dialogs
 - [x] N+1 query optimization (PR #51)
 - [x] Privacy redaction (PR #56)
+- [x] My Prayer Sheet (PR #57)
 - [x] All PRs merged to main
 
 ---
@@ -330,11 +351,27 @@ None - ready for PR.
 
 **Recently Completed:**
 
+- ✅ Onboarding implementation plan created (Dec 7)
+- ✅ Starry Night theme added (Dec 7)
+- ✅ CLAUDE.md guidelines with CSS rules (Dec 7)
+- ✅ FINISH-LINE.md MVP checklist created (Dec 7)
 - ✅ Dashboard quick actions grid (8 buttons)
 - ✅ Location-aware default tab
 - ✅ Worktree port configuration
 - ✅ Feature specs for bulk messaging & ChMS sync
 - ✅ Roadmap updates with worktree assignments
+
+#### Next Priority: Onboarding Feature
+
+**Implementation Plan:** `/docs/features/onboarding/implementation-plan.md`
+
+| Phase | Focus                 | Status  |
+| ----- | --------------------- | ------- |
+| 1     | Database & Foundation | Pending |
+| 2     | Setup Page UI         | Pending |
+| 3     | Card Mapping UI       | Pending |
+| 4     | Tracking & Alerts     | Pending |
+| 5     | Polish & Platform     | Pending |
 
 #### Start Here
 
@@ -349,6 +386,7 @@ pnpm dev  # Runs on port 3000
 
 #### Current Tasks
 
+- [ ] Implement onboarding feature (Phase 1: Database)
 - [ ] Review and merge feature PRs as they come in
 - [ ] Keep this status document updated
 - [ ] Coordinate cross-worktree dependencies
@@ -405,9 +443,10 @@ pnpm dev  # Runs on port 3000
 - ✅ PII removed from logs
 - ✅ Pagination added to all queries
 - ✅ Database indexes added
-- ✅ Prayer management complete
-- ✅ ChMS CSV export working (PR #48)
+- ✅ Prayer management complete (PR #49, #51, #56, #57)
+- ✅ ChMS CSV export working (PR #48, #58)
 - ✅ Theme switching system (PR #54, #55)
+- ✅ Onboarding plan ready for implementation
 
 ---
 
@@ -463,18 +502,20 @@ git merge origin/main
 
 ## 📞 Quick Reference
 
-| Need                | Location                                                     |
-| ------------------- | ------------------------------------------------------------ |
-| Technical patterns  | `/docs/PLAYBOOK.md`                                          |
-| Project roadmap     | `/docs/PROJECT.md`                                           |
-| Connect card spec   | `/docs/features/connect-cards/vision.md`                     |
-| Prayer spec         | `/docs/features/prayer-management/vision.md`                 |
-| Volunteer spec      | `/docs/features/volunteer-management/vision.md`              |
-| Tech debt spec      | `/docs/features/tech-debt/vision.md`                         |
-| Bulk messaging spec | `/docs/features/volunteer-management/bulk-messaging-spec.md` |
-| ChMS sync spec      | `/docs/features/integrations/church-software-sync-spec.md`   |
-| S3 structure        | `/docs/features/tech-debt/s3-bucket-structure.md`            |
-| Environment config  | `/docs/features/tech-debt/environment-configuration.md`      |
+| Need                | Location                                                   |
+| ------------------- | ---------------------------------------------------------- |
+| Technical patterns  | `/docs/PLAYBOOK.md`                                        |
+| Project roadmap     | `/docs/PROJECT.md`                                         |
+| Connect card spec   | `/docs/features/connect-cards/vision.md`                   |
+| Prayer spec         | `/docs/features/prayer/vision.md`                          |
+| Volunteer spec      | `/docs/features/volunteer/vision.md`                       |
+| Tech debt spec      | `/docs/features/tech-debt/vision.md`                       |
+| **Onboarding plan** | `/docs/features/onboarding/implementation-plan.md`         |
+| Bulk messaging spec | `/docs/features/volunteer/bulk-messaging-spec.md`          |
+| ChMS sync spec      | `/docs/features/integrations/church-software-sync-spec.md` |
+| Integrations spec   | `/docs/features/integrations/vision.md`                    |
+| S3 structure        | `/docs/features/tech-debt/s3-bucket-structure.md`          |
+| Environment config  | `/docs/features/tech-debt/environment-configuration.md`    |
 
 ---
 

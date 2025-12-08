@@ -1,9 +1,9 @@
 # Prayer Management - Product Vision
 
-**Status:** ✅ **COMPLETE** - PR #49 merged Dec 4, PR #51 fixed N+1, PR #56 added privacy redaction
+**Status:** ✅ **Phase 1 COMPLETE** - PRs #49, #51, #56, #57 merged | Phase 2 planned
 **Worktree:** `/church-connect-hub/prayer`
 **Branch:** `feature/prayer-enhancements`
-**Last Updated:** 2025-12-04
+**Last Updated:** 2025-12-07
 **Owner:** Church Operations Team
 
 ---
@@ -53,6 +53,31 @@ All 6 server actions implemented with full security:
 
 ---
 
+### 4. My Prayer Sheet (PR #57) ✅ COMPLETE
+
+**Route:** `/church/[slug]/my-prayers`
+**Status:** ✅ Merged Dec 7
+
+Devotional prayer session UI for prayer team members:
+
+| Feature                   | Status  |
+| ------------------------- | ------- |
+| Critical prayer detection | ✅ Done |
+| Category grouping         | ✅ Done |
+| Print stylesheet          | ✅ Done |
+| Mark answered action      | ✅ Done |
+| Complete session action   | ✅ Done |
+| Progress tracking         | ✅ Done |
+
+**Key Files:**
+
+- `lib/utils/prayer-priority.ts` - Critical keyword detection (cancer, death, emergency)
+- `components/prayer-session/prayer-card.tsx` - Individual prayer card
+- `components/prayer-session/prayer-section.tsx` - Category sections
+- `app/church/[slug]/my-prayers/` - Prayer sheet page
+
+---
+
 ## 📊 Progress Summary
 
 | Priority | Issue              | Status  | PR  |
@@ -61,8 +86,10 @@ All 6 server actions implemented with full security:
 | 2        | UI Components (3)  | ✅ Done | #49 |
 | 3        | N+1 Query          | ✅ Done | #51 |
 | 4        | Privacy redaction  | ✅ Done | #56 |
+| 5        | My Prayer Sheet    | ✅ Done | #57 |
 
-**Overall:** ✅ 100% Complete - All PRs merged to main
+**Phase 1:** ✅ 100% Complete - All PRs merged to main
+**Phase 2:** 📋 Planned - Prayer Team Workflow (see below)
 
 ---
 
@@ -198,15 +225,131 @@ Three privacy levels (expanding from current boolean):
 - ✅ Multi-tenant isolation verified
 - ✅ Privacy controls validated
 
-### 📋 Future Enhancements (Wishlist)
+---
 
-**Integration:**
+## 📋 Phase 2: Prayer Team Workflow (NEXT)
 
-- [ ] Connect card review → auto-create prayer (when connect card is saved with prayer text)
+**Goal:** Complete the end-to-end workflow so prayer team members can actually receive and pray over requests.
+
+### Current Workflow Gap
+
+The `/my-prayers` page exists, but prayers don't flow into it automatically:
+
+```
+CURRENT (BROKEN):
+Connect Card → prayer text stored → STUCK (not in workflow)
+                                    ↓
+                     Admin must manually create PrayerRequest records
+                                    ↓
+                     Admin must manually create PrayerBatch (no UI exists!)
+                                    ↓
+                     Prayer team has no visibility they have assignments
+```
+
+### Phase 2.1: Auto-Create from Connect Cards (CRITICAL)
+
+**Problem:** Prayers from connect cards never enter the prayer workflow system.
+
+**Current:** `ConnectCard.prayerRequest` stores text but no `PrayerRequest` record is created.
+
+**Solution:** When connect card is processed with prayer text, auto-create `PrayerRequest`.
+
+| Task                                             | Status |
+| ------------------------------------------------ | ------ |
+| Hook in `save-connect-card.ts` or `approve-all`  | [ ]    |
+| Create PrayerRequest with `connectCardId` linked | [ ]    |
+| Auto-detect privacy (sensitive keywords)         | [ ]    |
+| Auto-detect category (existing logic)            | [ ]    |
+
+**Files to modify:**
+
+- `actions/connect-card/save-connect-card.ts`
+- `actions/connect-card/approve-all-cards.ts`
 
 ---
 
-## 📋 Implementation Roadmap
+### Phase 2.2: Dashboard Widget for Prayer Team (CRITICAL)
+
+**Problem:** Prayer team members have zero visibility that prayers are assigned to them.
+
+**Current:** They must manually navigate to `/my-prayers` to see assignments.
+
+**Solution:** Add dashboard widget showing assigned prayer count.
+
+| Task                                     | Status |
+| ---------------------------------------- | ------ |
+| Create `AssignedPrayersWidget` component | [ ]    |
+| Add to dashboard for prayer team role    | [ ]    |
+| Show count + "Start Praying" button      | [ ]    |
+| Query: `getMyAssignedPrayerCount()`      | [ ]    |
+
+**Files to modify:**
+
+- `app/church/[slug]/admin/_components/DashboardClient.tsx`
+- `lib/data/prayer-requests.ts` (add count query)
+
+---
+
+### Phase 2.3: Batch Creation (HIGH)
+
+**Problem:** PrayerBatch records must exist for assignment, but there's no way to create them.
+
+**Current:** UI claims "batches are automatically created daily" but no such code exists.
+
+**Options:**
+
+1. **Auto-batch (recommended):** Cron/trigger creates daily batches from unassigned prayers
+2. **Manual batch:** Admin UI to "Create Batch from X pending prayers"
+
+| Task                               | Status |
+| ---------------------------------- | ------ |
+| Decide: auto-batch vs manual batch | [ ]    |
+| Implement batch creation function  | [ ]    |
+| Add UI trigger or cron job         | [ ]    |
+| Update batch list page             | [ ]    |
+
+**Files to modify:**
+
+- `lib/data/prayer-batches.ts`
+- `app/church/[slug]/admin/prayer-batches/`
+
+---
+
+### Phase 2.4: Enhanced Prayer Session (NICE TO HAVE)
+
+| Task                                          | Status |
+| --------------------------------------------- | ------ |
+| Full-screen prayer mode for tablets           | [ ]    |
+| Keyboard/swipe navigation between prayers     | [ ]    |
+| PDF export option                             | [ ]    |
+| Allow completion without all prayers answered | [ ]    |
+
+---
+
+### Phase 2 Definition of Done
+
+- [ ] Connect card prayers auto-create PrayerRequest records
+- [ ] Prayer team sees assigned count on dashboard
+- [ ] Batches can be created (auto or manual)
+- [ ] End-to-end: Card → Prayer → Batch → Assignment → Session → Complete
+
+---
+
+## 📋 Future Phases (Wishlist)
+
+**Phase 3 - Integration:**
+
+- [ ] Connect card review → auto-create prayer (when connect card is saved with prayer text)
+
+**Phase 4 - Anonymous Prayer Support:**
+
+- [ ] Privacy level enum (PUBLIC, PRIVATE, ANONYMOUS)
+- [ ] Public prayer form (no auth required)
+- [ ] Analytics without PII
+
+---
+
+## 📋 Historical Implementation Roadmap (COMPLETED)
 
 ### Phase 1: Server Actions (NEXT - Critical)
 
@@ -372,26 +515,23 @@ The `analyticsCorrelationId` enables trend tracking:
 
 ---
 
-## 🚫 Out of Scope (For MVP)
+## 🚫 Out of Scope (For Now)
 
-**Not building (defer to Phase 6+):**
+**Not building (defer to Phase 4+):**
 
-- ❌ Prayer batch grouping (no batching needed)
 - ❌ Prayer team management (use existing team roles)
-- ❌ Bulk operations (CRUD operations are individual)
-- ❌ Advanced reporting/analytics (beyond anonymous trends)
-- ❌ Export to PDF/email
+- ❌ Advanced reporting/analytics (beyond basic stats)
 - ❌ GHL SMS notifications
 - ❌ Follow-up automation workflows
 - ❌ Public prayer wall (display answered prayers publicly)
 
-**Rationale:** Ship simple MVP first, add complexity based on church feedback.
+**Rationale:** Ship Phase 2 workflow first, add complexity based on church feedback.
 
 ---
 
 ## 📊 Key Metrics
 
-**Current Status:**
+**Phase 1 Status (COMPLETE):**
 
 - Database: ✅ Complete
 - UI: ✅ Complete
@@ -399,11 +539,15 @@ The `analyticsCorrelationId` enables trend tracking:
 - Server Actions: ✅ Complete (PR #49)
 - N+1 Optimization: ✅ Complete (PR #51)
 - Privacy Redaction: ✅ Complete (PR #56)
-- Connect Card Integration: 📋 Future wishlist item
+- My Prayer Sheet: ✅ Complete (PR #57)
 
-**Overall Completion:** 100%
+**Phase 2 Status (PLANNED):**
 
-**Merged PRs:** #49, #51, #56
+- Auto-create from connect cards: 📋 Not started
+- Dashboard widget: 📋 Not started
+- Batch creation: 📋 Not started
+
+**Merged PRs:** #49, #51, #56, #57
 
 ---
 
@@ -497,6 +641,6 @@ Monday morning
 
 ---
 
-**Last Updated:** 2025-12-04
-**Status:** ✅ Feature complete - All PRs merged
-**Next Review:** When connect card integration is prioritized
+**Last Updated:** 2025-12-07
+**Status:** ✅ Phase 1 complete | 📋 Phase 2 planned
+**Next Review:** When Phase 2 work begins (connect card integration, dashboard widget)
