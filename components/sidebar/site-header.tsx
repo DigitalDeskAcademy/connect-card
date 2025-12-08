@@ -2,15 +2,25 @@
 
 import { Suspense } from "react";
 import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ThemeToggle } from "../ui/themeToggle";
 import { ThemeVariantSwitcher } from "../ui/theme-variant-switcher";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  IconBell,
-  IconSearch,
-  IconLayoutSidebarRight,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  IconSparkles,
+  IconDashboard,
+  IconUser,
+  IconLogout,
 } from "@tabler/icons-react";
 import { authClient } from "@/lib/auth-client";
 import { usePathname } from "next/navigation";
@@ -19,6 +29,9 @@ import {
   getChurchNavigation,
   getPlatformNavigation,
 } from "@/lib/navigation";
+import { useSignOut } from "@/hooks/use-signout";
+import { useNavigation } from "@/hooks/use-navigation";
+import Link from "next/link";
 
 /**
  * Top Bar - Global utility navigation
@@ -51,9 +64,10 @@ export function SiteHeader({
   showInfoSidebar = false,
   onInfoSidebarToggle,
 }: iAppProps) {
-  const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const { data: session } = authClient.useSession();
   const pathname = usePathname();
+  const handleSignOut = useSignOut();
+  const { dashboardUrl, profileUrl, isAdmin } = useNavigation();
 
   // Determine navigation config based on current path
   const getNavigationConfig = () => {
@@ -98,61 +112,93 @@ export function SiteHeader({
                 : "Active"}
             </span>
           )}
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <IconSearch className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <IconBell className="h-4 w-4" />
-          </Button>
           <Suspense fallback={null}>
             <ThemeVariantSwitcher />
           </Suspense>
           <ThemeToggle />
 
-          {/* User avatar - visible on mobile when sidebar is closed, always on far right */}
-          {isMobile && !openMobile && session && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setOpenMobile(true)}
-              aria-label="Open user menu"
-            >
-              <Avatar className="h-6 w-6">
-                <AvatarImage
-                  src={
-                    session.user.image ??
-                    `https://avatar.vercel.sh/${session.user.email}`
-                  }
-                  alt={session.user.name ?? "User"}
-                />
-                <AvatarFallback>
-                  {session.user.name?.[0]?.toUpperCase() ??
-                    session.user.email?.[0]?.toUpperCase() ??
-                    "U"}
-                </AvatarFallback>
-              </Avatar>
-            </Button>
+          {/* User avatar dropdown - always visible for logout access */}
+          {session && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  aria-label="User menu"
+                >
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage
+                      src={
+                        session.user.image ??
+                        `https://avatar.vercel.sh/${session.user.email}`
+                      }
+                      alt={session.user.name ?? "User"}
+                    />
+                    <AvatarFallback>
+                      {session.user.name?.[0]?.toUpperCase() ??
+                        session.user.email?.[0]?.toUpperCase() ??
+                        "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {session.user.name || session.user.email?.split("@")[0]}
+                    </p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {session.user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link href={dashboardUrl}>
+                        <IconDashboard className="mr-2 h-4 w-4" />
+                        Dashboard
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link href={profileUrl}>
+                      <IconUser className="mr-2 h-4 w-4" />
+                      Profile
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <IconLogout className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {/* AI Sidebar toggle - mirrors left sidebar pattern */}
+          {showInfoSidebar && (
+            <>
+              <Separator
+                orientation="vertical"
+                className="mx-2 data-[orientation=vertical]:h-4"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 -mr-1"
+                onClick={onInfoSidebarToggle}
+                aria-label="Toggle AI assistant"
+              >
+                <IconSparkles className="h-4 w-4" />
+              </Button>
+            </>
           )}
         </div>
-
-        {/* Right sidebar toggle - mirrors left sidebar toggle */}
-        {showInfoSidebar && (
-          <>
-            <Separator
-              orientation="vertical"
-              className="mx-2 data-[orientation=vertical]:h-4"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 -mr-1"
-              onClick={onInfoSidebarToggle}
-            >
-              <IconLayoutSidebarRight className="h-4 w-4" />
-            </Button>
-          </>
-        )}
       </div>
     </header>
   );

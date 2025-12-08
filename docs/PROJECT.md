@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-04
+**Last Updated:** 2025-12-06
 
 ---
 
@@ -55,6 +55,11 @@ Churches lose 70% of first-time visitors because:
 - Bulk assignment to prayer teams
 - Auto-categorization (8 categories)
 - Sensitive content detection
+- **My Prayer Sheet** - Devotional prayer session UI with:
+  - Critical prayer auto-detection (cancer, death, emergency)
+  - Category-grouped prayers (Health, Family, Salvation, etc.)
+  - Print-friendly layout for offline use
+  - Session completion tracking
 
 **Volunteer Pipeline (COMPLETE)**
 
@@ -64,6 +69,15 @@ Churches lose 70% of first-time visitors because:
 - Directory with TanStack Table UI
 - Export tracking for ChMS sync (PR #52)
 - Two-pool model: specific ministry vs general volunteer
+
+**ChMS Export (COMPLETE)** - PR #48, #58
+
+- CSV export with Planning Center, Breeze, Generic formats
+- Email deduplication (keeps most recent per email)
+- Field selection (include/exclude columns)
+- Sync-focused workflow (only exports unsynced records)
+- Export history with re-download
+- Unified DataTable component system
 
 **Team Management (COMPLETE)**
 
@@ -128,12 +142,13 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 - [ ] Profile pages
 - [ ] Journey tracking
 - [ ] Duplicate detection
-- [ ] **Church Software Sync (CSV Export)** → `connect-card` worktree
+- [x] **Church Software Sync (CSV Export)** → `integrations` worktree ✅ PR #48, #58
   - Planning Center format export
   - Breeze format export
   - Generic CSV export
   - Export tracking (mark as exported)
-  - See `/docs/features/integrations/church-software-sync-spec.md`
+  - Field selection (include/exclude columns)
+  - Unified DataTable component system
 
 ### Phase 4: Communication (February 2026)
 
@@ -240,6 +255,14 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 6, 2025
+
+- ✅ My Prayer Sheet - devotional prayer session UI (PR #57)
+  - Critical prayer detection (cancer, death, emergency keywords)
+  - Category grouping with visual sections
+  - Print stylesheet for offline prayer
+  - Session completion tracking
 
 ### Week of Dec 4, 2025
 

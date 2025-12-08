@@ -605,6 +605,131 @@ body {
 }
 
 /**
+ * Starry Night Theme
+ *
+ * Elegant dark blue theme with gold accents.
+ * Uses Libre Baskerville for a classic, refined aesthetic.
+ *
+ * Usage:
+ *   - Add class "theme-starry-night" to <html> element
+ */
+.theme-starry-night {
+  --background: oklch(0.9755 0.0045 258.3245);
+  --foreground: oklch(0.2558 0.0433 268.0662);
+  --card: oklch(0.9755 0.0045 258.3245);
+  --card-foreground: oklch(0.2558 0.0433 268.0662);
+  --popover: oklch(0.9755 0.0045 258.3245);
+  --popover-foreground: oklch(0.2558 0.0433 268.0662);
+  --primary: oklch(0.4815 0.1178 263.3758);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.8567 0.1164 81.0092);
+  --secondary-foreground: oklch(0.2558 0.0433 268.0662);
+  --muted: oklch(0.9421 0.0098 256.8481);
+  --muted-foreground: oklch(0.5063 0.0365 258.2955);
+  --accent: oklch(0.8567 0.1164 81.0092);
+  --accent-foreground: oklch(0.2558 0.0433 268.0662);
+  --destructive: oklch(0.5768 0.1616 22.2022);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.8886 0.0194 254.1685);
+  --input: oklch(0.8886 0.0194 254.1685);
+  --ring: oklch(0.4815 0.1178 263.3758);
+  --chart-1: oklch(0.4815 0.1178 263.3758);
+  --chart-2: oklch(0.8567 0.1164 81.0092);
+  --chart-3: oklch(0.6691 0.155 163.238);
+  --chart-4: oklch(0.6298 0.1232 22.2022);
+  --chart-5: oklch(0.7082 0.1506 318.6);
+  --sidebar: oklch(0.9421 0.0098 256.8481);
+  --sidebar-foreground: oklch(0.2558 0.0433 268.0662);
+  --sidebar-primary: oklch(0.4815 0.1178 263.3758);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.8567 0.1164 81.0092);
+  --sidebar-accent-foreground: oklch(0.2558 0.0433 268.0662);
+  --sidebar-border: oklch(0.8886 0.0194 254.1685);
+  --sidebar-ring: oklch(0.4815 0.1178 263.3758);
+  --font-sans: "Libre Baskerville", serif;
+  --font-serif: "Libre Baskerville", serif;
+  --font-mono: "Courier New", monospace;
+  --radius: 0.375rem;
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 60% 20% / 0.05);
+  --shadow-xs: 0px 1px 2px 0px hsl(220 60% 20% / 0.08);
+  --shadow-sm:
+    0px 1px 3px 0px hsl(220 60% 20% / 0.1),
+    0px 1px 2px -1px hsl(220 60% 20% / 0.1);
+  --shadow:
+    0px 2px 4px 0px hsl(220 60% 20% / 0.1),
+    0px 1px 2px -1px hsl(220 60% 20% / 0.1);
+  --shadow-md:
+    0px 4px 6px -1px hsl(220 60% 20% / 0.1),
+    0px 2px 4px -2px hsl(220 60% 20% / 0.1);
+  --shadow-lg:
+    0px 8px 10px -2px hsl(220 60% 20% / 0.1),
+    0px 4px 6px -2px hsl(220 60% 20% / 0.1);
+  --shadow-xl:
+    0px 16px 20px -4px hsl(220 60% 20% / 0.1),
+    0px 8px 10px -4px hsl(220 60% 20% / 0.1);
+  --shadow-2xl: 0px 24px 32px -8px hsl(220 60% 20% / 0.15);
+  --tracking-normal: normal;
+}
+
+.theme-starry-night.dark {
+  --background: oklch(0.2204 0.0198 275.8439);
+  --foreground: oklch(0.9421 0.0098 256.8481);
+  --card: oklch(0.2558 0.0256 271.7561);
+  --card-foreground: oklch(0.9421 0.0098 256.8481);
+  --popover: oklch(0.2558 0.0256 271.7561);
+  --popover-foreground: oklch(0.9421 0.0098 256.8481);
+  --primary: oklch(0.6691 0.155 263.3758);
+  --primary-foreground: oklch(0.1553 0.0158 268.0662);
+  --secondary: oklch(0.7082 0.1164 81.0092);
+  --secondary-foreground: oklch(0.1553 0.0158 268.0662);
+  --muted: oklch(0.3211 0.0315 270.1234);
+  --muted-foreground: oklch(0.7082 0.0245 258.2955);
+  --accent: oklch(0.7082 0.1164 81.0092);
+  --accent-foreground: oklch(0.1553 0.0158 268.0662);
+  --destructive: oklch(0.6298 0.1616 22.2022);
+  --destructive-foreground: oklch(0.1553 0.0158 268.0662);
+  --border: oklch(0.3565 0.0345 268.4532);
+  --input: oklch(0.3565 0.0345 268.4532);
+  --ring: oklch(0.6691 0.155 263.3758);
+  --chart-1: oklch(0.6691 0.155 263.3758);
+  --chart-2: oklch(0.7082 0.1164 81.0092);
+  --chart-3: oklch(0.6691 0.155 163.238);
+  --chart-4: oklch(0.6298 0.1232 22.2022);
+  --chart-5: oklch(0.7082 0.1506 318.6);
+  --sidebar: oklch(0.1906 0.0178 275.8439);
+  --sidebar-foreground: oklch(0.9421 0.0098 256.8481);
+  --sidebar-primary: oklch(0.6691 0.155 263.3758);
+  --sidebar-primary-foreground: oklch(0.1553 0.0158 268.0662);
+  --sidebar-accent: oklch(0.7082 0.1164 81.0092);
+  --sidebar-accent-foreground: oklch(0.1553 0.0158 268.0662);
+  --sidebar-border: oklch(0.3565 0.0345 268.4532);
+  --sidebar-ring: oklch(0.6691 0.155 263.3758);
+  --font-sans: "Libre Baskerville", serif;
+  --font-serif: "Libre Baskerville", serif;
+  --font-mono: "Courier New", monospace;
+  --radius: 0.375rem;
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 80% 10% / 0.2);
+  --shadow-xs: 0px 1px 2px 0px hsl(220 80% 10% / 0.25);
+  --shadow-sm:
+    0px 1px 3px 0px hsl(220 80% 10% / 0.3),
+    0px 1px 2px -1px hsl(220 80% 10% / 0.3);
+  --shadow:
+    0px 2px 4px 0px hsl(220 80% 10% / 0.3),
+    0px 1px 2px -1px hsl(220 80% 10% / 0.3);
+  --shadow-md:
+    0px 4px 6px -1px hsl(220 80% 10% / 0.3),
+    0px 2px 4px -2px hsl(220 80% 10% / 0.3);
+  --shadow-lg:
+    0px 8px 10px -2px hsl(220 80% 10% / 0.3),
+    0px 4px 6px -2px hsl(220 80% 10% / 0.3);
+  --shadow-xl:
+    0px 16px 20px -4px hsl(220 80% 10% / 0.3),
+    0px 8px 10px -4px hsl(220 80% 10% / 0.3);
+  --shadow-2xl: 0px 24px 32px -8px hsl(220 80% 10% / 0.4);
+  --tracking-normal: normal;
+}
+
+/**
  * Print Stylesheet - Prayer Sheet Optimizations
  *
  * Provides clean, readable print output for prayer sheets.
@@ -616,6 +741,30 @@ body {
  * - Uses high-contrast black/white for better printing
  * - Prevents awkward page breaks within prayer cards
  * - Includes footer with print timestamp
+ *
+ * ============================================================================
+ * CSS PATTERN: Targeting Tailwind Classes in Raw CSS
+ * ============================================================================
+ *
+ * PROBLEM: Tailwind uses colons in class names (print:hidden, md:flex).
+ * Escaping colons (\:) breaks in Turbopack/Next.js 15 CSS parsing.
+ *
+ * SOLUTIONS (in order of preference):
+ *
+ * 1. LET TAILWIND HANDLE IT (best)
+ *    - Tailwind already generates: @media print { .print\:hidden { display: none } }
+ *    - Don't duplicate in raw CSS - just use the class in JSX
+ *
+ * 2. USE DATA ATTRIBUTES (for custom targeting)
+ *    - JSX:  <div data-no-print>...</div>
+ *    - CSS:  [data-no-print] { display: none; }
+ *
+ * 3. ATTRIBUTE SELECTORS (last resort)
+ *    - CSS:  [class*="print:hidden"] { display: none; }
+ *    - Works but less specific, matches substrings
+ *
+ * NEVER USE: .print\:hidden or .print\\:hidden (parser-dependent)
+ * ============================================================================
  */
 @media print {
   /* Reset colors for print */
@@ -628,26 +777,27 @@ body {
     --muted-foreground: #666;
   }
 
-  /* Hide non-essential elements */
+  /**
+   * Hide non-essential elements
+   *
+   * NOTE: Tailwind's print:hidden works automatically via Tailwind's generated CSS.
+   * We only need to target structural elements and our custom data attributes here.
+   * The [data-no-print] attribute is our semantic escape hatch for edge cases.
+   */
   nav,
   header:not([data-print]),
   aside,
   footer:not([data-print]),
   .no-print,
   [data-no-print],
-  button,
-  .print\\:hidden {
+  button {
     display: none !important;
   }
 
-  /* Show print-only elements */
-  .print\\:block {
-    display: block !important;
-  }
-
-  .print\\:flex {
-    display: flex !important;
-  }
+  /**
+   * Print-only elements use Tailwind's print:block and print:flex directly.
+   * No need to duplicate here - Tailwind handles the CSS generation.
+   */
 
   /* Reset body and html */
   html,
