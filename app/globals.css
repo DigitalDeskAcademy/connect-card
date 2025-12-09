@@ -45,6 +45,27 @@
  * @file Global styles and design system foundation
  * @performance Zero-runtime theme switching with CSS custom properties
  * @accessibility WCAG compliant with comprehensive keyboard navigation support
+ *
+ * BUTTON HIERARCHY GUIDE:
+ * ========================
+ * Use semantic button variants to create clear visual hierarchy:
+ *
+ * - default (primary): Main CTA, 1-2 per view max. Brand color.
+ *   Examples: "Process All", "Save", "Submit", "Launch Scanner"
+ *
+ * - secondary: Supporting actions. Neutral grey, no border.
+ *   Examples: "Add More", "Export", "Upload More"
+ *
+ * - outline: Alternative secondary with border. Use sparingly.
+ *   Examples: "Back", "View Details"
+ *
+ * - ghost: Minimal visual weight. Navigation, cancel, tertiary.
+ *   Examples: "Cancel", "Skip", "Close"
+ *
+ * - destructive: Delete/remove actions only. Red.
+ *   Examples: "Delete", "Remove"
+ *
+ * Reference: /church/[slug]/admin/dev/components for visual examples
  */
 
 @import "tailwindcss";
@@ -605,6 +626,259 @@ body {
 }
 
 /**
+ * Starry Night Theme
+ *
+ * Elegant dark blue theme with gold accents.
+ * Uses Libre Baskerville for a classic, refined aesthetic.
+ *
+ * Usage:
+ *   - Add class "theme-starry-night" to <html> element
+ */
+.theme-starry-night {
+  --background: oklch(0.9755 0.0045 258.3245);
+  --foreground: oklch(0.2558 0.0433 268.0662);
+  --card: oklch(0.9755 0.0045 258.3245);
+  --card-foreground: oklch(0.2558 0.0433 268.0662);
+  --popover: oklch(0.9755 0.0045 258.3245);
+  --popover-foreground: oklch(0.2558 0.0433 268.0662);
+  --primary: oklch(0.4815 0.1178 263.3758);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.8567 0.1164 81.0092);
+  --secondary-foreground: oklch(0.2558 0.0433 268.0662);
+  --muted: oklch(0.9421 0.0098 256.8481);
+  --muted-foreground: oklch(0.5063 0.0365 258.2955);
+  --accent: oklch(0.8567 0.1164 81.0092);
+  --accent-foreground: oklch(0.2558 0.0433 268.0662);
+  --destructive: oklch(0.5768 0.1616 22.2022);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.8886 0.0194 254.1685);
+  --input: oklch(0.8886 0.0194 254.1685);
+  --ring: oklch(0.4815 0.1178 263.3758);
+  --chart-1: oklch(0.4815 0.1178 263.3758);
+  --chart-2: oklch(0.8567 0.1164 81.0092);
+  --chart-3: oklch(0.6691 0.155 163.238);
+  --chart-4: oklch(0.6298 0.1232 22.2022);
+  --chart-5: oklch(0.7082 0.1506 318.6);
+  --sidebar: oklch(0.9421 0.0098 256.8481);
+  --sidebar-foreground: oklch(0.2558 0.0433 268.0662);
+  --sidebar-primary: oklch(0.4815 0.1178 263.3758);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.8567 0.1164 81.0092);
+  --sidebar-accent-foreground: oklch(0.2558 0.0433 268.0662);
+  --sidebar-border: oklch(0.8886 0.0194 254.1685);
+  --sidebar-ring: oklch(0.4815 0.1178 263.3758);
+  --font-sans: "Libre Baskerville", serif;
+  --font-serif: "Libre Baskerville", serif;
+  --font-mono: "Courier New", monospace;
+  --radius: 0.375rem;
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 60% 20% / 0.05);
+  --shadow-xs: 0px 1px 2px 0px hsl(220 60% 20% / 0.08);
+  --shadow-sm:
+    0px 1px 3px 0px hsl(220 60% 20% / 0.1),
+    0px 1px 2px -1px hsl(220 60% 20% / 0.1);
+  --shadow:
+    0px 2px 4px 0px hsl(220 60% 20% / 0.1),
+    0px 1px 2px -1px hsl(220 60% 20% / 0.1);
+  --shadow-md:
+    0px 4px 6px -1px hsl(220 60% 20% / 0.1),
+    0px 2px 4px -2px hsl(220 60% 20% / 0.1);
+  --shadow-lg:
+    0px 8px 10px -2px hsl(220 60% 20% / 0.1),
+    0px 4px 6px -2px hsl(220 60% 20% / 0.1);
+  --shadow-xl:
+    0px 16px 20px -4px hsl(220 60% 20% / 0.1),
+    0px 8px 10px -4px hsl(220 60% 20% / 0.1);
+  --shadow-2xl: 0px 24px 32px -8px hsl(220 60% 20% / 0.15);
+  --tracking-normal: normal;
+}
+
+.theme-starry-night.dark {
+  --background: oklch(0.2204 0.0198 275.8439);
+  --foreground: oklch(0.9421 0.0098 256.8481);
+  --card: oklch(0.2558 0.0256 271.7561);
+  --card-foreground: oklch(0.9421 0.0098 256.8481);
+  --popover: oklch(0.2558 0.0256 271.7561);
+  --popover-foreground: oklch(0.9421 0.0098 256.8481);
+  --primary: oklch(0.6691 0.155 263.3758);
+  --primary-foreground: oklch(0.1553 0.0158 268.0662);
+  --secondary: oklch(0.7082 0.1164 81.0092);
+  --secondary-foreground: oklch(0.1553 0.0158 268.0662);
+  --muted: oklch(0.3211 0.0315 270.1234);
+  --muted-foreground: oklch(0.7082 0.0245 258.2955);
+  --accent: oklch(0.7082 0.1164 81.0092);
+  --accent-foreground: oklch(0.1553 0.0158 268.0662);
+  --destructive: oklch(0.6298 0.1616 22.2022);
+  --destructive-foreground: oklch(0.1553 0.0158 268.0662);
+  --border: oklch(0.3565 0.0345 268.4532);
+  --input: oklch(0.3565 0.0345 268.4532);
+  --ring: oklch(0.6691 0.155 263.3758);
+  --chart-1: oklch(0.6691 0.155 263.3758);
+  --chart-2: oklch(0.7082 0.1164 81.0092);
+  --chart-3: oklch(0.6691 0.155 163.238);
+  --chart-4: oklch(0.6298 0.1232 22.2022);
+  --chart-5: oklch(0.7082 0.1506 318.6);
+  --sidebar: oklch(0.1906 0.0178 275.8439);
+  --sidebar-foreground: oklch(0.9421 0.0098 256.8481);
+  --sidebar-primary: oklch(0.6691 0.155 263.3758);
+  --sidebar-primary-foreground: oklch(0.1553 0.0158 268.0662);
+  --sidebar-accent: oklch(0.7082 0.1164 81.0092);
+  --sidebar-accent-foreground: oklch(0.1553 0.0158 268.0662);
+  --sidebar-border: oklch(0.3565 0.0345 268.4532);
+  --sidebar-ring: oklch(0.6691 0.155 263.3758);
+  --font-sans: "Libre Baskerville", serif;
+  --font-serif: "Libre Baskerville", serif;
+  --font-mono: "Courier New", monospace;
+  --radius: 0.375rem;
+  --shadow-2xs: 0px 1px 2px 0px hsl(220 80% 10% / 0.2);
+  --shadow-xs: 0px 1px 2px 0px hsl(220 80% 10% / 0.25);
+  --shadow-sm:
+    0px 1px 3px 0px hsl(220 80% 10% / 0.3),
+    0px 1px 2px -1px hsl(220 80% 10% / 0.3);
+  --shadow:
+    0px 2px 4px 0px hsl(220 80% 10% / 0.3),
+    0px 1px 2px -1px hsl(220 80% 10% / 0.3);
+  --shadow-md:
+    0px 4px 6px -1px hsl(220 80% 10% / 0.3),
+    0px 2px 4px -2px hsl(220 80% 10% / 0.3);
+  --shadow-lg:
+    0px 8px 10px -2px hsl(220 80% 10% / 0.3),
+    0px 4px 6px -2px hsl(220 80% 10% / 0.3);
+  --shadow-xl:
+    0px 16px 20px -4px hsl(220 80% 10% / 0.3),
+    0px 8px 10px -4px hsl(220 80% 10% / 0.3);
+  --shadow-2xl: 0px 24px 32px -8px hsl(220 80% 10% / 0.4);
+  --tracking-normal: normal;
+}
+
+/**
+ * Starry Night Main Theme
+ *
+ * User-customized variant with refined blue palette and Libre Baskerville typography.
+ * Features a cohesive light mode derived from the dark mode design.
+ *
+ * Usage:
+ *   - Add class "theme-starry-night-main" to <html> element
+ */
+.theme-starry-night-main {
+  /* Backgrounds - Light versions */
+  --background: oklch(0.98 0 0);
+  --foreground: oklch(0.18 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0 0);
+  /* Primary - JetBrains Blue brand color */
+  --primary: oklch(0.8276 0.1013 230.3179);
+  --primary-foreground: oklch(0.15 0 0);
+  /* Secondary - Neutral light grey */
+  --secondary: oklch(0.92 0 0);
+  --secondary-foreground: oklch(0.18 0 0);
+  /* Muted - Subtle grays */
+  --muted: oklch(0.95 0 0);
+  --muted-foreground: oklch(0.45 0 0);
+  /* Accent - Neutral grey highlight */
+  --accent: oklch(0.9 0 0);
+  --accent-foreground: oklch(0.18 0 0);
+  /* Destructive - Readable red on light */
+  --destructive: oklch(0.53 0.2078 25.3313);
+  --destructive-foreground: oklch(0.98 0 0);
+  /* Borders & Inputs */
+  --border: oklch(0.88 0 0);
+  --input: oklch(0.95 0 0);
+  --ring: oklch(0.7 0 0);
+  /* Charts - Adjusted for light bg visibility */
+  --chart-1: oklch(0.45 0.14 263.3758);
+  --chart-2: oklch(0.65 0.16 95.112);
+  --chart-3: oklch(0.5 0.1 234.0387);
+  --chart-4: oklch(0.55 0.06 262.0375);
+  --chart-5: oklch(0.5 0.15 357.113);
+  /* Sidebar - Neutral with brand primary */
+  --sidebar: oklch(0.96 0 0);
+  --sidebar-foreground: oklch(0.18 0 0);
+  --sidebar-primary: oklch(0.8276 0.1013 230.3179);
+  --sidebar-primary-foreground: oklch(0.15 0 0);
+  --sidebar-accent: oklch(0.9 0 0);
+  --sidebar-accent-foreground: oklch(0.18 0 0);
+  --sidebar-border: oklch(0.88 0 0);
+  --sidebar-ring: oklch(0.7 0 0);
+  /* Typography - Using JetBrains fonts */
+  --font-sans: Inter, sans-serif;
+  --font-serif: "Source Serif 4", serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --radius: 0.5rem;
+  /* Shadows */
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --tracking-normal: 0em;
+}
+
+.theme-starry-night-main.dark {
+  --background: oklch(0.16 0 0);
+  --foreground: oklch(0.9 0 0);
+  --card: oklch(0.2046 0 0);
+  --card-foreground: oklch(0.9 0 0);
+  --popover: oklch(0.2603 0 0);
+  --popover-foreground: oklch(0.9 0 0);
+  /* Primary - JetBrains Blue brand color */
+  --primary: oklch(0.8276 0.1013 230.3179);
+  --primary-foreground: oklch(0.15 0 0);
+  --secondary: oklch(0.28 0 0);
+  --secondary-foreground: oklch(0.85 0 0);
+  --muted: oklch(0.24 0 0);
+  --muted-foreground: oklch(0.6 0 0);
+  --accent: oklch(0.3 0 0);
+  --accent-foreground: oklch(0.9 0 0);
+  --destructive: oklch(0.55 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.28 0 0);
+  --input: oklch(0.28 0 0);
+  --ring: oklch(0.5 0 0);
+  --chart-1: oklch(0.5 0.12 230);
+  --chart-2: oklch(0.7 0.14 95);
+  --chart-3: oklch(0.55 0.1 310);
+  --chart-4: oklch(0.6 0.12 60);
+  --chart-5: oklch(0.55 0.14 25);
+  --sidebar: oklch(0.1776 0 0);
+  --sidebar-foreground: oklch(0.7 0 0);
+  --sidebar-primary: oklch(0.8276 0.1013 230.3179);
+  --sidebar-primary-foreground: oklch(0.15 0 0);
+  --sidebar-accent: oklch(0.24 0 0);
+  --sidebar-accent-foreground: oklch(0.9 0 0);
+  --sidebar-border: oklch(0.25 0 0);
+  --sidebar-ring: oklch(0.5 0 0);
+  /* Typography - Using JetBrains fonts */
+  --font-sans: Inter, sans-serif;
+  --font-serif: "Source Serif 4", serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --radius: 0.5rem;
+  /* Shadows - darker for dark mode */
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.15);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.15);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.25), 0 1px 2px -1px hsl(0 0% 0% / 0.25);
+  --shadow:
+    0 1px 3px 0px hsl(0 0% 0% / 0.25), 0 1px 2px -1px hsl(0 0% 0% / 0.25);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.25), 0 2px 4px -1px hsl(0 0% 0% / 0.25);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.25), 0 4px 6px -1px hsl(0 0% 0% / 0.25);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.25), 0 8px 10px -1px hsl(0 0% 0% / 0.25);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.45);
+  --tracking-normal: 0em;
+}
+
+/**
  * Print Stylesheet - Prayer Sheet Optimizations
  *
  * Provides clean, readable print output for prayer sheets.
@@ -616,6 +890,30 @@ body {
  * - Uses high-contrast black/white for better printing
  * - Prevents awkward page breaks within prayer cards
  * - Includes footer with print timestamp
+ *
+ * ============================================================================
+ * CSS PATTERN: Targeting Tailwind Classes in Raw CSS
+ * ============================================================================
+ *
+ * PROBLEM: Tailwind uses colons in class names (print:hidden, md:flex).
+ * Escaping colons (\:) breaks in Turbopack/Next.js 15 CSS parsing.
+ *
+ * SOLUTIONS (in order of preference):
+ *
+ * 1. LET TAILWIND HANDLE IT (best)
+ *    - Tailwind already generates: @media print { .print\:hidden { display: none } }
+ *    - Don't duplicate in raw CSS - just use the class in JSX
+ *
+ * 2. USE DATA ATTRIBUTES (for custom targeting)
+ *    - JSX:  <div data-no-print>...</div>
+ *    - CSS:  [data-no-print] { display: none; }
+ *
+ * 3. ATTRIBUTE SELECTORS (last resort)
+ *    - CSS:  [class*="print:hidden"] { display: none; }
+ *    - Works but less specific, matches substrings
+ *
+ * NEVER USE: .print\:hidden or .print\\:hidden (parser-dependent)
+ * ============================================================================
  */
 @media print {
   /* Reset colors for print */
@@ -628,26 +926,27 @@ body {
     --muted-foreground: #666;
   }
 
-  /* Hide non-essential elements */
+  /**
+   * Hide non-essential elements
+   *
+   * NOTE: Tailwind's print:hidden works automatically via Tailwind's generated CSS.
+   * We only need to target structural elements and our custom data attributes here.
+   * The [data-no-print] attribute is our semantic escape hatch for edge cases.
+   */
   nav,
   header:not([data-print]),
   aside,
   footer:not([data-print]),
   .no-print,
   [data-no-print],
-  button,
-  .print\\:hidden {
+  button {
     display: none !important;
   }
 
-  /* Show print-only elements */
-  .print\\:block {
-    display: block !important;
-  }
-
-  .print\\:flex {
-    display: flex !important;
-  }
+  /**
+   * Print-only elements use Tailwind's print:block and print:flex directly.
+   * No need to duplicate here - Tailwind handles the CSS generation.
+   */
 
   /* Reset body and html */
   html,
@@ -751,4 +1050,117 @@ body {
   .grid.grid-cols-4 {
     display: none !important;
   }
+}
+
+/**
+ * Starry Night Theme
+ * Classic, sophisticated aesthetic with deep purple primary and golden secondary.
+ * Uses Libre Baskerville serif font for a refined, traditional feel.
+ */
+.theme-starry-night {
+  --background: oklch(0.9755 0.0045 258.3245);
+  --foreground: oklch(0.2558 0.0433 268.0662);
+  --card: oklch(0.9341 0.0132 251.5628);
+  --card-foreground: oklch(0.2558 0.0433 268.0662);
+  --popover: oklch(0.9856 0.0278 98.054);
+  --popover-foreground: oklch(0.2558 0.0433 268.0662);
+  --primary: oklch(0.4815 0.1178 263.3758);
+  --primary-foreground: oklch(0.9856 0.0278 98.054);
+  --secondary: oklch(0.8567 0.1164 81.0092);
+  --secondary-foreground: oklch(0.2558 0.0433 268.0662);
+  --muted: oklch(0.9202 0.008 106.5563);
+  --muted-foreground: oklch(0.4815 0.1178 263.3758);
+  --accent: oklch(0.6896 0.0714 234.0387);
+  --accent-foreground: oklch(0.9856 0.0278 98.054);
+  --destructive: oklch(0.2611 0.0376 322.5267);
+  --destructive-foreground: oklch(0.9856 0.0278 98.054);
+  --border: oklch(0.7791 0.0156 251.1926);
+  --input: oklch(0.6896 0.0714 234.0387);
+  --ring: oklch(0.8567 0.1164 81.0092);
+  --chart-1: oklch(0.4815 0.1178 263.3758);
+  --chart-2: oklch(0.8567 0.1164 81.0092);
+  --chart-3: oklch(0.6896 0.0714 234.0387);
+  --chart-4: oklch(0.7791 0.0156 251.1926);
+  --chart-5: oklch(0.2611 0.0376 322.5267);
+  --sidebar: oklch(0.9341 0.0132 251.5628);
+  --sidebar-foreground: oklch(0.2558 0.0433 268.0662);
+  --sidebar-primary: oklch(0.4815 0.1178 263.3758);
+  --sidebar-primary-foreground: oklch(0.9856 0.0278 98.054);
+  --sidebar-accent: oklch(0.8567 0.1164 81.0092);
+  --sidebar-accent-foreground: oklch(0.2558 0.0433 268.0662);
+  --sidebar-border: oklch(0.7791 0.0156 251.1926);
+  --sidebar-ring: oklch(0.8567 0.1164 81.0092);
+  --font-sans: Libre Baskerville, serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --radius: 0.5rem;
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+}
+
+.theme-starry-night.dark {
+  --background: oklch(0.2204 0.0198 275.8439);
+  --foreground: oklch(0.9366 0.0129 266.6974);
+  --card: oklch(0.2703 0.0407 281.3036);
+  --card-foreground: oklch(0.9366 0.0129 266.6974);
+  --popover: oklch(0.2703 0.0407 281.3036);
+  --popover-foreground: oklch(0.9097 0.144 95.112);
+  --primary: oklch(0.4815 0.1178 263.3758);
+  --primary-foreground: oklch(0.9097 0.144 95.112);
+  --secondary: oklch(0.9097 0.144 95.112);
+  --secondary-foreground: oklch(0.2703 0.0407 281.3036);
+  --muted: oklch(0.2424 0.0324 281.089);
+  --muted-foreground: oklch(0.6243 0.0412 262.0375);
+  --accent: oklch(0.8469 0.0524 264.7751);
+  --accent-foreground: oklch(0.2204 0.0198 275.8439);
+  --destructive: oklch(0.528 0.12 357.113);
+  --destructive-foreground: oklch(0.9097 0.144 95.112);
+  --border: oklch(0.3072 0.0287 281.7681);
+  --input: oklch(0.4815 0.1178 263.3758);
+  --ring: oklch(0.9097 0.144 95.112);
+  --chart-1: oklch(0.4815 0.1178 263.3758);
+  --chart-2: oklch(0.9097 0.144 95.112);
+  --chart-3: oklch(0.6896 0.0714 234.0387);
+  --chart-4: oklch(0.6243 0.0412 262.0375);
+  --chart-5: oklch(0.528 0.12 357.113);
+  --sidebar: oklch(0.2703 0.0407 281.3036);
+  --sidebar-foreground: oklch(0.9366 0.0129 266.6974);
+  --sidebar-primary: oklch(0.4815 0.1178 263.3758);
+  --sidebar-primary-foreground: oklch(0.9097 0.144 95.112);
+  --sidebar-accent: oklch(0.9097 0.144 95.112);
+  --sidebar-accent-foreground: oklch(0.2703 0.0407 281.3036);
+  --sidebar-border: oklch(0.3072 0.0287 281.7681);
+  --sidebar-ring: oklch(0.9097 0.144 95.112);
+  --font-sans: Libre Baskerville, serif;
+  --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  --radius: 0.5rem;
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
+  --shadow-sm:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 2px 4px -1px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 4px 6px -1px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 8px 10px -1px hsl(0 0% 0% / 0.1);
+  --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
 }

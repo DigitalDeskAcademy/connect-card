@@ -9,6 +9,8 @@ const STORAGE_KEY = "theme-variant";
 export const THEME_CLASSES: Record<string, string> = {
   "jetbrains-blue": "theme-jetbrains-blue",
   "soft-pop": "theme-soft-pop",
+  "starry-night": "theme-starry-night",
+  "starry-night-main": "theme-starry-night-main",
 };
 
 /**

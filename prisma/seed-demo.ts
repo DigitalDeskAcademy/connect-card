@@ -122,11 +122,17 @@ async function main() {
 
   const churchAdmin = await prisma.user.upsert({
     where: { email: "admin@newlife.test" },
-    update: {},
+    update: {
+      name: "Sarah Mitchell",
+      role: "church_admin",
+      organizationId: newlifeOrg.id,
+      canSeeAllLocations: true,
+      volunteerCategories: ["Kids Ministry", "Hospitality"], // Ministry leader
+    },
     create: {
       id: crypto.randomUUID(),
       email: "admin@newlife.test",
-      name: "Admin User",
+      name: "Sarah Mitchell",
       role: "church_admin",
       organizationId: newlifeOrg.id,
       emailVerified: true,
@@ -154,17 +160,24 @@ async function main() {
 
   const churchStaff = await prisma.user.upsert({
     where: { email: "staff@newlife.test" },
-    update: {},
+    update: {
+      name: "David Chen",
+      role: "user",
+      organizationId: newlifeOrg.id,
+      canSeeAllLocations: false,
+      defaultLocationId: bainbridgeLocation.id,
+      volunteerCategories: ["Worship", "AV Tech"], // Worship & AV leader
+    },
     create: {
       id: crypto.randomUUID(),
       email: "staff@newlife.test",
-      name: "Staff User",
+      name: "David Chen",
       role: "user",
       organizationId: newlifeOrg.id,
       emailVerified: true,
       canSeeAllLocations: false, // Campus-specific
       defaultLocationId: bainbridgeLocation.id,
-      volunteerCategories: ["Worship"], // Worship leader
+      volunteerCategories: ["Worship", "AV Tech"], // Worship & AV leader
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -185,7 +198,118 @@ async function main() {
     },
   });
 
-  console.log(`   ✅ 4 users created (platform admin, owner, admin, staff)\n`);
+  // Additional Volunteer Leaders for different ministry categories
+  const youthPastor = await prisma.user.upsert({
+    where: { email: "youth@newlife.test" },
+    update: {
+      name: "Marcus Johnson",
+      role: "user",
+      organizationId: newlifeOrg.id,
+      volunteerCategories: ["Youth Ministry", "Small Groups"],
+    },
+    create: {
+      id: crypto.randomUUID(),
+      email: "youth@newlife.test",
+      name: "Marcus Johnson",
+      role: "user",
+      organizationId: newlifeOrg.id,
+      emailVerified: true,
+      volunteerCategories: ["Youth Ministry", "Small Groups"],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.member.upsert({
+    where: {
+      userId_organizationId: {
+        userId: youthPastor.id,
+        organizationId: newlifeOrg.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: youthPastor.id,
+      organizationId: newlifeOrg.id,
+      role: "member",
+    },
+  });
+
+  const greetingLead = await prisma.user.upsert({
+    where: { email: "greeter@newlife.test" },
+    update: {
+      name: "Jennifer Adams",
+      role: "user",
+      organizationId: newlifeOrg.id,
+      volunteerCategories: ["Greeting", "Parking", "Hospitality"],
+    },
+    create: {
+      id: crypto.randomUUID(),
+      email: "greeter@newlife.test",
+      name: "Jennifer Adams",
+      role: "user",
+      organizationId: newlifeOrg.id,
+      emailVerified: true,
+      volunteerCategories: ["Greeting", "Parking", "Hospitality"],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.member.upsert({
+    where: {
+      userId_organizationId: {
+        userId: greetingLead.id,
+        organizationId: newlifeOrg.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: greetingLead.id,
+      organizationId: newlifeOrg.id,
+      role: "member",
+    },
+  });
+
+  const prayerLead = await prisma.user.upsert({
+    where: { email: "prayer@newlife.test" },
+    update: {
+      name: "Maria Garcia",
+      role: "user",
+      organizationId: newlifeOrg.id,
+      volunteerCategories: ["Prayer Team", "Counseling"],
+    },
+    create: {
+      id: crypto.randomUUID(),
+      email: "prayer@newlife.test",
+      name: "Maria Garcia",
+      role: "user",
+      organizationId: newlifeOrg.id,
+      emailVerified: true,
+      volunteerCategories: ["Prayer Team", "Counseling"],
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.member.upsert({
+    where: {
+      userId_organizationId: {
+        userId: prayerLead.id,
+        organizationId: newlifeOrg.id,
+      },
+    },
+    update: {},
+    create: {
+      userId: prayerLead.id,
+      organizationId: newlifeOrg.id,
+      role: "member",
+    },
+  });
+
+  console.log(
+    `   ✅ 7 users created (platform admin, owner, admin, 4 volunteer leaders)\n`
+  );
 
   // ========================================
   // CONNECT CARDS: Mix of statuses
@@ -193,9 +317,14 @@ async function main() {
   console.log("📇 Creating connect cards...");
 
   const now = new Date();
-  const lastSunday = new Date(now);
-  lastSunday.setDate(now.getDate() - now.getDay()); // Go to last Sunday
-  lastSunday.setHours(10, 30, 0, 0);
+  // "This Sunday" = start of current week (for "This Week" metrics)
+  const thisSunday = new Date(now);
+  thisSunday.setDate(now.getDate() - now.getDay()); // Go to this week's Sunday
+  thisSunday.setHours(10, 30, 0, 0);
+
+  // "Last Sunday" = start of previous week (for historical data)
+  const lastSunday = new Date(thisSunday);
+  lastSunday.setDate(thisSunday.getDate() - 7);
 
   // AWAITING REVIEW (5 cards - EXTRACTED status)
   const awaitingReviewCards = [
@@ -348,9 +477,9 @@ async function main() {
 
   for (let i = 0; i < reviewedCards.length; i++) {
     const card = reviewedCards[i];
-    const scanTime = new Date(lastSunday);
-    scanTime.setDate(lastSunday.getDate() - 1); // Day before
-    scanTime.setHours(10 + i);
+    // Use THIS week's Sunday so cards appear in "This Week" metrics
+    const scanTime = new Date(thisSunday);
+    scanTime.setHours(10 + i); // Spread across Sunday morning
 
     await prisma.connectCard.create({
       data: {
@@ -386,7 +515,7 @@ async function main() {
       visitType: "Second Visit",
       interests: ["Volunteering"],
       volunteerCategory: "Kids Ministry",
-      onboardingStatus: "DOCUMENTS_SHARED",
+      onboardingStatus: "DOCUMENTS_SHARED" as const,
       documentsSent: {
         "Welcome Email": true,
         "Leader Introduction": true,
@@ -403,7 +532,7 @@ async function main() {
       visitType: "First Visit",
       interests: ["Volunteering", "Worship Team"],
       volunteerCategory: "Worship",
-      onboardingStatus: "ORIENTATION_SET",
+      onboardingStatus: "ORIENTATION_SET" as const,
       documentsSent: {
         "Welcome Email": true,
         "Leader Introduction": true,
@@ -419,9 +548,8 @@ async function main() {
 
   for (let i = 0; i < volunteerOnboardingCards.length; i++) {
     const card = volunteerOnboardingCards[i];
-    const scanTime = new Date(lastSunday);
-    scanTime.setDate(lastSunday.getDate() - 2); // 2 days before Sunday
-    scanTime.setHours(14 + i);
+    const scanTime = new Date(thisSunday);
+    scanTime.setHours(14 + i); // This week's Sunday afternoon
 
     await prisma.connectCard.create({
       data: {
@@ -454,10 +582,157 @@ async function main() {
     });
   }
 
-  console.log(`   ✅ 15 connect cards created`);
+  // HISTORICAL DATA (52 weeks = 1 year of reviewed cards for dashboard charts)
+  // Week 0 = current week - make it HIGHER than average for positive trends (green)
+  // Bainbridge: Larger campus, more first-time visitors
+  // Bremerton: Smaller campus, higher prayer request ratio
+  const historicalWeeks: Array<{
+    weeksAgo: number;
+    bainbridge: number;
+    bremerton: number;
+  }> = [];
+
+  // Current week: above average for positive trends
+  historicalWeeks.push({ weeksAgo: 0, bainbridge: 18, bremerton: 9 });
+
+  // Recent 4 weeks: varying to create realistic averages
+  historicalWeeks.push({ weeksAgo: 1, bainbridge: 12, bremerton: 6 });
+  historicalWeeks.push({ weeksAgo: 2, bainbridge: 14, bremerton: 7 });
+  historicalWeeks.push({ weeksAgo: 3, bainbridge: 11, bremerton: 5 });
+  historicalWeeks.push({ weeksAgo: 4, bainbridge: 13, bremerton: 6 });
+
+  // Generate remaining 47 weeks with realistic seasonal patterns
+  for (let week = 5; week < 52; week++) {
+    // Seasonal variation: higher in fall/winter, lower in summer
+    const seasonalFactor = Math.sin((week / 52) * Math.PI * 2) * 0.2 + 1;
+    // Random variation ±20%
+    const randomFactor = 0.8 + Math.random() * 0.4;
+
+    const bainbridge = Math.round(12 * seasonalFactor * randomFactor);
+    const bremerton = Math.round(6 * seasonalFactor * randomFactor);
+
+    historicalWeeks.push({ weeksAgo: week, bainbridge, bremerton });
+  }
+
+  const visitTypes = [
+    "First Visit",
+    "First Visit",
+    "Second Visit",
+    "Regular Attender",
+    "Member",
+  ];
+  const interestOptions = [
+    ["Small Groups"],
+    ["Volunteering"],
+    ["Volunteering", "Small Groups"],
+    ["Prayer Team"],
+    ["Youth Ministry"],
+    ["Children's Ministry"],
+    ["Worship Team"],
+    [],
+  ];
+
+  let historicalCardCount = 0;
+
+  for (const week of historicalWeeks) {
+    // Use thisSunday as base so week 0 = current week
+    const weekSunday = new Date(thisSunday);
+    weekSunday.setDate(thisSunday.getDate() - week.weeksAgo * 7);
+
+    // Bainbridge cards (larger campus, 60% first-time visitors)
+    for (let i = 0; i < week.bainbridge; i++) {
+      const scanTime = new Date(weekSunday);
+      scanTime.setHours(9 + Math.floor(i / 3), (i % 3) * 15);
+
+      const isFirstVisit = i < Math.floor(week.bainbridge * 0.6);
+      const hasPrayer = i % 4 === 0; // 25% prayer requests
+      const hasVolunteer = i % 3 === 0; // 33% volunteer interest
+
+      await prisma.connectCard.create({
+        data: {
+          organizationId: newlifeOrg.id,
+          locationId: bainbridgeLocation.id,
+          imageKey: `demo/connect-cards/hist-bain-w${week.weeksAgo}-${i + 1}.jpg`,
+          name: `Bainbridge Visitor ${week.weeksAgo}-${i + 1}`,
+          email: `bain.visitor${week.weeksAgo}${i + 1}@email.com`,
+          phone: `(206) 555-${1000 + historicalCardCount}`,
+          visitType: isFirstVisit
+            ? "First Visit"
+            : visitTypes[i % visitTypes.length],
+          interests: hasVolunteer
+            ? ["Volunteering", "Small Groups"]
+            : interestOptions[i % interestOptions.length],
+          prayerRequest: hasPrayer ? "Please pray for our family" : null,
+          status: "REVIEWED",
+          scannedAt: scanTime,
+          extractedData: {
+            name: `Bainbridge Visitor ${week.weeksAgo}-${i + 1}`,
+            visitType: isFirstVisit
+              ? "First Visit"
+              : visitTypes[i % visitTypes.length],
+          },
+        },
+      });
+      historicalCardCount++;
+    }
+
+    // Bremerton cards (smaller campus, 50% prayer requests, more intimate)
+    for (let i = 0; i < week.bremerton; i++) {
+      const scanTime = new Date(weekSunday);
+      scanTime.setHours(9 + Math.floor(i / 2), (i % 2) * 30);
+
+      const isFirstVisit = i < Math.floor(week.bremerton * 0.4);
+      const hasPrayer = i % 2 === 0; // 50% prayer requests
+      const hasVolunteer = i % 4 === 0; // 25% volunteer interest
+
+      await prisma.connectCard.create({
+        data: {
+          organizationId: newlifeOrg.id,
+          locationId: bremertonLocation.id,
+          imageKey: `demo/connect-cards/hist-brem-w${week.weeksAgo}-${i + 1}.jpg`,
+          name: `Bremerton Visitor ${week.weeksAgo}-${i + 1}`,
+          email: `brem.visitor${week.weeksAgo}${i + 1}@email.com`,
+          phone: `(360) 555-${2000 + historicalCardCount}`,
+          visitType: isFirstVisit
+            ? "First Visit"
+            : visitTypes[i % visitTypes.length],
+          interests: hasVolunteer
+            ? ["Volunteering"]
+            : interestOptions[i % interestOptions.length],
+          prayerRequest: hasPrayer ? "Praying for healing and guidance" : null,
+          status: "REVIEWED",
+          scannedAt: scanTime,
+          extractedData: {
+            name: `Bremerton Visitor ${week.weeksAgo}-${i + 1}`,
+            visitType: isFirstVisit
+              ? "First Visit"
+              : visitTypes[i % visitTypes.length],
+          },
+        },
+      });
+      historicalCardCount++;
+    }
+  }
+
+  console.log(`   ✅ ${15 + historicalCardCount} connect cards created`);
   console.log(`      - 5 awaiting review (EXTRACTED)`);
-  console.log(`      - 8 reviewed (REVIEWED)`);
-  console.log(`      - 2 with volunteer onboarding in progress\n`);
+  console.log(`      - ${8 + historicalCardCount} reviewed (REVIEWED)`);
+  console.log(`      - 2 with volunteer onboarding in progress`);
+  console.log(
+    `      - ${historicalCardCount} historical cards across 52 weeks (1 year)\n`
+  );
+  console.log(`   📍 Location breakdown:`);
+  console.log(
+    `      - Bainbridge: ~${Math.round(historicalCardCount * 0.65)} cards (larger campus)`
+  );
+  console.log(
+    `      - Bremerton: ~${Math.round(historicalCardCount * 0.35)} cards (smaller campus)\n`
+  );
+  console.log(`   📈 Trends configured for positive display (green):`);
+  console.log(`      - This week: 18 Bainbridge + 9 Bremerton = 27 cards`);
+  console.log(
+    `      - 4-week avg: ~12.5 Bainbridge + ~6 Bremerton = ~18.5 cards\n`
+  );
 
   // ========================================
   // PRAYER REQUESTS: Various statuses
@@ -471,14 +746,14 @@ async function main() {
       request: "Pray for wisdom in a major life decision",
       isPrivate: false,
       category: "GUIDANCE",
-      status: "PENDING",
+      status: "PENDING" as const,
     },
     {
       submittedBy: "Sarah Johnson",
       request: "My father was diagnosed with cancer, need healing prayers",
       isPrivate: true,
       category: "HEALING",
-      status: "PENDING",
+      status: "PENDING" as const,
     },
     {
       submittedBy: "Michael Chen",
@@ -486,14 +761,14 @@ async function main() {
         "Lost my job last week, praying for provision and new opportunity",
       isPrivate: false,
       category: "PROVISION",
-      status: "PENDING",
+      status: "PENDING" as const,
     },
     {
       submittedBy: "Emily Rodriguez",
       request: "Struggling with anxiety and depression, need peace",
       isPrivate: true,
       category: "MENTAL_HEALTH",
-      status: "PENDING",
+      status: "PENDING" as const,
     },
 
     // PRAYING (5 requests)
@@ -502,7 +777,7 @@ async function main() {
       request: "Marriage going through difficult season, pray for restoration",
       isPrivate: true,
       category: "FAMILY",
-      status: "PRAYING",
+      status: "PRAYING" as const,
       assignedTo: churchAdmin,
     },
     {
@@ -510,7 +785,7 @@ async function main() {
       request: "Upcoming surgery next week, pray for successful outcome",
       isPrivate: true,
       category: "HEALING",
-      status: "PRAYING",
+      status: "PRAYING" as const,
       assignedTo: churchAdmin,
     },
     {
@@ -518,7 +793,7 @@ async function main() {
       request: "Son away at college making poor choices, pray for wisdom",
       isPrivate: true,
       category: "FAMILY",
-      status: "PRAYING",
+      status: "PRAYING" as const,
       assignedTo: churchStaff,
     },
     {
@@ -526,7 +801,7 @@ async function main() {
       request: "New job opportunity, pray for God's direction",
       isPrivate: false,
       category: "GUIDANCE",
-      status: "PRAYING",
+      status: "PRAYING" as const,
       assignedTo: churchStaff,
     },
     {
@@ -534,7 +809,7 @@ async function main() {
       request: "Struggling with addiction, need freedom and accountability",
       isPrivate: true,
       category: "MENTAL_HEALTH",
-      status: "PRAYING",
+      status: "PRAYING" as const,
       assignedTo: churchAdmin,
     },
 
@@ -544,7 +819,7 @@ async function main() {
       request: "Needed provision for medical bills - God provided!",
       isPrivate: false,
       category: "PROVISION",
-      status: "ANSWERED",
+      status: "ANSWERED" as const,
       assignedTo: churchAdmin,
     },
     {
@@ -552,7 +827,7 @@ async function main() {
       request: "Daughter's health improving after prayer - thank you!",
       isPrivate: true,
       category: "HEALING",
-      status: "ANSWERED",
+      status: "ANSWERED" as const,
       assignedTo: churchStaff,
     },
     {
@@ -560,7 +835,7 @@ async function main() {
       request: "Found new job, God's timing was perfect",
       isPrivate: false,
       category: "PROVISION",
-      status: "ANSWERED",
+      status: "ANSWERED" as const,
       assignedTo: churchAdmin,
     },
   ];
@@ -603,21 +878,37 @@ async function main() {
   console.log("📊 Test Environment:");
   console.log("   🏢 Organization: Newlife Church");
   console.log("   📍 Locations: 2 (Bainbridge, Bremerton)");
-  console.log("   👥 Users: 4 (platform admin, owner, admin, staff)");
-  console.log("   📇 Connect Cards: 15");
+  console.log(
+    "   👥 Users: 7 (platform admin, owner, admin, 4 volunteer leaders)"
+  );
+  console.log("   📇 Connect Cards: ~950 total");
   console.log("      - 5 awaiting review");
-  console.log("      - 8 reviewed");
+  console.log("      - ~945 reviewed (52 weeks of history)");
   console.log("      - 2 with volunteer onboarding");
+  console.log("      - Full year of data for Last Year dropdown");
+  console.log("   📈 Trend Display: Green (this week above 4-week average)");
+  console.log("   📍 Location Distribution:");
+  console.log("      - Bainbridge: ~620 cards (larger campus)");
+  console.log("      - Bremerton: ~330 cards (smaller campus)");
   console.log("   👔 Volunteer Pipeline: 2 volunteers in onboarding");
   console.log("   🙏 Prayer Requests: 12 (4 pending, 5 praying, 3 answered)\n");
 
   console.log("🔐 Test Credentials (Email OTP):");
   console.log("   platform@test.com       (platform_admin)");
-  console.log("   test@playwright.dev     (church_owner)");
+  console.log("   test@playwright.dev     (church_owner - Pastor Mike)");
   console.log(
-    "   admin@newlife.test      (church_admin - Kids Ministry, Hospitality)"
+    "   admin@newlife.test      (church_admin - Sarah, Kids/Hospitality)"
   );
-  console.log("   staff@newlife.test      (staff - Worship)\n");
+  console.log("   staff@newlife.test      (staff - David, Worship/AV)");
+  console.log(
+    "   youth@newlife.test      (volunteer leader - Marcus, Youth/Small Groups)"
+  );
+  console.log(
+    "   greeter@newlife.test    (volunteer leader - Jennifer, Greeting/Parking)"
+  );
+  console.log(
+    "   prayer@newlife.test     (volunteer leader - Maria, Prayer Team)\n"
+  );
 
   console.log("🌐 Quick Access URLs:");
   const port = process.env.PORT || 3002;

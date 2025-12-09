@@ -56,13 +56,15 @@ export function ThemeVariantSwitcher() {
     <div className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground">Theme:</span>
       <Select value={currentTheme} onValueChange={handleThemeChange}>
-        <SelectTrigger className="h-7 w-36 text-xs">
+        <SelectTrigger size="sm" className="w-44 text-xs">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="primary">Primary</SelectItem>
           <SelectItem value="jetbrains-blue">JetBrains Blue</SelectItem>
           <SelectItem value="soft-pop">Soft Pop</SelectItem>
+          <SelectItem value="starry-night">Starry Night</SelectItem>
+          <SelectItem value="starry-night-main">Starry Night Main</SelectItem>
         </SelectContent>
       </Select>
     </div>

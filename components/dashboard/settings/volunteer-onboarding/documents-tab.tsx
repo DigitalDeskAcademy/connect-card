@@ -412,7 +412,11 @@ export function DocumentsTab({
           throw new Error(error.error || "Failed to get upload URL");
         }
 
-        const { presignedUrl, fileUrl } = await presignedResponse.json();
+        const {
+          presignedUrl,
+          key: fileKey,
+          fileUrl,
+        } = await presignedResponse.json();
 
         // 2. Upload file directly to S3
         await new Promise<void>((resolve, reject) => {
@@ -445,7 +449,7 @@ export function DocumentsTab({
           const result = await createVolunteerDocument(slug, {
             name: file.name.replace(/\.[^/.]+$/, ""), // Remove extension for display name
             fileName: file.name,
-            fileUrl,
+            fileKey, // Store S3 key, not full URL
             fileSize: file.size,
             mimeType: file.type,
             scope: uploadScope,

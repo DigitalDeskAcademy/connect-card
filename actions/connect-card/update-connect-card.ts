@@ -23,6 +23,7 @@ import {
   getVolunteerDocumentsText,
 } from "@/lib/email/templates/volunteer-documents";
 import { env } from "@/lib/env";
+import { getS3Url } from "@/lib/S3Client";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -524,7 +525,7 @@ export async function updateConnectCard(
           select: {
             name: true,
             description: true,
-            fileUrl: true,
+            fileKey: true,
           },
         });
 
@@ -552,7 +553,7 @@ export async function updateConnectCard(
             documents: documents.map(d => ({
               name: d.name,
               description: d.description,
-              fileUrl: d.fileUrl,
+              fileUrl: getS3Url(d.fileKey), // Construct URL from key
             })),
             backgroundCheckRequired:
               ministryRequirements?.backgroundCheckRequired ?? false,
@@ -571,7 +572,7 @@ export async function updateConnectCard(
             documents: documents.map(d => ({
               name: d.name,
               description: d.description,
-              fileUrl: d.fileUrl,
+              fileUrl: getS3Url(d.fileKey), // Construct URL from key
             })),
             backgroundCheckRequired:
               ministryRequirements?.backgroundCheckRequired ?? false,
