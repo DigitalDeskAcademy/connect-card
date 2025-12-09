@@ -577,10 +577,13 @@ model DataExport {
   exportedAt     DateTime         @default(now())
   /// When the file was downloaded (null if not yet downloaded)
   downloadedAt   DateTime?
+  /// When the export file expires and should be deleted (default: 30 days from creation)
+  expiresAt      DateTime?
 
   organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, exportedAt])
+  @@index([expiresAt])
   @@map("data_export")
 }
 
@@ -1679,7 +1682,9 @@ model VolunteerDocument {
   organizationId  String
   name            String
   fileName        String
-  fileUrl         String
+  /// S3 key (path) for the document - construct URL via getDocumentUrl() helper
+  /// Legacy data may contain full URLs which are handled gracefully
+  fileKey         String
   fileSize        Int
   mimeType        String
   scope           DocumentScope          @default(GLOBAL)
