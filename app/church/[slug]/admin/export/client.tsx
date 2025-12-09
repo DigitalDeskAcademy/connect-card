@@ -34,24 +34,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { PreviewTable } from "@/components/data-table";
+import { ColumnDef } from "@tanstack/react-table";
+import { DataTable, PreviewTable } from "@/components/data-table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
 import {
   Download,
   FileSpreadsheet,
@@ -266,6 +252,70 @@ export function ExportClient({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  // Column definitions for export history table
+  const historyColumns: ColumnDef<ExportHistoryItem>[] = useMemo(
+    () => [
+      {
+        accessorKey: "format",
+        header: "Format",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-2">
+            <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">
+              {formatLabel(row.original.format)}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "recordCount",
+        header: "Records",
+      },
+      {
+        accessorKey: "fileSizeBytes",
+        header: "Size",
+        cell: ({ row }) => formatBytes(row.original.fileSizeBytes),
+      },
+      {
+        accessorKey: "exportedAt",
+        header: "Date",
+        cell: ({ row }) => (
+          <div className="flex flex-col">
+            <span className="text-sm">
+              {format(new Date(row.original.exportedAt), "MMM d, yyyy")}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {formatDistanceToNow(new Date(row.original.exportedAt), {
+                addSuffix: true,
+              })}
+            </span>
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() =>
+              handleRedownload(row.original.id, row.original.fileName)
+            }
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Download
+          </Button>
+        ),
+        meta: {
+          className: "w-[100px]",
+        },
+      },
+    ],
+    [handleRedownload]
+  );
+
   return (
     <>
       <NavTabs
@@ -290,88 +340,19 @@ export function ExportClient({
                 <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-12 w-full" />
               </div>
-            ) : history.length > 0 ? (
-              <div className="rounded-md border flex-1 overflow-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="px-4 border-r last:border-r-0 border-border">
-                        Format
-                      </TableHead>
-                      <TableHead className="px-4 border-r last:border-r-0 border-border">
-                        Records
-                      </TableHead>
-                      <TableHead className="px-4 border-r last:border-r-0 border-border">
-                        Size
-                      </TableHead>
-                      <TableHead className="px-4 border-r last:border-r-0 border-border">
-                        Date
-                      </TableHead>
-                      <TableHead className="px-4 border-r last:border-r-0 border-border w-[100px]">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody className="[&_tr:last-child]:border-b">
-                    {history.map(item => (
-                      <TableRow key={item.id}>
-                        <TableCell className="px-4 border-r last:border-r-0 border-border">
-                          <div className="flex items-center gap-2">
-                            <FileSpreadsheet className="h-4 w-4 text-muted-foreground" />
-                            <span className="font-medium">
-                              {formatLabel(item.format)}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-4 border-r last:border-r-0 border-border">
-                          {item.recordCount}
-                        </TableCell>
-                        <TableCell className="px-4 border-r last:border-r-0 border-border">
-                          {formatBytes(item.fileSizeBytes)}
-                        </TableCell>
-                        <TableCell className="px-4 border-r last:border-r-0 border-border">
-                          <div className="flex flex-col">
-                            <span className="text-sm">
-                              {format(new Date(item.exportedAt), "MMM d, yyyy")}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDistanceToNow(new Date(item.exportedAt), {
-                                addSuffix: true,
-                              })}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="px-4 border-r last:border-r-0 border-border">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              handleRedownload(item.id, item.fileName)
-                            }
-                            className="gap-2"
-                          >
-                            <Download className="h-4 w-4" />
-                            Download
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
             ) : (
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <FileSpreadsheet className="h-8 w-8" />
-                  </EmptyMedia>
-                  <EmptyTitle>No exports yet</EmptyTitle>
-                  <EmptyDescription>
-                    Export your connect cards to see them here. You can
-                    re-download any previous export.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
+              <DataTable
+                columns={historyColumns}
+                data={history}
+                variant="compact"
+                wrapInCard={false}
+                emptyState={{
+                  icon: <FileSpreadsheet className="h-8 w-8" />,
+                  title: "No exports yet",
+                  description:
+                    "Export your connect cards to see them here. You can re-download any previous export.",
+                }}
+              />
             )}
           </CardContent>
         </Card>

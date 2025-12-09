@@ -10,8 +10,9 @@
  * - Delete documents
  */
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useCallback, useMemo } from "react";
 import { useDropzone, FileRejection } from "react-dropzone";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   Card,
   CardContent,
@@ -21,14 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/data-table";
 import {
   Accordion,
   AccordionContent,
@@ -240,6 +234,138 @@ function getPriorityBadge(priority: SuggestedTemplate["priority"]) {
     case "optional":
       return <Badge variant="outline">Optional</Badge>;
   }
+}
+
+// ============================================================================
+// Documents DataTable Component
+// ============================================================================
+
+interface DocumentsDataTableProps {
+  documents: DocumentData[];
+  onDelete: (id: string) => void;
+  isPending: boolean;
+}
+
+function DocumentsDataTable({
+  documents,
+  onDelete,
+  isPending,
+}: DocumentsDataTableProps) {
+  // Define columns with useMemo to avoid recreation on each render
+  const columns: ColumnDef<DocumentData>[] = useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: "Document",
+        cell: ({ row }) => {
+          const doc = row.original;
+          return (
+            <div className="flex items-center gap-3">
+              {getFileIcon(doc.mimeType)}
+              <div>
+                <p className="font-medium">{doc.name}</p>
+                <p className="text-xs text-muted-foreground">{doc.fileName}</p>
+              </div>
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "scope",
+        header: "Scope",
+        cell: ({ row }) => {
+          const doc = row.original;
+          return doc.scope === "GLOBAL" ? (
+            <Badge variant="secondary">All Volunteers</Badge>
+          ) : (
+            <Badge variant="outline">
+              {doc.category ? formatCategoryLabel(doc.category) : "Ministry"}
+            </Badge>
+          );
+        },
+      },
+      {
+        accessorKey: "fileSize",
+        header: () => <div className="text-right">Size</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            {formatFileSize(row.original.fileSize)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "deliveryCount",
+        header: () => <div className="text-right">Sent</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{row.original.deliveryCount}</div>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const doc = row.original;
+          return (
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" asChild>
+                <a href={doc.fileUrl} target="_blank" rel="noopener noreferrer">
+                  <IconExternalLink className="h-4 w-4" />
+                </a>
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    disabled={isPending}
+                  >
+                    <IconTrash className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Document</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete &quot;{doc.name}&quot;?
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => onDelete(doc.id)}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          );
+        },
+        meta: {
+          className: "w-[100px]",
+        },
+      },
+    ],
+    [isPending, onDelete]
+  );
+
+  return (
+    <DataTable
+      columns={columns}
+      data={documents}
+      variant="compact"
+      wrapInCard={false}
+      emptyState={{
+        icon: <IconFileText className="h-12 w-12 opacity-50" />,
+        title: "No documents uploaded yet",
+        description: "Upload your first document above",
+      }}
+    />
+  );
 }
 
 export function DocumentsTab({
@@ -527,104 +653,11 @@ export function DocumentsTab({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {documents.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <IconFileText className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>No documents uploaded yet</p>
-              <p className="text-sm">Upload your first document above</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Document</TableHead>
-                  <TableHead>Scope</TableHead>
-                  <TableHead className="text-right">Size</TableHead>
-                  <TableHead className="text-right">Sent</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {documents.map(doc => (
-                  <TableRow key={doc.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {getFileIcon(doc.mimeType)}
-                        <div>
-                          <p className="font-medium">{doc.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {doc.fileName}
-                          </p>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {doc.scope === "GLOBAL" ? (
-                        <Badge variant="secondary">All Volunteers</Badge>
-                      ) : (
-                        <Badge variant="outline">
-                          {doc.category
-                            ? formatCategoryLabel(doc.category)
-                            : "Ministry"}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {formatFileSize(doc.fileSize)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {doc.deliveryCount}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" asChild>
-                          <a
-                            href={doc.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <IconExternalLink className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-destructive hover:text-destructive"
-                              disabled={isPending}
-                            >
-                              <IconTrash className="h-4 w-4" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>
-                                Delete Document
-                              </AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete &quot;{doc.name}
-                                &quot;? This action cannot be undone.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDelete(doc.id)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+          <DocumentsDataTable
+            documents={documents}
+            onDelete={handleDelete}
+            isPending={isPending}
+          />
         </CardContent>
       </Card>
 
