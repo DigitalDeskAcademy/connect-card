@@ -17,6 +17,7 @@ import {
   getVolunteerDocumentsEmail,
   getVolunteerDocumentsText,
 } from "@/lib/email/templates/volunteer-documents";
+import { getS3Url } from "@/lib/S3Client";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -761,7 +762,7 @@ export async function processVolunteer(
                 },
               ],
             },
-            select: { name: true, description: true, fileUrl: true },
+            select: { name: true, description: true, fileKey: true },
           }),
           prisma.backgroundCheckConfig.findUnique({
             where: { organizationId: organization.id },
@@ -799,7 +800,7 @@ export async function processVolunteer(
           documents: documents.map(d => ({
             name: d.name,
             description: d.description,
-            fileUrl: d.fileUrl,
+            fileUrl: getS3Url(d.fileKey),
           })),
           backgroundCheckRequired:
             ministryRequirements?.backgroundCheckRequired ?? false,
@@ -818,7 +819,7 @@ export async function processVolunteer(
           documents: documents.map(d => ({
             name: d.name,
             description: d.description,
-            fileUrl: d.fileUrl,
+            fileUrl: getS3Url(d.fileKey),
           })),
           backgroundCheckRequired:
             ministryRequirements?.backgroundCheckRequired ?? false,

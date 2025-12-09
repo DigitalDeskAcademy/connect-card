@@ -187,8 +187,8 @@ export function Navbar() {
 
         {/* Right Side - User Actions and Authentication */}
         <div className="hidden md:flex md:items-center md:space-x-4">
-          {/* Theme Toggle - User preference and engagement (lg to match button height) */}
-          <ThemeToggle size="lg" />
+          {/* Theme Toggle - User preference and engagement */}
+          <ThemeToggle />
 
           {/* Authentication-Aware Action Area */}
           {isPending ? null : session ? (
