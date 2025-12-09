@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-07
+**Last Updated:** 2025-12-08
 
 ---
 
@@ -69,6 +69,12 @@ Churches lose 70% of first-time visitors because:
 - Directory with TanStack Table UI
 - Export tracking for ChMS sync (PR #52)
 - Two-pool model: specific ministry vs general volunteer
+- **Phase 2 MVP Automation** (PR #61):
+  - Auto-send welcome email with ministry documents on activation
+  - Token-based BG check confirmation page (`/volunteer/confirm/[token]`)
+  - Staff review queue with Approve/Flag actions
+  - Arcjet rate limiting for public endpoints
+  - Email service with audit logging (EmailLog table)
 
 **ChMS Export (COMPLETE)** - PR #48, #58
 
@@ -260,6 +266,26 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 8, 2025
+
+- ✅ **Volunteer Phase 2 MVP Automation** (PR #61)
+  - Auto-send welcome email with ministry documents on volunteer activation
+  - Token-based public confirmation page for BG check self-reporting
+  - Staff "BG Check Review" tab with Approve/Flag workflow
+  - Email service abstraction with environment-aware delivery
+  - Vitest testing setup with 37 unit/integration tests
+  - Rate limiting via Arcjet for public endpoints
+- ✅ E2E Phase 3 workflow tests + shared auth pattern (PR #60)
+  - Comprehensive connect card workflow tests
+  - Shared authentication setup for test suite
+  - Batch processing and review queue coverage
+- ✅ UI/UX improvements (merged to main)
+  - Dev component library page (`/dev/components`)
+  - Button hierarchy documentation
+  - Removed sidebar auto-close on connect-cards
+  - Cleaned up top-level page back buttons
+  - Starry Night Main theme registered
 
 ### Week of Dec 7, 2025
 

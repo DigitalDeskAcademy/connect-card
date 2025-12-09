@@ -577,10 +577,13 @@ model DataExport {
   exportedAt     DateTime         @default(now())
   /// When the file was downloaded (null if not yet downloaded)
   downloadedAt   DateTime?
+  /// When the export file expires and should be deleted (default: 30 days from creation)
+  expiresAt      DateTime?
 
   organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId, exportedAt])
+  @@index([expiresAt])
   @@map("data_export")
 }
 
@@ -843,6 +846,10 @@ model Volunteer {
   backgroundCheckDate   DateTime?
   /// Background check expiration date (typically 2-3 years)
   backgroundCheckExpiry DateTime?
+  /// Unique token for BG check self-report confirmation link
+  bgCheckToken          String?                    @unique
+  /// When volunteer self-reported BG check completion via confirmation link
+  bgCheckConfirmedAt    DateTime?
   /// Whether volunteer is ready to be exported to ChMS (BG check done + docs sent)
   readyForExport        Boolean                    @default(false)
   /// Date when volunteer was marked ready for export
@@ -1118,6 +1125,8 @@ enum BackgroundCheckStatus {
   NOT_STARTED
   /// Background check in progress
   IN_PROGRESS
+  /// Volunteer self-reported completion, awaiting staff verification
+  PENDING_REVIEW
   /// Background check completed and passed
   CLEARED
   /// Background check failed or flagged
@@ -1644,8 +1653,6 @@ enum BGCheckPayment {
   CHURCH_PAID
   /// Volunteer pays for background check
   VOLUNTEER_PAID
-  /// Cost is split/subsidized
-  SUBSIDIZED
 }
 
 /// Ministry requirements configuration per category
@@ -1679,7 +1686,9 @@ model VolunteerDocument {
   organizationId  String
   name            String
   fileName        String
-  fileUrl         String
+  /// S3 key (path) for the document - construct URL via getDocumentUrl() helper
+  /// Legacy data may contain full URLs which are handled gracefully
+  fileKey         String
   fileSize        Int
   mimeType        String
   scope           DocumentScope          @default(GLOBAL)
@@ -1753,4 +1762,52 @@ model MessageTemplate {
 
   @@index([organizationId])
   @@map("message_template")
+}
+
+// ============================================================================
+// EMAIL AUDIT LOG
+// ============================================================================
+
+/// Email delivery audit log for tracking all outbound emails
+/// Supports retry logic, debugging, and compliance requirements
+model EmailLog {
+  id             String      @id @default(cuid())
+  /// Organization for multi-tenant isolation (optional for system emails)
+  organizationId String?
+  /// Recipient email address
+  to             String
+  /// Sender email address
+  from           String
+  /// Email subject line
+  subject        String
+  /// Delivery status
+  status         EmailStatus @default(PENDING)
+  /// Resend message ID (if sent via Resend)
+  resendId       String?
+  /// Error message if delivery failed
+  error          String?
+  /// Additional metadata (JSON: templateName, volunteerId, etc.)
+  metadata       Json?
+  /// When email was actually sent (null if not sent)
+  sentAt         DateTime?
+  /// When this log entry was created
+  createdAt      DateTime    @default(now())
+
+  @@index([organizationId])
+  @@index([organizationId, status])
+  @@index([to])
+  @@index([createdAt])
+  @@map("email_log")
+}
+
+/// Email delivery status for audit logging
+enum EmailStatus {
+  /// Email queued but not yet processed
+  PENDING
+  /// Email successfully sent to provider
+  SENT
+  /// Email delivery failed
+  FAILED
+  /// Email skipped (dev mode, invalid recipient, etc.)
+  SKIPPED
 }

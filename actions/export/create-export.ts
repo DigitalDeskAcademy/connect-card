@@ -191,7 +191,10 @@ export async function createExport(
       })
     );
 
-    // 9. Create export record in database
+    // 9. Create export record in database (expires in 30 days)
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 30);
+
     const exportRecord = await prisma.dataExport.create({
       data: {
         organizationId: organization.id,
@@ -202,6 +205,7 @@ export async function createExport(
         fileKey,
         fileSizeBytes,
         exportedBy: session.user.id,
+        expiresAt,
       },
     });
 

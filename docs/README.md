@@ -8,37 +8,46 @@
 
 **For Any Worktree Session:**
 
-1. **CHECK FIRST:** `WORKTREE-STATUS.md` - What should I work on?
-2. Read your feature's vision doc in `features/{feature}/vision.md`
-3. Reference `PLAYBOOK.md` for technical patterns
+1. **CHECK FIRST:** `/CLAUDE.md` - AI assistant context
+2. **CHECK SECOND:** `WORKTREE-STATUS.md` - What should I work on?
+3. **CHECK THIRD:** `FINISH-LINE.md` - What's blocking MVP?
+4. Reference `PLAYBOOK.md` for technical patterns
 
 **For New Developers:**
 
-1. Read `WORKTREE-STATUS.md` - Project dashboard and worktree assignments
-2. Read `PLAYBOOK.md` - THE technical guide (patterns, blockers, debt)
-3. Read `PROJECT.md` - Business context and roadmap
-4. Read `essentials/coding-patterns.md` - How to write code
+1. Read `/CLAUDE.md` - Project overview and tech stack
+2. Read `WORKTREE-STATUS.md` - Project dashboard and worktree assignments
+3. Read `PLAYBOOK.md` - THE technical guide (patterns, blockers, debt)
+4. Read `PROJECT.md` - Business context and roadmap
+5. Read `essentials/coding-patterns.md` - How to write code
 
 **For AI Sessions:**
 
-1. **Start with `WORKTREE-STATUS.md`** - Know which worktree you're in and what to do
-2. Check `PLAYBOOK.md` - Technical single source of truth
-3. Reference `features/{feature}/vision.md` - Detailed feature planning
+1. **Start with `/CLAUDE.md`** - Technical context and patterns
+2. Check `WORKTREE-STATUS.md` - Know which worktree needs work
+3. Check `FINISH-LINE.md` - What's blocking MVP?
+4. Reference `PLAYBOOK.md` - Technical single source of truth
+5. Reference `features/{feature}/vision.md` - Detailed feature planning
 
 ---
 
 ## 📁 Documentation Structure
 
 ```
+/CLAUDE.md                       # ← AI ASSISTANT: Read first (project context)
+
 docs/
-├── 🔴 PLAYBOOK.md               # ← THE GUIDE: Technical single source of truth
+├── WORKTREE-STATUS.md           # ← PROJECT DASHBOARD: What to work on
+├── FINISH-LINE.md               # ← MVP CHECKLIST: What's blocking launch
+├── 🔴 PLAYBOOK.md               # ← THE LAW: Technical patterns & standards
 ├── PROJECT.md                   # ← Business overview (vision, status, roadmap)
 │
 ├── features/                    # ← Feature specs (detailed planning)
 │   ├── connect-cards/vision.md
-│   ├── member-management/vision.md
-│   ├── prayer-management/vision.md
-│   └── volunteer-management/vision.md
+│   ├── prayer/vision.md
+│   ├── volunteer/vision.md
+│   ├── tech-debt/vision.md
+│   └── integrations/vision.md
 │
 ├── essentials/                  # ← Core guides (how to build)
 │   ├── architecture.md          # System design & decisions
@@ -206,5 +215,5 @@ GoHighLevel, Stripe, Tigris S3, Better Auth integration details
 
 ---
 
-**Last Updated:** 2025-11-25
-**Total Files:** 2 main docs + feature docs (simplified from 10+ files)
+**Last Updated:** 2025-12-06
+**Total Files:** CLAUDE.md + 4 core docs + feature docs
