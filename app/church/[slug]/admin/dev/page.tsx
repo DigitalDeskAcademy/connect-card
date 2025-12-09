@@ -9,7 +9,10 @@ import {
   IconPlugConnected,
   IconDashboard,
   IconRocket,
+  IconPalette,
 } from "@tabler/icons-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface Task {
   label: string;
@@ -358,7 +361,17 @@ export default async function DevDashboardPage({
   ];
 
   return (
-    <PageContainer as="main" backButton={{ href: `/church/${slug}/admin` }}>
+    <PageContainer as="main">
+      {/* Quick Links */}
+      <div className="flex gap-3 mb-6">
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/church/${slug}/admin/dev/components`}>
+            <IconPalette className="mr-2 h-4 w-4" />
+            Component Library
+          </Link>
+        </Button>
+      </div>
+
       <DemoReadyChecklist />
 
       <h2 className="text-lg font-semibold mb-4">Worktree Progress</h2>
