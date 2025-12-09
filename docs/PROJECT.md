@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-06
+**Last Updated:** 2025-12-08
 
 ---
 
@@ -127,8 +127,13 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 **Goal:** First church using in production
 
 - [x] Dashboard UI/UX - Quick action cards for staff workflows → `main` ✅
-- [ ] Card Format Onboarding - AI-guided field mapping for unique connect cards → `connect-card` worktree
-  - See `/docs/features/connect-cards/card-format-variance.md`
+- [x] Theme system with multiple variants (PR #54, #55) → `main` ✅
+- [ ] **Onboarding & Card Mapping** → `main` worktree (NEW)
+  - Implementation plan: `/docs/features/onboarding/implementation-plan.md`
+  - Hybrid onboarding: Setup checklist + AI-powered card mapping
+  - Universal field detection (works without template)
+  - Optional template creation for custom fields
+  - Accuracy tracking via staff corrections
 - [ ] Onboard pilot church (6 locations)
 - [ ] Process 100+ real cards
 - [ ] Gather feedback
@@ -255,6 +260,31 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 8, 2025
+
+- ✅ E2E Phase 3 workflow tests + shared auth pattern (PR #60)
+  - Comprehensive connect card workflow tests
+  - Shared authentication setup for test suite
+  - Batch processing and review queue coverage
+- ✅ UI/UX improvements (merged to main)
+  - Dev component library page (`/dev/components`)
+  - Button hierarchy documentation
+  - Removed sidebar auto-close on connect-cards
+  - Cleaned up top-level page back buttons
+  - Starry Night Main theme registered
+
+### Week of Dec 7, 2025
+
+- ✅ Onboarding & Card Mapping plan complete (PR #59)
+  - Implementation plan: 5 phases, all data models defined
+  - Hybrid approach: AI fallback + optional templates
+  - Setup checklist with tiered steps
+  - Accuracy tracking via staff corrections
+- ✅ Starry Night theme added (PR #59)
+- ✅ CLAUDE.md coding guidelines created (PR #59)
+- ✅ FINISH-LINE.md MVP checklist created (PR #59)
+- ✅ DataTable consolidation for export (PR #58)
 
 ### Week of Dec 6, 2025
 

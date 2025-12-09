@@ -69,14 +69,7 @@ export default async function ChurchVolunteersPage({
   // - Platform admins see all (but shouldn't access this route directly)
 
   return (
-    <PageContainer
-      variant="tabs"
-      as="main"
-      backButton={{
-        href: `/church/${slug}/admin`,
-        label: "Back",
-      }}
-    >
+    <PageContainer variant="tabs" as="main">
       <VolunteersClient
         volunteers={volunteers}
         slug={slug}

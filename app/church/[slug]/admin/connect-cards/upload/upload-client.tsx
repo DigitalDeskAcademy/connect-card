@@ -952,7 +952,7 @@ export function ConnectCardUploadClient({
                 <p className="text-sm text-muted-foreground mb-4">
                   or click to browse files
                 </p>
-                <Button variant="outline">Select Images</Button>
+                <Button>Select Images</Button>
               </CardContent>
             </Card>
           </TabsContent>
