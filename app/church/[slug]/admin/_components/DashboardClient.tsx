@@ -20,24 +20,174 @@ interface Location {
   slug: string;
 }
 
+interface SectionState {
+  quickActions: boolean;
+  kpiCards: boolean;
+  chart: boolean;
+  prayerCategories: boolean;
+}
+
 interface DashboardClientProps {
   slug: string;
   organizationId: string;
   locations: Location[];
   cumulativeAnalytics: ConnectCardAnalytics;
   chartData: ConnectCardChartDataPoint[];
+  /** Pre-fetched analytics for each location keyed by slug */
+  locationAnalytics: Record<
+    string,
+    { analytics: ConnectCardAnalytics; chartData: ConnectCardChartDataPoint[] }
+  >;
   /** User's default location slug. Null if user can see all locations. */
   userDefaultLocationSlug: string | null;
   /** Whether user has permission to see all locations */
   canSeeAllLocations: boolean;
 }
 
+/** Reusable KPI card for dashboard metrics */
+function KPICard({
+  title,
+  icon: Icon,
+  value,
+  average,
+  trend,
+}: {
+  title: string;
+  icon: typeof FileText;
+  value: number;
+  average: number;
+  trend: number;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <Icon className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">{value}</div>
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-xs text-muted-foreground">vs {average} avg</p>
+          <TrendBadge trend={trend} />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Reusable dashboard content for both cumulative and location tabs */
+function DashboardContent({
+  analytics,
+  chartData,
+  locationName,
+  sections,
+  onToggleSection,
+}: {
+  analytics: ConnectCardAnalytics;
+  chartData: ConnectCardChartDataPoint[];
+  locationName?: string;
+  sections: SectionState;
+  onToggleSection: (key: keyof SectionState) => void;
+}) {
+  const kpiTitle = locationName
+    ? `${locationName} - This Week's Metrics`
+    : "This Week's Metrics";
+
+  return (
+    <>
+      {/* KPI Cards */}
+      <CollapsibleSection
+        title={kpiTitle}
+        isOpen={sections.kpiCards}
+        onToggle={() => onToggleSection("kpiCards")}
+      >
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KPICard
+            title="This Week"
+            icon={FileText}
+            value={analytics.thisWeek.totalCards}
+            average={analytics.fourWeekAverage.totalCards}
+            trend={analytics.trends.totalCards}
+          />
+          <KPICard
+            title="First-Time Visitors"
+            icon={UserPlus}
+            value={analytics.thisWeek.firstTimeVisitors}
+            average={analytics.fourWeekAverage.firstTimeVisitors}
+            trend={analytics.trends.firstTimeVisitors}
+          />
+          <KPICard
+            title="Prayer Requests"
+            icon={Heart}
+            value={analytics.thisWeek.prayerRequests}
+            average={analytics.fourWeekAverage.prayerRequests}
+            trend={analytics.trends.prayerRequests}
+          />
+          <KPICard
+            title="Volunteer Interest"
+            icon={Users}
+            value={analytics.thisWeek.volunteersInterested}
+            average={analytics.fourWeekAverage.volunteersInterested}
+            trend={analytics.trends.volunteersInterested}
+          />
+        </div>
+      </CollapsibleSection>
+
+      {/* Activity Chart */}
+      <CollapsibleSection
+        title="Activity Chart"
+        isOpen={sections.chart}
+        onToggle={() => onToggleSection("chart")}
+      >
+        <ConnectCardChart data={chartData} />
+      </CollapsibleSection>
+
+      {/* Top Prayer Categories */}
+      {analytics.topPrayerCategories.length > 0 && (
+        <CollapsibleSection
+          title="Top Prayer Categories"
+          isOpen={sections.prayerCategories}
+          onToggle={() => onToggleSection("prayerCategories")}
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium">
+                Top Prayer Categories This Week
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                {analytics.topPrayerCategories.map((category, index) => (
+                  <div
+                    key={category.category}
+                    className="flex items-center gap-2"
+                  >
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {index + 1}.
+                    </span>
+                    <span className="text-sm font-medium capitalize">
+                      {category.category}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      ({category.count})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </CollapsibleSection>
+      )}
+    </>
+  );
+}
+
 export function DashboardClient({
   slug,
-  organizationId, // eslint-disable-line @typescript-eslint/no-unused-vars -- Future: used with locationId for per-tab analytics fetching
   locations,
   cumulativeAnalytics,
   chartData,
+  locationAnalytics,
   userDefaultLocationSlug,
   canSeeAllLocations,
 }: DashboardClientProps) {
@@ -46,7 +196,7 @@ export function DashboardClient({
   const [selectedTab, setSelectedTab] = useState(defaultTab);
 
   // Section collapsed states (persisted to localStorage)
-  const [sections, setSections] = useLocalStorage<Record<string, boolean>>(
+  const [sections, setSections] = useLocalStorage<SectionState>(
     "dashboard-sections",
     {
       quickActions: true,
@@ -56,13 +206,9 @@ export function DashboardClient({
     }
   );
 
-  const toggleSection = (key: string) => {
+  const toggleSection = (key: keyof SectionState) => {
     setSections(prev => ({ ...prev, [key]: !prev[key] }));
   };
-
-  // For now, we'll just show cumulative data
-  // In the future, we can add dynamic fetching per tab using organizationId + locationId
-  const analytics = cumulativeAnalytics;
 
   // Filter locations for display based on user permissions
   const visibleLocations = canSeeAllLocations
@@ -113,148 +259,35 @@ export function DashboardClient({
 
       {/* Cumulative Tab Content */}
       <TabsContent value="cumulative" className="mt-0 space-y-6">
-        {/* KPI Cards */}
-        <CollapsibleSection
-          title="This Week's Metrics"
-          isOpen={sections.kpiCards}
-          onToggle={() => toggleSection("kpiCards")}
-        >
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">This Week</CardTitle>
-                <FileText className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analytics.thisWeek.totalCards}
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-muted-foreground">
-                    vs {analytics.fourWeekAverage.totalCards} avg
-                  </p>
-                  <TrendBadge trend={analytics.trends.totalCards} />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  First-Time Visitors
-                </CardTitle>
-                <UserPlus className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analytics.thisWeek.firstTimeVisitors}
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-muted-foreground">
-                    vs {analytics.fourWeekAverage.firstTimeVisitors} avg
-                  </p>
-                  <TrendBadge trend={analytics.trends.firstTimeVisitors} />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Prayer Requests
-                </CardTitle>
-                <Heart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analytics.thisWeek.prayerRequests}
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-muted-foreground">
-                    vs {analytics.fourWeekAverage.prayerRequests} avg
-                  </p>
-                  <TrendBadge trend={analytics.trends.prayerRequests} />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Volunteer Interest
-                </CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {analytics.thisWeek.volunteersInterested}
-                </div>
-                <div className="flex items-center justify-between mt-1">
-                  <p className="text-xs text-muted-foreground">
-                    vs {analytics.fourWeekAverage.volunteersInterested} avg
-                  </p>
-                  <TrendBadge trend={analytics.trends.volunteersInterested} />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </CollapsibleSection>
-
-        {/* Activity Chart */}
-        <CollapsibleSection
-          title="Activity Chart"
-          isOpen={sections.chart}
-          onToggle={() => toggleSection("chart")}
-        >
-          <ConnectCardChart data={chartData} />
-        </CollapsibleSection>
-
-        {/* Top Prayer Categories */}
-        {analytics.topPrayerCategories.length > 0 && (
-          <CollapsibleSection
-            title="Top Prayer Categories"
-            isOpen={sections.prayerCategories}
-            onToggle={() => toggleSection("prayerCategories")}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm font-medium">
-                  Top Prayer Categories This Week
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-4">
-                  {analytics.topPrayerCategories.map((category, index) => (
-                    <div
-                      key={category.category}
-                      className="flex items-center gap-2"
-                    >
-                      <span className="text-sm font-medium text-muted-foreground">
-                        {index + 1}.
-                      </span>
-                      <span className="text-sm font-medium capitalize">
-                        {category.category}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        ({category.count})
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </CollapsibleSection>
-        )}
+        <DashboardContent
+          analytics={cumulativeAnalytics}
+          chartData={chartData}
+          sections={sections}
+          onToggleSection={toggleSection}
+        />
       </TabsContent>
 
-      {/* Location Tabs (same structure for each location) */}
-      {visibleLocations.map(location => (
-        <TabsContent key={location.slug} value={location.slug} className="mt-0">
-          <div className="text-center text-muted-foreground py-12">
-            Per-location analytics coming soon for {location.name}
-          </div>
-        </TabsContent>
-      ))}
+      {/* Location Tabs */}
+      {visibleLocations.map(location => {
+        const locData = locationAnalytics[location.slug];
+        if (!locData) return null;
+
+        return (
+          <TabsContent
+            key={location.slug}
+            value={location.slug}
+            className="mt-0 space-y-6"
+          >
+            <DashboardContent
+              analytics={locData.analytics}
+              chartData={locData.chartData}
+              locationName={location.name}
+              sections={sections}
+              onToggleSection={toggleSection}
+            />
+          </TabsContent>
+        );
+      })}
     </Tabs>
   );
 }
