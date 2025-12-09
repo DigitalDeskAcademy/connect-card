@@ -10,6 +10,7 @@ import {
   IconDashboard,
   IconRocket,
   IconPalette,
+  IconQrcode,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,17 @@ function DemoReadyChecklist() {
         { label: "Sample data seeded", completed: false },
       ],
     },
+    {
+      title: "QR Code Connect Cards",
+      items: [
+        { label: "ConnectCardQRCode Prisma model", completed: false },
+        { label: "Public /connect/[token] route", completed: false },
+        { label: "Digital connect card form", completed: false },
+        { label: "QR code generator (admin)", completed: false },
+        { label: "QR management UI", completed: false },
+        { label: "Scan analytics tracking", completed: false },
+      ],
+    },
   ];
 
   const totalItems = sections.reduce((acc, s) => acc + s.items.length, 0);
@@ -116,7 +128,7 @@ function DemoReadyChecklist() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
           {sections.map(section => (
             <div key={section.title}>
               <h4 className="font-medium text-sm mb-2">{section.title}</h4>
@@ -367,6 +379,27 @@ export default async function DevDashboardPage({
       wishlist: [
         { label: "Analytics dashboard", completed: false },
         { label: "Mobile responsive polish", completed: false },
+      ],
+    },
+    {
+      name: "QR Code Cards",
+      branch: "main",
+      status: "in-progress",
+      statusLabel: "In Progress",
+      icon: <IconQrcode className="h-5 w-5" />,
+      tasks: [
+        { label: "Add qrcode dependency", completed: false },
+        { label: "ConnectCardQRCode Prisma model", completed: false },
+        { label: "Public /connect/[token] route", completed: false },
+        { label: "Digital connect card form", completed: false },
+        { label: "Form submission server action", completed: false },
+        { label: "QR code generator component", completed: false },
+        { label: "Admin QR management UI", completed: false },
+      ],
+      wishlist: [
+        { label: "Scan analytics dashboard", completed: false },
+        { label: "QR code expiration", completed: false },
+        { label: "Branded QR codes with logo", completed: false },
       ],
     },
   ];
