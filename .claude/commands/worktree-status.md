@@ -7,13 +7,11 @@ argument-hint: [worktree-name]
 
 **Worktree:** `$ARGUMENTS` (if empty, use current directory)
 
-Provide comprehensive, brutally honest analysis of worktree status, progress, and recommended next actions.
+Provide comprehensive, brutally honest analysis of **THIS worktree only**. Do NOT compare to or suggest switching to other worktrees - they may have parallel work in progress with uncommitted changes.
 
 ---
 
-## Stage 1: Gather Context (Use Subagents in Parallel)
-
-**IMPORTANT:** Use the `Task` tool with `subagent_type="Explore"` to gather these in parallel for speed.
+## Stage 1: Gather Context
 
 ### 1.1 Determine Current Worktree
 
@@ -64,21 +62,19 @@ echo "=== Last Activity ==="
 git log -1 --format="%cr (%ci)"
 ```
 
-### 1.3 Recent PRs
+### 1.3 Recent PRs from This Branch
 
 ```bash
-# Recent merged PRs to main (context for what's shipped)
-gh pr list --state merged --limit 5 --json number,title,mergedAt 2>/dev/null || echo "GitHub CLI not available"
+# PRs from this branch (open or merged)
+gh pr list --head $(git branch --show-current) --state all --limit 3 --json number,title,state,mergedAt 2>/dev/null || echo "GitHub CLI not available"
 ```
 
 ### 1.4 Documentation State
 
-Read these files to understand documented status:
+Read these files to understand documented status for THIS worktree:
 
-1. **`docs/WORKTREE-STATUS.md`** - What does it claim about this worktree?
-2. **`docs/PROJECT.md`** - Current phase, roadmap priorities
-3. **`docs/PLAYBOOK.md`** - Any blockers or critical issues?
-4. **Feature vision doc** based on current branch:
+1. **`docs/WORKTREE-STATUS.md`** - Find the section for this worktree only
+2. **Feature vision doc** based on current branch:
    - `feature/connect-card` → `docs/features/connect-cards/vision.md`
    - `feature/prayer*` → `docs/features/prayer/vision.md`
    - `feature/volunteer*` → `docs/features/volunteer/vision.md`
@@ -91,7 +87,7 @@ Read these files to understand documented status:
 Read `app/church/[slug]/admin/dev/page.tsx`:
 
 - Find the `worktrees` array
-- Locate the card matching this branch
+- Locate the card matching THIS branch only
 - Extract:
   - `status` and `statusLabel`
   - `tasks` array (what's completed vs pending)
@@ -107,47 +103,35 @@ If uncommitted files > 5:
 
 ---
 
-## Stage 2: Analysis (Be Direct and Honest)
+## Stage 2: Analysis (This Worktree Only)
 
 ### Compare Reality vs Documentation
 
-Ask these questions and answer honestly:
+Ask these questions about THIS worktree only:
 
-1. **Is documentation accurate?**
+1. **Is documentation accurate for this worktree?**
 
-   - Does WORKTREE-STATUS.md reflect actual git state?
-   - Are dev dashboard checkboxes current?
+   - Does WORKTREE-STATUS.md section reflect actual git state?
+   - Are dev dashboard checkboxes current for this worktree?
    - Does the vision doc status match reality?
 
-2. **What's actually been accomplished?**
+2. **What's actually been accomplished here?**
 
    - Check recent commits - what was built?
-   - Check merged PRs - has work already shipped to main?
+   - Check merged PRs from this branch - has work already shipped?
    - Look at uncommitted files - is there untracked WIP?
 
-3. **Is this work active or abandoned?**
+3. **Is this worktree's work active or stale?**
    - When was the last commit? (> 3 days = needs attention)
-   - When was the last activity? (> 5 days = possibly abandoned)
+   - When was the last activity? (> 5 days = possibly stale)
 
 ### Assess Worktree Health
 
 - **Merge risk:** How far behind main? (> 10 commits = sync soon)
-- **Completion:** What % is actually done vs claimed?
-- **Priority:** Is this the most important thing to work on?
-- **Dependencies:** Does anything block or depend on this?
+- **Completion:** What % of THIS worktree's tasks are done vs claimed?
+- **Blockers:** Is anything blocking progress on THIS worktree?
 
-### Priority Check
-
-From `docs/WORKTREE-STATUS.md`, the priority order is:
-
-1. prayer → Server actions (BLOCKING)
-2. volunteer → Ready for export flag
-3. connect-card → Card format onboarding
-4. integrations → Phase 2 API
-5. tech-debt → Phase 2 Performance
-6. main → Project management
-
-If working on lower priority, call it out.
+**IMPORTANT:** Do NOT check or comment on other worktrees. They may have parallel work with uncommitted changes.
 
 ---
 
@@ -177,7 +161,7 @@ Path: [full path]
 ## Progress Assessment
 
 **Documentation claims:**
-> [Quote from WORKTREE-STATUS.md and vision doc]
+> [Quote from WORKTREE-STATUS.md section for this worktree]
 
 **Reality:**
 [What's actually true based on code/commits/PRs]
@@ -193,25 +177,14 @@ Path: [full path]
 
 Summary: X/Y tasks actually complete
 
-## Health Verdict: [🟢 Healthy | 🟡 Needs Attention | 🔴 Critical | ⚫ Abandoned]
+## Health Verdict: [🟢 Healthy | 🟡 Needs Attention | 🔴 Critical | ⚫ Stale]
 
 [Honest assessment paragraph. Examples:]
 
 🟢 "Active development, on track, docs accurate."
 🟡 "15 commits behind main - sync soon or face merge conflicts."
 🔴 "58 uncommitted files for 14+ hours. Commit or risk losing work."
-⚫ "Last activity 5 days ago. Is this abandoned?"
-
-## Priority Check
-
-Current priority order:
-1. [priority 1] ← [status]
-2. [priority 2] ← [status]
-...
-
-This worktree is priority #X.
-
-[If not #1]: "⚠️ [Higher priority] needs attention first because [reason]."
+⚫ "Last activity 5 days ago in this worktree. Resume or stash?"
 
 ## Recommended Action
 
@@ -225,7 +198,7 @@ gh pr create --title "[suggested title]" --body "## Summary\n- [bullet points]"
 \`\`\`
 
 ### 💻 KEEP WORKING
-Continue current work. Next tasks:
+Continue current work. Next tasks for this worktree:
 1. [specific task]
 2. [specific task]
 
@@ -242,18 +215,10 @@ git add .
 git commit -m "wip: [suggested message based on files]"
 \`\`\`
 
-### 🔀 SWITCH GEARS
-[Other worktree] is higher priority.
-\`\`\`bash
-cd /home/digitaldesk/Desktop/church-connect-hub/[worktree]
-/worktree-status
-\`\`\`
-
-### 🧹 CLEAN UP
-This work appears stale. Options:
-1. Resume and finish
+### 🧹 RESUME OR STASH
+This worktree hasn't been touched in a while. Options:
+1. Resume and finish the current phase
 2. Stash and revisit later: `git stash push -m "[description]"`
-3. Abandon: `git checkout . && git clean -fd`
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
@@ -264,37 +229,35 @@ This work appears stale. Options:
 
 **DO:**
 
-- Be direct and specific
+- Be direct and specific about THIS worktree
 - Point out stale documentation ("Docs say X but reality is Y")
-- Call out abandoned work ("Last commit 5 days ago - is this dead?")
+- Call out if this worktree seems stale
 - Compare claimed progress to actual commits
-- Give specific actionable commands
-- Prioritize based on project roadmap
+- Give specific actionable commands for THIS worktree
 
 **DON'T:**
 
+- Compare to other worktrees or suggest switching
+- Assume other worktrees are abandoned (they may have uncommitted WIP)
+- Use priority order to suggest working elsewhere
 - Be agreeable just to be nice
 - Assume documentation is accurate
-- Give vague advice ("keep working on things")
-- Skip hard questions ("should we abandon this?")
-- Ignore priority order
 
-**Example harsh feedback:**
+**Example feedback (this worktree only):**
 
 - "This worktree has 58 uncommitted files from 14 hours ago. Either commit this work or it's going to cause merge hell."
-- "Documentation says 'In Progress' but the last commit was 3 days ago. Is this abandoned?"
+- "Documentation says 'In Progress' but the last commit here was 3 days ago. Is this stale?"
 - "You're 20 commits behind main. Sync before doing anything else."
-- "The dev dashboard shows 0/6 tasks complete but PRs #47 and #48 already shipped these features. Documentation is lying to you."
-- "Prayer worktree is BLOCKING and hasn't been touched. Why are you here instead?"
+- "The dev dashboard shows 0/6 tasks complete but PRs from this branch already shipped these features. Update the dashboard."
 
 ---
 
 ## Performance Notes
 
-- Use `Task` tool with `subagent_type="Explore"` to gather git state, docs, and dev dashboard in parallel
 - Skip files not relevant to current worktree
 - Target: Complete analysis in < 30 seconds
 - Don't run TypeScript checks unless specifically asked (slow)
+- Only read docs/dashboard sections for THIS worktree
 
 ---
 
