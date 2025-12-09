@@ -83,7 +83,7 @@ const formSchema = z.object({
   ]),
   applicationUrl: z.string().url("Please enter a valid URL").or(z.literal("")),
   providerAccountId: z.string().optional(),
-  paymentModel: z.enum(["CHURCH_PAID", "VOLUNTEER_PAID", "SUBSIDIZED"]),
+  paymentModel: z.enum(["CHURCH_PAID", "VOLUNTEER_PAID"]),
   validityMonths: z.number().min(6).max(60),
   instructions: z.string().optional(),
   isEnabled: z.boolean(),
@@ -137,10 +137,6 @@ const paymentModelInfo: Record<string, { label: string; description: string }> =
     VOLUNTEER_PAID: {
       label: "Volunteer Paid",
       description: "Volunteers pay for their own background check.",
-    },
-    SUBSIDIZED: {
-      label: "Subsidized",
-      description: "Church pays part, volunteer pays the rest.",
     },
   };
 

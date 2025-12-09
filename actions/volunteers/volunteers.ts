@@ -6,11 +6,17 @@ import { prisma } from "@/lib/db";
 import {
   BackgroundCheckStatus,
   VolunteerCategoryType,
+  DocumentScope,
 } from "@/lib/generated/prisma";
 import { ApiResponse } from "@/lib/types";
 import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { volunteerSchema, type VolunteerSchemaType } from "@/lib/zodSchemas";
+import { sendEmail } from "@/lib/email/service";
+import {
+  getVolunteerDocumentsEmail,
+  getVolunteerDocumentsText,
+} from "@/lib/email/templates/volunteer-documents";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -679,7 +685,7 @@ export async function processVolunteer(
       select: {
         id: true,
         documentsSentAt: true,
-        churchMember: { select: { name: true } },
+        churchMember: { select: { name: true, email: true } },
         categories: { select: { category: true } },
       },
     });
@@ -727,18 +733,249 @@ export async function processVolunteer(
       });
     }
 
-    // 7. Revalidate relevant pages
+    // 7. Send welcome email with documents + BG check link (if volunteer has email)
+    let documentsSent = false;
+    if (volunteer.churchMember.email && categories.length > 0) {
+      // Use first category for ministry-specific requirements/docs
+      const primaryCategory = categories[0] as VolunteerCategoryType;
+
+      // Fetch ministry requirements, documents, and BG check config in parallel
+      const [ministryRequirements, documents, bgCheckConfig] =
+        await Promise.all([
+          prisma.ministryRequirements.findUnique({
+            where: {
+              organizationId_category: {
+                organizationId: organization.id,
+                category: primaryCategory,
+              },
+            },
+          }),
+          prisma.volunteerDocument.findMany({
+            where: {
+              organizationId: organization.id,
+              OR: [
+                { scope: DocumentScope.GLOBAL },
+                {
+                  scope: DocumentScope.MINISTRY_SPECIFIC,
+                  category: primaryCategory,
+                },
+              ],
+            },
+            select: { name: true, description: true, fileUrl: true },
+          }),
+          prisma.backgroundCheckConfig.findUnique({
+            where: { organizationId: organization.id },
+          }),
+        ]);
+
+      // Only send email if there's content to send
+      const hasContent =
+        documents.length > 0 ||
+        (ministryRequirements?.backgroundCheckRequired &&
+          bgCheckConfig?.applicationUrl) ||
+        (ministryRequirements?.trainingRequired &&
+          ministryRequirements?.trainingUrl);
+
+      if (hasContent) {
+        const categoryDisplay = primaryCategory
+          .split("_")
+          .map(w => w.charAt(0) + w.slice(1).toLowerCase())
+          .join(" ");
+
+        // Generate BG check confirmation token if BG check is required
+        // GHL will use this token in follow-up SMS/email sequences
+        if (ministryRequirements?.backgroundCheckRequired) {
+          const token = crypto.randomUUID();
+          await prisma.volunteer.update({
+            where: { id: volunteerId },
+            data: { bgCheckToken: token },
+          });
+        }
+
+        const emailHtml = getVolunteerDocumentsEmail({
+          churchName: organization.name,
+          volunteerName: volunteer.churchMember.name || "Volunteer",
+          volunteerCategory: categoryDisplay,
+          documents: documents.map(d => ({
+            name: d.name,
+            description: d.description,
+            fileUrl: d.fileUrl,
+          })),
+          backgroundCheckRequired:
+            ministryRequirements?.backgroundCheckRequired ?? false,
+          backgroundCheckUrl: bgCheckConfig?.applicationUrl ?? null,
+          backgroundCheckInstructions: bgCheckConfig?.instructions ?? null,
+          trainingRequired: ministryRequirements?.trainingRequired ?? false,
+          trainingUrl: ministryRequirements?.trainingUrl ?? null,
+          trainingDescription:
+            ministryRequirements?.trainingDescription ?? null,
+        });
+
+        const emailText = getVolunteerDocumentsText({
+          churchName: organization.name,
+          volunteerName: volunteer.churchMember.name || "Volunteer",
+          volunteerCategory: categoryDisplay,
+          documents: documents.map(d => ({
+            name: d.name,
+            description: d.description,
+            fileUrl: d.fileUrl,
+          })),
+          backgroundCheckRequired:
+            ministryRequirements?.backgroundCheckRequired ?? false,
+          backgroundCheckUrl: bgCheckConfig?.applicationUrl ?? null,
+          backgroundCheckInstructions: bgCheckConfig?.instructions ?? null,
+          trainingRequired: ministryRequirements?.trainingRequired ?? false,
+          trainingUrl: ministryRequirements?.trainingUrl ?? null,
+          trainingDescription:
+            ministryRequirements?.trainingDescription ?? null,
+        });
+
+        const emailResult = await sendEmail({
+          to: volunteer.churchMember.email,
+          subject: `Welcome to ${categoryDisplay} - ${organization.name}`,
+          html: emailHtml,
+          text: emailText,
+          organizationId: organization.id,
+          metadata: {
+            template: "volunteer-documents",
+            volunteerId: volunteerId,
+            category: primaryCategory,
+          },
+        });
+
+        if (emailResult.success) {
+          documentsSent = true;
+          // Update documentsSentAt timestamp
+          await prisma.volunteer.update({
+            where: { id: volunteerId },
+            data: { documentsSentAt: new Date() },
+          });
+        }
+      }
+    }
+
+    // 8. Revalidate relevant pages
     revalidatePath(`/church/${slug}/admin/volunteers`);
     revalidatePath(`/church/${slug}/admin/volunteers/${volunteerId}`);
 
+    const message = documentsSent
+      ? `${volunteer.churchMember.name} has been activated and welcome email sent`
+      : `${volunteer.churchMember.name} has been activated as a volunteer`;
+
     return {
       status: "success",
-      message: `${volunteer.churchMember.name} has been activated as a volunteer`,
+      message,
     };
   } catch (error) {
     return {
       status: "error",
       message: "Failed to process volunteer. Please try again.",
+    };
+  }
+}
+
+/**
+ * Update Background Check Status
+ *
+ * Allows staff to approve (CLEARED) or flag a volunteer's background check.
+ * Primarily used from the "BG Check Review" tab after a volunteer self-reports completion.
+ *
+ * @param slug - Organization slug for routing
+ * @param volunteerId - Volunteer to update
+ * @param status - New background check status (CLEARED, FLAGGED, etc.)
+ * @param notes - Optional notes about the decision
+ */
+export async function updateBackgroundCheckStatus(
+  slug: string,
+  volunteerId: string,
+  status: BackgroundCheckStatus,
+  notes?: string
+): Promise<ApiResponse> {
+  try {
+    // 1. Verify user has access
+    const { organization } = await requireDashboardAccess(slug);
+
+    // 2. Rate limiting
+    const req = await request();
+    const decision = await aj.protect(req, {
+      fingerprint: `update_bg_status_${volunteerId}`,
+    });
+
+    if (decision.isDenied()) {
+      return {
+        status: "error",
+        message: "Too many requests. Please wait and try again.",
+      };
+    }
+
+    // 3. Verify volunteer exists and belongs to organization
+    const volunteer = await prisma.volunteer.findFirst({
+      where: {
+        id: volunteerId,
+        organizationId: organization.id,
+      },
+      select: {
+        id: true,
+        backgroundCheckStatus: true,
+        documentsSentAt: true,
+        churchMember: { select: { name: true } },
+      },
+    });
+
+    if (!volunteer) {
+      return {
+        status: "error",
+        message: "Volunteer not found",
+      };
+    }
+
+    // 4. Update background check status
+    const updateData: {
+      backgroundCheckStatus: BackgroundCheckStatus;
+      backgroundCheckDate?: Date;
+      notes?: string;
+      readyForExport?: boolean;
+      readyForExportDate?: Date;
+    } = {
+      backgroundCheckStatus: status,
+    };
+
+    // If clearing, set the completion date
+    if (status === "CLEARED") {
+      updateData.backgroundCheckDate = new Date();
+
+      // Check if volunteer is now ready for export (BG cleared + docs sent)
+      if (volunteer.documentsSentAt) {
+        updateData.readyForExport = true;
+        updateData.readyForExportDate = new Date();
+      }
+    }
+
+    // Add notes if provided
+    if (notes) {
+      updateData.notes = notes;
+    }
+
+    await prisma.volunteer.update({
+      where: { id: volunteerId },
+      data: updateData,
+    });
+
+    // 5. Revalidate
+    revalidatePath(`/church/${slug}/admin/volunteer`);
+    revalidatePath(`/church/${slug}/admin/volunteer/${volunteerId}`);
+
+    const statusLabel =
+      status === "CLEARED" ? "approved" : status.toLowerCase();
+    return {
+      status: "success",
+      message: `Background check ${statusLabel} for ${volunteer.churchMember.name}`,
+    };
+  } catch (error) {
+    console.error("Error updating background check status:", error);
+    return {
+      status: "error",
+      message: "Failed to update background check status. Please try again.",
     };
   }
 }
