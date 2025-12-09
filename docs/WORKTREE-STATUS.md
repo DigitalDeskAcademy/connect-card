@@ -1,21 +1,21 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-07
+**Last Updated:** 2025-12-08
 **Update Frequency:** After each significant work session
 
 ---
 
 ## 🚦 Project Health at a Glance
 
-| Worktree         | Port | Branch                         | Status          | Current Focus                    |
-| ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
-| **main**         | 3000 | `main`                         | 🟢 Active       | Onboarding feature, Theme system |
-| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready for PR | Phase 4 complete (CSV Export)    |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 Phase 1 Done | Phase 2 planned (workflow gaps)  |
-| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 Phase 1 Done | PR #47, #52, #53 merged          |
-| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
-| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | PR #48, #58 merged               |
+| Worktree         | Port | Branch                         | Status          | Current Focus                   |
+| ---------------- | ---- | ------------------------------ | --------------- | ------------------------------- |
+| **main**         | 3000 | `main`                         | 🟢 Active       | UI/UX improvements, E2E tests   |
+| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready for PR | Phase 4 + E2E tests complete    |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 Phase 1 Done | Phase 2 planned (workflow gaps) |
+| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 Phase 1 Done | PR #47, #52, #53 merged         |
+| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance            |
+| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | PR #48, #58 merged              |
 
 ---
 
@@ -32,6 +32,8 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ connect-card #60 - E2E Phase 3 workflow tests + shared auth pattern (Dec 9)
+- ✅ main - UI/UX improvements: component library, navigation cleanup (Dec 8)
 - ✅ main #59 - Docs & theme updates, onboarding plan, Starry Night theme (Dec 7)
 - ✅ integrations #58 - DataTable consolidation for export (Dec 6)
 - ✅ prayer #57 - My Prayer Sheet devotional UI (Dec 6)

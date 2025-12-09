@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-07
+**Last Updated:** 2025-12-08
 
 ---
 
@@ -260,6 +260,19 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 8, 2025
+
+- ✅ E2E Phase 3 workflow tests + shared auth pattern (PR #60)
+  - Comprehensive connect card workflow tests
+  - Shared authentication setup for test suite
+  - Batch processing and review queue coverage
+- ✅ UI/UX improvements (merged to main)
+  - Dev component library page (`/dev/components`)
+  - Button hierarchy documentation
+  - Removed sidebar auto-close on connect-cards
+  - Cleaned up top-level page back buttons
+  - Starry Night Main theme registered
 
 ### Week of Dec 7, 2025
 

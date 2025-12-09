@@ -48,6 +48,7 @@ function DemoReadyChecklist() {
         { label: "Create/Edit/Detail dialogs (PR #49)", completed: true },
         { label: "N+1 query optimization (PR #51)", completed: true },
         { label: "Privacy redaction (PR #56)", completed: true },
+        { label: "My Prayer Sheet (PR #57)", completed: true },
       ],
     },
     {
@@ -68,6 +69,8 @@ function DemoReadyChecklist() {
         { label: "Breeze format", completed: true },
         { label: "Email deduplication", completed: true },
         { label: "Export history", completed: true },
+        { label: "Field selection (PR #58)", completed: true },
+        { label: "Unified DataTable (PR #58)", completed: true },
       ],
     },
     {
@@ -75,8 +78,9 @@ function DemoReadyChecklist() {
       items: [
         { label: "Theme switching (PR #54)", completed: true },
         { label: "Theme persistence (PR #55)", completed: true },
+        { label: "Component library page", completed: true },
+        { label: "E2E workflow tests (PR #60)", completed: true },
         { label: "Sample data seeded", completed: false },
-        { label: "End-to-end happy path tested", completed: false },
       ],
     },
   ];
@@ -255,7 +259,7 @@ export default async function DevDashboardPage({
       name: "Connect Cards",
       branch: "feature/connect-card",
       status: "ready",
-      statusLabel: "Phase 3.5 Complete",
+      statusLabel: "Phase 4 + E2E",
       icon: <IconUserPlus className="h-5 w-5" />,
       tasks: [
         { label: "Mobile Camera Wizard", completed: true },
@@ -264,6 +268,7 @@ export default async function DevDashboardPage({
         { label: "Auto-crop to card bounds", completed: true },
         { label: "Fuzzy duplicate detection (PR #50)", completed: true },
         { label: "S3 org-scoped paths (PR #50)", completed: true },
+        { label: "E2E workflow tests (PR #60)", completed: true },
       ],
       wishlist: [
         { label: "Card format onboarding", completed: false },
@@ -281,6 +286,7 @@ export default async function DevDashboardPage({
         { label: "Create/Edit/Detail dialogs (PR #49)", completed: true },
         { label: "N+1 query optimization (PR #51)", completed: true },
         { label: "Privacy redaction (PR #56)", completed: true },
+        { label: "My Prayer Sheet (PR #57)", completed: true },
       ],
       wishlist: [
         { label: "Connect card → auto-create prayer", completed: false },
@@ -335,6 +341,8 @@ export default async function DevDashboardPage({
         { label: "Breeze CSV format", completed: true },
         { label: "Email deduplication", completed: true },
         { label: "Export history", completed: true },
+        { label: "Field selection (PR #58)", completed: true },
+        { label: "Unified DataTable (PR #58)", completed: true },
       ],
       wishlist: [
         { label: "Volunteer export tab", completed: false },
@@ -352,6 +360,9 @@ export default async function DevDashboardPage({
         { label: "Theme switching (PR #54)", completed: true },
         { label: "Theme persistence (PR #55)", completed: true },
         { label: "Quick action cards", completed: true },
+        { label: "Starry Night Main theme (PR #59)", completed: true },
+        { label: "Component library page", completed: true },
+        { label: "Navigation cleanup", completed: true },
       ],
       wishlist: [
         { label: "Analytics dashboard", completed: false },
