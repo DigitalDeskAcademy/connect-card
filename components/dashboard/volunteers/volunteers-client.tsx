@@ -48,7 +48,7 @@ interface VolunteersClientProps {
   organizationId: string;
   locations: Location[];
   activeTab: string;
-  tabCounts: { all: number; pending: number };
+  tabCounts: { all: number; pending: number; review: number };
   canDelete: boolean;
 }
 
@@ -79,6 +79,12 @@ export function VolunteersClient({
     if (activeTab === "pending") {
       return volunteers.filter(v => v.status === "PENDING_APPROVAL");
     }
+    if (activeTab === "review") {
+      // Show volunteers who have self-reported completing their background check
+      return volunteers.filter(
+        v => v.backgroundCheckStatus === "PENDING_REVIEW"
+      );
+    }
     // "all" tab shows ACTIVE and INACTIVE volunteers (not PENDING_APPROVAL)
     return volunteers.filter(v => ["ACTIVE", "INACTIVE"].includes(v.status));
   }, [volunteers, activeTab]);
@@ -101,6 +107,11 @@ export function VolunteersClient({
             label: "Pending Volunteers",
             value: "pending",
             count: tabCounts.pending,
+          },
+          {
+            label: "BG Check Review",
+            value: "review",
+            count: tabCounts.review,
           },
         ]}
       />

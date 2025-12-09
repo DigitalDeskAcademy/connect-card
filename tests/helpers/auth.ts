@@ -57,6 +57,12 @@ export async function loginWithOTP(
     await page.goto("/login");
   }
 
+  // Wait for page to fully load and email input to be visible
+  await page.waitForSelector('input[type="email"]', {
+    state: "visible",
+    timeout: 15000,
+  });
+
   // Enter email
   await page.fill('input[type="email"]', email);
 

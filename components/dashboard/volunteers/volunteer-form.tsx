@@ -557,6 +557,7 @@ export function VolunteerForm({
                 <SelectContent>
                   <SelectItem value="NOT_STARTED">Not Started</SelectItem>
                   <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="PENDING_REVIEW">Pending Review</SelectItem>
                   <SelectItem value="CLEARED">Cleared</SelectItem>
                   <SelectItem value="FLAGGED">Flagged</SelectItem>
                   <SelectItem value="EXPIRED">Expired</SelectItem>
