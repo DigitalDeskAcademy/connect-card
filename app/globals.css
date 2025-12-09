@@ -767,9 +767,9 @@ body {
   --card-foreground: oklch(0.18 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0 0);
-  /* Primary - Dark grey for light backgrounds */
-  --primary: oklch(0.35 0 0);
-  --primary-foreground: oklch(0.98 0 0);
+  /* Primary - JetBrains Blue brand color */
+  --primary: oklch(0.8276 0.1013 230.3179);
+  --primary-foreground: oklch(0.15 0 0);
   /* Secondary - Neutral light grey */
   --secondary: oklch(0.92 0 0);
   --secondary-foreground: oklch(0.18 0 0);
@@ -792,21 +792,19 @@ body {
   --chart-3: oklch(0.5 0.1 234.0387);
   --chart-4: oklch(0.55 0.06 262.0375);
   --chart-5: oklch(0.5 0.15 357.113);
-  /* Sidebar - Neutral */
+  /* Sidebar - Neutral with brand primary */
   --sidebar: oklch(0.96 0 0);
   --sidebar-foreground: oklch(0.18 0 0);
-  --sidebar-primary: oklch(0.35 0 0);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.8276 0.1013 230.3179);
+  --sidebar-primary-foreground: oklch(0.15 0 0);
   --sidebar-accent: oklch(0.9 0 0);
   --sidebar-accent-foreground: oklch(0.18 0 0);
   --sidebar-border: oklch(0.88 0 0);
   --sidebar-ring: oklch(0.7 0 0);
-  /* Typography */
-  --font-sans: "Libre Baskerville", serif;
-  --font-serif: "Libre Baskerville", serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  /* Typography - Using JetBrains fonts */
+  --font-sans: Inter, sans-serif;
+  --font-serif: "Source Serif 4", serif;
+  --font-mono: "JetBrains Mono", monospace;
   --radius: 0.5rem;
   /* Shadows */
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
@@ -825,12 +823,13 @@ body {
 }
 
 .theme-starry-night-main.dark {
-  --background: oklch(0.1776 0 0);
+  --background: oklch(0.16 0 0);
   --foreground: oklch(0.9 0 0);
   --card: oklch(0.2046 0 0);
   --card-foreground: oklch(0.9 0 0);
   --popover: oklch(0.2603 0 0);
   --popover-foreground: oklch(0.9 0 0);
+  /* Primary - JetBrains Blue brand color */
   --primary: oklch(0.8276 0.1013 230.3179);
   --primary-foreground: oklch(0.15 0 0);
   --secondary: oklch(0.28 0 0);
@@ -849,7 +848,7 @@ body {
   --chart-3: oklch(0.55 0.1 310);
   --chart-4: oklch(0.6 0.12 60);
   --chart-5: oklch(0.55 0.14 25);
-  --sidebar: oklch(0.16 0 0);
+  --sidebar: oklch(0.1776 0 0);
   --sidebar-foreground: oklch(0.7 0 0);
   --sidebar-primary: oklch(0.8276 0.1013 230.3179);
   --sidebar-primary-foreground: oklch(0.15 0 0);
@@ -857,12 +856,10 @@ body {
   --sidebar-accent-foreground: oklch(0.9 0 0);
   --sidebar-border: oklch(0.25 0 0);
   --sidebar-ring: oklch(0.5 0 0);
-  /* Typography */
-  --font-sans: "Libre Baskerville", serif;
-  --font-serif: "Libre Baskerville", serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  /* Typography - Using JetBrains fonts */
+  --font-sans: Inter, sans-serif;
+  --font-serif: "Source Serif 4", serif;
+  --font-mono: "JetBrains Mono", monospace;
   --radius: 0.5rem;
   /* Shadows - darker for dark mode */
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.15);
