@@ -1,5 +1,4 @@
 import { test, expect } from "@playwright/test";
-import { loginWithOTP, TEST_USERS } from "../helpers/auth";
 
 /**
  * Phase 2: Interaction Tests - Connect Card Features
@@ -20,7 +19,6 @@ const BASE_URL = `/church/${SLUG}/admin`;
 
 test.describe("Phase 2: Dashboard Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
     await page.goto(BASE_URL);
   });
 
@@ -87,7 +85,6 @@ test.describe("Phase 2: Dashboard Interactions", () => {
 
 test.describe("Phase 2: Connect Cards Tab Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
     await page.goto(`${BASE_URL}/connect-cards`);
   });
 
@@ -135,7 +132,6 @@ test.describe("Phase 2: Connect Cards Tab Interactions", () => {
 
 test.describe("Phase 2: Export Page Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
     await page.goto(`${BASE_URL}/export`);
   });
 
@@ -182,7 +178,6 @@ test.describe("Phase 2: Export Page Interactions", () => {
 
 test.describe("Phase 2: Prayer Page Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
     await page.goto(`${BASE_URL}/prayer`);
   });
 
@@ -218,7 +213,6 @@ test.describe("Phase 2: Prayer Page Interactions", () => {
 
 test.describe("Phase 2: Volunteer Page Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
     await page.goto(`${BASE_URL}/volunteer`);
   });
 
@@ -253,7 +247,6 @@ test.describe("Phase 2: Volunteer Page Interactions", () => {
 
 test.describe("Phase 2: Team Page Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
     await page.goto(`${BASE_URL}/team`);
   });
 
@@ -312,7 +305,6 @@ test.describe("Phase 2: Team Page Interactions", () => {
 
 test.describe("Phase 2: Prayer Batches Interactions", () => {
   test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
     await page.goto(`${BASE_URL}/prayer-batches`);
   });
 
@@ -340,10 +332,6 @@ test.describe("Phase 2: Prayer Batches Interactions", () => {
 });
 
 test.describe("Phase 2: Keyboard Navigation", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
-  });
-
   test("Tab key navigates through dashboard elements", async ({ page }) => {
     await page.goto(BASE_URL);
 
@@ -375,10 +363,6 @@ test.describe("Phase 2: Keyboard Navigation", () => {
 });
 
 test.describe("Phase 2: Loading States", () => {
-  test.beforeEach(async ({ page }) => {
-    await loginWithOTP(page, TEST_USERS.churchOwner.email);
-  });
-
   test("Dashboard shows content after loading", async ({ page }) => {
     await page.goto(BASE_URL);
 

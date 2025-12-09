@@ -56,7 +56,7 @@ function KPICard({
   icon: typeof FileText;
   value: number;
   average: number;
-  trend: "up" | "down" | "neutral";
+  trend: number;
 }) {
   return (
     <Card>

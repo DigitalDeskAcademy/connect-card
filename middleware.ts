@@ -3,13 +3,17 @@ import { getSessionCookie } from "better-auth/cookies";
 import arcjet, { createMiddleware, detectBot, fixedWindow } from "@arcjet/next";
 import { isValidSlug } from "./lib/tenant-utils";
 
+// Use DRY_RUN in development/testing to allow Playwright, LIVE in production
+const isDev = process.env.NODE_ENV === "development";
+
 // Configure Arcjet with bot detection and rate limiting
 const aj = arcjet({
   key: process.env.ARCJET_KEY!, // Get your site key from https://app.arcjet.com
   rules: [
     // Bot detection - block malicious bots, allow legitimate crawlers
+    // DRY_RUN in dev allows Playwright E2E tests to run
     detectBot({
-      mode: "LIVE", // will block requests. Use "DRY_RUN" to log only
+      mode: isDev ? "DRY_RUN" : "LIVE",
       allow: [
         "CATEGORY:SEARCH_ENGINE", // Google, Bing, DuckDuckGo
         "CATEGORY:MONITOR", // Uptime monitoring services
