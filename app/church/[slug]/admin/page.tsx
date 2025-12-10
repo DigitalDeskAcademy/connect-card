@@ -22,12 +22,15 @@ import { DashboardClient } from "./_components/DashboardClient";
 
 interface ChurchAdminDashboardProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ location?: string }>;
 }
 
 export default async function ChurchAdminDashboard({
   params,
+  searchParams,
 }: ChurchAdminDashboardProps) {
   const { slug } = await params;
+  const { location: locationParam } = await searchParams;
   const { organization, dataScope } = await requireDashboardAccess(slug);
 
   // Fetch locations first
@@ -62,8 +65,22 @@ export default async function ChurchAdminDashboard({
       null)
     : null;
 
+  // Determine active tab from URL or default
+  // Valid tabs: "cumulative" (if canSeeAllLocations) or any location slug
+  const validLocationSlugs = locations.map(loc => loc.slug);
+  const validTabs = dataScope.filters.canSeeAllLocations
+    ? ["cumulative", ...validLocationSlugs]
+    : validLocationSlugs;
+
+  // Default: user's assigned location, or "cumulative" if they can see all
+  const defaultTab = userDefaultLocationSlug ?? "cumulative";
+  const activeTab =
+    locationParam && validTabs.includes(locationParam)
+      ? locationParam
+      : defaultTab;
+
   return (
-    <PageContainer as="main">
+    <PageContainer as="main" variant="tabs">
       <DashboardClient
         slug={slug}
         organizationId={organization.id}
@@ -73,6 +90,7 @@ export default async function ChurchAdminDashboard({
         locationAnalytics={locationAnalytics}
         userDefaultLocationSlug={userDefaultLocationSlug}
         canSeeAllLocations={dataScope.filters.canSeeAllLocations}
+        activeTab={activeTab}
       />
     </PageContainer>
   );

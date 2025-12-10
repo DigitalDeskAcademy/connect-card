@@ -1,9 +1,9 @@
 # Volunteer Onboarding Pipeline - Product Vision
 
-**Status:** 🟢 **Phase 1 Complete** - Core automation merged (PR #47, #52, #53)
+**Status:** 🟢 **Phase 2 MVP Complete** - Onboarding automation merged (PR #61)
 **Worktree:** `/church-connect-hub/volunteer`
 **Branch:** `feature/volunteer-management`
-**Last Updated:** 2025-12-04
+**Last Updated:** 2025-12-08
 **Focus:** Onboarding Automation (Not Volunteer Management)
 
 ---
@@ -14,16 +14,18 @@
 
 ### This Worktree Owns
 
-| Item                             | Status               |
-| -------------------------------- | -------------------- |
-| Volunteer data model             | ✅ Complete          |
-| `readyForExport` business logic  | ✅ Complete          |
-| `getExportableVolunteers()` fn   | ✅ Complete (PR #52) |
-| Leader auto-notification         | ✅ Complete (PR #47) |
-| Document auto-send               | ✅ Complete (PR #47) |
-| `documentsSentAt` tracking       | 📋 Phase 2           |
-| `automationStatus` for general   | 📋 Phase 2           |
-| General volunteer automation seq | 📋 Phase 2           |
+| Item                              | Status               |
+| --------------------------------- | -------------------- |
+| Volunteer data model              | ✅ Complete          |
+| `readyForExport` business logic   | ✅ Complete          |
+| `getExportableVolunteers()` fn    | ✅ Complete (PR #52) |
+| Leader auto-notification          | ✅ Complete (PR #47) |
+| Document auto-send                | ✅ Complete (PR #47) |
+| `documentsSentAt` tracking        | ✅ Complete (PR #61) |
+| Email service with audit logging  | ✅ Complete (PR #61) |
+| Token-based BG check confirmation | ✅ Complete (PR #61) |
+| Staff BG check review queue       | ✅ Complete (PR #61) |
+| Vitest test suite (37 tests)      | ✅ Complete (PR #61) |
 
 ### Integrations Worktree Owns
 
@@ -232,23 +234,28 @@ model Organization {
 
 ---
 
-## 📊 Fix Progress
+## 📊 Implementation Progress
 
-| Priority | Issue                     | Status | PR  |
-| -------- | ------------------------- | ------ | --- |
-| 1        | N+1 Query                 | ✅ N/A | -   |
-| 2        | Leader notification       | ✅     | #47 |
-| 3        | Document auto-send        | ✅     | #47 |
-| 4        | Ready for export flag     | ✅     | #52 |
-| 5        | getExportableVolunteers() | ✅     | #52 |
-| 6        | Check All toggle fix      | ✅     | #53 |
+| Priority | Feature                       | Status | PR  |
+| -------- | ----------------------------- | ------ | --- |
+| 1        | Leader notification           | ✅     | #47 |
+| 2        | Document auto-send            | ✅     | #47 |
+| 3        | Ready for export flag         | ✅     | #52 |
+| 4        | getExportableVolunteers()     | ✅     | #52 |
+| 5        | Check All toggle fix          | ✅     | #53 |
+| 6        | Welcome email on activation   | ✅     | #61 |
+| 7        | Token-based BG confirmation   | ✅     | #61 |
+| 8        | Staff BG check review queue   | ✅     | #61 |
+| 9        | Email service + audit logging | ✅     | #61 |
+| 10       | Vitest test suite (37 tests)  | ✅     | #61 |
+| 11       | Arcjet rate limiting (public) | ✅     | #61 |
 
 ---
 
 ## 🎯 Phase 2: MVP Onboarding Automation (Dec 2025)
 
-**Status:** 📋 Planning Complete - Ready for Implementation
-**Decided:** 2025-12-05
+**Status:** ✅ **COMPLETE** - PR #61 merged Dec 9, 2025
+**Decided:** 2025-12-05 | **Completed:** 2025-12-09
 
 ### Design Decisions
 
@@ -861,10 +868,10 @@ CategoryLeaderAssignment {
 
 ---
 
-**Last Updated:** 2025-12-04
+**Last Updated:** 2025-12-08
 **Document Purpose:** Clarify product vision - we're building onboarding automation, not volunteer management
 **Strategic Position:** Feed Planning Center, don't compete with it
-**Recent PRs:** #47 (email automation), #52 (export tracking), #53 (Check All fix)
+**Recent PRs:** #61 (Phase 2 MVP), #53 (Check All fix), #52 (export tracking), #47 (email automation)
 
 ---
 

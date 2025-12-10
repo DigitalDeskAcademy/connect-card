@@ -2,13 +2,17 @@
  * Connect Cards Client Component
  *
  * Provides tabbed interface for connect card operations.
- * Tabs: Upload | Review Queue | Analytics
+ * Tabs: Upload | Batches | Analytics
+ *
+ * Uses URL-based tabs (NavTabs) for:
+ * - Shareable/bookmarkable URLs
+ * - Browser back/forward support
+ * - State persistence on refresh
  */
 
 "use client";
 
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NavTabs } from "@/components/layout/nav-tabs";
 import { Upload, Package, ChartBar } from "lucide-react";
 import { ConnectCardUploadClient } from "./upload/upload-client";
 import { BatchesClient } from "./batches/batches-client";
@@ -19,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 interface Location {
   id: string;
   name: string;
@@ -48,6 +53,7 @@ interface ConnectCardsClientProps {
   defaultLocationId: string | null;
   batches: Batch[];
   pendingBatchCount: number;
+  activeTab: string;
 }
 
 export default function ConnectCardsClient({
@@ -56,62 +62,37 @@ export default function ConnectCardsClient({
   defaultLocationId,
   batches,
   pendingBatchCount,
+  activeTab,
 }: ConnectCardsClientProps) {
-  const [selectedTab, setSelectedTab] = useState("upload");
-
   return (
-    <Tabs
-      defaultValue="upload"
-      value={selectedTab}
-      onValueChange={setSelectedTab}
-      className="w-full"
-    >
-      <div className="flex items-center justify-between mb-6">
-        <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
-          <TabsTrigger
-            value="upload"
-            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-          >
-            <Upload className="mr-2 w-4 h-4" />
-            Upload
-          </TabsTrigger>
-          <TabsTrigger
-            value="batches"
-            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-          >
-            <Package className="mr-2 w-4 h-4" />
-            Batches
-            {pendingBatchCount > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
-                {pendingBatchCount}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger
-            value="analytics"
-            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-          >
-            <ChartBar className="mr-2 w-4 h-4" />
-            Analytics
-          </TabsTrigger>
-        </TabsList>
-      </div>
+    <>
+      <NavTabs
+        baseUrl={`/church/${slug}/admin/connect-cards`}
+        tabs={[
+          { label: "Upload", value: "upload", icon: Upload },
+          {
+            label: "Batches",
+            value: "batches",
+            icon: Package,
+            count: pendingBatchCount > 0 ? pendingBatchCount : undefined,
+          },
+          { label: "Analytics", value: "analytics", icon: ChartBar },
+        ]}
+      />
 
-      {/* Upload Tab */}
-      <TabsContent value="upload">
+      {/* Tab Content */}
+      {activeTab === "upload" && (
         <ConnectCardUploadClient
           locations={locations}
           defaultLocationId={defaultLocationId}
         />
-      </TabsContent>
+      )}
 
-      {/* Batches Tab */}
-      <TabsContent value="batches">
+      {activeTab === "batches" && (
         <BatchesClient batches={batches} slug={slug} />
-      </TabsContent>
+      )}
 
-      {/* Analytics Tab */}
-      <TabsContent value="analytics">
+      {activeTab === "analytics" && (
         <Card>
           <CardHeader>
             <CardTitle>Connect Card Analytics</CardTitle>
@@ -131,7 +112,7 @@ export default function ConnectCardsClient({
             </div>
           </CardContent>
         </Card>
-      </TabsContent>
-    </Tabs>
+      )}
+    </>
   );
 }

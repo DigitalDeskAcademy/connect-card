@@ -62,6 +62,7 @@ import {
   Info,
   ChevronDown,
   Settings2,
+  History,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow, format } from "date-fns";
@@ -271,10 +272,9 @@ export function ExportClient({
       <NavTabs
         baseUrl={`/church/${slug}/admin/export`}
         tabs={[
-          { label: "Export", value: "export" },
-          { label: "History", value: "history" },
+          { label: "Export", value: "export", icon: Download },
+          { label: "History", value: "history", icon: History },
         ]}
-        className="border-b-0"
       />
 
       {activeTab === "history" ? (
