@@ -142,6 +142,19 @@ export interface DataTableProps<TData, TValue> {
   /** Enable row selection checkboxes */
   enableRowSelection?: boolean;
 
+  /**
+   * Controlled row selection state (TanStack RowSelectionState).
+   * When provided, enables controlled mode for row selection.
+   * Use with onRowSelectionChange for full control.
+   */
+  rowSelection?: Record<string, boolean>;
+
+  /**
+   * Callback when row selection state changes (controlled mode).
+   * Receives the TanStack RowSelectionState object.
+   */
+  onRowSelectionChange?: (state: Record<string, boolean>) => void;
+
   /** Enable column resizing */
   enableColumnResizing?: boolean;
 
