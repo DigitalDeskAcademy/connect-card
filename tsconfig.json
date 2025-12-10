@@ -27,6 +27,8 @@
     "node_modules",
     "dev_scripts/**/*",
     "prisma/seed*.ts",
-    "scripts/**/*"
+    "scripts/**/*",
+    "tests/**/*",
+    "vitest.config.ts"
   ]
 }
