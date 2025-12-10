@@ -216,8 +216,8 @@ export function PageContainer({
     // Tighter gap spacing: contacts-style pages
     tight: "p-4 md:p-6 gap-3 md:gap-4",
 
-    // No gap: NavTabs integration (prevents double-spacing)
-    tabs: "p-4 md:p-6 gap-0",
+    // NavTabs integration: no top padding, tabs provide border
+    tabs: "pt-0 px-4 md:px-6 pb-4 md:pb-6 gap-4 md:gap-6",
 
     // No wrapper: handled above, but included for type exhaustiveness
     none: "",

@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { NavTabs } from "@/components/layout/nav-tabs";
 import { VolunteersTable } from "./volunteers-table";
+import { Users, Clock, ClipboardCheck } from "lucide-react";
 
 /**
  * Volunteer with relations for display
@@ -102,16 +103,23 @@ export function VolunteersClient({
       <NavTabs
         baseUrl={`/church/${slug}/admin/volunteer`}
         tabs={[
-          { label: "All Volunteers", value: "all", count: tabCounts.all },
           {
-            label: "Pending Volunteers",
+            label: "All Volunteers",
+            value: "all",
+            icon: Users,
+            count: tabCounts.all,
+          },
+          {
+            label: "Pending",
             value: "pending",
-            count: tabCounts.pending,
+            icon: Clock,
+            count: tabCounts.pending > 0 ? tabCounts.pending : undefined,
           },
           {
             label: "BG Check Review",
             value: "review",
-            count: tabCounts.review,
+            icon: ClipboardCheck,
+            count: tabCounts.review > 0 ? tabCounts.review : undefined,
           },
         ]}
       />

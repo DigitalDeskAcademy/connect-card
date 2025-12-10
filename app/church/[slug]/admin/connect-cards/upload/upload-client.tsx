@@ -424,6 +424,7 @@ export function ConnectCardUploadClient({
               const batchResult = await getActiveBatchAction(slug);
               if (batchResult.status === "success" && batchResult.data) {
                 setActiveBatch(batchResult.data);
+                router.refresh(); // Update Batches tab badge count
               }
             }
 
@@ -693,6 +694,7 @@ export function ConnectCardUploadClient({
             const batchResult = await getActiveBatchAction(slug);
             if (batchResult.status === "success" && batchResult.data) {
               setActiveBatch(batchResult.data);
+              router.refresh(); // Update Batches tab badge count
             }
           }
           toast.success("Connect card saved to database!");
@@ -818,7 +820,7 @@ export function ConnectCardUploadClient({
           {/* Step 1: Verify Location */}
           <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">
                 1
               </div>
               <h3 className="text-lg font-semibold">Verify Location</h3>
@@ -860,7 +862,7 @@ export function ConnectCardUploadClient({
           {/* Step 2: Upload Connect Cards */}
           <div className="mb-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">
                 2
               </div>
               <h3 className="text-lg font-semibold">Upload Connect Cards</h3>
@@ -1201,7 +1203,7 @@ export function ConnectCardUploadClient({
                 {/* Header row: Batch name + Review button */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
                     <p className="text-sm font-medium">
