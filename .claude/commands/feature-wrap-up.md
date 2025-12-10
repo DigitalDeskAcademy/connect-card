@@ -17,6 +17,27 @@ Complete feature workflow: build → commit → PR → merge → sync main → h
 
 ## Stage 1: Pre-Flight Checks
 
+### 1.0: Origin Sync Check (CRITICAL)
+
+**ALWAYS run first** - ensures we have latest changes from origin/main before build:
+
+```bash
+git fetch origin main
+BEHIND=$(git rev-list HEAD..origin/main --count 2>/dev/null || echo "0")
+echo "Commits behind origin/main: $BEHIND"
+```
+
+**If behind (BEHIND > 0), merge before proceeding:**
+
+```bash
+git merge origin/main --no-edit
+pnpm prisma generate
+```
+
+**STOP if merge has conflicts** - resolve them first.
+
+---
+
 ### 1.1: Schema Sync Check
 
 Check if Prisma schema differs from main:
