@@ -450,22 +450,6 @@ export function ReviewQueueClient({
 
   return (
     <div className="space-y-4">
-      {/* Action Bar */}
-      <div className="flex items-center justify-end">
-        {/* Back Button */}
-        <Button
-          onClick={() =>
-            router.push(`/church/${slug}/admin/connect-cards?tab=batches`)
-          }
-          variant="outline"
-          size="lg"
-          disabled={isPending}
-        >
-          <ArrowLeft className="mr-2 w-5 h-5" />
-          Back
-        </Button>
-      </div>
-
       {/* Batch info */}
       <Alert className="py-2">
         <AlertDescription className="flex items-center justify-between">
@@ -479,105 +463,122 @@ export function ReviewQueueClient({
         </AlertDescription>
       </Alert>
 
-      {/* Pagination */}
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={e => {
-                e.preventDefault();
-                if (currentIndex > 0) {
-                  const prevCard = cards[currentIndex - 1];
-                  setCurrentIndex(currentIndex - 1);
-                  resetFormForCard(prevCard);
+      {/* Pagination with Back button */}
+      <div className="flex items-center">
+        {/* Spacer to balance back button */}
+        <div className="w-[72px]" />
+        <Pagination className="flex-1">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={e => {
+                  e.preventDefault();
+                  if (currentIndex > 0) {
+                    const prevCard = cards[currentIndex - 1];
+                    setCurrentIndex(currentIndex - 1);
+                    resetFormForCard(prevCard);
+                  }
+                }}
+                className={
+                  currentIndex === 0 || isPending
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
                 }
-              }}
-              className={
-                currentIndex === 0 || isPending
-                  ? "pointer-events-none opacity-50"
-                  : "cursor-pointer"
+              />
+            </PaginationItem>
+
+            {/* Page numbers - Show 3 consecutive numbers */}
+            {(() => {
+              // Calculate which 3 pages to show
+              let startPage = Math.max(0, currentIndex - 1);
+              const endPage = Math.min(cards.length - 1, startPage + 2);
+
+              // Adjust if we're near the end
+              if (endPage - startPage < 2) {
+                startPage = Math.max(0, endPage - 2);
               }
-            />
-          </PaginationItem>
 
-          {/* Page numbers - Show 3 consecutive numbers */}
-          {(() => {
-            // Calculate which 3 pages to show
-            let startPage = Math.max(0, currentIndex - 1);
-            const endPage = Math.min(cards.length - 1, startPage + 2);
+              const pages = [];
 
-            // Adjust if we're near the end
-            if (endPage - startPage < 2) {
-              startPage = Math.max(0, endPage - 2);
-            }
+              // Show ellipsis before if not starting at page 1
+              if (startPage > 0) {
+                pages.push(
+                  <PaginationItem key="ellipsis-start">
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                );
+              }
 
-            const pages = [];
-
-            // Show ellipsis before if not starting at page 1
-            if (startPage > 0) {
-              pages.push(
-                <PaginationItem key="ellipsis-start">
-                  <PaginationEllipsis />
-                </PaginationItem>
-              );
-            }
-
-            // Show 3 consecutive pages
-            for (let i = startPage; i <= endPage; i++) {
-              pages.push(
-                <PaginationItem key={i}>
-                  <PaginationLink
-                    onClick={e => {
-                      e.preventDefault();
-                      if (!isPending) {
-                        setCurrentIndex(i);
-                        resetFormForCard(cards[i]);
+              // Show 3 consecutive pages
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      onClick={e => {
+                        e.preventDefault();
+                        if (!isPending) {
+                          setCurrentIndex(i);
+                          resetFormForCard(cards[i]);
+                        }
+                      }}
+                      isActive={currentIndex === i}
+                      className={
+                        isPending
+                          ? "pointer-events-none opacity-50"
+                          : "cursor-pointer"
                       }
-                    }}
-                    isActive={currentIndex === i}
-                    className={
-                      isPending
-                        ? "pointer-events-none opacity-50"
-                        : "cursor-pointer"
-                    }
-                  >
-                    {i + 1}
-                  </PaginationLink>
-                </PaginationItem>
-              );
-            }
-
-            // Show ellipsis after if not ending at last page
-            if (endPage < cards.length - 1) {
-              pages.push(
-                <PaginationItem key="ellipsis-end">
-                  <PaginationEllipsis />
-                </PaginationItem>
-              );
-            }
-
-            return pages;
-          })()}
-
-          <PaginationItem>
-            <PaginationNext
-              onClick={e => {
-                e.preventDefault();
-                if (currentIndex < cards.length - 1) {
-                  const nextCard = cards[currentIndex + 1];
-                  setCurrentIndex(currentIndex + 1);
-                  resetFormForCard(nextCard);
-                }
-              }}
-              className={
-                currentIndex === cards.length - 1 || isPending
-                  ? "pointer-events-none opacity-50"
-                  : "cursor-pointer"
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
               }
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
+
+              // Show ellipsis after if not ending at last page
+              if (endPage < cards.length - 1) {
+                pages.push(
+                  <PaginationItem key="ellipsis-end">
+                    <PaginationEllipsis />
+                  </PaginationItem>
+                );
+              }
+
+              return pages;
+            })()}
+
+            <PaginationItem>
+              <PaginationNext
+                onClick={e => {
+                  e.preventDefault();
+                  if (currentIndex < cards.length - 1) {
+                    const nextCard = cards[currentIndex + 1];
+                    setCurrentIndex(currentIndex + 1);
+                    resetFormForCard(nextCard);
+                  }
+                }}
+                className={
+                  currentIndex === cards.length - 1 || isPending
+                    ? "pointer-events-none opacity-50"
+                    : "cursor-pointer"
+                }
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+
+        {/* Back to batches */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() =>
+            router.push(`/church/${slug}/admin/connect-cards?tab=batches`)
+          }
+          disabled={isPending}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
+      </div>
 
       <div
         className="grid grid-cols-1 lg:grid-cols-2 gap-4"
@@ -1010,7 +1011,8 @@ export function ReviewQueueClient({
                   setFormData({ ...formData, prayerRequest: e.target.value })
                 }
                 placeholder="Enter prayer request or notes..."
-                rows={4}
+                rows={3}
+                className="max-h-28 overflow-y-auto"
                 disabled={isPending}
               />
             </div>

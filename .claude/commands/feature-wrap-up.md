@@ -17,6 +17,27 @@ Complete feature workflow: build → commit → PR → merge → sync main → h
 
 ## Stage 1: Pre-Flight Checks
 
+### 1.0: Origin Sync Check (CRITICAL)
+
+**ALWAYS run first** - ensures we have latest changes from origin/main before build:
+
+```bash
+git fetch origin main
+BEHIND=$(git rev-list HEAD..origin/main --count 2>/dev/null || echo "0")
+echo "Commits behind origin/main: $BEHIND"
+```
+
+**If behind (BEHIND > 0), merge before proceeding:**
+
+```bash
+git merge origin/main --no-edit
+pnpm prisma generate
+```
+
+**STOP if merge has conflicts** - resolve them first.
+
+---
+
 ### 1.1: Schema Sync Check
 
 Check if Prisma schema differs from main:
@@ -222,14 +243,13 @@ gh pr view <pr-number> --json state,mergedAt
 
 ---
 
-## Stage 7: Post-Merge Sync
+## Stage 7: Update Current Worktree
 
-### 7.1: Update Main Worktree
+### 7.1: Pull Latest Main
 
 ```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/main
 git fetch origin main
-git pull origin main
+git merge origin/main --no-edit
 ```
 
 ### 7.2: Schema Migration (if needed)
@@ -241,15 +261,85 @@ pnpm prisma generate
 pnpm prisma db push
 ```
 
-### 7.3: Other Worktrees - Status Check
+---
+
+## Stage 8: Documentation Update
+
+**REQUIRED** - Run BEFORE syncing other worktrees so they get the doc changes.
+
+### 8.0: Apply Deferred Doc Updates
+
+Check for and apply any patches deferred from Stage 1.2:
+
+```bash
+# Check for pending patches
+PENDING_DIR=".claude/pending-docs"
+
+if [ -d "$PENDING_DIR" ] && ls "$PENDING_DIR"/*.patch 1>/dev/null 2>&1; then
+  echo "📋 Applying deferred doc updates..."
+
+  for patch in "$PENDING_DIR"/*.patch; do
+    FILENAME=$(basename "$patch" .patch)
+    echo "  → Applying $FILENAME changes"
+
+    # Try to apply the patch
+    if git apply "$patch" 2>/dev/null; then
+      rm "$patch"
+      echo "  ✅ Applied successfully"
+    else
+      echo "  ⚠️  Patch conflict - apply manually"
+      cat "$patch"
+    fi
+  done
+else
+  echo "No deferred doc updates to apply"
+fi
+```
+
+### 8.1: Analyze What Was Built
+
+```bash
+gh pr view <pr-number> --json title,body,files
+git log -1 --stat
+```
+
+### 8.2: Update PROJECT.md (if needed)
+
+Move feature from "In Progress" to "Complete":
+
+```markdown
+## Working Features
+
+### <Feature Name> - COMPLETE (Nov 2025)
+
+- <Key accomplishment 1>
+- <Key accomplishment 2>
+```
+
+### 8.3: Commit and Push Documentation
+
+```bash
+git add docs/ .claude/
+git commit -m "docs: update after <feature> merge (PR #<number>)"
+git push origin main
+```
+
+---
+
+## Stage 9: Sync Other Worktrees
+
+**Run AFTER documentation is pushed** so all worktrees get doc changes.
+
+### 9.1: Check Worktree Status
 
 ```bash
 # Check each worktree status
 for worktree in connect-card prayer volunteer tech-debt integrations; do
   echo "==== $worktree ===="
   cd /home/digitaldesk/Desktop/church-connect-hub/$worktree 2>/dev/null && \
-  git status --short | head -5 && \
-  echo "Behind main: $(git rev-list HEAD..main --count 2>/dev/null || echo 'N/A')"
+  git fetch origin main 2>/dev/null && \
+  echo "Uncommitted: $(git status --short | wc -l)" && \
+  echo "Behind: $(git rev-list HEAD..origin/main --count 2>/dev/null || echo 'N/A')"
 done
 ```
 
@@ -266,6 +356,8 @@ prayer       | 5 files     | 2 commits   | Skip (active)
 volunteer    | 0 files     | 1 commit    | Safe to sync
 ```
 
+### 9.2: Sync Clean Worktrees
+
 Options:
 
 1. Sync all CLEAN worktrees (recommended)
@@ -276,94 +368,18 @@ For clean worktrees:
 
 ```bash
 cd /path/to/worktree
-git merge main --no-edit
+git merge origin/main --no-edit
 ```
 
 ---
 
-## Stage 8: Documentation Update
+## Stage 10: Handoff
 
-**REQUIRED** - Run in main worktree after merge.
-
-### 8.0: Apply Deferred Doc Updates (Auto)
-
-Check for and apply any patches deferred from Stage 1.2:
-
-```bash
-cd /home/digitaldesk/Desktop/church-connect-hub/main
-
-# Check for pending patches from feature worktree
-FEATURE_WORKTREE="/home/digitaldesk/Desktop/church-connect-hub/<feature-name>"
-PENDING_DIR="$FEATURE_WORKTREE/.claude/pending-docs"
-
-if [ -d "$PENDING_DIR" ] && ls "$PENDING_DIR"/*.patch 1>/dev/null 2>&1; then
-  echo "📋 Applying deferred doc updates..."
-
-  for patch in "$PENDING_DIR"/*.patch; do
-    FILENAME=$(basename "$patch" .patch)
-    echo "  → Applying $FILENAME changes"
-
-    # Apply the patch
-    git apply "$patch"
-
-    # Remove the patch file
-    rm "$patch"
-  done
-
-  echo "✅ Deferred updates applied"
-else
-  echo "No deferred doc updates to apply"
-fi
-```
-
-### 8.1: Analyze What Was Built
-
-```bash
-gh pr view <pr-number> --json title,body,files
-git log -1 --stat
-```
-
-### 8.2: Update PROJECT.md
-
-Move feature from "In Progress" to "Complete":
-
-```markdown
-## Working Features
-
-### <Feature Name> - COMPLETE (Nov 2025)
-
-- <Key accomplishment 1>
-- <Key accomplishment 2>
-```
-
-Update roadmap/priorities section.
-
-### 8.3: Update Feature Vision (if needed)
-
-Only if scope changed or feature completed:
-
-```bash
-# Update status in docs/features/<feature>/vision.md
-# Mark completed items with checkboxes
-```
-
-### 8.4: Commit Documentation
-
-```bash
-git add docs/
-git commit -m "docs: update PROJECT.md after <feature> merge (PR #<number>)"
-git push origin main
-```
-
----
-
-## Stage 9: Handoff
-
-### 9.1: Ask About Next Feature
+### 10.1: Ask About Next Feature
 
 "What feature should we work on next?"
 
-### 9.2: Generate Handoff
+### 10.2: Generate Handoff
 
 ````
 FEATURE WRAP-UP COMPLETE

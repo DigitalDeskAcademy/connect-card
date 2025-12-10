@@ -1,21 +1,21 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-06
+**Last Updated:** 2025-12-08
 **Update Frequency:** After each significant work session
 
 ---
 
 ## 🚦 Project Health at a Glance
 
-| Worktree         | Port | Branch                         | Status          | Current Focus                    |
-| ---------------- | ---- | ------------------------------ | --------------- | -------------------------------- |
-| **main**         | 3000 | `main`                         | 🟢 Active       | Project management, Theme system |
-| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Ready        | Phase 3.5 complete (PR #50)      |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE** | PR #49, #51, #56 merged          |
-| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 Phase 1 Done | PR #47, #52, #53 merged          |
-| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Phase 1 Done | Phase 2: Performance             |
-| **integrations** | 3005 | `feature/integrations`         | 🟢 Phase 1 Done | PR #48 merged Dec 1              |
+| Worktree         | Port | Branch                         | Status              | Current Focus                       |
+| ---------------- | ---- | ------------------------------ | ------------------- | ----------------------------------- |
+| **main**         | 3000 | `feature/general`              | 🟢 Active           | Project management, QR code feature |
+| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Synced           | Phase 3.5 complete (PR #50)         |
+| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
+| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
+| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Synced           | Phase 2: Performance (non-blocking) |
+| **integrations** | 3005 | `feature/integrations`         | 🟢 **COMPLETE**     | PR #48, #58 merged                  |
 
 ---
 
@@ -31,16 +31,16 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ tech-debt #62 - S3 storage architecture improvements for multi-tenant safety (Dec 9)
+- ✅ volunteer #61 - Phase 2 MVP: Volunteer Onboarding Automation (Dec 9)
+- ✅ e2e #60 - Phase 3 workflow tests + shared auth pattern (Dec 9)
+- ✅ main #59 - Starry Night theme, header improvements, onboarding plan (Dec 8)
+- ✅ integrations #58 - Field selection and unified DataTable system (Dec 7)
+- ✅ prayer #57 - My Prayer Sheet for team members (Dec 7)
 - ✅ prayer #56 - Redact submittedBy for private prayers (Dec 5)
 - ✅ main #55 - Persist theme choice across navigation (Dec 5)
 - ✅ main #54 - Theme switching system with multiple variants (Dec 5)
 - ✅ volunteer #53 - Check All toggle and volunteer category matching (Dec 4)
-- ✅ volunteer #52 - Export tracking and getExportableVolunteers (Dec 4)
-- ✅ prayer #51 - Optimize getPrayerRequestStats N+1 query (Dec 4)
-- ✅ connect-card #50 - Fuzzy duplicate detection + S3 org-scoped paths (Dec 4)
-- ✅ prayer #49 - Complete prayer request management system (Dec 4)
-- ✅ integrations #48 - ChMS export with email deduplication (Dec 1)
-- ✅ volunteer #47 - Email automation for leader notification (Dec 1)
 
 ---
 
@@ -142,133 +142,50 @@ None - Phase 1 complete, no longer blocking production.
 
 ### 🟢 volunteer (Port 3003)
 
-**Status:** Phase 2.2 In Progress - Email automation wired
+**Status:** ✅ **Phase 2 MVP COMPLETE** - PR #61 merged (Dec 9)
 **Branch:** `feature/volunteer-management`
 **Vision Doc:** `/docs/features/volunteer/vision.md`
 **Testing Strategy:** `/docs/technical/testing-strategy.md`
 
-#### Completed Work
-
-**PR #47 - Email Automation:**
-
-| #   | Task                             | Status |
-| --- | -------------------------------- | ------ |
-| 1   | Leader auto-notification         | [x]    |
-| 2   | Document auto-send to volunteers | [x]    |
-
-**PR #52 - Export Tracking:**
-
-| #   | Task                                 | Status |
-| --- | ------------------------------------ | ------ |
-| 1   | `getExportableVolunteers()` function | [x]    |
-| 2   | Export tracking fields               | [x]    |
-
-**PR #53 - UI Fixes:**
-
-| #   | Task                            | Status |
-| --- | ------------------------------- | ------ |
-| 1   | Check All toggle                | [x]    |
-| 2   | Volunteer category matching fix | [x]    |
-
-**Session Dec 6 - Phase 2.1 & 2.2 (In Progress):**
-
-| #   | Task                                                      | Status |
-| --- | --------------------------------------------------------- | ------ |
-| 1   | Add `PENDING_REVIEW` to BackgroundCheckStatus enum        | [x]    |
-| 2   | Remove `SUBSIDIZED` from BGCheckPayment enum              | [x]    |
-| 3   | Create email service abstraction (`lib/email/service.ts`) | [x]    |
-| 4   | Add `EmailLog` model for audit trail                      | [x]    |
-| 5   | Wire `processVolunteer` → send welcome email              | [x]    |
-| 6   | Set `documentsSentAt` timestamp when email sent           | [x]    |
-| 7   | Update all UI components with PENDING_REVIEW option       | [x]    |
-| 8   | Create testing strategy documentation                     | [x]    |
-| 9   | Set up Vitest for unit/integration tests                  | [ ]    |
-| 10  | Write tests for email service                             | [ ]    |
-
-#### What You Should Be Working On (Phase 2 - MVP Automation)
-
-**Design decisions documented:** See `/docs/features/volunteer/vision.md` (Phase 2 section)
-
-**Phase 2.1: Schema & Foundation** ✅ COMPLETE
-
-| #   | Task                                                  | Status |
-| --- | ----------------------------------------------------- | ------ |
-| 1.1 | Add `PENDING_REVIEW` to BackgroundCheckStatus enum    | [x]    |
-| 1.2 | Simplify payment: remove `SUBSIDIZED`, keep 2 options | [x]    |
-
-**Phase 2.2: Core Automation** ✅ COMPLETE
-
-| #   | Task                                            | Status |
-| --- | ----------------------------------------------- | ------ |
-| 2.1 | Wire `processVolunteer` → send welcome email    | [x]    |
-| 2.2 | Create industry-standard email service          | [x]    |
-| 2.3 | Set `documentsSentAt` timestamp when email sent | [x]    |
-
-**Phase 2.T: Testing Infrastructure** 🔄 IN PROGRESS
-
-| #   | Task                                         | Status |
-| --- | -------------------------------------------- | ------ |
-| T.1 | Document testing strategy                    | [x]    |
-| T.2 | Install Vitest + dependencies                | [ ]    |
-| T.3 | Configure vitest.config.ts                   | [ ]    |
-| T.4 | Write unit tests for email service           | [ ]    |
-| T.5 | Write integration tests for processVolunteer | [ ]    |
-| T.6 | Refactor E2E to critical paths only          | [ ]    |
-
-**Phase 2.3: Volunteer Self-Report**
-
-| #   | Task                                            | Status |
-| --- | ----------------------------------------------- | ------ |
-| 3.1 | Generate unique token-based confirmation link   | [ ]    |
-| 3.2 | Build public endpoint → `PENDING_REVIEW` status | [ ]    |
-| 3.3 | Add follow-up email template with confirm link  | [ ]    |
-
-**Phase 2.4: Staff Review Queue**
-
-| #   | Task                                                   | Status |
-| --- | ------------------------------------------------------ | ------ |
-| 4.1 | Build review queue UI (`PENDING_REVIEW` volunteers)    | [ ]    |
-| 4.2 | One-click verification ("Confirm Cleared" / "Not Yet") | [ ]    |
-| 4.3 | Bulk verification support                              | [ ]    |
-
-**Phase 2.5: Dashboard Stats**
-
-| #   | Task                                                   | Status |
-| --- | ------------------------------------------------------ | ------ |
-| 5.1 | Build stats banner (Awaiting BG, Pending Review, etc.) | [ ]    |
-| 5.2 | Add stats data query                                   | [ ]    |
-| 5.3 | Wire clickable filters                                 | [ ]    |
-
-**Phase 2.6: Leader Notifications**
-
-| #   | Task                                                    | Status |
-| --- | ------------------------------------------------------- | ------ |
-| 6.1 | Add leader notification prefs (per-category, email/SMS) | [ ]    |
-| 6.2 | Trigger notifications when enabled                      | [ ]    |
-
-**Phase 2.7: Export Enhancement**
+#### Completed Work (PR #61 - Phase 2 MVP)
 
 | #   | Task                                                     | Status |
 | --- | -------------------------------------------------------- | ------ |
-| 7.1 | Update CSV export with BG status, date, expiry, provider | [ ]    |
+| 1   | Auto-send welcome email with ministry docs on activation | [x]    |
+| 2   | Token-based BG check confirmation page                   | [x]    |
+| 3   | Staff "BG Check Review" tab with Approve/Flag workflow   | [x]    |
+| 4   | Email service abstraction with audit logging             | [x]    |
+| 5   | Vitest testing setup with 37 unit/integration tests      | [x]    |
+| 6   | Arcjet rate limiting for public endpoints                | [x]    |
+| 7   | PENDING_REVIEW status in BackgroundCheckStatus enum      | [x]    |
 
-**After Phase 2 Complete - Bulk Messaging (Phase 3):**
+**Earlier PRs:**
+
+- ✅ PR #47 - Leader auto-notification + document auto-send
+- ✅ PR #52 - Export tracking + `getExportableVolunteers()`
+- ✅ PR #53 - Check All toggle + category matching fix
+
+#### What's Next (Future Enhancements)
+
+**Phase 3 - Bulk Messaging:**
 
 - See `/docs/features/volunteer/bulk-messaging-spec.md`
 - Route: `/church/[slug]/admin/volunteer/message`
+- Filter volunteers by ministry/location/status
+- Compose with calendar links & document attachments
+- Send via GHL (SMS/Email)
 
 #### Definition of Done (Phase 2 - MVP Automation)
 
-- [ ] Welcome email sends automatically when volunteer processed
-- [ ] Volunteer can self-report BG check completion
-- [ ] Staff can verify BG completions (one-click)
-- [ ] Stats banner shows pipeline counts
-- [ ] Export includes BG status data
-- [ ] PR created to main
+- [x] Welcome email sends automatically when volunteer processed
+- [x] Volunteer can self-report BG check completion
+- [x] Staff can verify BG completions (one-click via Review tab)
+- [x] Vitest test suite (37 tests)
+- [x] PR #61 merged to main
 
 #### Blockers
 
-None - can work independently.
+None - Phase 2 MVP complete.
 
 ---
 
@@ -415,8 +332,8 @@ pnpm dev  # Runs on port 3000
 | Phase   | Description             | Status  | Target   |
 | ------- | ----------------------- | ------- | -------- |
 | Phase 1 | Production Fixes        | 🟢 100% | Complete |
-| Phase 2 | Pilot Church            | 🟡 60%  | Dec 2025 |
-| Phase 3 | Member Mgmt + ChMS Sync | 🟡 25%  | Jan 2026 |
+| Phase 2 | Pilot Church            | 🟢 85%  | Dec 2025 |
+| Phase 3 | Member Mgmt + ChMS Sync | 🟡 30%  | Jan 2026 |
 | Phase 4 | Communication           | ⬜ 0%   | Feb 2026 |
 | Phase 5 | Scale                   | ⬜ 0%   | Mar 2026 |
 
@@ -426,9 +343,12 @@ pnpm dev  # Runs on port 3000
 - ✅ PII removed from logs
 - ✅ Pagination added to all queries
 - ✅ Database indexes added
-- ✅ Prayer management complete
-- ✅ ChMS CSV export working (PR #48)
+- ✅ Prayer management complete (PR #49, #51, #56, #57)
+- ✅ ChMS CSV export working (PR #48, #58)
 - ✅ Theme switching system (PR #54, #55)
+- ✅ Volunteer Phase 2 MVP (PR #61)
+- ✅ E2E test suite (PR #60)
+- ✅ S3 multi-tenant safety (PR #62)
 
 ---
 
