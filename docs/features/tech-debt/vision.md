@@ -1,9 +1,9 @@
 # Tech Debt - Production Blockers
 
-**Status:** 🟢 **Phase 1 Complete** - Ready for Phase 2
+**Status:** 🟢 **Phase 1.5 Complete** - Caching deferred to scale
 **Worktree:** `/church-connect-hub/tech-debt`
 **Branch:** `feature/tech-debt`
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-12-09
 
 ---
 
@@ -153,23 +153,150 @@ const cards = await prisma.connectCard.findMany({
 
 ---
 
+## 🟢 Phase 1.5: S3 Architecture (COMPLETE)
+
+**Completed:** PR #62 (Dec 9, 2025)
+
+### S3 Storage Improvements
+
+| Fix                       | Description                                                      | Status |
+| ------------------------- | ---------------------------------------------------------------- | ------ |
+| Path inconsistency        | `s3-cleanup.ts` now uses `organizations/{slug}` consistently     | [x]    |
+| VolunteerDocument URL→Key | Migrated from storing full URLs to S3 keys                       | [x]    |
+| Export expiration         | Added 30-day auto-expiration to DataExport with cleanup function | [x]    |
+
+**Files Changed:**
+
+- `lib/s3-cleanup.ts` - Fixed path patterns, added `cleanupExpiredExports()`
+- `lib/S3Client.ts` - Added `getS3Url()` and `getS3Key()` helpers
+- `prisma/schema.prisma` - `fileUrl` → `fileKey`, added `expiresAt`
+- `actions/volunteers/onboarding.ts` - Updated to use `fileKey`
+- `actions/export/create-export.ts` - Added 30-day expiration
+
+**Documentation:** See `/docs/features/tech-debt/s3-enterprise-architecture-plan.md` for full enterprise S3 strategy (deferred UUID migration to 500+ churches scale).
+
+---
+
 ## 🟠 Phase 2: Performance (HIGH)
 
 **Fix after production blockers, before scaling.**
 
-### 5. No Caching
+### 5. Caching Strategy
 
-**Impact:** Every request hits database
-**Risk:** Slow performance, high database costs
+**Current State:** React `cache()` deduplicates within single request only. Every new page load = fresh DB queries.
 
-**Strategy:**
+**Impact:** Every request hits database (3 queries per dashboard page load)
+**Risk:** Slow performance at scale, high database costs
 
-- Add Redis/Upstash for hot data
-- Cache organization settings
-- Cache user permissions
-- Cache navigation config
+**Status:** [ ] Deferred - Document gameplan, implement when scaling
 
-**Status:** [ ] Not started
+---
+
+#### When to Implement
+
+**Trigger Points (implement when ANY is true):**
+
+- [ ] 100+ active users
+- [ ] 500+ daily dashboard requests
+- [ ] Average page load > 500ms
+- [ ] Database costs exceed $50/month
+- [ ] Preparing for 10+ church pilot
+
+**Current Reality:** <10 churches, <100 users. Neon is fast enough. Ship MVP first.
+
+---
+
+#### Implementation Gameplan
+
+**Technology:** Upstash Redis (serverless, HTTP-based, Vercel-native)
+
+**Install:**
+
+```bash
+pnpm add @upstash/redis
+```
+
+**Environment Variables:**
+
+```env
+UPSTASH_REDIS_REST_URL=https://xxx.upstash.io
+UPSTASH_REDIS_REST_TOKEN=xxx
+```
+
+**Create Cache Utility:** `lib/cache.ts`
+
+```typescript
+import { Redis } from "@upstash/redis";
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
+
+export async function cacheGet<T>(key: string): Promise<T | null> {
+  return redis.get<T>(key);
+}
+
+export async function cacheSet<T>(
+  key: string,
+  value: T,
+  ttlSeconds: number
+): Promise<void> {
+  await redis.set(key, value, { ex: ttlSeconds });
+}
+
+export async function cacheDelete(key: string): Promise<void> {
+  await redis.del(key);
+}
+
+export async function cacheDeletePattern(pattern: string): Promise<void> {
+  const keys = await redis.keys(pattern);
+  if (keys.length > 0) await redis.del(...keys);
+}
+```
+
+---
+
+#### What to Cache
+
+| Data                 | Key Pattern                   | TTL    | Invalidate When                |
+| -------------------- | ----------------------------- | ------ | ------------------------------ |
+| Organization by slug | `org:slug:{slug}`             | 5 min  | Org settings updated           |
+| User permissions     | `user:perms:{userId}:{orgId}` | 2 min  | Role changed, location changed |
+| Location list        | `org:locations:{orgId}`       | 10 min | Location added/removed         |
+
+**Hot Path (3 queries per page load):**
+
+```
+app/data/dashboard/require-dashboard-access.ts
+├── getOrganizationBySlug(slug)      → Cache: org:slug:{slug}
+├── prisma.user.findUnique(userId)   → Cache: user:perms:{userId}:{orgId}
+└── prisma.member.findUnique(...)    → Combined with user cache
+```
+
+---
+
+#### Cache Invalidation Points
+
+Add cache invalidation to these server actions:
+
+| Action                          | Cache Keys to Invalidate                   |
+| ------------------------------- | ------------------------------------------ |
+| Update organization settings    | `org:slug:{slug}`, `org:locations:{orgId}` |
+| Change user role                | `user:perms:{userId}:*`                    |
+| Add/remove location             | `org:locations:{orgId}`                    |
+| Update user location assignment | `user:perms:{userId}:{orgId}`              |
+
+---
+
+#### Expected Results
+
+| Metric                | Before Cache        | After Cache                 |
+| --------------------- | ------------------- | --------------------------- |
+| Queries per page load | 3                   | 0-1 (cache hit)             |
+| Dashboard latency     | 100-300ms           | 20-50ms                     |
+| DB load at 1000 users | 30K queries/day     | 3K queries/day              |
+| Monthly cost          | Scales with traffic | Fixed + $0.20/100K requests |
 
 ---
 
@@ -184,7 +311,7 @@ const cards = await prisma.connectCard.findMany({
 - Abstract data access
 - Enable future database flexibility
 
-**Status:** [ ] Not started (defer until scale)
+**Status:** [ ] Deferred (implement only if switching databases)
 
 ---
 
@@ -281,17 +408,20 @@ try {
 
 ## 📊 Progress Tracking
 
-| Phase | Issue               | Status | PR  |
-| ----- | ------------------- | ------ | --- |
-| 1     | Subscription bypass | [x]    | -   |
-| 1     | PII in logs         | [x]    | -   |
-| 1     | Missing indexes     | [x]    | -   |
-| 1     | No pagination       | [x]    | #42 |
-| 2     | No caching          | [ ]    | -   |
-| 2     | No data abstraction | [ ]    | -   |
-| 3     | Type safety         | [x]    | -   |
-| 3     | Error swallowing    | [ ]    | -   |
-| 3     | Component cleanup   | [ ]    | -   |
+| Phase | Issue                | Status | PR                |
+| ----- | -------------------- | ------ | ----------------- |
+| 1     | Subscription bypass  | [x]    | -                 |
+| 1     | PII in logs          | [x]    | -                 |
+| 1     | Missing indexes      | [x]    | -                 |
+| 1     | No pagination        | [x]    | #42               |
+| 1.5   | S3 path consistency  | [x]    | #62               |
+| 1.5   | S3 URL→Key migration | [x]    | #62               |
+| 1.5   | Export expiration    | [x]    | #62               |
+| 2     | Caching              | ⏸️     | Deferred to scale |
+| 2     | Data abstraction     | ⏸️     | Deferred to scale |
+| 3     | Type safety          | [x]    | -                 |
+| 3     | Error swallowing     | [ ]    | -                 |
+| 3     | Component cleanup    | [ ]    | -                 |
 
 ---
 

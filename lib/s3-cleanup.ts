@@ -295,11 +295,12 @@ export async function cleanupLessonFiles(lesson: {
     }
   } else if (lesson.Chapter) {
     // Build prefix from lesson data if s3Prefix not stored
+    // IMPORTANT: Use slug only (not slug-id) to match upload path pattern
     const course = lesson.Chapter.Course;
     const orgPrefix = course.organization
-      ? `organizations/${course.organization.slug}-${course.organization.id}`
+      ? `organizations/${course.organization.slug}`
       : "platform";
-    const lessonPrefix = `${orgPrefix}/courses/${course.slug}-${course.id}/chapters/${lesson.Chapter.slug}-${lesson.Chapter.id}/lessons/${lesson.slug}-${lesson.id}`;
+    const lessonPrefix = `${orgPrefix}/courses/${course.slug}/chapters/${lesson.Chapter.slug}/lessons/${lesson.slug}/`;
     const prefixResult = await deleteByPrefix(lessonPrefix);
     results.deleted += prefixResult.deleted;
     results.errors += prefixResult.errors;
@@ -337,11 +338,107 @@ export async function cleanupLessonFiles(lesson: {
 /**
  * Clean up ALL S3 files for an organization
  * DANGEROUS: Only call when deleting entire organization
+ *
+ * Path pattern: organizations/{slug}/ (matches upload pattern)
  */
 export async function cleanupOrganizationFiles(organization: {
   id: string;
   slug: string;
 }): Promise<DeleteResult> {
-  const prefix = `organizations/${organization.slug}-${organization.id}/`;
+  // Use slug only to match upload path pattern
+  const prefix = `organizations/${organization.slug}/`;
   return await deleteByPrefix(prefix);
+}
+
+/**
+ * Clean up expired export files
+ *
+ * Finds all DataExport records past their expiresAt date,
+ * deletes the S3 files, and removes the database records.
+ *
+ * Intended to be called from a cron job (e.g., daily at 2 AM).
+ *
+ * @returns Summary of cleanup operation
+ */
+export async function cleanupExpiredExports(): Promise<{
+  processed: number;
+  deleted: number;
+  errors: number;
+  errorDetails: Array<{ id: string; error: string }>;
+}> {
+  // Import prisma here to avoid circular dependencies
+  const { prisma } = await import("@/lib/db");
+
+  const results = {
+    processed: 0,
+    deleted: 0,
+    errors: 0,
+    errorDetails: [] as Array<{ id: string; error: string }>,
+  };
+
+  try {
+    // Find all expired exports
+    const expiredExports = await prisma.dataExport.findMany({
+      where: {
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+      select: {
+        id: true,
+        fileKey: true,
+        organizationId: true,
+      },
+    });
+
+    results.processed = expiredExports.length;
+
+    if (expiredExports.length === 0) {
+      return results;
+    }
+
+    // Process each expired export
+    for (const exp of expiredExports) {
+      try {
+        // Delete S3 file
+        const s3Deleted = await deleteS3Object(exp.fileKey);
+
+        if (!s3Deleted) {
+          // Log but continue - file may already be deleted
+          console.warn(`S3 file not found or already deleted: ${exp.fileKey}`);
+        }
+
+        // Delete database record
+        await prisma.dataExport.delete({
+          where: { id: exp.id },
+        });
+
+        results.deleted++;
+      } catch (error) {
+        results.errors++;
+        results.errorDetails.push({
+          id: exp.id,
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }
+
+    console.log(
+      `[Export Cleanup] Processed: ${results.processed}, Deleted: ${results.deleted}, Errors: ${results.errors}`
+    );
+
+    return results;
+  } catch (error) {
+    console.error("Failed to cleanup expired exports:", error);
+    return {
+      ...results,
+      errors: 1,
+      errorDetails: [
+        {
+          id: "query",
+          error: error instanceof Error ? error.message : "Query failed",
+        },
+      ],
+    };
+  }
 }

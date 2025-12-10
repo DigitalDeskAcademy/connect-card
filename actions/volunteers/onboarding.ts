@@ -26,7 +26,7 @@ import { request } from "@arcjet/next";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { S3 } from "@/lib/S3Client";
+import { S3, getS3Key, getS3Url } from "@/lib/S3Client";
 import { env } from "@/lib/env";
 
 // Rate limiting: 10 requests per minute
@@ -45,7 +45,7 @@ const aj = arcjet.withRule(
 const volunteerDocumentSchema = z.object({
   name: z.string().min(1, "Document name is required"),
   fileName: z.string().min(1, "File name is required"),
-  fileUrl: z.string().url("Invalid file URL"),
+  fileKey: z.string().min(1, "File key is required"),
   fileSize: z.number().min(1, "File size is required"),
   mimeType: z.string().min(1, "MIME type is required"),
   scope: z.nativeEnum(DocumentScope),
@@ -122,7 +122,7 @@ export async function createVolunteerDocument(
   const {
     name,
     fileName,
-    fileUrl,
+    fileKey,
     fileSize,
     mimeType,
     scope,
@@ -144,7 +144,7 @@ export async function createVolunteerDocument(
         organizationId: organization.id,
         name,
         fileName,
-        fileUrl,
+        fileKey,
         fileSize,
         mimeType,
         scope,
@@ -217,12 +217,8 @@ export async function deleteVolunteerDocument(
       };
     }
 
-    // Extract S3 key from URL
-    // URL format: https://bucket.s3.region.amazonaws.com/key or similar
-    const url = new URL(document.fileUrl);
-    const key = url.pathname.startsWith("/")
-      ? url.pathname.slice(1)
-      : url.pathname;
+    // Extract S3 key (handles both new key format and legacy URL format)
+    const key = getS3Key(document.fileKey);
 
     // Delete from S3
     try {
@@ -301,7 +297,7 @@ export async function getVolunteerDocuments(slug: string): Promise<
           id: doc.id,
           name: doc.name,
           fileName: doc.fileName,
-          fileUrl: doc.fileUrl,
+          fileUrl: getS3Url(doc.fileKey), // Construct URL from key
           fileSize: doc.fileSize,
           mimeType: doc.mimeType,
           scope: doc.scope,
@@ -708,7 +704,7 @@ export async function getOnboardingSettings(slug: string): Promise<
           id: doc.id,
           name: doc.name,
           fileName: doc.fileName,
-          fileUrl: doc.fileUrl,
+          fileUrl: getS3Url(doc.fileKey), // Construct URL from key
           fileSize: doc.fileSize,
           mimeType: doc.mimeType,
           scope: doc.scope,
