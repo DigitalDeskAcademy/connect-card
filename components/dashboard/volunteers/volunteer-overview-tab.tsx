@@ -9,10 +9,20 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { IconPhone, IconMail, IconMapPin, IconSend } from "@tabler/icons-react";
+import {
+  IconPhone,
+  IconMail,
+  IconMapPin,
+  IconSend,
+  IconCheck,
+  IconAlertTriangle,
+} from "@tabler/icons-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useTransition } from "react";
+import { useParams } from "next/navigation";
 import type { Volunteer } from "@/lib/generated/prisma";
+import { updateBackgroundCheckStatus } from "@/actions/volunteers/volunteers";
 
 /**
  * Volunteer Overview Tab
@@ -45,16 +55,22 @@ interface VolunteerOverviewTabProps {
 }
 
 export function VolunteerOverviewTab({ volunteer }: VolunteerOverviewTabProps) {
+  const params = useParams();
+  const slug = params.slug as string;
+  const [isPending, startTransition] = useTransition();
+
   // Background check status color mapping
   const bgCheckStatusColor = {
     NOT_STARTED: "secondary",
     IN_PROGRESS: "default",
+    PENDING_REVIEW: "outline",
     CLEARED: "default",
     FLAGGED: "destructive",
     EXPIRED: "destructive",
   } as const;
 
   const statusColor = bgCheckStatusColor[volunteer.backgroundCheckStatus];
+  const isPendingReview = volunteer.backgroundCheckStatus === "PENDING_REVIEW";
 
   // Placeholder function for starting background check process
   const handleStartBackgroundCheck = () => {
@@ -66,6 +82,38 @@ export function VolunteerOverviewTab({ volunteer }: VolunteerOverviewTabProps) {
     // - Include links to required documents
     // - Track status updates
     // - Send reminders if not completed
+  };
+
+  // Approve background check (set to CLEARED)
+  const handleApproveBackgroundCheck = () => {
+    startTransition(async () => {
+      const result = await updateBackgroundCheckStatus(
+        slug,
+        volunteer.id,
+        "CLEARED"
+      );
+      if (result.status === "success") {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    });
+  };
+
+  // Flag background check for issues
+  const handleFlagBackgroundCheck = () => {
+    startTransition(async () => {
+      const result = await updateBackgroundCheckStatus(
+        slug,
+        volunteer.id,
+        "FLAGGED"
+      );
+      if (result.status === "success") {
+        toast.success(result.message);
+      } else {
+        toast.error(result.message);
+      }
+    });
   };
 
   return (
@@ -158,14 +206,37 @@ export function VolunteerOverviewTab({ volunteer }: VolunteerOverviewTabProps) {
           </div>
         </CardContent>
         <CardFooter>
-          <Button
-            variant="default"
-            className="w-full"
-            onClick={handleStartBackgroundCheck}
-          >
-            <IconSend className="mr-2 h-4 w-4" />
-            Start Background Check
-          </Button>
+          {isPendingReview ? (
+            <div className="flex w-full gap-2">
+              <Button
+                variant="default"
+                className="flex-1"
+                onClick={handleApproveBackgroundCheck}
+                disabled={isPending}
+              >
+                <IconCheck className="mr-2 h-4 w-4" />
+                {isPending ? "Processing..." : "Approve"}
+              </Button>
+              <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={handleFlagBackgroundCheck}
+                disabled={isPending}
+              >
+                <IconAlertTriangle className="mr-2 h-4 w-4" />
+                Flag
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={handleStartBackgroundCheck}
+            >
+              <IconSend className="mr-2 h-4 w-4" />
+              Start Background Check
+            </Button>
+          )}
         </CardFooter>
       </Card>
 

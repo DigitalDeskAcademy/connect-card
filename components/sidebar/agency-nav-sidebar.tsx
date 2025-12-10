@@ -22,9 +22,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Link from "next/link";
 
@@ -49,25 +46,18 @@ export function AgencyNavSidebar({
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
-              <Link href={effectiveHomeUrl}>
-                {/* Following existing pattern - CSS truncate like AppSidebar */}
-                <span
-                  className={`font-semibold truncate max-w-[180px] block ${
-                    brandName === "Church Connect" ? "text-xl" : "text-base"
-                  }`}
-                >
-                  {brandName}
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <Link
+          href={effectiveHomeUrl}
+          className="flex items-center gap-2 px-2 py-1.5"
+        >
+          <span
+            className={`font-semibold truncate max-w-[180px] block text-sidebar-foreground ${
+              brandName === "Church Connect" ? "text-xl" : "text-base"
+            }`}
+          >
+            {brandName}
+          </span>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navigation.navMain} />

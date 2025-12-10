@@ -9,9 +9,7 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Upload, Package, ChartBar, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Upload, Package, ChartBar } from "lucide-react";
 import { ConnectCardUploadClient } from "./upload/upload-client";
 import { BatchesClient } from "./batches/batches-client";
 import {
@@ -97,13 +95,6 @@ export default function ConnectCardsClient({
             Analytics
           </TabsTrigger>
         </TabsList>
-
-        <Button variant="outline" size="sm" asChild>
-          <Link href={`/church/${slug}/admin`}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
-          </Link>
-        </Button>
       </div>
 
       {/* Upload Tab */}

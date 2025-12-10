@@ -30,12 +30,31 @@ export default async function ChurchAdminDashboard({
   const { slug } = await params;
   const { organization, dataScope } = await requireDashboardAccess(slug);
 
-  // Fetch locations, cumulative analytics, and chart data
-  const [locations, cumulativeAnalytics, chartData] = await Promise.all([
-    getOrganizationLocations(organization.id),
+  // Fetch locations first
+  const locations = await getOrganizationLocations(organization.id);
+
+  // Fetch cumulative analytics and chart data, plus per-location data
+  const [cumulativeAnalytics, chartData, ...locationData] = await Promise.all([
     getConnectCardAnalytics(organization.id), // No locationId = all locations
     getConnectCardChartData(organization.id), // Chart data for last 90 days
+    // Fetch analytics and chart data for each location
+    ...locations.flatMap(loc => [
+      getConnectCardAnalytics(organization.id, loc.id),
+      getConnectCardChartData(organization.id, loc.id),
+    ]),
   ]);
+
+  // Build per-location analytics map
+  const locationAnalytics: Record<
+    string,
+    { analytics: typeof cumulativeAnalytics; chartData: typeof chartData }
+  > = {};
+  locations.forEach((loc, index) => {
+    locationAnalytics[loc.slug] = {
+      analytics: locationData[index * 2] as typeof cumulativeAnalytics,
+      chartData: locationData[index * 2 + 1] as typeof chartData,
+    };
+  });
 
   // Find user's default location slug from locationId
   const userDefaultLocationSlug = dataScope.filters.locationId
@@ -51,6 +70,7 @@ export default async function ChurchAdminDashboard({
         locations={locations}
         cumulativeAnalytics={cumulativeAnalytics}
         chartData={chartData}
+        locationAnalytics={locationAnalytics}
         userDefaultLocationSlug={userDefaultLocationSlug}
         canSeeAllLocations={dataScope.filters.canSeeAllLocations}
       />

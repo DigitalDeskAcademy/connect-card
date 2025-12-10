@@ -58,10 +58,15 @@ export default async function ChurchVolunteersPage({
   const allCount = volunteers.filter(v =>
     ["ACTIVE", "INACTIVE"].includes(v.status)
   ).length;
+  const reviewCount = volunteers.filter(
+    v => v.backgroundCheckStatus === "PENDING_REVIEW"
+  ).length;
 
   // Determine active tab (default to "all")
   const activeTab =
-    typeof tab === "string" && ["all", "pending"].includes(tab) ? tab : "all";
+    typeof tab === "string" && ["all", "pending", "review"].includes(tab)
+      ? tab
+      : "all";
 
   // Note: Data is automatically filtered based on dataScope:
   // - Church admins see all volunteers in their organization
@@ -69,21 +74,18 @@ export default async function ChurchVolunteersPage({
   // - Platform admins see all (but shouldn't access this route directly)
 
   return (
-    <PageContainer
-      variant="tabs"
-      as="main"
-      backButton={{
-        href: `/church/${slug}/admin`,
-        label: "Back",
-      }}
-    >
+    <PageContainer variant="tabs" as="main">
       <VolunteersClient
         volunteers={volunteers}
         slug={slug}
         organizationId={organization.id}
         locations={locations}
         activeTab={activeTab}
-        tabCounts={{ all: allCount, pending: pendingCount }}
+        tabCounts={{
+          all: allCount,
+          pending: pendingCount,
+          review: reviewCount,
+        }}
         canDelete={dataScope.filters.canDeleteData}
       />
     </PageContainer>
