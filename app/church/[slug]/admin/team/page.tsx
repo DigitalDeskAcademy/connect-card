@@ -14,10 +14,12 @@ import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }
 
-export default async function TeamPage({ params }: PageProps) {
+export default async function TeamPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const { tab } = await searchParams;
   const { organization, dataScope, session, member } =
     await requireDashboardAccess(slug);
 
@@ -116,8 +118,14 @@ export default async function TeamPage({ params }: PageProps) {
     })
   );
 
+  // Determine active tab (default to "active")
+  const activeTab =
+    typeof tab === "string" && ["active", "pending"].includes(tab)
+      ? tab
+      : "active";
+
   return (
-    <PageContainer as="main">
+    <PageContainer as="main" variant="tabs">
       <TeamManagementClient
         teamMembers={teamMembers}
         dataScope={dataScope}
@@ -125,6 +133,7 @@ export default async function TeamPage({ params }: PageProps) {
         locations={locations}
         organizationSlug={slug}
         pendingInvitations={enrichedInvitations}
+        activeTab={activeTab}
       />
     </PageContainer>
   );

@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NavTabs } from "@/components/layout/nav-tabs";
 import { FileText, UserPlus, Heart, Users, Building2 } from "lucide-react";
 import type {
   ConnectCardAnalytics,
@@ -42,6 +41,8 @@ interface DashboardClientProps {
   userDefaultLocationSlug: string | null;
   /** Whether user has permission to see all locations */
   canSeeAllLocations: boolean;
+  /** Active tab from URL (location slug or "cumulative") */
+  activeTab: string;
 }
 
 /** Reusable KPI card for dashboard metrics */
@@ -190,11 +191,8 @@ export function DashboardClient({
   locationAnalytics,
   userDefaultLocationSlug,
   canSeeAllLocations,
+  activeTab,
 }: DashboardClientProps) {
-  // Default to user's location if they have one assigned, otherwise show cumulative
-  const defaultTab = userDefaultLocationSlug ?? "cumulative";
-  const [selectedTab, setSelectedTab] = useState(defaultTab);
-
   // Section collapsed states (persisted to localStorage)
   const [sections, setSections] = useLocalStorage<SectionState>(
     "dashboard-sections",
@@ -215,79 +213,63 @@ export function DashboardClient({
     ? locations
     : locations.filter(loc => loc.slug === userDefaultLocationSlug);
 
+  // Build tabs array for NavTabs
+  const tabs = [
+    // Only show "All Locations" tab if user has permission
+    ...(canSeeAllLocations
+      ? [{ label: "All Locations", value: "cumulative", icon: Building2 }]
+      : []),
+    // Location tabs
+    ...visibleLocations.map(location => ({
+      label: location.name,
+      value: location.slug,
+    })),
+  ];
+
+  // Get current analytics based on active tab
+  const currentAnalytics =
+    activeTab === "cumulative"
+      ? { analytics: cumulativeAnalytics, chartData }
+      : locationAnalytics[activeTab];
+
+  const currentLocationName =
+    activeTab === "cumulative"
+      ? undefined
+      : visibleLocations.find(loc => loc.slug === activeTab)?.name;
+
   return (
-    <Tabs
-      defaultValue={defaultTab}
-      value={selectedTab}
-      onValueChange={setSelectedTab}
-      className="w-full space-y-6"
-    >
-      {/* Location Filter Tabs - At the very top */}
-      <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
-        {/* Only show "All Locations" tab if user has permission */}
-        {canSeeAllLocations && (
-          <TabsTrigger
-            value="cumulative"
-            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-          >
-            <Building2 className="mr-2 w-4 h-4" />
-            All Locations
-          </TabsTrigger>
+    <>
+      {/* Location Filter Tabs */}
+      <NavTabs
+        baseUrl={`/church/${slug}/admin`}
+        paramName="location"
+        tabs={tabs}
+      />
+
+      <div className="space-y-6 pt-6">
+        {/* Quick Actions */}
+        <CollapsibleSection
+          title="Quick Actions"
+          isOpen={sections.quickActions}
+          onToggle={() => toggleSection("quickActions")}
+        >
+          <QuickActionsGrid
+            slug={slug}
+            defaultLocationSlug={userDefaultLocationSlug}
+          />
+        </CollapsibleSection>
+
+        {/* Dashboard Content for active tab */}
+        {currentAnalytics && (
+          <DashboardContent
+            analytics={currentAnalytics.analytics}
+            chartData={currentAnalytics.chartData}
+            locationName={currentLocationName}
+            sections={sections}
+            onToggleSection={toggleSection}
+          />
         )}
-        {visibleLocations.map(location => (
-          <TabsTrigger
-            key={location.id}
-            value={location.slug}
-            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-          >
-            {location.name}
-          </TabsTrigger>
-        ))}
-      </TabsList>
-
-      {/* Quick Actions */}
-      <CollapsibleSection
-        title="Quick Actions"
-        isOpen={sections.quickActions}
-        onToggle={() => toggleSection("quickActions")}
-      >
-        <QuickActionsGrid
-          slug={slug}
-          defaultLocationSlug={userDefaultLocationSlug}
-        />
-      </CollapsibleSection>
-
-      {/* Cumulative Tab Content */}
-      <TabsContent value="cumulative" className="mt-0 space-y-6">
-        <DashboardContent
-          analytics={cumulativeAnalytics}
-          chartData={chartData}
-          sections={sections}
-          onToggleSection={toggleSection}
-        />
-      </TabsContent>
-
-      {/* Location Tabs */}
-      {visibleLocations.map(location => {
-        const locData = locationAnalytics[location.slug];
-        if (!locData) return null;
-
-        return (
-          <TabsContent
-            key={location.slug}
-            value={location.slug}
-            className="mt-0 space-y-6"
-          >
-            <DashboardContent
-              analytics={locData.analytics}
-              chartData={locData.chartData}
-              locationName={location.name}
-              sections={sections}
-              onToggleSection={toggleSection}
-            />
-          </TabsContent>
-        );
-      })}
-    </Tabs>
+      </div>
+    </>
   );
 }

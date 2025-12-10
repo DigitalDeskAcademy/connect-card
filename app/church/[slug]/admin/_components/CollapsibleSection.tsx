@@ -14,6 +14,7 @@ interface CollapsibleSectionProps {
   onToggle: () => void;
   children: React.ReactNode;
   className?: string;
+  highlight?: boolean;
 }
 
 export function CollapsibleSection({
@@ -22,10 +23,18 @@ export function CollapsibleSection({
   onToggle,
   children,
   className,
+  highlight = false,
 }: CollapsibleSectionProps) {
   return (
     <Collapsible open={isOpen} onOpenChange={onToggle} className={className}>
-      <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors w-full group">
+      <CollapsibleTrigger
+        className={cn(
+          "flex items-center gap-2 text-sm font-medium transition-colors w-full group",
+          highlight
+            ? "text-primary hover:text-primary/80"
+            : "text-muted-foreground hover:text-foreground"
+        )}
+      >
         <ChevronDown
           className={cn(
             "h-4 w-4 transition-transform",

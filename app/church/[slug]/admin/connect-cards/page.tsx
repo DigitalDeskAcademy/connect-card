@@ -19,10 +19,15 @@ import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }
 
-export default async function ConnectCardsPage({ params }: PageProps) {
+export default async function ConnectCardsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params;
+  const { tab } = await searchParams;
   const { session, organization, member } = await requireDashboardAccess(slug);
 
   // Block staff users from accessing connect cards admin
@@ -88,14 +93,21 @@ export default async function ConnectCardsPage({ params }: PageProps) {
   // Count is just the filtered list length
   const pendingBatchCount = batches.length;
 
+  // Determine active tab (default to "upload")
+  const activeTab =
+    typeof tab === "string" && ["upload", "batches", "analytics"].includes(tab)
+      ? tab
+      : "upload";
+
   return (
-    <PageContainer as="main">
+    <PageContainer as="main" variant="tabs">
       <ConnectCardsClient
         slug={slug}
         locations={locations}
         defaultLocationId={defaultLocationId}
         batches={batches}
         pendingBatchCount={pendingBatchCount}
+        activeTab={activeTab}
       />
     </PageContainer>
   );

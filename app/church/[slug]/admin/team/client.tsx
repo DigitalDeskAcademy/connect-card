@@ -2,6 +2,11 @@
  * Team Management Client Component
  *
  * Provides UI for managing team members with role-based permissions.
+ *
+ * Uses URL-based tabs (NavTabs) for:
+ * - Shareable/bookmarkable URLs
+ * - Browser back/forward support
+ * - State persistence on refresh
  */
 
 "use client";
@@ -26,7 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NavTabs } from "@/components/layout/nav-tabs";
 import { IconUserPlus, IconMail, IconMapPin } from "@tabler/icons-react";
 import { Users, Clock } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -70,6 +75,7 @@ interface TeamManagementClientProps {
   locations: Location[];
   organizationSlug: string;
   pendingInvitations: PendingInvitation[];
+  activeTab: string;
 }
 
 export default function TeamManagementClient({
@@ -79,9 +85,9 @@ export default function TeamManagementClient({
   locations,
   organizationSlug,
   pendingInvitations,
+  activeTab,
 }: TeamManagementClientProps) {
   const { toast } = useToast();
-  const [selectedTab, setSelectedTab] = useState("active");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isRemoveOpen, setIsRemoveOpen] = useState(false);
@@ -362,155 +368,147 @@ export default function TeamManagementClient({
   });
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Team Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your organization&apos;s team members
-          </p>
-        </div>
+    <>
+      {/* NavTabs for URL-based tab navigation */}
+      <NavTabs
+        baseUrl={`/church/${organizationSlug}/admin/team`}
+        tabs={[
+          {
+            label: "Active Members",
+            value: "active",
+            icon: Users,
+            count: teamMembers.length,
+          },
+          {
+            label: "Pending Invitations",
+            value: "pending",
+            icon: Clock,
+            count:
+              pendingInvitations.length > 0
+                ? pendingInvitations.length
+                : undefined,
+          },
+        ]}
+      />
 
-        {canInviteUsers && (
-          <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <IconUserPlus className="mr-2 h-4 w-4" />
-                Invite Staff
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Invite Staff Member</DialogTitle>
-                <DialogDescription>
-                  Send an invitation to add a new staff member to your
-                  organization.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="staff@example.com"
-                    value={inviteForm.email}
-                    onChange={e =>
-                      setInviteForm({ ...inviteForm, email: e.target.value })
-                    }
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
-                  <Select
-                    value={inviteForm.role}
-                    onValueChange={(value: "admin" | "member") =>
-                      setInviteForm({
-                        ...inviteForm,
-                        role: value,
-                        // Reset location if switching to admin (admins see all locations)
-                        locationId:
-                          value === "admin" ? null : inviteForm.locationId,
-                      })
-                    }
-                    disabled={isSubmitting}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="member">Staff</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {inviteForm.role === "admin"
-                      ? "Admins can manage team members and see all locations"
-                      : "Staff members can scan and process connect cards at their assigned location"}
-                  </p>
-                </div>
-
-                {/* Location Selector - Only show for staff role */}
-                {inviteForm.role === "member" && (
+      <div className="space-y-6 pt-6">
+        {/* Header with Invite Button */}
+        <div className="flex justify-end">
+          {canInviteUsers && (
+            <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <IconUserPlus className="mr-2 h-4 w-4" />
+                  Invite Staff
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Invite Staff Member</DialogTitle>
+                  <DialogDescription>
+                    Send an invitation to add a new staff member to your
+                    organization.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
                   <div className="space-y-2">
-                    <Label
-                      htmlFor="location"
-                      className="flex items-center gap-2"
-                    >
-                      <IconMapPin className="h-4 w-4" />
-                      Assigned Location
-                    </Label>
+                    <Label htmlFor="email">Email Address</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="staff@example.com"
+                      value={inviteForm.email}
+                      onChange={e =>
+                        setInviteForm({ ...inviteForm, email: e.target.value })
+                      }
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
                     <Select
-                      value={inviteForm.locationId || ""}
-                      onValueChange={value =>
-                        setInviteForm({ ...inviteForm, locationId: value })
+                      value={inviteForm.role}
+                      onValueChange={(value: "admin" | "member") =>
+                        setInviteForm({
+                          ...inviteForm,
+                          role: value,
+                          // Reset location if switching to admin (admins see all locations)
+                          locationId:
+                            value === "admin" ? null : inviteForm.locationId,
+                        })
                       }
                       disabled={isSubmitting}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a location..." />
+                        <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {locations.map(location => (
-                          <SelectItem key={location.id} value={location.id}>
-                            {location.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="member">Staff</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>
                     <p className="text-xs text-muted-foreground">
-                      Staff members will only see connect cards from their
-                      assigned location
+                      {inviteForm.role === "admin"
+                        ? "Admins can manage team members and see all locations"
+                        : "Staff members can scan and process connect cards at their assigned location"}
                     </p>
                   </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsInviteOpen(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleInvite} disabled={isSubmitting}>
-                  <IconMail className="mr-2 h-4 w-4" />
-                  {isSubmitting ? "Sending..." : "Send Invitation"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
-      </div>
 
-      {/* Tabs Layout */}
-      <Tabs
-        defaultValue="active"
-        value={selectedTab}
-        onValueChange={setSelectedTab}
-        className="w-full"
-      >
-        <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs">
-          <TabsTrigger
-            value="active"
-            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-          >
-            <Users className="mr-2 w-4 h-4" />
-            Active Members ({teamMembers.length})
-          </TabsTrigger>
-          <TabsTrigger
-            value="pending"
-            className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-          >
-            <Clock className="mr-2 w-4 h-4" />
-            Pending Invitations ({pendingInvitations.length})
-          </TabsTrigger>
-        </TabsList>
+                  {/* Location Selector - Only show for staff role */}
+                  {inviteForm.role === "member" && (
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="location"
+                        className="flex items-center gap-2"
+                      >
+                        <IconMapPin className="h-4 w-4" />
+                        Assigned Location
+                      </Label>
+                      <Select
+                        value={inviteForm.locationId || ""}
+                        onValueChange={value =>
+                          setInviteForm({ ...inviteForm, locationId: value })
+                        }
+                        disabled={isSubmitting}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a location..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {locations.map(location => (
+                            <SelectItem key={location.id} value={location.id}>
+                              {location.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Staff members will only see connect cards from their
+                        assigned location
+                      </p>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsInviteOpen(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleInvite} disabled={isSubmitting}>
+                    <IconMail className="mr-2 h-4 w-4" />
+                    {isSubmitting ? "Sending..." : "Send Invitation"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
 
-        {/* Active Members Tab */}
-        <TabsContent value="active" className="mt-6">
+        {/* Active Members Tab Content */}
+        {activeTab === "active" && (
           <TeamDataTable
             columns={teamMembersColumns}
             data={teamMembers}
@@ -528,10 +526,10 @@ export default function TeamManagementClient({
               ) : undefined
             }
           />
-        </TabsContent>
+        )}
 
-        {/* Pending Invitations Tab */}
-        <TabsContent value="pending" className="mt-6">
+        {/* Pending Invitations Tab Content */}
+        {activeTab === "pending" && (
           <TeamDataTable
             columns={pendingInvitationsColumns}
             data={pendingInvitations}
@@ -541,8 +539,8 @@ export default function TeamManagementClient({
             emptyStateTitle="No pending invitations"
             emptyStateDescription="All invitations have been accepted or expired."
           />
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
 
       {/* Edit Member Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -734,6 +732,6 @@ export default function TeamManagementClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 }

@@ -3,7 +3,7 @@
 **Purpose:** THE authoritative guide for building Church Connect Hub. If there's a conflict, this document wins.
 **Status:** 🟡 **PRODUCTION BLOCKERS FIXED** - Phase 1 complete, ready for pilot
 **Health Score:** 78/100 (C+)
-**Last Updated:** 2025-12-07 (via /update-docs)
+**Last Updated:** 2025-12-08 (via /update-docs)
 **Applies To:** All worktrees, all features, all developers
 
 > ⚠️ **This is the law.** When in doubt, follow this document. All other docs are supplementary.
@@ -154,6 +154,39 @@ import { DashboardClient } from "./_components/DashboardClient";
 // Centralized (absolute import)
 import { VolunteersTable } from "@/components/dashboard/volunteers/volunteers-table";
 ```
+
+#### UI Patterns
+
+**Badges & Indicators**
+
+Use `rounded-md` for badge-style indicators (step numbers, counts, status icons). This matches our Badge component default and creates visual consistency.
+
+```tsx
+// ✅ Step indicators, status badges, count badges
+<div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">
+  1
+</div>
+
+// ✅ Badge component (defaults to primary, rounded-md)
+<Badge>3</Badge>
+
+// ❌ Don't use rounded-full for badges
+<div className="rounded-full bg-primary ...">1</div>
+```
+
+**When to use `rounded-full` (circles):**
+
+- Large decorative backgrounds (size-16+)
+- Avatar/profile images
+- Circular buttons (camera capture, etc.)
+- Icon containers with light backgrounds (`bg-primary/10`)
+
+**When to use `rounded-md` (badges):**
+
+- Step number indicators (1, 2, 3)
+- Count badges in tabs/navigation
+- Status indicator badges with icons
+- Any small indicator meant to draw attention
 
 #### Data Access
 
@@ -424,4 +457,4 @@ import { SomeUtil } from "@/lib/utils";
 
 ---
 
-_Last audit: 2025-12-04 | Next audit: After pilot church deployment_
+_Last audit: 2025-12-08 | Next audit: After pilot church deployment_

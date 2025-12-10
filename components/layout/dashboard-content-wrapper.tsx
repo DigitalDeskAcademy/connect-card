@@ -66,7 +66,7 @@ export function DashboardContentWrapper({
   return (
     <div className="flex flex-col h-screen">
       {/* Sticky header wrapper */}
-      <div className="sticky top-0 z-50 bg-background">
+      <div className="sticky top-0 z-50 bg-card">
         <SiteHeader
           brandName={brandName}
           organization={organization}
