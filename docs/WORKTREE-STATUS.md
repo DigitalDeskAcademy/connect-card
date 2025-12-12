@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-08
+**Last Updated:** 2025-12-11
 **Update Frequency:** After each significant work session
 
 ---
@@ -11,7 +11,7 @@
 | Worktree         | Port | Branch                         | Status              | Current Focus                       |
 | ---------------- | ---- | ------------------------------ | ------------------- | ----------------------------------- |
 | **main**         | 3000 | `feature/general`              | 🟢 Active           | Project management, QR code feature |
-| **connect-card** | 3001 | `feature/connect-card`         | 🟢 Synced           | Phase 3.5 complete (PR #50)         |
+| **connect-card** | 3001 | `feature/connect-card`         | 🟡 **UX Priority**  | Upload UX Overhaul (high priority)  |
 | **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
 | **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
 | **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Synced           | Phase 2: Performance (non-blocking) |
@@ -24,13 +24,15 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. connect-card  → Phase 4: CSV Export (next)
-2. tech-debt     → Phase 2: Performance (non-blocking)
-3. main          → Project management (ongoing)
+1. connect-card  → 🔥 Upload UX Overhaul (HIGH PRIORITY)
+2. connect-card  → Phase 4: CSV Export
+3. tech-debt     → Phase 2: Performance (non-blocking)
+4. main          → Project management (ongoing)
 ```
 
 **Recently Completed (PRs Merged):**
 
+- ✅ main #64 - Dashboard UI polish and badge standardization (Dec 10)
 - ✅ tech-debt #62 - S3 storage architecture improvements for multi-tenant safety (Dec 9)
 - ✅ volunteer #61 - Phase 2 MVP: Volunteer Onboarding Automation (Dec 9)
 - ✅ e2e #60 - Phase 3 workflow tests + shared auth pattern (Dec 9)
@@ -189,9 +191,9 @@ None - Phase 2 MVP complete.
 
 ---
 
-### 🟢 connect-card (Port 3001)
+### 🟡 connect-card (Port 3001)
 
-**Status:** Phase 3.5 Complete - Ready for Phase 4
+**Status:** 🔥 Upload UX Overhaul (HIGH PRIORITY)
 **Branch:** `feature/connect-card`
 **Vision Doc:** `/docs/features/connect-cards/vision.md`
 
@@ -211,6 +213,22 @@ None - Phase 2 MVP complete.
 | 10  | S3 org-scoped paths                    | [x]    |
 
 #### What You Should Be Working On
+
+**🔥 HIGH PRIORITY - Upload UX Overhaul:**
+
+Non-technical church staff need better guidance through the upload process. Current pain points:
+
+| #   | Issue                              | Solution Needed                              | Status |
+| --- | ---------------------------------- | -------------------------------------------- | ------ |
+| 1   | Unclear entry point                | Guide: "Are you scanning or uploading?"      | [ ]    |
+| 2   | Scanner vs file upload confusion   | Clear pathway selection with visual cues     | [ ]    |
+| 3   | "Where are my files?" after upload | Better feedback, link to batches             | [ ]    |
+| 4   | Process feels technical            | Friendly language, step-by-step hand-holding | [ ]    |
+| 5   | No progress indicator for batch    | Show "X of Y cards processed" status         | [ ]    |
+
+**Goal:** A church volunteer with no tech experience should complete their first upload without asking for help.
+
+---
 
 **Next Feature - CSV Export (Phase 4):**
 
