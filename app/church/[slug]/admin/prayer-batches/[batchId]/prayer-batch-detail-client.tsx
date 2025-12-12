@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,28 +29,10 @@ import {
   assignSelectedPrayers,
   assignAllPrayers,
 } from "@/actions/prayer/prayer-batch-actions";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  RowSelectionState,
-} from "@tanstack/react-table";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { IconAlertTriangle, IconLock } from "@tabler/icons-react";
+import { DataTable } from "@/components/data-table/data-table";
 
 interface PrayerBatch {
   id: string;
@@ -107,6 +89,8 @@ interface PrayerBatchDetailClientProps {
   teamMembers: TeamMember[];
 }
 
+type PrayerRequest = PrayerBatch["prayerRequests"][0];
+
 function getStatusBadge(status: string) {
   switch (status) {
     case "PENDING":
@@ -138,17 +122,26 @@ export function PrayerBatchDetailClient({
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [isPending, startTransition] = useTransition();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "createdAt", desc: true },
-  ]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
-  // Define table columns with checkbox selection
-  const columns: ColumnDef<(typeof batch.prayerRequests)[0]>[] = [
-    {
-      id: "select",
-      header: ({ table }) => (
-        <div className="flex justify-center">
+  // Calculate selected count from rowSelection state
+  const selectedCount = Object.keys(rowSelection).filter(
+    key => rowSelection[key]
+  ).length;
+
+  // Get selected prayer request IDs
+  const getSelectedIds = (): string[] => {
+    return Object.entries(rowSelection)
+      .filter(([, selected]) => selected)
+      .map(([index]) => batch.prayerRequests[parseInt(index)]?.id)
+      .filter(Boolean) as string[];
+  };
+
+  // Define table columns with useMemo
+  const columns = useMemo<ColumnDef<PrayerRequest>[]>(
+    () => [
+      {
+        id: "select",
+        header: ({ table }) => (
           <Checkbox
             checked={
               table.getIsAllPageRowsSelected() ||
@@ -157,133 +150,110 @@ export function PrayerBatchDetailClient({
             onCheckedChange={value => table.toggleAllPageRowsSelected(!!value)}
             aria-label="Select all"
           />
-        </div>
-      ),
-      cell: ({ row }) => (
-        <div className="flex justify-center">
+        ),
+        cell: ({ row }) => (
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={value => row.toggleSelected(!!value)}
             aria-label="Select row"
           />
-        </div>
-      ),
-      enableSorting: false,
-      enableHiding: false,
-    },
-    {
-      id: "flags",
-      cell: ({ row }) => {
-        const isPrivate = row.original.isPrivate;
-        const isUrgent = row.original.isUrgent;
+        ),
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "flags",
+        header: "",
+        cell: ({ row }) => {
+          const isPrivate = row.original.isPrivate;
+          const isUrgent = row.original.isUrgent;
 
-        return (
-          <div className="flex items-center justify-center">
-            {isUrgent ? (
-              <IconAlertTriangle
-                className="h-4 w-4 text-orange-500"
-                title={isPrivate ? "Urgent & Private" : "Urgent"}
-              />
-            ) : isPrivate ? (
-              <IconLock
-                className="h-4 w-4 text-muted-foreground"
-                title="Private"
-              />
-            ) : (
-              <span className="text-muted-foreground text-xs">—</span>
-            )}
-          </div>
-        );
-      },
-      enableSorting: false,
-    },
-    {
-      accessorKey: "request",
-      header: "Prayer Request",
-      cell: ({ row }) => {
-        const request = row.getValue("request") as string;
-        const truncated =
-          request.length > 80 ? `${request.substring(0, 80)}...` : request;
-        return <div className="text-sm">{truncated}</div>;
-      },
-      enableSorting: false,
-    },
-    {
-      accessorKey: "category",
-      header: "Category",
-      cell: ({ row }) => {
-        const category = row.getValue("category") as string | null;
-        if (!category)
-          return <span className="text-muted-foreground text-sm">—</span>;
-        return (
-          <Badge variant="outline" className="whitespace-nowrap">
-            {category}
-          </Badge>
-        );
-      },
-    },
-    {
-      accessorKey: "submittedBy",
-      header: "Submitted By",
-      cell: ({ row }) => {
-        const submittedBy = row.getValue("submittedBy") as string | null;
-        const isPrivate = row.original.isPrivate;
-
-        // For private prayers with no submittedBy (redacted by backend), show "Private"
-        if (isPrivate && !submittedBy) {
           return (
-            <div className="text-sm text-muted-foreground italic flex items-center gap-1">
-              <IconLock className="h-3 w-3" />
-              Private
+            <div className="flex items-center justify-center w-8">
+              {isUrgent ? (
+                <IconAlertTriangle
+                  className="h-4 w-4 text-orange-500"
+                  title={isPrivate ? "Urgent & Private" : "Urgent"}
+                />
+              ) : isPrivate ? (
+                <IconLock
+                  className="h-4 w-4 text-muted-foreground"
+                  title="Private"
+                />
+              ) : (
+                <span className="text-muted-foreground text-xs">—</span>
+              )}
             </div>
           );
-        }
-
-        return (
-          <div className="text-sm">
-            {submittedBy || <span className="text-muted-foreground">—</span>}
-          </div>
-        );
+        },
+        enableSorting: false,
       },
-    },
-    {
-      id: "location",
-      header: "Location",
-      cell: ({ row }) => {
-        const location = row.original.location;
-        return (
-          <div className="text-sm">
-            {location?.name || <span className="text-muted-foreground">—</span>}
-          </div>
-        );
+      {
+        accessorKey: "request",
+        header: "Prayer Request",
+        cell: ({ row }) => {
+          const request = row.getValue("request") as string;
+          const truncated =
+            request.length > 80 ? `${request.substring(0, 80)}...` : request;
+          return <div className="text-sm">{truncated}</div>;
+        },
+        enableSorting: false,
       },
-    },
-  ];
-
-  const table = useReactTable({
-    data: batch.prayerRequests,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      rowSelection,
-    },
-    initialState: {
-      pagination: {
-        pageSize: 10,
+      {
+        accessorKey: "category",
+        header: "Category",
+        cell: ({ row }) => {
+          const category = row.getValue("category") as string | null;
+          if (!category)
+            return <span className="text-muted-foreground text-sm">—</span>;
+          return (
+            <Badge variant="outline" className="whitespace-nowrap">
+              {category}
+            </Badge>
+          );
+        },
       },
-    },
-  });
+      {
+        accessorKey: "submittedBy",
+        header: "Submitted By",
+        cell: ({ row }) => {
+          const submittedBy = row.getValue("submittedBy") as string | null;
+          const isPrivate = row.original.isPrivate;
 
-  const selectedRows = table.getSelectedRowModel().rows;
-  const selectedCount = selectedRows.length;
+          // For private prayers with no submittedBy (redacted by backend), show "Private"
+          if (isPrivate && !submittedBy) {
+            return (
+              <div className="text-sm text-muted-foreground italic flex items-center gap-1">
+                <IconLock className="h-3 w-3" />
+                Private
+              </div>
+            );
+          }
+
+          return (
+            <div className="text-sm">
+              {submittedBy || <span className="text-muted-foreground">—</span>}
+            </div>
+          );
+        },
+      },
+      {
+        id: "location",
+        header: "Location",
+        cell: ({ row }) => {
+          const location = row.original.location;
+          return (
+            <div className="text-sm">
+              {location?.name || (
+                <span className="text-muted-foreground">—</span>
+              )}
+            </div>
+          );
+        },
+      },
+    ],
+    []
+  );
 
   const handleAssignSelected = () => {
     if (!selectedUserId) {
@@ -291,16 +261,15 @@ export function PrayerBatchDetailClient({
       return;
     }
 
-    if (selectedCount === 0) {
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
       toast.error("Please select at least one prayer request");
       return;
     }
 
     startTransition(async () => {
-      const prayerRequestIds = selectedRows.map(row => row.original.id);
-
       const result = await assignSelectedPrayers(slug, {
-        prayerRequestIds,
+        prayerRequestIds: selectedIds,
         assignedToId: selectedUserId,
         batchId: batch.id,
       });
@@ -449,112 +418,27 @@ export function PrayerBatchDetailClient({
         </CardContent>
       </Card>
 
-      {/* Prayer Requests Table */}
+      {/* Prayer Requests Table - Using Unified DataTable */}
       <Card>
         <CardHeader>
           <CardTitle className="text-lg">Prayer Requests</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map(header => {
-                      return (
-                        <TableHead
-                          key={header.id}
-                          className={
-                            header.id === "select" || header.id === "flags"
-                              ? "border-r last:border-r-0 border-border pl-2 !pr-2"
-                              : "px-4 border-r last:border-r-0 border-border"
-                          }
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map(row => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map(cell => (
-                        <TableCell
-                          key={cell.id}
-                          className={
-                            cell.column.id === "select" ||
-                            cell.column.id === "flags"
-                              ? "border-r last:border-r-0 border-border pl-2 !pr-2"
-                              : "px-4 border-r last:border-r-0 border-border"
-                          }
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No prayer requests in this batch.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Pagination */}
-          {batch.prayerRequests.length >
-            table.getState().pagination.pageSize && (
-            <div className="flex items-center justify-between mt-4">
-              <div className="text-sm text-muted-foreground">
-                Showing{" "}
-                {table.getState().pagination.pageIndex *
-                  table.getState().pagination.pageSize +
-                  1}{" "}
-                to{" "}
-                {Math.min(
-                  (table.getState().pagination.pageIndex + 1) *
-                    table.getState().pagination.pageSize,
-                  batch.prayerRequests.length
-                )}{" "}
-                of {batch.prayerRequests.length} prayers
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
+          <DataTable
+            columns={columns}
+            data={batch.prayerRequests}
+            variant="compact"
+            wrapInCard={false}
+            enableRowSelection
+            rowSelection={rowSelection}
+            onRowSelectionChange={setRowSelection}
+            pageSize={10}
+            emptyState={{
+              icon: <FileText className="h-12 w-12 text-muted-foreground/50" />,
+              title: "No prayer requests",
+              description: "This batch has no prayer requests.",
+            }}
+          />
         </CardContent>
       </Card>
     </div>

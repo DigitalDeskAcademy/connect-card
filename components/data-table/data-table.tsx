@@ -116,6 +116,8 @@ export function DataTable<TData, TValue>({
   enableFiltering = false,
   enableColumnVisibility = false,
   enableRowSelection = false,
+  rowSelection: controlledRowSelection,
+  onRowSelectionChange: controlledOnRowSelectionChange,
   searchColumn,
   searchPlaceholder,
   filters,
@@ -151,7 +153,33 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+  const [internalRowSelection, setInternalRowSelection] = useState<
+    Record<string, boolean>
+  >({});
+
+  // Determine if row selection is controlled
+  const isControlled = controlledRowSelection !== undefined;
+  const rowSelection = isControlled
+    ? controlledRowSelection
+    : internalRowSelection;
+
+  // Handle row selection change - support both controlled and uncontrolled
+  const handleRowSelectionChange = (
+    updaterOrValue:
+      | Record<string, boolean>
+      | ((old: Record<string, boolean>) => Record<string, boolean>)
+  ) => {
+    const newValue =
+      typeof updaterOrValue === "function"
+        ? updaterOrValue(rowSelection)
+        : updaterOrValue;
+
+    if (isControlled && controlledOnRowSelectionChange) {
+      controlledOnRowSelectionChange(newValue);
+    } else {
+      setInternalRowSelection(newValue);
+    }
+  };
 
   // Create table instance
   const table = useReactTable({
@@ -175,7 +203,7 @@ export function DataTable<TData, TValue>({
       onColumnVisibilityChange: setColumnVisibility,
     }),
     ...(enableRowSelection && {
-      onRowSelectionChange: setRowSelection,
+      onRowSelectionChange: handleRowSelectionChange,
     }),
     state: {
       sorting,
