@@ -81,45 +81,37 @@ export function PrayerBatchesClient({
   const completedCount = batches.filter(b => b.status === "COMPLETED").length;
 
   return (
-    <div className="space-y-6">
-      {/* Header with filters */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Prayer Batches</h2>
-          <p className="text-muted-foreground">
-            Daily batches of prayer requests for prayer team assignment
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant={filter === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("all")}
-          >
-            All ({batches.length})
-          </Button>
-          <Button
-            variant={filter === "pending" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("pending")}
-          >
-            Pending ({pendingCount})
-          </Button>
-          <Button
-            variant={filter === "assigned" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("assigned")}
-          >
-            Assigned ({assignedCount})
-          </Button>
-          <Button
-            variant={filter === "completed" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setFilter("completed")}
-          >
-            Completed ({completedCount})
-          </Button>
-        </div>
+    <div className="space-y-4">
+      {/* Filter buttons */}
+      <div className="flex flex-wrap gap-2">
+        <Button
+          variant={filter === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("all")}
+        >
+          All ({batches.length})
+        </Button>
+        <Button
+          variant={filter === "pending" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("pending")}
+        >
+          Pending ({pendingCount})
+        </Button>
+        <Button
+          variant={filter === "assigned" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("assigned")}
+        >
+          Assigned ({assignedCount})
+        </Button>
+        <Button
+          variant={filter === "completed" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("completed")}
+        >
+          Completed ({completedCount})
+        </Button>
       </div>
 
       {/* Batch list */}
