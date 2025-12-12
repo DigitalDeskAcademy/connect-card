@@ -6,11 +6,13 @@ import { useSearchParams } from "next/navigation";
 const STORAGE_KEY = "theme-variant";
 
 // Map of theme names to CSS class names
+// "primary-square" uses empty string = base CSS (no theme class)
 export const THEME_CLASSES: Record<string, string> = {
+  primary: "theme-starry-night-main", // Default - Starry Night Main
+  "primary-square": "", // Original base theme (no class)
   "jetbrains-blue": "theme-jetbrains-blue",
   "soft-pop": "theme-soft-pop",
   "starry-night": "theme-starry-night",
-  "starry-night-main": "theme-starry-night-main",
 };
 
 /**
@@ -30,30 +32,32 @@ export function ThemeVariantProvider() {
   useEffect(() => {
     const html = document.documentElement;
 
-    // URL param takes precedence, otherwise use localStorage
-    let activeTheme = urlTheme;
-    if (urlTheme && THEME_CLASSES[urlTheme]) {
+    // URL param takes precedence, otherwise use localStorage, fallback to "primary"
+    let activeTheme: string;
+    if (urlTheme && urlTheme in THEME_CLASSES) {
       // Save URL param choice to localStorage
       localStorage.setItem(STORAGE_KEY, urlTheme);
+      activeTheme = urlTheme;
     } else {
-      // No URL param, try localStorage
-      activeTheme = localStorage.getItem(STORAGE_KEY);
+      // No URL param, try localStorage, default to "primary"
+      activeTheme = localStorage.getItem(STORAGE_KEY) || "primary";
     }
 
     // Remove all theme classes first
     Object.values(THEME_CLASSES).forEach(cls => {
-      html.classList.remove(cls);
+      if (cls) html.classList.remove(cls);
     });
 
-    // Add the selected theme class if it exists
-    if (activeTheme && THEME_CLASSES[activeTheme]) {
-      html.classList.add(THEME_CLASSES[activeTheme]);
+    // Add the selected theme class if it exists and is not empty
+    const themeClass = THEME_CLASSES[activeTheme];
+    if (themeClass) {
+      html.classList.add(themeClass);
     }
 
     // Cleanup on unmount
     return () => {
       Object.values(THEME_CLASSES).forEach(cls => {
-        html.classList.remove(cls);
+        if (cls) html.classList.remove(cls);
       });
     };
   }, [urlTheme]);

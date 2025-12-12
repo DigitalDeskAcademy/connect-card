@@ -22,7 +22,7 @@ import {
  * Only visible in development mode.
  */
 export function ThemeVariantSwitcher() {
-  // Lazy initialize from localStorage
+  // Lazy initialize from localStorage, default to "primary" (Starry Night Main)
   const [currentTheme, setCurrentTheme] = useState(() => {
     if (typeof window === "undefined") return "primary";
     return getStoredTheme() || "primary";
@@ -38,17 +38,16 @@ export function ThemeVariantSwitcher() {
 
     // Remove all theme classes
     Object.values(THEME_CLASSES).forEach(cls => {
-      html.classList.remove(cls);
+      if (cls) html.classList.remove(cls);
     });
 
-    // Apply new theme
-    if (value === "primary") {
-      setStoredTheme(null);
-    } else {
-      html.classList.add(THEME_CLASSES[value]);
-      setStoredTheme(value);
+    // Apply new theme class if it exists
+    const themeClass = THEME_CLASSES[value];
+    if (themeClass) {
+      html.classList.add(themeClass);
     }
 
+    setStoredTheme(value);
     setCurrentTheme(value);
   };
 
@@ -61,10 +60,10 @@ export function ThemeVariantSwitcher() {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="primary">Primary</SelectItem>
+          <SelectItem value="primary-square">Primary Square</SelectItem>
           <SelectItem value="jetbrains-blue">JetBrains Blue</SelectItem>
           <SelectItem value="soft-pop">Soft Pop</SelectItem>
           <SelectItem value="starry-night">Starry Night</SelectItem>
-          <SelectItem value="starry-night-main">Starry Night Main</SelectItem>
         </SelectContent>
       </Select>
     </div>

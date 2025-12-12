@@ -15,7 +15,7 @@
 | **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
 | **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
 | **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Synced           | Phase 2: Performance (non-blocking) |
-| **integrations** | 3005 | `feature/integrations`         | 🟢 **COMPLETE**     | PR #48, #58 merged                  |
+| **integrations** | 3005 | `feature/integrations`         | 🟢 **COMPLETE**     | PR #48, #58, #65 merged             |
 
 ---
 
@@ -32,6 +32,7 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ integrations #65 - Enterprise Contacts module + DataTable migrations (Dec 11)
 - ✅ main #64 - Dashboard UI polish and badge standardization (Dec 10)
 - ✅ tech-debt #62 - S3 storage architecture improvements for multi-tenant safety (Dec 9)
 - ✅ volunteer #61 - Phase 2 MVP: Volunteer Onboarding Automation (Dec 9)
