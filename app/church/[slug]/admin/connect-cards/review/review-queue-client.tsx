@@ -732,7 +732,7 @@ export function ReviewQueueClient({
                   variant={isReviewMode ? "secondary" : "outline"}
                   size="sm"
                   onClick={toggleReviewMode}
-                  className="gap-2"
+                  className="gap-2 !border-2 !border-primary"
                   title={
                     isReviewMode
                       ? "Exit Review Mode (Esc)"
@@ -742,7 +742,7 @@ export function ReviewQueueClient({
                   {isReviewMode ? (
                     <>
                       <Minimize2 className="w-4 h-4" />
-                      Exit
+                      Exit Review
                     </>
                   ) : (
                     <>
