@@ -60,6 +60,18 @@ git stash pop
 
 ---
 
+## Step 4.5: Regenerate Prisma Client
+
+**ALWAYS run after merge** - ensures TypeScript types match any schema changes from main:
+
+```bash
+pnpm prisma generate
+```
+
+⚠️ **Why this matters:** Schema changes from main require Prisma client regeneration. Without this, you'll get TypeScript errors like `'fieldName' does not exist on type 'ModelSelect'` even though the field exists in schema.
+
+---
+
 ## Step 5: Verify & Report
 
 ```bash
