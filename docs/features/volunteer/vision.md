@@ -234,6 +234,30 @@ model Organization {
 
 ---
 
+### 5. Volunteer Assignment UX Polish
+
+**Impact:** Staff confused about what actions trigger during connect card review
+**Status:** ✅ Complete
+**Location:** Connect Card Review Queue (`/church/{slug}/admin/connect-cards/review/{batchId}`)
+
+**Implemented:**
+
+- [x] Renamed "Send Background check information" → "Send onboarding documents" (clearer intent)
+- [x] Dynamic helper text shows what will be sent (docs, training, BG check link)
+- [x] Disabled send checkbox when volunteer has no email (prevents silent failures)
+- [x] Clear assigned leader automatically when category changes to incompatible one
+- [x] Deep link to team page includes category context (`?highlight=Kids%20Ministry`)
+- [x] Leader dropdown shows email in parentheses for verification
+- [x] Auto-check "Send message to leader" when a leader is selected
+
+**Future Enhancements:**
+
+- [ ] Preview of what documents will be sent before checkbox is checked
+- [ ] Auto-select lone leader when only one matches category
+- [ ] "My Volunteers" queue for leaders (filter by assignedLeaderId)
+
+---
+
 ## 📊 Implementation Progress
 
 | Priority | Feature                       | Status | PR  |
@@ -249,6 +273,7 @@ model Organization {
 | 9        | Email service + audit logging | ✅     | #61 |
 | 10       | Vitest test suite (37 tests)  | ✅     | #61 |
 | 11       | Arcjet rate limiting (public) | ✅     | #61 |
+| 12       | Volunteer Assignment UX       | ✅     | -   |
 
 ---
 
