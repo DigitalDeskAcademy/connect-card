@@ -1,107 +1,79 @@
 /**
- * Universal Contacts Management Page
+ * Contacts Management Page
  *
- * Used by all three tiers with different data scoping:
- * - Platform admins: See all contacts across all organizations
- * - Agency admins: See all contacts in their organization
- * - End users (staff): See only their location's contacts
+ * Enterprise-grade contacts management built on ChurchMember model.
+ * Uses the unified DataTable system with full sorting, filtering, and pagination.
  *
- * All users see the same UI, data is filtered based on role.
+ * Data scoping:
+ * - Platform admins: All contacts across all organizations
+ * - Church admins: Organization-filtered contacts
+ * - Staff: Location-filtered contacts (if applicable)
  */
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
-import AgencyContactsClient from "./client";
-import { type Contact } from "@/components/contacts/ContactsTable";
-
-// Mock data - TODO: Replace with role-based scoped queries
-const mockContacts: Contact[] = [
-  {
-    id: "1",
-    name: "John Smith",
-    initials: "JS",
-    phone: "(555) 123-4567",
-    email: "john.smith@church.org",
-    created: "Oct 15 2025",
-    lastActivity: "2 hours ago",
-    tags: ["IV Therapy Client", "VIP"],
-    color: "bg-purple-500",
-  },
-  {
-    id: "2",
-    name: "Sarah Johnson",
-    initials: "SJ",
-    phone: "(555) 234-5678",
-    email: "sarah.j@example.com",
-    created: "Oct 14 2025",
-    lastActivity: "1 day ago",
-    tags: ["New Patient"],
-    color: "bg-pink-500",
-  },
-  {
-    id: "3",
-    name: "Michael Brown",
-    initials: "MB",
-    phone: "(555) 345-6789",
-    email: "mbrown@company.com",
-    created: "Oct 13 2025",
-    lastActivity: "3 days ago",
-    tags: ["Corporate Account"],
-    color: "bg-blue-500",
-  },
-  {
-    id: "4",
-    name: "Emily Davis",
-    initials: "ED",
-    phone: "(555) 456-7890",
-    email: "emily.davis@email.com",
-    created: "Oct 12 2025",
-    lastActivity: "1 week ago",
-    tags: ["Monthly Member"],
-    color: "bg-indigo-500",
-  },
-  {
-    id: "5",
-    name: "Robert Wilson",
-    initials: "RW",
-    phone: "(555) 567-8901",
-    email: "r.wilson@gmail.com",
-    created: "Oct 10 2025",
-    lastActivity: "2 days ago",
-    tags: ["Referral"],
-    color: "bg-green-500",
-  },
-];
+import { getContacts, getContactTags } from "@/lib/data/contacts";
+import ContactsClient from "./contacts-client";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{
+    page?: string;
+    pageSize?: string;
+    search?: string;
+    memberType?: string;
+    tag?: string;
+  }>;
 }
 
-export default async function AgencyContactsPage({ params }: PageProps) {
+export default async function ContactsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params;
+  const search = await searchParams;
+
   const { organization, dataScope } = await requireDashboardAccess(slug);
 
-  // TODO: Fetch contacts based on data scope
-  // Platform admin: all contacts across all organizations
-  // Church admin/staff: organizationId filtered contacts only
+  // Parse search params
+  const page = parseInt(search.page ?? "1", 10);
+  const pageSize = parseInt(search.pageSize ?? "25", 10);
+  const searchQuery = search.search ?? "";
+  const memberType = search.memberType as
+    | "VISITOR"
+    | "RETURNING"
+    | "MEMBER"
+    | "VOLUNTEER"
+    | "STAFF"
+    | undefined;
+  const tag = search.tag;
 
-  // For now, use mock data that represents the scoped view
-  const contacts = mockContacts;
+  // Fetch contacts with filters
+  const result = await getContacts({
+    organizationId: organization.id,
+    search: searchQuery,
+    memberType,
+    tags: tag ? [tag] : undefined,
+    page,
+    pageSize,
+  });
 
-  // In production, this would be:
-  // if (dataScope.type === 'platform') {
-  //   contacts = await db.contact.findMany({ orderBy: { createdAt: 'desc' } });
-  // } else {
-  //   contacts = await db.contact.findMany({
-  //     where: { organizationId: dataScope.organizationId },
-  //     orderBy: { createdAt: 'desc' }
-  //   });
-  // }
+  // Fetch available tags for filtering
+  const availableTags = await getContactTags(organization.id);
 
   return (
-    <AgencyContactsClient
-      contacts={contacts}
+    <ContactsClient
+      contacts={result.contacts}
+      totalCount={result.totalCount}
+      page={result.page}
+      pageSize={result.pageSize}
+      totalPages={result.totalPages}
+      availableTags={availableTags}
       organizationId={organization.id}
+      slug={slug}
       dataScope={dataScope}
+      initialSearch={searchQuery}
+      initialMemberType={memberType}
+      initialTag={tag}
     />
   );
 }
