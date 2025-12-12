@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Zoom from "react-medium-image-zoom";
-import "react-medium-image-zoom/dist/styles.css";
+import { useSidebar } from "@/components/ui/sidebar";
 import { leaderMatchesCategory } from "@/lib/volunteer-category-mapping";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,10 +50,14 @@ import {
   Image as ImageIcon,
   ClipboardCheck,
   ZoomIn,
+  ZoomOut,
   Trash2,
   ArrowLeft,
   ChevronDown,
   RotateCcw,
+  Maximize2,
+  Minimize2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
@@ -71,6 +74,7 @@ import {
 interface VolunteerLeader {
   id: string;
   name: string;
+  email: string | null;
   volunteerCategories: string[];
 }
 
@@ -88,6 +92,9 @@ export function ReviewQueueClient({
   volunteerLeaders,
 }: ReviewQueueClientProps) {
   const router = useRouter();
+  const { open: sidebarOpen, setOpen: setSidebarOpen } = useSidebar();
+  const previousSidebarState = useRef<boolean>(true);
+
   // Track cards in local state so we can remove them after processing
   const [cards, setCards] = useState(initialCards);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -178,6 +185,98 @@ export function ReviewQueueClient({
   // Discard confirmation dialog state
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
 
+  // Review Mode state - 75/25 split with persistent zoom
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // Reset zoom state when exiting Review Mode or changing cards
+  const resetZoom = useCallback(() => {
+    setZoomLevel(1);
+    setPanPosition({ x: 0, y: 0 });
+  }, []);
+
+  // Toggle Review Mode
+  const toggleReviewMode = useCallback(() => {
+    setIsReviewMode(prev => {
+      if (!prev) {
+        // Entering review mode - save current sidebar state
+        previousSidebarState.current = sidebarOpen;
+      }
+      return !prev;
+    });
+    resetZoom();
+  }, [resetZoom, sidebarOpen]);
+
+  // Handle sidebar state based on Review Mode
+  useEffect(() => {
+    if (isReviewMode) {
+      setSidebarOpen(false);
+    } else if (previousSidebarState.current !== undefined) {
+      setSidebarOpen(previousSidebarState.current);
+    }
+  }, [isReviewMode, setSidebarOpen]);
+
+  // Keyboard handler for Escape to exit Review Mode
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isReviewMode) {
+        e.preventDefault();
+        toggleReviewMode();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isReviewMode, toggleReviewMode]);
+
+  // Zoom controls
+  const handleZoomIn = useCallback(() => {
+    setZoomLevel(prev => Math.min(prev + 0.5, 4));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoomLevel(prev => {
+      const newZoom = Math.max(prev - 0.5, 1);
+      if (newZoom === 1) {
+        setPanPosition({ x: 0, y: 0 });
+      }
+      return newZoom;
+    });
+  }, []);
+
+  // Pan handlers for dragging the zoomed image
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (zoomLevel > 1) {
+        setIsDragging(true);
+        setDragStart({
+          x: e.clientX - panPosition.x,
+          y: e.clientY - panPosition.y,
+        });
+      }
+    },
+    [zoomLevel, panPosition]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (isDragging && zoomLevel > 1) {
+        setPanPosition({
+          x: e.clientX - dragStart.x,
+          y: e.clientY - dragStart.y,
+        });
+      }
+    },
+    [isDragging, dragStart, zoomLevel]
+  );
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
   // Auto-expand volunteer assignment section for non-GENERAL categories
   useEffect(() => {
     if (formData?.volunteerCategory) {
@@ -185,6 +284,28 @@ export function ReviewQueueClient({
       setIsAssignmentOpen(formData.volunteerCategory !== "GENERAL");
     }
   }, [formData?.volunteerCategory]);
+
+  // Clear assigned leader if they don't match the new category
+  useEffect(() => {
+    if (!formData?.volunteerCategory || !formData?.assignedLeaderId) return;
+
+    const currentLeader = volunteerLeaders.find(
+      l => l.id === formData.assignedLeaderId
+    );
+    if (
+      currentLeader &&
+      !leaderMatchesCategory(
+        currentLeader.volunteerCategories,
+        formData.volunteerCategory
+      )
+    ) {
+      setFormData(prev => (prev ? { ...prev, assignedLeaderId: "" } : null));
+    }
+  }, [
+    formData?.volunteerCategory,
+    formData?.assignedLeaderId,
+    volunteerLeaders,
+  ]);
 
   // Check for duplicates when card changes
   useEffect(() => {
@@ -274,6 +395,7 @@ export function ReviewQueueClient({
     setShowBackImage(false); // Reset to front image for new card
     setValidationErrors({}); // Clear validation errors for new card
     setDuplicateInfo(null); // Reset duplicate info - will be rechecked by useEffect
+    resetZoom(); // Reset zoom state for new card
   };
 
   // Handle save and move to next card
@@ -581,7 +703,7 @@ export function ReviewQueueClient({
       </div>
 
       <div
-        className="grid grid-cols-1 lg:grid-cols-2 gap-4"
+        className="grid gap-4 grid-cols-1 lg:grid-cols-2"
         style={{ height: "calc(100vh - 180px)" }}
       >
         {/* Left side - Image display */}
@@ -590,20 +712,46 @@ export function ReviewQueueClient({
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2">
                 <ImageIcon className="w-5 h-5" />
-                Scanned Connect Card
+                {isReviewMode ? "Review Mode" : "Scanned Connect Card"}
               </CardTitle>
-              {/* Front/Back toggle for two-sided cards */}
-              {currentCard.backImageUrl && (
+              <div className="flex items-center gap-2">
+                {/* Front/Back toggle for two-sided cards */}
+                {currentCard.backImageUrl && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowBackImage(!showBackImage)}
+                    className="gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    {showBackImage ? "Front" : "Back"}
+                  </Button>
+                )}
+                {/* Review Mode toggle */}
                 <Button
-                  variant="outline"
+                  variant={isReviewMode ? "secondary" : "outline"}
                   size="sm"
-                  onClick={() => setShowBackImage(!showBackImage)}
+                  onClick={toggleReviewMode}
                   className="gap-2"
+                  title={
+                    isReviewMode
+                      ? "Exit Review Mode (Esc)"
+                      : "Enter Review Mode"
+                  }
                 >
-                  <RotateCcw className="w-4 h-4" />
-                  {showBackImage ? "Front" : "Back"}
+                  {isReviewMode ? (
+                    <>
+                      <Minimize2 className="w-4 h-4" />
+                      Exit
+                    </>
+                  ) : (
+                    <>
+                      <Maximize2 className="w-4 h-4" />
+                      Review Mode
+                    </>
+                  )}
                 </Button>
-              )}
+              </div>
             </div>
           </CardHeader>
           <CardContent className="flex-1 flex flex-col">
@@ -614,38 +762,124 @@ export function ReviewQueueClient({
               const displayLabel = showBackImage ? "Back" : "Front";
 
               return displayUrl?.trim() && !imageError ? (
-                <>
-                  <Zoom>
-                    <div className="relative w-full flex-1 bg-muted rounded-lg overflow-hidden border cursor-zoom-in">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={displayUrl.trim() || undefined}
-                        alt={`Connect card ${displayLabel.toLowerCase()}`}
-                        className="w-full h-full object-contain"
-                        loading="lazy"
-                        decoding="async"
-                        onError={() => setImageError(true)}
-                      />
-                      {/* Side indicator for two-sided cards */}
-                      {currentCard.backImageUrl && (
-                        <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs font-medium">
-                          {displayLabel}
-                        </div>
-                      )}
-                    </div>
-                  </Zoom>
+                <div className="flex flex-col">
+                  {/* Custom zoom container */}
+                  <div
+                    className={`relative w-full bg-muted rounded-lg overflow-hidden border ${
+                      isReviewMode
+                        ? zoomLevel > 1
+                          ? "cursor-grab active:cursor-grabbing"
+                          : "cursor-zoom-in"
+                        : "cursor-pointer"
+                    }`}
+                    onMouseDown={isReviewMode ? handleMouseDown : undefined}
+                    onMouseMove={isReviewMode ? handleMouseMove : undefined}
+                    onMouseUp={isReviewMode ? handleMouseUp : undefined}
+                    onMouseLeave={isReviewMode ? handleMouseUp : undefined}
+                    onClick={() => {
+                      if (!isReviewMode) {
+                        // In normal mode, clicking enters review mode
+                        toggleReviewMode();
+                      } else if (zoomLevel === 1) {
+                        // In review mode at 1x, click to zoom in
+                        handleZoomIn();
+                      }
+                    }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={displayUrl.trim() || undefined}
+                      alt={`Connect card ${displayLabel.toLowerCase()}`}
+                      className="w-full max-h-[calc(100vh-320px)] object-contain select-none"
+                      loading="lazy"
+                      decoding="async"
+                      draggable={false}
+                      onError={() => setImageError(true)}
+                      style={
+                        isReviewMode
+                          ? {
+                              transform: `scale(${zoomLevel}) translate(${panPosition.x / zoomLevel}px, ${panPosition.y / zoomLevel}px)`,
+                              transition: isDragging
+                                ? "none"
+                                : "transform 0.2s ease-out",
+                            }
+                          : undefined
+                      }
+                    />
+                    {/* Side indicator for two-sided cards */}
+                    {currentCard.backImageUrl && (
+                      <div className="absolute top-2 left-2 bg-black/60 text-white px-2 py-1 rounded text-xs font-medium">
+                        {displayLabel}
+                      </div>
+                    )}
+                    {/* Zoom controls overlay in Review Mode */}
+                    {isReviewMode && (
+                      <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 rounded-lg p-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleZoomOut();
+                          }}
+                          disabled={zoomLevel <= 1}
+                          className="h-8 w-8 p-0 text-white hover:bg-white/20 disabled:opacity-40"
+                        >
+                          <ZoomOut className="w-4 h-4" />
+                        </Button>
+                        <span className="text-white text-xs font-medium min-w-[3ch] text-center">
+                          {zoomLevel.toFixed(1)}x
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleZoomIn();
+                          }}
+                          disabled={zoomLevel >= 4}
+                          className="h-8 w-8 p-0 text-white hover:bg-white/20 disabled:opacity-40"
+                        >
+                          <ZoomIn className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            resetZoom();
+                          }}
+                          disabled={zoomLevel === 1}
+                          className="h-8 w-8 p-0 text-white hover:bg-white/20 disabled:opacity-40"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                   <div className="mt-3 space-y-1">
                     <p className="text-xs text-muted-foreground text-center">
                       Scanned{" "}
                       {new Date(currentCard.scannedAt).toLocaleDateString()}
                       {currentCard.backImageUrl && " (2-sided card)"}
                     </p>
-                    <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
-                      <ZoomIn className="w-4 h-4" />
-                      <span>Click image to zoom</span>
-                    </div>
+                    {!isReviewMode && (
+                      <div className="flex items-center justify-center gap-2 text-sm font-medium text-primary">
+                        <ZoomIn className="w-4 h-4" />
+                        <span>Click image to zoom</span>
+                      </div>
+                    )}
+                    {isReviewMode && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        Press{" "}
+                        <kbd className="px-1 py-0.5 bg-muted-foreground/20 rounded text-[10px]">
+                          Esc
+                        </kbd>{" "}
+                        to exit • Drag to pan when zoomed
+                      </p>
+                    )}
                   </div>
-                </>
+                </div>
               ) : (
                 <div className="relative w-full aspect-[3/4] bg-muted rounded-lg overflow-hidden border flex items-center justify-center">
                   <div className="text-center text-muted-foreground p-6">
@@ -860,26 +1094,28 @@ export function ReviewQueueClient({
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="flex w-full justify-between p-0 hover:bg-transparent whitespace-normal"
+                            className="w-full p-0 h-auto hover:bg-transparent"
                           >
-                            <div className="flex-1 text-left min-w-0">
-                              <h4 className="text-sm font-semibold">
-                                Volunteer Assignment
-                              </h4>
+                            <div className="w-full text-left">
+                              <div className="flex justify-between items-center">
+                                <h4 className="text-sm font-semibold">
+                                  Volunteer Assignment
+                                </h4>
+                                <ChevronDown
+                                  className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
+                                    isAssignmentOpen ? "rotate-180" : ""
+                                  }`}
+                                />
+                              </div>
                               <p className="text-sm text-muted-foreground">
                                 Assign leader and configure notifications
                               </p>
                             </div>
-                            <ChevronDown
-                              className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                                isAssignmentOpen ? "rotate-180" : ""
-                              }`}
-                            />
                           </Button>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="pt-4 space-y-4">
                           {/* Assigned Leader Dropdown */}
-                          <div className="space-y-2">
+                          <div className="space-y-2 w-full max-w-xs">
                             <Label htmlFor="assignedLeader">
                               Assigned Leader (Optional)
                             </Label>
@@ -889,6 +1125,10 @@ export function ReviewQueueClient({
                                 setFormData({
                                   ...formData,
                                   assignedLeaderId: value,
+                                  // Auto-check "Send message to leader" when a leader is selected
+                                  sendMessageToLeader: value
+                                    ? true
+                                    : formData.sendMessageToLeader,
                                 })
                               }
                               disabled={isPending}
@@ -924,21 +1164,27 @@ export function ReviewQueueClient({
                                 )}
                               </SelectContent>
                             </Select>
-                            <p className="text-xs text-muted-foreground">
-                              Leaders with &quot;
-                              {formatVolunteerCategoryLabel(
-                                formData.volunteerCategory
-                              )}
-                              &quot; category.{" "}
+                            <div className="text-xs text-muted-foreground space-y-1">
+                              <p>
+                                Leaders with &quot;
+                                {formatVolunteerCategoryLabel(
+                                  formData.volunteerCategory
+                                )}
+                                &quot; category.
+                              </p>
                               <a
-                                href={`/church/${slug}/admin/team`}
+                                href={`/church/${slug}/admin/team?highlight=${encodeURIComponent(
+                                  formatVolunteerCategoryLabel(
+                                    formData.volunteerCategory
+                                  )
+                                )}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-primary hover:underline"
+                                className="text-primary hover:underline inline-block"
                               >
-                                Add role to staff member →
+                                Add leader for this ministry →
                               </a>
-                            </p>
+                            </div>
                           </div>
 
                           {/* Send Message to Leader Checkbox */}
@@ -968,7 +1214,7 @@ export function ReviewQueueClient({
                             </div>
                           </div>
 
-                          {/* Send Background Check Info Checkbox */}
+                          {/* Send Onboarding Documents Checkbox */}
                           <div className="flex items-start space-x-2">
                             <Checkbox
                               id="sendBackgroundCheckInfo"
@@ -979,18 +1225,27 @@ export function ReviewQueueClient({
                                   sendBackgroundCheckInfo: Boolean(checked),
                                 })
                               }
-                              disabled={isPending}
+                              disabled={isPending || !formData.email}
                             />
                             <div className="grid gap-1 leading-none">
                               <label
                                 htmlFor="sendBackgroundCheckInfo"
-                                className="text-sm font-medium leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                className={`text-sm font-medium leading-tight peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ${
+                                  formData.email
+                                    ? "cursor-pointer"
+                                    : "opacity-50"
+                                }`}
                               >
-                                Send Background check information
+                                Send onboarding documents
                               </label>
                               <p className="text-xs text-muted-foreground leading-tight">
-                                Send background check instructions and forms to
-                                volunteer
+                                {!formData.email ? (
+                                  <span className="text-destructive">
+                                    No email address — cannot send documents
+                                  </span>
+                                ) : (
+                                  "Welcome email with ministry docs, training, and background check link (if required)"
+                                )}
                               </p>
                             </div>
                           </div>

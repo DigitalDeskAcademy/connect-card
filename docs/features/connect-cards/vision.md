@@ -241,6 +241,74 @@ The `useCamera` hook supports cropping to card bounds:
 
 ---
 
+## ✅ Review Mode (Phase 4.5) - COMPLETE
+
+**Status:** ✅ Complete (Dec 2025)
+**Goal:** Enable staff to view zoomed image AND type corrections simultaneously without friction
+
+### The Problem
+
+Current zoom behavior uses fullscreen overlay, blocking the form. Staff must:
+
+1. Click image to zoom (fullscreen takeover)
+2. Memorize the text they see
+3. Close zoom
+4. Type from memory
+5. Repeat for each field
+
+This creates unnecessary cognitive load for quick 1-2 second spelling verification.
+
+### The Solution: Review Mode
+
+**One click toggles the entire layout:**
+
+```
+NORMAL MODE:
+┌────────┬──────────────────────────────────────┐
+│Sidebar │  [Image]        │    Form Inputs     │
+│        │  (small)        │    (full width)    │
+└────────┴──────────────────────────────────────┘
+
+REVIEW MODE (click image):
+┌─────────────────────────────────────┬─────────┐
+│                                     │ Name    │
+│         ZOOMED IMAGE                │ [_____] │
+│           (75%)                     │ Email   │
+│                                     │ [_____] │
+│    Click anywhere to exit           │ Phone   │
+│                                     │ [_____] │
+└─────────────────────────────────────┴─────────┘
+        ↑ Sidebar hidden               ↑ 25%
+```
+
+### Behavior
+
+- **Click image** → Sidebar hides, layout shifts to 75/25 split
+- **Form stays interactive** → Can type while viewing zoomed image
+- **Click image again (or Escape)** → Returns to normal layout
+- **Mobile:** Stack vertically or 60/40 split
+
+### Implementation Tasks
+
+| #   | Task                                             | Status                         |
+| --- | ------------------------------------------------ | ------------------------------ |
+| 1   | Add `isReviewMode` state to review-queue-client  | [x]                            |
+| 2   | Create sidebar hide mechanism (useSidebar hook)  | [x]                            |
+| 3   | Implement 75/25 grid layout for Review Mode      | [x]                            |
+| 4   | Replace react-medium-image-zoom with custom zoom | [x]                            |
+| 5   | Add Escape key handler to exit Review Mode       | [x]                            |
+| 6   | Handle responsive breakpoints (mobile/tablet)    | [x] (auto-responsive via grid) |
+| 7   | Test with long-name edge cases                   | [x]                            |
+
+### Design Decisions
+
+- **No new tabs/panels/drawers** - Minimize friction for quick verification
+- **AI is usually right** - This is for 1-2 second spelling checks, not extended reading
+- **Single monitor focus** - Designed for tablets, phones, single monitors (not dual-monitor power users)
+- **One click in, one click out** - Fast toggle, minimal cognitive load
+
+---
+
 ## 🔮 Future Enhancements (Phase 5+)
 
 ### Church Software Sync (Phase 4) → COMPLETE ✅

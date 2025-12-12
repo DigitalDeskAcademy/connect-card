@@ -103,6 +103,16 @@ ls -1 .claude/pending-docs/*.patch 2>/dev/null | xargs -I {} basename {} .patch
 
 ## Stage 2: Quality Verification
 
+### 2.0: Prisma Client Sync (REQUIRED)
+
+**ALWAYS run before build** - ensures Prisma types match schema after any main sync:
+
+```bash
+pnpm prisma generate
+```
+
+⚠️ **Why this matters:** After merging from main, the Prisma client types may be stale even if schemas match. This causes TypeScript errors like `'fieldName' does not exist on type 'ModelSelect'`. Always regenerate to be safe.
+
 ### 2.1: Build Check
 
 ```bash

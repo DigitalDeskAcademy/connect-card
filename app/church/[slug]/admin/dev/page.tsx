@@ -40,6 +40,7 @@ function DemoReadyChecklist() {
         { label: "Batch save/complete flow", completed: true },
         { label: "Fuzzy duplicate detection (PR #50)", completed: true },
         { label: "S3 org-scoped paths (PR #50)", completed: true },
+        { label: "Review Mode (see & type simultaneously)", completed: true },
       ],
     },
     {
@@ -59,6 +60,7 @@ function DemoReadyChecklist() {
         { label: "Document auto-send (PR #47)", completed: true },
         { label: "Export tracking (PR #52)", completed: true },
         { label: "Check All toggle fix (PR #53)", completed: true },
+        { label: "Volunteer Assignment UX polish", completed: true },
         { label: "Onboarding pipeline UI", completed: false },
       ],
     },
@@ -271,7 +273,7 @@ export default async function DevDashboardPage({
       name: "Connect Cards",
       branch: "feature/connect-card",
       status: "ready",
-      statusLabel: "Phase 4 + E2E",
+      statusLabel: "✅ Ready",
       icon: <IconUserPlus className="h-5 w-5" />,
       tasks: [
         { label: "Mobile Camera Wizard", completed: true },
@@ -281,6 +283,8 @@ export default async function DevDashboardPage({
         { label: "Fuzzy duplicate detection (PR #50)", completed: true },
         { label: "S3 org-scoped paths (PR #50)", completed: true },
         { label: "E2E workflow tests (PR #60)", completed: true },
+        { label: "Volunteer Assignment UX polish", completed: true },
+        { label: "Review Mode (see & type)", completed: true },
       ],
       wishlist: [
         { label: "Card format onboarding", completed: false },
