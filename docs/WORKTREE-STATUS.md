@@ -32,6 +32,7 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ tech-debt #68 - GitHub-style responsive overflow tabs for NavTabs (Dec 12)
 - ✅ connect-card #66 - Review Mode + Volunteer Assignment UX polish (Dec 12)
 - ✅ integrations #65 - Enterprise Contacts module + DataTable migrations (Dec 11)
 - ✅ main #64 - Dashboard UI polish and badge standardization (Dec 10)
@@ -83,11 +84,16 @@
 - `/docs/features/tech-debt/s3-bucket-structure.md` - S3 organization spec
 - `/docs/features/tech-debt/environment-configuration.md` - Env vars for forked projects
 
+#### Recent Work
+
+- ✅ PR #68 - GitHub-style responsive overflow tabs for NavTabs
+- ✅ Team page spacing fixes
+
 #### Definition of Done (Phase 1)
 
 - [x] All 4 Phase 1 items complete
-- [ ] PR created to main
-- [ ] PLAYBOOK.md updated with completion status
+- [x] PR created to main
+- [x] PLAYBOOK.md updated with completion status
 
 #### Blockers
 
