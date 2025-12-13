@@ -708,23 +708,28 @@ export function ReviewQueueClient({
       >
         {/* Left side - Image display */}
         <Card className="flex flex-col h-full">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <ImageIcon className="w-5 h-5" />
-                {isReviewMode ? "Review Mode" : "Scanned Connect Card"}
+          <CardHeader className="py-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="flex items-center gap-2 text-base md:text-lg truncate">
+                <ImageIcon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                <span className="truncate">
+                  {isReviewMode ? "Review Mode" : "Card Preview"}
+                </span>
               </CardTitle>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 md:gap-2 shrink-0">
                 {/* Front/Back toggle for two-sided cards */}
                 {currentCard.backImageUrl && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowBackImage(!showBackImage)}
-                    className="gap-2"
+                    className="gap-1 md:gap-2 px-2 md:px-3"
+                    title={showBackImage ? "Show Front" : "Show Back"}
                   >
                     <RotateCcw className="w-4 h-4" />
-                    {showBackImage ? "Front" : "Back"}
+                    <span className="hidden sm:inline">
+                      {showBackImage ? "Front" : "Back"}
+                    </span>
                   </Button>
                 )}
                 {/* Review Mode toggle */}
@@ -732,7 +737,7 @@ export function ReviewQueueClient({
                   variant={isReviewMode ? "secondary" : "outline"}
                   size="sm"
                   onClick={toggleReviewMode}
-                  className="gap-2 !border-2 !border-primary"
+                  className="gap-1 md:gap-2 px-2 md:px-3 !border-2 !border-primary"
                   title={
                     isReviewMode
                       ? "Exit Review Mode (Esc)"
@@ -742,12 +747,12 @@ export function ReviewQueueClient({
                   {isReviewMode ? (
                     <>
                       <Minimize2 className="w-4 h-4" />
-                      Exit Review
+                      <span className="hidden sm:inline">Exit</span>
                     </>
                   ) : (
                     <>
                       <Maximize2 className="w-4 h-4" />
-                      Review Mode
+                      <span className="hidden sm:inline">Review</span>
                     </>
                   )}
                 </Button>

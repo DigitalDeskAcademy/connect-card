@@ -1,8 +1,8 @@
 # S3 Bucket Structure
 
-**Status:** Documentation Complete | Implementation Pending
+**Status:** Core Implementation Complete (PR #50, #62) | Admin tooling pending
 **Bucket:** `connect-card-testing` (dev) | TBD (production)
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-12-12
 
 ---
 
