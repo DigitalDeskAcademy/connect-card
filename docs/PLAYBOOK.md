@@ -3,7 +3,7 @@
 **Purpose:** THE authoritative guide for building Church Connect Hub. If there's a conflict, this document wins.
 **Status:** 🟡 **PRODUCTION BLOCKERS FIXED** - Phase 1 complete, ready for pilot
 **Health Score:** 78/100 (C+)
-**Last Updated:** 2025-12-11 (via /update-docs)
+**Last Updated:** 2025-12-12
 **Applies To:** All worktrees, all features, all developers
 
 > ⚠️ **This is the law.** When in doubt, follow this document. All other docs are supplementary.
@@ -188,6 +188,43 @@ Use `rounded-md` for badge-style indicators (step numbers, counts, status icons)
 - Status indicator badges with icons
 - Any small indicator meant to draw attention
 
+**Responsive Design Patterns**
+
+We use Tailwind's mobile-first breakpoints: `sm:` (640px), `md:` (768px), `lg:` (1024px), `xl:` (1280px).
+
+```tsx
+// Text sizing - mobile first
+<h1 className="text-lg md:text-xl lg:text-2xl">Title</h1>
+
+// Icon-only buttons on mobile
+<Button>
+  <Icon />
+  <span className="hidden sm:inline">Edit Profile</span>
+</Button>
+
+// Grid stacking
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+
+// Responsive spacing
+<div className="px-4 md:px-6 lg:px-8">
+
+// Truncation for long text
+<span className="truncate">{longTitle}</span>
+
+// Hide non-essential on mobile
+<div className="hidden lg:block">
+  <DetailedSidebar />
+</div>
+```
+
+**Responsive checklist for new components:**
+
+- [ ] Does text truncate gracefully?
+- [ ] Do buttons have icon-only mobile variants?
+- [ ] Does the grid stack on mobile?
+- [ ] Is spacing responsive?
+- [ ] Are non-essential elements hidden on mobile?
+
 **NavTabs - Responsive Tab Navigation**
 
 All tabbed pages use `<NavTabs>` from `/components/layout/nav-tabs.tsx`. This component has **built-in responsive overflow handling** inspired by GitHub's UnderlineNav:
@@ -234,7 +271,9 @@ const data = await prisma.model.findMany({
 
 ---
 
-## 🔥 Production Blockers (Phase 1 - MUST FIX)
+## 🔥 Production Blockers - Phase 1 (HISTORICAL - Complete)
+
+> ✅ **All Phase 1 blockers are fixed.** This section is kept for reference.
 
 ### Emergency Fix 1: Pagination
 
@@ -478,17 +517,17 @@ import { SomeUtil } from "@/lib/utils";
 
 ## The Bottom Line
 
-**We have 5 critical issues that WILL crash production.** Fix those first. Everything else is negotiable.
+**Phase 1 critical issues are FIXED.** We're now focused on Phase 2 (performance) and feature completion.
 
-**The order:**
+**Current priorities:**
 
-1. Emergency fixes (Phase 1) - Ship or die
-2. Performance fixes (Phase 2) - Keep customers
-3. Code quality (Phase 3) - Maintain sanity
-4. Nice to haves (Phase 4) - When we're profitable
+1. ✅ ~~Emergency fixes (Phase 1)~~ - Complete
+2. 🔄 Performance fixes (Phase 2) - In progress (caching, optimization)
+3. 🔄 Feature completion - Connect Card UX, Volunteer Export
+4. ⏳ Code quality (Phase 3) - After pilot
 
 **This document is the law. When in doubt, check here. If it conflicts with other docs, this wins.**
 
 ---
 
-_Last audit: 2025-12-08 | Next audit: After pilot church deployment_
+_Last audit: 2025-12-12 | Next audit: After pilot church deployment_

@@ -2,7 +2,7 @@
 
 **Status:** 🟢 Phase 2 Complete (PR #48, #58, #65 merged)
 **Worktree:** `feature/integrations`
-**Last Updated:** 2025-12-11
+**Last Updated:** 2025-12-12
 
 ---
 
@@ -388,7 +388,86 @@ But CSV export remains the universal fallback for churches using any ChMS.
 
 ---
 
+## 🔧 Technical Reference (Future API Work)
+
+This section consolidates technical details for when we implement direct API integrations (Phase 4+).
+
+### Industry Research Summary
+
+| ChMS                         | Market Share | Import Method   | API Available |
+| ---------------------------- | ------------ | --------------- | ------------- |
+| **Planning Center**          | ~40%         | CSV import, API | Yes (REST)    |
+| **Breeze**                   | ~25%         | CSV import, API | Yes (REST)    |
+| **Church Community Builder** | ~15%         | CSV import      | Limited       |
+| **Realm (ACS)**              | ~10%         | CSV import      | Limited       |
+| **Other/Custom**             | ~10%         | CSV only        | Varies        |
+
+**Key Insight:** CSV export covers 100% of use cases. API integration covers the top 2 systems for a premium experience.
+
+### Database Additions for API Sync
+
+When implementing Phase 4+ (direct API sync), add these models:
+
+```prisma
+/// Integration connection for external ChMS
+model ChMSIntegration {
+  id             String   @id @default(cuid())
+  organizationId String
+  provider       ChMSProvider  // PLANNING_CENTER, BREEZE
+  accessToken    String
+  refreshToken   String?
+  expiresAt      DateTime?
+  syncMode       SyncMode      @default(MANUAL)
+  fieldMapping   Json?
+  connectedBy    String
+  connectedAt    DateTime      @default(now())
+  lastSyncAt     DateTime?
+
+  @@unique([organizationId, provider])
+}
+
+enum ChMSProvider {
+  PLANNING_CENTER
+  BREEZE
+  CSV
+}
+
+enum SyncMode {
+  MANUAL
+  AUTOMATIC
+}
+```
+
+### API Endpoints (Phase 4+)
+
+```typescript
+// OAuth endpoints
+GET  /api/integrations/planning-center/connect    → OAuth redirect
+GET  /api/integrations/planning-center/callback   → Handle callback
+DELETE /api/integrations/planning-center          → Disconnect
+
+// Sync endpoints
+POST /api/integrations/planning-center/sync       → Manual sync
+GET  /api/integrations/planning-center/status     → Connection status
+```
+
+### Rate Limiting & Error Handling
+
+- Planning Center: 100 requests/minute
+- Breeze: 60 requests/minute
+- Implement queue-based sync for large batches
+- Token refresh on 401, retry with exponential backoff
+
+### Security Considerations
+
+- Tokens encrypted at rest
+- Scoped OAuth permissions (read/write people only)
+- Admin role required for integration management
+- Prayer requests optional in sync (privacy)
+
+---
+
 ## Related Documents
 
-- [Church Software Sync Spec](./church-software-sync-spec.md) - Detailed technical specification
 - [Connect Cards Vision](../connect-cards/vision.md) - Source data for exports
+- [Volunteer Vision](../volunteer/vision.md) - Volunteer export data

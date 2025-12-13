@@ -448,5 +448,5 @@ After migration:
 
 ---
 
-_Last Updated: 2025-12-11_
-_Status: Implemented (PR #58, #65)_
+_Last Updated: 2025-12-12_
+_Status: Core Implemented (PR #58, #65) - Some legacy tables remain for future migration_
