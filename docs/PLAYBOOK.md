@@ -225,6 +225,40 @@ We use Tailwind's mobile-first breakpoints: `sm:` (640px), `md:` (768px), `lg:` 
 - [ ] Is spacing responsive?
 - [ ] Are non-essential elements hidden on mobile?
 
+**NavTabs - Responsive Tab Navigation**
+
+All tabbed pages use `<NavTabs>` from `/components/layout/nav-tabs.tsx`. This component has **built-in responsive overflow handling** inspired by GitHub's UnderlineNav:
+
+```tsx
+// Usage - overflow handling is automatic
+<NavTabs
+  baseUrl={`/church/${slug}/admin/team`}
+  tabs={[
+    { label: "Active Members", value: "active", icon: Users, count: 6 },
+    { label: "Pending", value: "pending", icon: Clock },
+  ]}
+/>
+```
+
+**How it works:**
+
+- Container uses `overflow-hidden` to clip tabs that don't fit
+- ResizeObserver calculates which tabs overflow
+- Overflow tabs appear in a "•••" dropdown (styled like theme toggle)
+- `useLayoutEffect` ensures no flash on initial render
+- Active tab in overflow highlights the dropdown trigger
+
+**When to use NavTabs:**
+
+- ✅ Any page with 2+ content sections (Team, Volunteer, Export, etc.)
+- ✅ URL-based navigation needed (shareable links, back button support)
+- ✅ Pages that may have many tabs on mobile (locations, categories)
+
+**When NOT to use NavTabs:**
+
+- ❌ Local state tabs within a dialog/modal (use shadcn Tabs)
+- ❌ Single-purpose pages with no sections
+
 #### Data Access
 
 ```typescript

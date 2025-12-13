@@ -81,23 +81,6 @@ export function getChurchNavigation(slug: string): NavigationConfig {
         title: "Prayer",
         url: `/church/${slug}/admin/prayer`,
         icon: IconPray,
-        items: [
-          {
-            title: "All Requests",
-            url: `/church/${slug}/admin/prayer`,
-            icon: IconPray,
-          },
-          {
-            title: "Prayer Batches",
-            url: `/church/${slug}/admin/prayer-batches`,
-            icon: IconPray,
-          },
-          {
-            title: "My Prayer Sheet",
-            url: `/church/${slug}/my-prayers`,
-            icon: IconPray,
-          },
-        ],
       },
       {
         title: "Team",
