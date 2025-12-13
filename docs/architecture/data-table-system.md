@@ -448,5 +448,5 @@ After migration:
 
 ---
 
-_Last Updated: 2024-12-04_
-_Status: Planning_
+_Last Updated: 2025-12-11_
+_Status: Implemented (PR #58, #65)_

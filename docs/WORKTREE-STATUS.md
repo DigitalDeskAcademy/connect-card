@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-11
+**Last Updated:** 2025-12-12
 **Update Frequency:** After each significant work session
 
 ---
@@ -15,7 +15,7 @@
 | **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
 | **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
 | **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Synced           | Phase 2: Performance (non-blocking) |
-| **integrations** | 3005 | `feature/integrations`         | 🟢 **COMPLETE**     | PR #48, #58 merged                  |
+| **integrations** | 3005 | `feature/integrations`         | 🟢 **COMPLETE**     | PR #48, #58, #65 merged             |
 
 ---
 
@@ -32,6 +32,8 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ connect-card #66 - Review Mode + Volunteer Assignment UX polish (Dec 12)
+- ✅ integrations #65 - Enterprise Contacts module + DataTable migrations (Dec 11)
 - ✅ main #64 - Dashboard UI polish and badge standardization (Dec 10)
 - ✅ tech-debt #62 - S3 storage architecture improvements for multi-tenant safety (Dec 9)
 - ✅ volunteer #61 - Phase 2 MVP: Volunteer Onboarding Automation (Dec 9)
@@ -197,20 +199,22 @@ None - Phase 2 MVP complete.
 **Branch:** `feature/connect-card`
 **Vision Doc:** `/docs/features/connect-cards/vision.md`
 
-#### Recently Completed (PR #50)
+#### Recently Completed (PR #50, #66)
 
-| #   | Task                                   | Status |
-| --- | -------------------------------------- | ------ |
-| 1   | Mobile Camera Wizard (live viewfinder) | [x]    |
-| 2   | Background queue processing            | [x]    |
-| 3   | Two-sided card support (front/back)    | [x]    |
-| 4   | Auto-crop to card bounds               | [x]    |
-| 5   | Upload flow polished                   | [x]    |
-| 6   | AI extraction reliable                 | [x]    |
-| 7   | Review queue complete                  | [x]    |
-| 8   | Batch save/complete flow               | [x]    |
-| 9   | Fuzzy duplicate detection              | [x]    |
-| 10  | S3 org-scoped paths                    | [x]    |
+| #   | Task                                    | Status |
+| --- | --------------------------------------- | ------ |
+| 1   | Mobile Camera Wizard (live viewfinder)  | [x]    |
+| 2   | Background queue processing             | [x]    |
+| 3   | Two-sided card support (front/back)     | [x]    |
+| 4   | Auto-crop to card bounds                | [x]    |
+| 5   | Upload flow polished                    | [x]    |
+| 6   | AI extraction reliable                  | [x]    |
+| 7   | Review queue complete                   | [x]    |
+| 8   | Batch save/complete flow                | [x]    |
+| 9   | Fuzzy duplicate detection               | [x]    |
+| 10  | S3 org-scoped paths                     | [x]    |
+| 11  | Review Mode (see & type simultaneously) | [x]    |
+| 12  | Volunteer Assignment UX polish          | [x]    |
 
 #### What You Should Be Working On
 

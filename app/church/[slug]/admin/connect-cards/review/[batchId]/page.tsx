@@ -59,6 +59,7 @@ export default async function BatchReviewPage({ params }: PageProps) {
     select: {
       id: true,
       name: true,
+      email: true,
       volunteerCategories: true,
     },
     orderBy: {
