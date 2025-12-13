@@ -10,8 +10,7 @@
 
 1. **CHECK FIRST:** `/CLAUDE.md` - AI assistant context
 2. **CHECK SECOND:** `WORKTREE-STATUS.md` - What should I work on?
-3. **CHECK THIRD:** `FINISH-LINE.md` - What's blocking MVP?
-4. Reference `PLAYBOOK.md` for technical patterns
+3. Reference `PLAYBOOK.md` for technical patterns
 
 **For New Developers:**
 
@@ -19,15 +18,13 @@
 2. Read `WORKTREE-STATUS.md` - Project dashboard and worktree assignments
 3. Read `PLAYBOOK.md` - THE technical guide (patterns, blockers, debt)
 4. Read `PROJECT.md` - Business context and roadmap
-5. Read `essentials/coding-patterns.md` - How to write code
 
 **For AI Sessions:**
 
 1. **Start with `/CLAUDE.md`** - Technical context and patterns
 2. Check `WORKTREE-STATUS.md` - Know which worktree needs work
-3. Check `FINISH-LINE.md` - What's blocking MVP?
-4. Reference `PLAYBOOK.md` - Technical single source of truth
-5. Reference `features/{feature}/vision.md` - Detailed feature planning
+3. Reference `PLAYBOOK.md` - Technical single source of truth
+4. Reference `features/{feature}/vision.md` - Detailed feature planning
 
 ---
 
@@ -38,7 +35,6 @@
 
 docs/
 ├── WORKTREE-STATUS.md           # ← PROJECT DASHBOARD: What to work on
-├── FINISH-LINE.md               # ← MVP CHECKLIST: What's blocking launch
 ├── 🔴 PLAYBOOK.md               # ← THE LAW: Technical patterns & standards
 ├── PROJECT.md                   # ← Business overview (vision, status, roadmap)
 │
@@ -47,21 +43,15 @@ docs/
 │   ├── prayer/vision.md
 │   ├── volunteer/vision.md
 │   ├── tech-debt/vision.md
-│   └── integrations/vision.md
+│   ├── integrations/vision.md
+│   ├── member/vision.md
+│   └── onboarding/implementation-plan.md
 │
-├── essentials/                  # ← Core guides (how to build)
-│   ├── architecture.md          # System design & decisions
-│   ├── coding-patterns.md       # Code standards & patterns
-│   ├── development.md           # Local setup & workflows
-│   ├── deployment.md            # Production deployment
-│   ├── data-table-pattern.md    # TanStack Table guide
-│   ├── shadcn.md                # shadcn/ui component list
-│   └── shadcn-usage-patterns.md # Component usage patterns
+├── architecture/                # ← System architecture
+│   └── data-table-system.md     # Unified DataTable component spec
 │
-└── technical/                   # ← Implementation details
-    ├── architecture-decisions.md # ADR log
-    ├── adr-code-examples.md      # Code examples for ADRs
-    └── integrations.md           # Third-party integrations
+└── technical/                   # ← Implementation guides
+    └── testing-strategy.md      # Vitest/Playwright testing approach
 ```
 
 ---
@@ -130,43 +120,12 @@ All feature planning lives in `/docs/features/{feature}/vision.md`:
 
 ## 🛠️ Essential Guides
 
-### architecture.md
+All essential patterns are now consolidated in:
 
-System design, business vision, multi-tenant architecture, database schema
-
-### coding-patterns.md
-
-**MUST READ** - How to write code that follows project standards:
-
-- Server actions pattern
-- Multi-tenant data isolation
-- PageContainer usage
-- Shadcn component-first approach
-- Navigation configuration
-
-### development.md
-
-Local setup, tech stack, validation patterns, security patterns
-
-### deployment.md
-
-Production deployment, environment configuration, monitoring
-
----
-
-## 📚 Technical Documentation
-
-### architecture-decisions.md
-
-ADR log with all architectural decisions and rationale
-
-### adr-code-examples.md
-
-Code examples referenced by ADRs
-
-### integrations.md
-
-GoHighLevel, Stripe, Tigris S3, Better Auth integration details
+- **`/CLAUDE.md`** - Project context, tech stack, critical rules
+- **`PLAYBOOK.md`** - Code patterns, server actions, UI patterns, responsive design
+- **`architecture/data-table-system.md`** - Unified DataTable component spec
+- **`technical/testing-strategy.md`** - Vitest/Playwright testing approach
 
 ---
 
@@ -215,5 +174,5 @@ GoHighLevel, Stripe, Tigris S3, Better Auth integration details
 
 ---
 
-**Last Updated:** 2025-12-06
-**Total Files:** CLAUDE.md + 4 core docs + feature docs
+**Last Updated:** 2025-12-12
+**Total Files:** CLAUDE.md + 3 core docs + feature docs
