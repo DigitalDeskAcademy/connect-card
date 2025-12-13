@@ -25,10 +25,11 @@
 
 ```
 1. connect-card  → 🔥 Upload UX Overhaul (HIGH PRIORITY)
-2. connect-card  → Phase 4: CSV Export
-3. tech-debt     → Phase 2: Performance (non-blocking)
-4. main          → Project management (ongoing)
+2. tech-debt     → Phase 2: Performance (non-blocking)
+3. main          → Project management (ongoing)
 ```
+
+> **Note:** CSV Export is complete (PR #48, #58). Volunteer Export (Phase 3) depends on volunteer worktree providing `getExportableVolunteers()`.
 
 **Recently Completed (PRs Merged):**
 

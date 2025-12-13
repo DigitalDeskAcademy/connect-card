@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-08
+**Last Updated:** 2025-12-12
 
 ---
 
@@ -95,7 +95,7 @@ Churches lose 70% of first-time visitors because:
 
 **Production Readiness**
 
-- Fixing critical performance issues (see ENGINEERING-PLAYBOOK.md)
+- Fixing critical performance issues (see PLAYBOOK.md)
 - Setting up production environment
 - Load testing for Sunday rush
 
@@ -246,9 +246,9 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 
 ### For Developers
 
-- [Setup instructions](ENGINEERING-PLAYBOOK.md#development-setup)
-- [Code patterns](ENGINEERING-PLAYBOOK.md#how-we-build)
-- [Technical debt](ENGINEERING-PLAYBOOK.md#technical-debt-register)
+- [Setup instructions](PLAYBOOK.md#development-setup)
+- [Code patterns](PLAYBOOK.md#how-we-build)
+- [Technical debt](PLAYBOOK.md#technical-debt-register)
 
 ### For Product
 
@@ -266,6 +266,23 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 10, 2025
+
+- ✅ **Enterprise Contacts Module** (PR #65)
+  - Full contacts data layer with multi-tenant isolation
+  - Unified DataTable component system for all tables
+  - Server actions for contact management
+  - ChurchMember integration for connect card contacts
+- ✅ **Dashboard UI Polish** (PR #64)
+  - Badge standardization (primary color project-wide)
+  - NavTabs improvements with edge-to-edge borders
+  - Review queue back button repositioned
+  - Step badges changed to rounded-md style
+- ✅ **Theme System Improvements**
+  - Primary theme now uses Starry Night Main (rounded corners)
+  - Primary Square available for sharp corner preference
+  - Theme switcher updated with new naming
 
 ### Week of Dec 8, 2025
 
@@ -343,7 +360,7 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 
 ### For Technical Issues
 
-Check ENGINEERING-PLAYBOOK.md first, then:
+Check PLAYBOOK.md first, then:
 
 1. Check existing GitHub issues
 2. Ask in team Slack

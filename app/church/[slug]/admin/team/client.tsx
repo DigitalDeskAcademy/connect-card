@@ -391,9 +391,9 @@ export default function TeamManagementClient({
         ]}
       />
 
-      <div className="space-y-6 pt-6">
+      <div className="space-y-4">
         {/* Header with Invite Button */}
-        <div className="flex justify-end">
+        <div className="flex justify-end pt-4">
           {canInviteUsers && (
             <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
               <DialogTrigger asChild>
