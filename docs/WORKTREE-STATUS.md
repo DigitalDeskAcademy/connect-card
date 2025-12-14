@@ -526,20 +526,21 @@ git merge origin/main
 
 ## 📞 Quick Reference
 
-| Need                 | Location                                                     |
-| -------------------- | ------------------------------------------------------------ |
-| Technical patterns   | `/docs/PLAYBOOK.md`                                          |
-| Project roadmap      | `/docs/PROJECT.md`                                           |
-| **Testing strategy** | `/docs/technical/testing-strategy.md`                        |
-| **GHL integration**  | `/docs/features/ghl-integration/vision.md`                   |
-| Connect card spec    | `/docs/features/connect-cards/vision.md`                     |
-| Prayer spec          | `/docs/features/prayer-management/vision.md`                 |
-| Volunteer spec       | `/docs/features/volunteer-management/vision.md`              |
-| Tech debt spec       | `/docs/features/tech-debt/vision.md`                         |
-| Bulk messaging spec  | `/docs/features/volunteer-management/bulk-messaging-spec.md` |
-| ChMS sync spec       | `/docs/features/integrations/church-software-sync-spec.md`   |
-| S3 structure         | `/docs/features/tech-debt/s3-bucket-structure.md`            |
-| Environment config   | `/docs/features/tech-debt/environment-configuration.md`      |
+| Need                 | Location                                                |
+| -------------------- | ------------------------------------------------------- |
+| Technical patterns   | `/docs/PLAYBOOK.md`                                     |
+| Project roadmap      | `/docs/PROJECT.md`                                      |
+| **Testing strategy** | `/docs/technical/testing-strategy.md`                   |
+| **GHL integration**  | `/docs/features/ghl-integration/vision.md`              |
+| **Platform admin**   | `/docs/features/platform-admin/vision.md`               |
+| Connect card spec    | `/docs/features/connect-cards/vision.md`                |
+| Prayer spec          | `/docs/features/prayer/vision.md`                       |
+| Volunteer spec       | `/docs/features/volunteer/vision.md`                    |
+| Tech debt spec       | `/docs/features/tech-debt/vision.md`                    |
+| Bulk messaging spec  | `/docs/features/volunteer/bulk-messaging-spec.md`       |
+| Integrations spec    | `/docs/features/integrations/vision.md`                 |
+| S3 structure         | `/docs/features/tech-debt/s3-bucket-structure.md`       |
+| Environment config   | `/docs/features/tech-debt/environment-configuration.md` |
 
 ---
 
