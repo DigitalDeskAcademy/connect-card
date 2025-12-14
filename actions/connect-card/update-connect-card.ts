@@ -24,6 +24,7 @@ import {
 } from "@/lib/email/templates/volunteer-documents";
 import { env } from "@/lib/env";
 import { getS3Url } from "@/lib/S3Client";
+import { syncConnectCardToGHL, isGHLConfigured } from "@/lib/ghl";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -635,7 +636,38 @@ export async function updateConnectCard(
       }
     }
 
-    // 11. Build response message
+    // 11. Sync contact to GHL and send welcome SMS if configured
+    let ghlContactSynced = false;
+    let ghlSmsSent = false;
+    if (isGHLConfigured()) {
+      try {
+        const ghlResult = await syncConnectCardToGHL(
+          organization.id,
+          {
+            name: cardName || undefined,
+            email: cardEmail || undefined,
+            phone: cardPhone || undefined,
+          },
+          {
+            // Send welcome SMS when "Send onboarding materials" is checked
+            sendWelcomeSMS: validation.data.sendBackgroundCheckInfo === true,
+            ministryName: validation.data.volunteerCategory?.replace(/_/g, " "),
+            churchName: organization.name,
+            churchMemberId: churchMemberId || undefined,
+            source: "Connect Card",
+            tags: volunteerCreated ? ["volunteer", "new"] : ["visitor"],
+          }
+        );
+
+        ghlContactSynced = ghlResult.contactSync.success;
+        ghlSmsSent = ghlResult.smsResult?.success === true;
+      } catch {
+        // GHL sync failed but card processing continues
+        // Error is logged in the GHL service
+      }
+    }
+
+    // 12. Build response message
     const messages: string[] = ["Connect card processed successfully"];
 
     if (memberCreated) {
@@ -662,6 +694,14 @@ export async function updateConnectCard(
 
     if (updatedCard.smsAutomationEnabled) {
       messages.push("SMS automation enabled");
+    }
+
+    if (ghlContactSynced) {
+      messages.push("Contact synced to GHL");
+    }
+
+    if (ghlSmsSent) {
+      messages.push("Welcome SMS sent via GHL");
     }
 
     return {

@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-13
+**Last Updated:** 2025-12-14
 **Update Frequency:** After each significant work session
 
 ---
@@ -14,7 +14,7 @@
 | **connect-card**   | 3001 | `feature/connect-card`         | 🟡 **UX Priority**  | Upload UX Overhaul (high priority)  |
 | **prayer**         | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
 | **volunteer**      | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
-| **tech-debt**      | 3004 | `feature/ghl-integration`      | 🟡 **In Progress**  | GHL Integration (SMS/Automations)   |
+| **tech-debt**      | 3004 | `feature/ghl-integration`      | 🟢 **Phase 1 Done** | GHL Integration (Phase 1 Complete)  |
 | **platform-admin** | 3005 | `feature/platform-admin`       | 🔴 **Planning**     | Modernize platform admin (7 phases) |
 
 ---
@@ -24,15 +24,15 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. tech-debt       → 🔥 GHL Integration Phase 1 (Demo Priority)
-2. connect-card    → Upload UX Overhaul
+1. connect-card    → 🔥 Upload UX Overhaul (HIGH PRIORITY)
+2. tech-debt       → GHL Phase 2: Ministry Management (Phase 1 DONE ✅)
 3. platform-admin  → Modernize platform admin (post-demo)
 4. main            → Project management (ongoing)
 ```
 
-> **Note:** GHL integration is now the top priority for the demo. Must show: volunteer checkbox → SMS + email sent.
+> **Note:** GHL Phase 1 COMPLETE! Demo goal achieved: volunteer checkbox → SMS + email sent.
 >
-> **Post-Demo:** Platform admin modernization is next priority after demo. Currently 88% placeholder pages.
+> **Next Priority:** Connect card upload UX overhaul for non-technical church staff.
 
 **Recently Completed (PRs Merged):**
 
@@ -58,9 +58,9 @@
 
 ---
 
-### 🟡 tech-debt (Port 3004) - NOW: GHL Integration
+### 🟢 tech-debt (Port 3004) - GHL Integration Phase 1 COMPLETE
 
-**Status:** 🔥 GHL Integration Phase 1 (Demo Priority)
+**Status:** ✅ Phase 1 Complete - Ready for PR
 **Branch:** `feature/ghl-integration`
 **Vision Doc:** `/docs/features/ghl-integration/vision.md`
 
@@ -68,18 +68,18 @@
 
 GoHighLevel integration for SMS/email automation. Each church has their own GHL sub-account.
 
-**Demo Goal:** Check "Send onboarding materials" → Volunteer gets welcome SMS + email
+**Demo Goal:** Check "Send onboarding materials" → Volunteer gets welcome SMS + email ✅
 
-#### Phase 1 - Foundation (Current Sprint)
+#### Phase 1 - Foundation (COMPLETE)
 
 | #   | Task              | Description                      | Status |
 | --- | ----------------- | -------------------------------- | ------ |
 | 1   | MCP Server Setup  | Connect GHL MCP to Claude Code   | [x]    |
-| 2   | Service Layer     | Create `lib/ghl/` abstraction    | [ ]    |
-| 3   | Credentials Model | Add GHLCredentials to schema     | [ ]    |
-| 4   | Contact Sync      | Sync contact on Save & Next      | [ ]    |
-| 5   | Welcome SMS       | Send SMS when onboarding checked | [ ]    |
-| 6   | Demo Test         | End-to-end demo flow             | [ ]    |
+| 2   | Service Layer     | Create `lib/ghl/` abstraction    | [x]    |
+| 3   | Credentials Model | Using env vars (Phase 4 for DB)  | [x]    |
+| 4   | Contact Sync      | Sync contact on Save & Next      | [x]    |
+| 5   | Welcome SMS       | Send SMS when onboarding checked | [x]    |
+| 6   | Demo Test         | End-to-end demo flow             | [x]    |
 
 #### Future Phases
 
@@ -106,12 +106,13 @@ GoHighLevel integration for SMS/email automation. Each church has their own GHL 
 cd /home/digitaldesk/Desktop/church-connect-hub/tech-debt
 pnpm dev  # Runs on port 3004
 
-# GHL MCP is already connected
-# Next: Create lib/ghl/ service layer
+# Phase 1 complete - GHL service layer + SMS integration working
+# Next: Phase 2 - Ministry management + custom templates
 ```
 
 #### Recent Work
 
+- ✅ GHL Phase 1 - Service layer, contact sync, welcome SMS (Dec 14)
 - ✅ PR #68 - GitHub-style responsive overflow tabs for NavTabs
 - ✅ Team page spacing fixes
 
