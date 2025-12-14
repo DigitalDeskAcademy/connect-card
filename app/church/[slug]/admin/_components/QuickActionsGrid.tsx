@@ -3,30 +3,35 @@
 import Link from "next/link";
 import {
   IconUpload,
-  IconUserPlus,
+  IconClipboardList,
   IconPray,
   IconHeart,
   IconFileExport,
   IconSend,
 } from "@tabler/icons-react";
 import type { Icon } from "@tabler/icons-react";
+import { Badge } from "@/components/ui/badge";
 
 interface QuickAction {
   label: string;
   href: string;
   icon: Icon;
   color: string;
+  badge?: number;
 }
 
 interface QuickActionsGridProps {
   slug: string;
   /** User's default location slug for pre-filtering. Null if user can see all locations. */
   defaultLocationSlug: string | null;
+  /** Count of batches needing review for badge display */
+  batchesNeedingReview: number;
 }
 
 export function QuickActionsGrid({
   slug,
   defaultLocationSlug,
+  batchesNeedingReview,
 }: QuickActionsGridProps) {
   // Build location query param if user has a default location
   const locationParam = defaultLocationSlug
@@ -41,10 +46,11 @@ export function QuickActionsGrid({
       color: "text-blue-500",
     },
     {
-      label: "Invite Staff",
-      href: `/church/${slug}/admin/team`,
-      icon: IconUserPlus,
+      label: "Review Batches",
+      href: `/church/${slug}/admin/connect-cards?tab=batches`,
+      icon: IconClipboardList,
       color: "text-purple-500",
+      badge: batchesNeedingReview,
     },
     {
       label: "Assign Prayers",
@@ -76,7 +82,12 @@ export function QuickActionsGrid({
     <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
       {actions.map(action => (
         <Link key={action.label} href={action.href}>
-          <div className="h-20 flex flex-col items-center justify-center rounded-xl border bg-card shadow-sm hover:bg-accent hover:border-primary/50 transition-all cursor-pointer group">
+          <div className="relative h-20 flex flex-col items-center justify-center rounded-xl border bg-card shadow-sm hover:bg-accent hover:border-primary/50 transition-all cursor-pointer group">
+            {action.badge !== undefined && action.badge > 0 && (
+              <Badge className="absolute -top-2 -right-2 h-5 min-w-5 flex items-center justify-center text-xs">
+                {action.badge}
+              </Badge>
+            )}
             <action.icon
               className={`h-6 w-6 mb-1.5 ${action.color} group-hover:scale-110 transition-transform`}
             />
