@@ -1120,7 +1120,7 @@ export function ReviewQueueClient({
                         </CollapsibleTrigger>
                         <CollapsibleContent className="pt-4 space-y-4">
                           {/* Assigned Leader Dropdown */}
-                          <div className="space-y-2 w-full max-w-xs">
+                          <div className="space-y-2 w-full">
                             <Label htmlFor="assignedLeader">
                               Assigned Leader (Optional)
                             </Label>
@@ -1138,10 +1138,19 @@ export function ReviewQueueClient({
                               }
                               disabled={isPending}
                             >
-                              <SelectTrigger id="assignedLeader">
-                                <SelectValue placeholder="Select a leader..." />
+                              <SelectTrigger
+                                id="assignedLeader"
+                                className="w-full"
+                              >
+                                <span className="truncate">
+                                  {formData.assignedLeaderId
+                                    ? volunteerLeaders.find(
+                                        l => l.id === formData.assignedLeaderId
+                                      )?.name
+                                    : "Select a leader..."}
+                                </span>
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="max-w-[300px]">
                                 {volunteerLeaders
                                   .filter(leader =>
                                     leaderMatchesCategory(
@@ -1154,7 +1163,9 @@ export function ReviewQueueClient({
                                       key={leader.id}
                                       value={leader.id}
                                     >
-                                      {leader.name}
+                                      <span className="truncate block max-w-[250px]">
+                                        {leader.name}
+                                      </span>
                                     </SelectItem>
                                   ))}
                                 {volunteerLeaders.filter(leader =>
