@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-11
+**Last Updated:** 2025-12-12
 
 ---
 
@@ -93,9 +93,17 @@ Churches lose 70% of first-time visitors because:
 
 ### 🚧 In Progress
 
+**GHL Integration (Demo Priority)** → `tech-debt` worktree
+
+- GoHighLevel MCP connected ✅
+- Service layer for SMS/Email automation
+- Contact sync on card review
+- Volunteer onboarding SMS
+- Vision doc: `/docs/features/ghl-integration/vision.md`
+
 **Production Readiness**
 
-- Fixing critical performance issues (see ENGINEERING-PLAYBOOK.md)
+- Fixing critical performance issues (see PLAYBOOK.md)
 - Setting up production environment
 - Load testing for Sunday rush
 
@@ -107,11 +115,11 @@ Churches lose 70% of first-time visitors because:
 - Visitor → Member tracking
 - Duplicate detection
 
-**Automated Communication** (Q1 2026)
+**GHL Bulk Messaging** (Phase 3)
 
-- GoHighLevel integration
-- SMS/email campaigns
-- Follow-up automation
+- Filter volunteers by ministry/location/status
+- Compose with calendar links & attachments
+- Send via GHL (SMS/Email)
 
 ---
 
@@ -130,11 +138,17 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 
 ### Phase 2: Pilot Church (December 2025)
 
-**Goal:** First church using in production
+**Goal:** First church using in production with SMS automation
 
 - [x] Dashboard UI/UX - Quick action cards for staff workflows → `main` ✅
 - [x] Theme system with multiple variants (PR #54, #55) → `main` ✅
-- [ ] **Onboarding & Card Mapping** → `main` worktree (NEW)
+- [ ] **GHL Integration Phase 1** → `tech-debt` worktree (DEMO PRIORITY)
+  - Vision doc: `/docs/features/ghl-integration/vision.md`
+  - GHL MCP connected ✅
+  - Service layer for contacts + messaging
+  - Contact sync on Save & Next
+  - Welcome SMS on volunteer onboarding
+- [ ] **Onboarding & Card Mapping** → `main` worktree
   - Implementation plan: `/docs/features/onboarding/implementation-plan.md`
   - Hybrid onboarding: Setup checklist + AI-powered card mapping
   - Universal field detection (works without template)
@@ -246,9 +260,9 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 
 ### For Developers
 
-- [Setup instructions](ENGINEERING-PLAYBOOK.md#development-setup)
-- [Code patterns](ENGINEERING-PLAYBOOK.md#how-we-build)
-- [Technical debt](ENGINEERING-PLAYBOOK.md#technical-debt-register)
+- [Setup instructions](PLAYBOOK.md#development-setup)
+- [Code patterns](PLAYBOOK.md#how-we-build)
+- [Technical debt](PLAYBOOK.md#technical-debt-register)
 
 ### For Product
 
@@ -360,7 +374,7 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 
 ### For Technical Issues
 
-Check ENGINEERING-PLAYBOOK.md first, then:
+Check PLAYBOOK.md first, then:
 
 1. Check existing GitHub issues
 2. Ask in team Slack

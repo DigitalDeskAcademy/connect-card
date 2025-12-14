@@ -244,7 +244,7 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
               Pending Batches Detected
             </AlertDialogTitle>
             <AlertDialogDescription className="space-y-3">
-              <p>
+              <span className="block">
                 You have{" "}
                 <strong>
                   {pendingBatches.length} batch
@@ -255,15 +255,15 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
                   {pendingCardCount} card{pendingCardCount !== 1 ? "s" : ""}
                 </strong>{" "}
                 still pending review.
-              </p>
-              <p>
+              </span>
+              <span className="block">
                 These cards won&apos;t be included in your export until
                 they&apos;re reviewed and processed.
-              </p>
-              <p className="text-sm text-muted-foreground">
+              </span>
+              <span className="block text-sm text-muted-foreground">
                 You can export now with only the processed cards, or review the
                 pending batches first.
-              </p>
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">

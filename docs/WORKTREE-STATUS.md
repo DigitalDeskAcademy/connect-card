@@ -1,21 +1,21 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-12
+**Last Updated:** 2025-12-13
 **Update Frequency:** After each significant work session
 
 ---
 
 ## 🚦 Project Health at a Glance
 
-| Worktree         | Port | Branch                         | Status              | Current Focus                       |
-| ---------------- | ---- | ------------------------------ | ------------------- | ----------------------------------- |
-| **main**         | 3000 | `feature/general`              | 🟢 Active           | Project management, QR code feature |
-| **connect-card** | 3001 | `feature/connect-card`         | 🟡 **UX Priority**  | Upload UX Overhaul (high priority)  |
-| **prayer**       | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
-| **volunteer**    | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
-| **tech-debt**    | 3004 | `feature/tech-debt`            | 🟢 Synced           | Phase 2: Performance (non-blocking) |
-| **integrations** | 3005 | `feature/integrations`         | 🟢 **COMPLETE**     | PR #48, #58, #65 merged             |
+| Worktree           | Port | Branch                         | Status              | Current Focus                       |
+| ------------------ | ---- | ------------------------------ | ------------------- | ----------------------------------- |
+| **main**           | 3000 | `feature/general`              | 🟢 Active           | Project management, docs            |
+| **connect-card**   | 3001 | `feature/connect-card`         | 🟡 **UX Priority**  | Upload UX Overhaul (high priority)  |
+| **prayer**         | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
+| **volunteer**      | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
+| **tech-debt**      | 3004 | `feature/ghl-integration`      | 🟡 **In Progress**  | GHL Integration (SMS/Automations)   |
+| **platform-admin** | 3005 | `feature/platform-admin`       | 🔴 **Planning**     | Modernize platform admin (7 phases) |
 
 ---
 
@@ -24,14 +24,19 @@
 **Work on these in order. Don't skip ahead.**
 
 ```
-1. connect-card  → 🔥 Upload UX Overhaul (HIGH PRIORITY)
-2. connect-card  → Phase 4: CSV Export
-3. tech-debt     → Phase 2: Performance (non-blocking)
-4. main          → Project management (ongoing)
+1. tech-debt       → 🔥 GHL Integration Phase 1 (Demo Priority)
+2. connect-card    → Upload UX Overhaul
+3. platform-admin  → Modernize platform admin (post-demo)
+4. main            → Project management (ongoing)
 ```
+
+> **Note:** GHL integration is now the top priority for the demo. Must show: volunteer checkbox → SMS + email sent.
+>
+> **Post-Demo:** Platform admin modernization is next priority after demo. Currently 88% placeholder pages.
 
 **Recently Completed (PRs Merged):**
 
+- ✅ main #70 - Documentation audit + responsive UI fixes (Dec 13)
 - ✅ tech-debt #68 - GitHub-style responsive overflow tabs for NavTabs (Dec 12)
 - ✅ connect-card #66 - Review Mode + Volunteer Assignment UX polish (Dec 12)
 - ✅ integrations #65 - Enterprise Contacts module + DataTable migrations (Dec 11)
@@ -53,36 +58,57 @@
 
 ---
 
-### 🟢 tech-debt (Port 3004)
+### 🟡 tech-debt (Port 3004) - NOW: GHL Integration
 
-**Status:** Phase 1 Complete - Ready for Phase 2
-**Branch:** `feature/tech-debt`
-**Vision Doc:** `/docs/features/tech-debt/vision.md`
+**Status:** 🔥 GHL Integration Phase 1 (Demo Priority)
+**Branch:** `feature/ghl-integration`
+**Vision Doc:** `/docs/features/ghl-integration/vision.md`
 
-#### Phase 1 - Production Blockers (COMPLETE)
+#### GHL Integration Overview
 
-| #   | Task                          | File                                                 | Status |
-| --- | ----------------------------- | ---------------------------------------------------- | ------ |
-| 1   | Fix subscription bypass       | `app/data/dashboard/require-dashboard-access.ts:114` | [x]    |
-| 2   | Remove PII from logs          | Server action files                                  | [x]    |
-| 3   | Add database indexes          | `prisma/schema.prisma`                               | [x]    |
-| 4   | Add pagination to all queries | `/lib/data/*.ts`                                     | [x]    |
+GoHighLevel integration for SMS/email automation. Each church has their own GHL sub-account.
 
-#### What You Should Be Working On
+**Demo Goal:** Check "Send onboarding materials" → Volunteer gets welcome SMS + email
 
-**Phase 2 - Infrastructure & Performance:**
+#### Phase 1 - Foundation (Current Sprint)
 
-| #   | Task                     | Description                          | Status |
-| --- | ------------------------ | ------------------------------------ | ------ |
-| 5   | S3 bucket structure init | Admin UI to create org folders       | [ ]    |
-| 6   | Migrate legacy S3 paths  | Move `uploads/general/` to org paths | [ ]    |
-| 7   | Add caching              | Redis/Upstash for hot data           | [ ]    |
-| 8   | Data abstraction         | Repository pattern (defer)           | [ ]    |
+| #   | Task              | Description                      | Status |
+| --- | ----------------- | -------------------------------- | ------ |
+| 1   | MCP Server Setup  | Connect GHL MCP to Claude Code   | [x]    |
+| 2   | Service Layer     | Create `lib/ghl/` abstraction    | [ ]    |
+| 3   | Credentials Model | Add GHLCredentials to schema     | [ ]    |
+| 4   | Contact Sync      | Sync contact on Save & Next      | [ ]    |
+| 5   | Welcome SMS       | Send SMS when onboarding checked | [ ]    |
+| 6   | Demo Test         | End-to-end demo flow             | [ ]    |
 
-**New Documentation:**
+#### Future Phases
 
-- `/docs/features/tech-debt/s3-bucket-structure.md` - S3 organization spec
-- `/docs/features/tech-debt/environment-configuration.md` - Env vars for forked projects
+**Phase 2 - Volunteer Automation:**
+
+- BG check SMS sequence
+- Calendar link SMS
+- Status update notifications
+
+**Phase 3 - Bulk Messaging:**
+
+- Filter + compose UI
+- Message templates
+- Delivery tracking
+
+**Phase 4 - Settings:**
+
+- GHL connection UI for churches
+- OAuth flow (optional)
+
+#### Start Here
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/tech-debt
+pnpm dev  # Runs on port 3004
+
+# GHL MCP is already connected
+# Next: Create lib/ghl/ service layer
+```
 
 #### Recent Work
 
@@ -91,13 +117,87 @@
 
 #### Definition of Done (Phase 1)
 
-- [x] All 4 Phase 1 items complete
-- [x] PR created to main
-- [x] PLAYBOOK.md updated with completion status
+- [x] GHL MCP connected and working
+- [x] Service layer created (`lib/ghl/`)
+- [x] Contact syncs to GHL on save
+- [x] Welcome SMS sends when checkbox checked
+- [x] Demo flow works end-to-end
+- [ ] PR created to main
 
 #### Blockers
 
-None - Phase 1 complete, no longer blocking production.
+None - Phase 1 complete, ready for PR.
+
+---
+
+### 🔴 platform-admin (Port 3005) - NEW
+
+**Status:** 🔴 Planning - Worktree to be created
+**Branch:** `feature/platform-admin`
+**Vision Doc:** `/docs/features/platform-admin/vision.md`
+
+#### Overview
+
+Platform admin (`/app/platform/admin/`) has fallen behind church admin. 88% of pages are placeholders/stubs. Needs modernization to match church admin quality.
+
+#### Current State
+
+| Page          | Status         | Notes                    |
+| ------------- | -------------- | ------------------------ |
+| Dashboard     | 🔴 Placeholder | "Coming soon" text       |
+| Contacts      | 🟡 Stub        | NavTabs only, no data    |
+| Team          | 🔴 Placeholder | Empty                    |
+| Conversations | 🟢 Demo        | Mock data                |
+| Courses       | 🟢 Working     | Real DB                  |
+| Payments      | 🟡 Demo        | Mock data                |
+| API           | 🟢 Working     | Real DB                  |
+| Others        | 🔴 Empty       | 8 more placeholder pages |
+
+#### 7-Phase Plan
+
+| Phase | Focus                     | Status |
+| ----- | ------------------------- | ------ |
+| 1     | Foundation & Security     | [ ]    |
+| 2     | Dashboard & Organizations | [ ]    |
+| 3     | Contacts & Team           | [ ]    |
+| 4     | Conversations & Messaging | [ ]    |
+| 5     | Analytics & Reporting     | [ ]    |
+| 6     | Settings & Configuration  | [ ]    |
+| 7     | Polish & Parity           | [ ]    |
+
+#### Critical Issues
+
+1. **No multi-tenant filtering** - Security risk
+2. **Different auth pattern** - Uses `requireAdmin()` not `requireDashboardAccess()`
+3. **No data layer** - Missing `/lib/data/platform/*.ts`
+4. **Stale UI** - Missing NavTabs overflow, quick actions, badges
+
+#### Start Here
+
+```bash
+# Create worktree (not yet created)
+cd /home/digitaldesk/Desktop/church-connect-hub/main
+git worktree add ../platform-admin -b feature/platform-admin
+
+cd ../platform-admin
+cp .env.local.example .env.local
+# Update PORT=3005, DATABASE_URL to new Neon branch
+pnpm install
+pnpm dev
+```
+
+#### Definition of Done (Phase 1 - Foundation)
+
+- [ ] Platform auth helper created
+- [ ] PlatformRole added to schema
+- [ ] Data access layer created
+- [ ] All routes protected
+- [ ] PR created to main
+
+#### Blockers
+
+- Worktree not yet created
+- Depends on demo completion (tech-debt GHL work)
 
 ---
 
@@ -432,19 +532,21 @@ git merge origin/main
 
 ## 📞 Quick Reference
 
-| Need                 | Location                                                     |
-| -------------------- | ------------------------------------------------------------ |
-| Technical patterns   | `/docs/PLAYBOOK.md`                                          |
-| Project roadmap      | `/docs/PROJECT.md`                                           |
-| **Testing strategy** | `/docs/technical/testing-strategy.md`                        |
-| Connect card spec    | `/docs/features/connect-cards/vision.md`                     |
-| Prayer spec          | `/docs/features/prayer-management/vision.md`                 |
-| Volunteer spec       | `/docs/features/volunteer-management/vision.md`              |
-| Tech debt spec       | `/docs/features/tech-debt/vision.md`                         |
-| Bulk messaging spec  | `/docs/features/volunteer-management/bulk-messaging-spec.md` |
-| ChMS sync spec       | `/docs/features/integrations/church-software-sync-spec.md`   |
-| S3 structure         | `/docs/features/tech-debt/s3-bucket-structure.md`            |
-| Environment config   | `/docs/features/tech-debt/environment-configuration.md`      |
+| Need                 | Location                                                |
+| -------------------- | ------------------------------------------------------- |
+| Technical patterns   | `/docs/PLAYBOOK.md`                                     |
+| Project roadmap      | `/docs/PROJECT.md`                                      |
+| **Testing strategy** | `/docs/technical/testing-strategy.md`                   |
+| **GHL integration**  | `/docs/features/ghl-integration/vision.md`              |
+| **Platform admin**   | `/docs/features/platform-admin/vision.md`               |
+| Connect card spec    | `/docs/features/connect-cards/vision.md`                |
+| Prayer spec          | `/docs/features/prayer/vision.md`                       |
+| Volunteer spec       | `/docs/features/volunteer/vision.md`                    |
+| Tech debt spec       | `/docs/features/tech-debt/vision.md`                    |
+| Bulk messaging spec  | `/docs/features/volunteer/bulk-messaging-spec.md`       |
+| Integrations spec    | `/docs/features/integrations/vision.md`                 |
+| S3 structure         | `/docs/features/tech-debt/s3-bucket-structure.md`       |
+| Environment config   | `/docs/features/tech-debt/environment-configuration.md` |
 
 ---
 

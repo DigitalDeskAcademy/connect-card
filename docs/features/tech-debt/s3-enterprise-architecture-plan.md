@@ -1,10 +1,12 @@
 # S3 Storage Architecture Plan
 
-**Status:** ✅ APPROVED - Pragmatic MVP Approach
+**Status:** 📋 DEFERRED - Future Blueprint (Critical bugs fixed in PR #62, enterprise architecture deferred to 500+ churches)
 **Created:** 2025-12-07
-**Updated:** 2025-12-07 (Revised after architecture review)
-**Target:** Production-Ready for Pilot Churches (10-100 scale)
+**Updated:** 2025-12-12
+**Target:** Reference document for future scale (500+ churches)
 **Scope:** Church Connect Hub SaaS Platform
+
+> ⚠️ **Note:** Only the 3 critical bugs (items 1-3) were implemented in PR #62. The enterprise architecture (UUID paths, S3Paths module, lifecycle policies) is deferred until we reach 500+ churches. Current MVP uses slug-based paths successfully.
 
 ---
 
