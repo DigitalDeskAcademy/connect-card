@@ -43,6 +43,8 @@ interface DashboardClientProps {
   canSeeAllLocations: boolean;
   /** Active tab from URL (location slug or "cumulative") */
   activeTab: string;
+  /** Count of batches with cards awaiting review */
+  batchesNeedingReview: number;
 }
 
 /** Reusable KPI card for dashboard metrics */
@@ -192,6 +194,7 @@ export function DashboardClient({
   userDefaultLocationSlug,
   canSeeAllLocations,
   activeTab,
+  batchesNeedingReview,
 }: DashboardClientProps) {
   // Section collapsed states (persisted to localStorage)
   const [sections, setSections] = useLocalStorage<SectionState>(
@@ -256,6 +259,7 @@ export function DashboardClient({
           <QuickActionsGrid
             slug={slug}
             defaultLocationSlug={userDefaultLocationSlug}
+            batchesNeedingReview={batchesNeedingReview}
           />
         </CollapsibleSection>
 
