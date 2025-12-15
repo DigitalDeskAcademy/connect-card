@@ -62,6 +62,7 @@ The marketing landing page with "25 Founding Churches" messaging was temporarily
 
 **Recently Completed (PRs Merged):**
 
+- ✅ connect-card #76 - Scan session cookie auth for phone QR scanning (Dec 15)
 - ✅ connect-card #73 - QR code scan flow with token authentication (Dec 15)
 - ✅ tech-debt #72 - GHL Integration Phase 1: Service Layer + SMS (Dec 14)
 - ✅ main #71 - Dashboard UX improvements + Review Batches action (Dec 14)
@@ -335,7 +336,7 @@ None - Phase 2 MVP complete.
 **Branch:** `feature/connect-card`
 **Vision Doc:** `/docs/features/connect-cards/vision.md`
 
-#### Recently Completed (PR #50, #66)
+#### Recently Completed (PR #50, #66, #73, #76)
 
 | #   | Task                                    | Status |
 | --- | --------------------------------------- | ------ |
@@ -351,6 +352,8 @@ None - Phase 2 MVP complete.
 | 10  | S3 org-scoped paths                     | [x]    |
 | 11  | Review Mode (see & type simultaneously) | [x]    |
 | 12  | Volunteer Assignment UX polish          | [x]    |
+| 13  | QR code scan flow with tokens (PR #73)  | [x]    |
+| 14  | Scan session cookie auth (PR #76)       | [x]    |
 
 #### What You Should Be Working On
 
