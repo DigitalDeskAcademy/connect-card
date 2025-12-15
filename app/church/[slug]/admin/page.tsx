@@ -17,6 +17,7 @@ import {
   getConnectCardChartData,
 } from "@/lib/data/connect-card-analytics";
 import { getOrganizationLocations } from "@/lib/data/locations";
+import { countBatchesNeedingReview } from "@/lib/data/connect-card-batch";
 import { PageContainer } from "@/components/layout/page-container";
 import { DashboardClient } from "./_components/DashboardClient";
 
@@ -36,10 +37,16 @@ export default async function ChurchAdminDashboard({
   // Fetch locations first
   const locations = await getOrganizationLocations(organization.id);
 
-  // Fetch cumulative analytics and chart data, plus per-location data
-  const [cumulativeAnalytics, chartData, ...locationData] = await Promise.all([
+  // Fetch cumulative analytics, chart data, batch count, plus per-location data
+  const [
+    cumulativeAnalytics,
+    chartData,
+    batchesNeedingReview,
+    ...locationData
+  ] = await Promise.all([
     getConnectCardAnalytics(organization.id), // No locationId = all locations
     getConnectCardChartData(organization.id), // Chart data for last 90 days
+    countBatchesNeedingReview(organization.id, dataScope.filters.locationId),
     // Fetch analytics and chart data for each location
     ...locations.flatMap(loc => [
       getConnectCardAnalytics(organization.id, loc.id),
@@ -91,6 +98,7 @@ export default async function ChurchAdminDashboard({
         userDefaultLocationSlug={userDefaultLocationSlug}
         canSeeAllLocations={dataScope.filters.canSeeAllLocations}
         activeTab={activeTab}
+        batchesNeedingReview={batchesNeedingReview}
       />
     </PageContainer>
   );

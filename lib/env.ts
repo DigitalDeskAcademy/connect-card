@@ -26,9 +26,13 @@ export const env = createEnv({
     CLAUDE_VISION_MODEL: z.string().default("claude-opus-4-5-20251101"), // Model for connect card extraction
     S3_UPLOAD_ALLOWED_DOMAINS: z.string().optional(), // Comma-separated production domains
     PLATFORM_ADMIN_EMAIL: z.string().email().optional(), // Platform admin email for auto-promotion
-    GHL_CLIENT_ID: z.string().min(1).optional(), // GoHighLevel - Phase 5 feature
+    GHL_CLIENT_ID: z.string().min(1).optional(), // GoHighLevel OAuth - Phase 4 feature
     GHL_CLIENT_SECRET: z.string().min(1).optional(),
     GHL_REDIRECT_URI: z.string().url().optional(),
+    // GHL Private Integration Token (PIT) - for demo/single-tenant
+    GHL_PIT: z.string().min(1).optional(), // Private Integration Token
+    GHL_LOCATION_ID: z.string().min(1).optional(), // GHL Location ID (sub-account)
+    GHL_CALL_IN_DEV: z.string().optional(), // Set to "true" to make API calls in dev
   },
 
   client: {

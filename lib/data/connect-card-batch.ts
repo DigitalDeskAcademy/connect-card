@@ -259,6 +259,34 @@ export async function incrementBatchCardCount(batchId: string): Promise<void> {
 }
 
 /**
+ * Count batches with cards awaiting review
+ * Returns count of batches that have EXTRACTED cards
+ */
+export async function countBatchesNeedingReview(
+  organizationId: string,
+  locationId?: string | null
+): Promise<number> {
+  const where: {
+    organizationId: string;
+    locationId?: string;
+    cards?: { some: { status: "EXTRACTED" } };
+  } = {
+    organizationId,
+    cards: {
+      some: {
+        status: "EXTRACTED",
+      },
+    },
+  };
+
+  if (locationId) {
+    where.locationId = locationId;
+  }
+
+  return prisma.connectCardBatch.count({ where });
+}
+
+/**
  * Get batch statistics for dashboard
  */
 export async function getBatchStats(organizationId: string, userId: string) {

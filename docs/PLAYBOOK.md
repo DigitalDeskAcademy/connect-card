@@ -259,6 +259,7 @@ All tabbed pages use `<NavTabs>` from `/components/layout/nav-tabs.tsx`. This co
 - ❌ Local state tabs within a dialog/modal (use shadcn Tabs)
 - ❌ Single-purpose pages with no sections
 
+
 #### Data Access
 
 ```typescript
