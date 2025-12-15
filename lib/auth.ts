@@ -87,7 +87,14 @@ export const auth = betterAuth({
   // Include localhost for development and the dynamic Vercel URL for previews
   trustedOrigins: [
     "http://localhost:3000",
+    // Production URL (Vercel alias)
+    "https://connect-card-two.vercel.app",
+    // Dynamic preview URLs
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    // Production URL from Vercel env (if set)
+    ...(process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`]
+      : []),
     ...(env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL] : []),
   ].filter(Boolean),
 
