@@ -1,106 +1,37 @@
 /**
- * Church Sync - Early Access Landing Page
+ * Church Sync - Demo Landing Page
  *
- * Beta/Early access landing page for founding churches program.
- * Positions as software developers partnering with NewLife Church
- * to build real-world tested connect card solution.
+ * Simplified landing page for demos. No marketing language or
+ * partner church references.
  *
- * Target Audience: Churches of all sizes (25 founding churches)
- * Core Problem: Manual connect card entry wastes 10-20 hours/week
- * Solution: AI reads handwriting, routes volunteers and prayers automatically
- * Offer: 50% off lifetime + free scanner for founding churches
- *
- * Key Value Props:
- * - Built in partnership with NewLife Church (5 campuses, 2000 members)
- * - Processing 500+ cards weekly in real church environment
- * - 50% off lifetime pricing locked in forever
- * - Free ScanSnap ix1600 scanner ($425 value) with annual plans
- *
- * @page Church Landing
+ * @page Demo Landing
  * @route /
  * @access Public (no authentication required)
- * @returns {JSX.Element} Early access landing page
  */
 
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
-import { CheckCircle, X } from "lucide-react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 
 import Link from "next/link";
 import AdminLink from "./_components/AdminLink";
 
-/**
- * Metadata for SEO and social sharing
- */
 export const metadata: Metadata = {
-  title: "Church Sync - Connect Card Management for Churches",
+  title: "Church Sync - Connect Card Management",
   description:
-    "AI-powered connect card processing. Built with NewLife Church. Transform 20 hours of manual entry into 2 hours. 50% off for 25 founding churches.",
-  keywords: [
-    "church management",
-    "connect cards",
-    "church software",
-    "visitor management",
-    "church administration",
-    "volunteer management",
-    "prayer requests",
-  ],
-  authors: [{ name: "Church Sync" }],
-  openGraph: {
-    title: "Church Sync - Connect Card Management for Churches",
-    description:
-      "Transform connect card processing from 20 hours to 2 hours weekly with AI-powered automation. Built in partnership with NewLife Church.",
-    url: "https://churchsync.com",
-    siteName: "Church Sync",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Church Sync - Connect Card Management",
-      },
-    ],
-    locale: "en_US",
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Church Sync - Connect Card Management",
-    description:
-      "AI-powered connect card processing for churches. 50% off for founding churches.",
-    images: ["/og-image.png"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
+    "AI-powered connect card processing for churches. Transform hours of manual entry into minutes.",
 };
-
-/**
- * Feature Interface for Church Sync
- * @interface FeatureProps
- * @property {string} title - Feature name
- * @property {string} description - Feature benefit description
- * @property {string} icon - Emoji icon
- */
-interface FeatureProps {
-  title: string;
-  description: string;
-  icon: string;
-}
 
 /**
  * Workflow Steps
  */
-const workflowSteps: FeatureProps[] = [
+const workflowSteps = [
   {
     title: "Capture",
     description:
-      "Use a ScanSnap or phone camera to capture entire stacks of connect cards in minutes.",
+      "Use a scanner or phone camera to capture stacks of connect cards in minutes.",
     icon: "📸",
   },
   {
@@ -124,9 +55,7 @@ const workflowSteps: FeatureProps[] = [
 ];
 
 /**
- * Church Sync Early Access Landing Page
- *
- * Founding churches program with limited spots and lifetime benefits
+ * Demo Landing Page
  */
 export default async function Home() {
   const session = await auth.api.getSession({
@@ -138,213 +67,41 @@ export default async function Home() {
       {/* Hero Section */}
       <section aria-labelledby="hero-title" className="relative py-20">
         <div className="flex flex-col items-center text-center space-y-8">
-          <Badge className="text-sm bg-orange-100 text-orange-800 border-orange-200">
-            Early Access • Limited to 25 Founding Churches
-          </Badge>
-
           <h1
             id="hero-title"
             className="text-4xl md:text-6xl font-bold tracking-tight max-w-4xl"
           >
-            We&apos;re Building the Connect Card Solution Churches Actually Need
+            Connect Card Management Made Simple
           </h1>
 
           <p className="max-w-[700px] text-muted-foreground md:text-xl">
-            NewLife Church processes 500+ connect cards across 5 campuses. We
-            partnered with their team to build Church Sync—the solution that
-            actually works. Now opening to 25 founding churches.
+            Stop spending hours on manual data entry. Church Sync uses AI to
+            read connect cards and automatically route visitors, volunteers, and
+            prayer requests to the right people.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mt-8">
-            <Link
-              className={buttonVariants({
-                size: "lg",
-              })}
-              href="/signup"
-            >
-              Request Early Access
-            </Link>
-
             <AdminLink session={session} />
 
             {!session && (
               <Link
                 className={buttonVariants({
                   size: "lg",
-                  variant: "outline",
                 })}
-                href="#story"
+                href="/login"
               >
-                See Our Story
+                Sign In
               </Link>
             )}
           </div>
-
-          <p className="text-sm text-muted-foreground">
-            Limited to 25 founding churches
-          </p>
         </div>
       </section>
 
-      {/* Problem Validation Section */}
-      <section aria-labelledby="challenges-title" className="mb-40">
-        <div className="text-center mb-12">
-          <h2 id="challenges-title" className="text-3xl font-bold mb-8">
-            Does This Sound Like Your Monday?
-          </h2>
-        </div>
-
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-muted/30 rounded-lg p-8 mb-8">
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <CheckCircle className="size-5 text-green-600 mt-1 flex-shrink-0" />
-                <span className="text-muted-foreground">
-                  Stack of connect cards from Sunday still unprocessed
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="size-5 text-green-600 mt-1 flex-shrink-0" />
-                <span className="text-muted-foreground">
-                  Volunteers texting asking where to serve this week
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="size-5 text-green-600 mt-1 flex-shrink-0" />
-                <span className="text-muted-foreground">
-                  Prayer requests that haven&apos;t reached pastoral staff yet
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="size-5 text-green-600 mt-1 flex-shrink-0" />
-                <span className="text-muted-foreground">
-                  Last week&apos;s visitors still waiting for follow-up
-                </span>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle className="size-5 text-green-600 mt-1 flex-shrink-0" />
-                <span className="text-muted-foreground">
-                  Multiple campuses with no unified system
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <p className="text-lg font-semibold text-primary">
-              If you checked 3 or more, you need what we&apos;re building.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Our Story Section */}
-      <section aria-labelledby="partnership-title" className="mb-40" id="story">
-        <div className="text-center mb-12">
-          <h2 id="partnership-title" className="text-3xl font-bold mb-4">
-            Built With Real Churches, For Real Churches
-          </h2>
-        </div>
-
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="bg-muted/30 rounded-lg p-8">
-            <p className="text-lg mb-6">
-              NewLife Church has 5 campuses, 2,000 members, and was drowning in
-              connect cards every Monday.
-            </p>
-
-            <p className="text-muted-foreground mb-4">
-              Their team tried everything:
-            </p>
-
-            <div className="space-y-3 mb-6">
-              <div className="flex items-center gap-2">
-                <X className="size-4 text-destructive flex-shrink-0" />
-                <span className="text-sm">
-                  Expensive church management systems (didn&apos;t handle cards)
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <X className="size-4 text-destructive flex-shrink-0" />
-                <span className="text-sm">
-                  Manual data entry teams (burned out volunteers)
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <X className="size-4 text-destructive flex-shrink-0" />
-                <span className="text-sm">
-                  Partial digital solutions (created more work)
-                </span>
-              </div>
-            </div>
-
-            <p className="text-lg font-semibold text-primary">
-              Nothing worked. So we partnered with them to build something
-              better.
-            </p>
-          </div>
-
-          <div className="bg-primary/5 rounded-lg p-8 border-l-4 border-primary">
-            <h3 id="partnership-details" className="font-semibold mb-4">
-              The Partnership:
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              We bring the technical expertise. NewLife&apos;s team brings 20
-              years of church operations experience. Together, we built what
-              actually works.
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <p className="text-sm font-semibold mb-2">Now at NewLife:</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="size-4 text-green-600" />
-                    <span className="text-sm">
-                      500+ cards weekly in under 2 hours
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="size-4 text-green-600" />
-                    <span className="text-sm">
-                      Visitors contacted within 24 hours
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-semibold mb-2">&nbsp;</p>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="size-4 text-green-600" />
-                    <span className="text-sm">
-                      Volunteers know where to serve
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="size-4 text-green-600" />
-                    <span className="text-sm">
-                      Prayers reach the right people
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center">
-            <p className="text-xl font-semibold">
-              Time to expand to 25 founding churches.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* What We've Built Section */}
+      {/* Workflow Section */}
       <section aria-labelledby="workflow-title" className="mb-40" id="solution">
         <div className="text-center mb-12">
           <h2 id="workflow-title" className="text-3xl font-bold mb-4">
-            A Complete Connect Card Workflow (That Actually Works)
+            How It Works
           </h2>
           <p className="text-muted-foreground">
             Capture → Extract → Review → Connect
@@ -366,424 +123,108 @@ export default async function Home() {
             </Card>
           ))}
         </div>
-
-        {/* Live Statistics */}
-        <div className="bg-muted/30 rounded-lg p-8">
-          <h3 id="stats-title" className="font-semibold text-center mb-8">
-            Live Statistics from NewLife Church:
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <p className="text-6xl font-bold text-primary mb-2">500+</p>
-              <p className="text-sm text-muted-foreground">
-                Cards processed weekly
-              </p>
-            </div>
-            <div>
-              <p className="text-6xl font-bold text-primary mb-2">2 min</p>
-              <p className="text-sm text-muted-foreground">
-                Average per card (was 6-8 min)
-              </p>
-            </div>
-            <div>
-              <p className="text-6xl font-bold text-primary mb-2">90%</p>
-              <p className="text-sm text-muted-foreground">
-                Time saved vs manual entry
-              </p>
-            </div>
-            <div>
-              <p className="text-6xl font-bold text-primary mb-2">100%</p>
-              <p className="text-sm text-muted-foreground">
-                Follow-up within 24hrs
-              </p>
-            </div>
-          </div>
-        </div>
       </section>
 
-      {/* Founding Church Benefits */}
-      <section aria-labelledby="benefits-title" className="mb-40" id="benefits">
+      {/* Features Section */}
+      <section aria-labelledby="features-title" className="mb-40">
         <div className="text-center mb-12">
-          <h2 id="benefits-title" className="text-3xl font-bold mb-4">
-            Become a Founding Church
-          </h2>
-          <p className="text-muted-foreground">
-            Exclusive Benefits for Our First 25 Churches
-          </p>
-        </div>
-
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl mb-3">💰</div>
-                <h3 className="font-semibold text-lg mb-2">50% Off Forever</h3>
-                <p className="text-sm text-muted-foreground">
-                  Locked in lifetime pricing for founding churches. Regular
-                  pricing begins March 2025.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl mb-3">📦</div>
-                <h3 className="font-semibold text-lg mb-2">FREE Scanner</h3>
-                <p className="text-sm text-muted-foreground">
-                  $425 ScanSnap ix1600 with annual Growth or Enterprise plan
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl mb-3">🎯</div>
-                <h3 className="font-semibold text-lg mb-2">
-                  Direct Feature Input
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Monthly calls with our team. Your feedback shapes the product.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl mb-3">🤝</div>
-                <h3 className="font-semibold text-lg mb-2">
-                  White-Glove Onboarding
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  We help you set everything up and train your team personally.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl mb-3">🏆</div>
-                <h3 className="font-semibold text-lg mb-2">
-                  Pioneer Recognition
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Your church helped shape this solution from day one.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-4xl mb-3">✅</div>
-                <h3 className="font-semibold text-lg mb-2">30-Day Guarantee</h3>
-                <p className="text-sm text-muted-foreground">
-                  No questions asked. We&apos;ll even pay return shipping on the
-                  scanner.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section aria-labelledby="pricing-title" className="mb-40" id="pricing">
-        <div className="text-center mb-12">
-          <h2 id="pricing-title" className="text-3xl font-bold mb-4">
-            Founding Church Pricing (50% Off Forever)
-          </h2>
-          <p className="text-muted-foreground">
-            Only 25 founding spots available
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {/* Single Campus */}
-          <Card className="flex flex-col">
-            <CardHeader className="text-center">
-              <Badge className="w-fit mx-auto mb-4">Single Campus</Badge>
-              <div className="space-y-2">
-                <div className="text-muted-foreground line-through text-lg">
-                  $158/month
-                </div>
-                <CardTitle className="text-6xl">$79</CardTitle>
-                <div className="text-muted-foreground">/month</div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-4">
-                {"<"}200 members
-              </p>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
-              <div className="space-y-3 mb-6 flex-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">200 cards/month</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">All core features</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">Email support</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">50% off forever</span>
-                </div>
-              </div>
-              <Link
-                href="/signup"
-                className={buttonVariants({ className: "w-full" })}
-              >
-                Request Early Access
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Multi-Campus */}
-          <Card className="border-2 border-primary relative flex flex-col">
-            <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
-              FREE $425 Scanner
-            </Badge>
-            <CardHeader className="text-center">
-              <Badge className="w-fit mx-auto mb-4">Most Popular</Badge>
-              <div className="space-y-2">
-                <div className="text-muted-foreground line-through text-lg">
-                  $298/month
-                </div>
-                <CardTitle className="text-6xl">$149</CardTitle>
-                <div className="text-muted-foreground">/month</div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-4">
-                200-500 members
-              </p>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
-              <div className="space-y-3 mb-6 flex-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">500 cards/month</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm font-semibold">
-                    FREE Scanner with annual
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">All core features</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">Priority support</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">50% off forever</span>
-                </div>
-              </div>
-              <Link
-                href="/signup"
-                className={buttonVariants({ className: "w-full" })}
-              >
-                Request Early Access
-              </Link>
-            </CardContent>
-          </Card>
-
-          {/* Large Network */}
-          <Card className="relative flex flex-col">
-            <Badge className="absolute -top-3 right-4 bg-green-600 text-white border-none hover:bg-green-600">
-              FREE $425 Scanner
-            </Badge>
-            <CardHeader className="text-center">
-              <Badge className="w-fit mx-auto mb-4">Large Network</Badge>
-              <div className="space-y-2">
-                <div className="text-muted-foreground line-through text-lg">
-                  $598/month
-                </div>
-                <CardTitle className="text-6xl">$299</CardTitle>
-                <div className="text-muted-foreground">/month</div>
-              </div>
-              <p className="text-sm text-muted-foreground mt-4">500+ members</p>
-            </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
-              <div className="space-y-3 mb-6 flex-1">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">Unlimited cards</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm font-semibold">
-                    FREE Scanner with annual
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">Multiple locations</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">Phone support</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="size-4 text-green-600 flex-shrink-0" />
-                  <span className="text-sm">50% off forever</span>
-                </div>
-              </div>
-              <Link
-                href="/signup"
-                className={buttonVariants({
-                  variant: "outline",
-                  className: "w-full",
-                })}
-              >
-                Request Early Access
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="text-center mt-8">
-          <p className="text-sm text-muted-foreground">
-            Only 25 founding spots available. Regular pricing begins March 2025.
-          </p>
-        </div>
-      </section>
-
-      {/* FAQ Section */}
-      <section aria-labelledby="faq-title" className="mb-40">
-        <div className="text-center mb-12">
-          <h2 id="faq-title" className="text-3xl font-bold mb-4">
-            Early Access Questions
+          <h2 id="features-title" className="text-3xl font-bold mb-4">
+            What You Can Do
           </h2>
         </div>
 
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Who built this?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Church Sync was developed in partnership with NewLife
-                  Church&apos;s operations team. We build the technology, they
-                  ensure it works for real church workflows.
-                </p>
-              </div>
+              <div className="text-3xl mb-3">📋</div>
+              <h3 className="font-semibold text-lg mb-2">Connect Cards</h3>
+              <p className="text-sm text-muted-foreground">
+                Upload scanned cards or use your phone camera. AI extracts
+                names, contact info, and interests automatically.
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-2">
-                <h3 className="font-semibold">When can we start?</h3>
-                <p className="text-sm text-muted-foreground">
-                  NewLife has been live since October 2024. Founding churches
-                  begin onboarding January 2025.
-                </p>
-              </div>
+              <div className="text-3xl mb-3">🙏</div>
+              <h3 className="font-semibold text-lg mb-2">Prayer Requests</h3>
+              <p className="text-sm text-muted-foreground">
+                Prayer requests are automatically categorized and routed to your
+                prayer team with privacy controls.
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-2">
-                <h3 className="font-semibold">
-                  What if it doesn&apos;t work for us?
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  30-day money back guarantee, no questions asked. We&apos;ll
-                  even pay return shipping on the scanner.
-                </p>
-              </div>
+              <div className="text-3xl mb-3">🙋</div>
+              <h3 className="font-semibold text-lg mb-2">Volunteer Pipeline</h3>
+              <p className="text-sm text-muted-foreground">
+                Track volunteer interests, assign to ministries, and automate
+                onboarding with welcome messages.
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Can we influence features?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Absolutely. Founding churches have monthly feedback calls and
-                  direct input on our roadmap.
-                </p>
-              </div>
+              <div className="text-3xl mb-3">📍</div>
+              <h3 className="font-semibold text-lg mb-2">Multi-Campus</h3>
+              <p className="text-sm text-muted-foreground">
+                Manage multiple locations with location-specific permissions and
+                unified reporting.
+              </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Is our data secure?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Bank-level encryption. Complete church isolation. Your data
-                  never mingles with other churches.
-                </p>
-              </div>
+              <div className="text-3xl mb-3">📱</div>
+              <h3 className="font-semibold text-lg mb-2">SMS & Email</h3>
+              <p className="text-sm text-muted-foreground">
+                Automated welcome messages to volunteers. Send follow-ups via
+                SMS and email integration.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-3xl mb-3">📊</div>
+              <h3 className="font-semibold text-lg mb-2">Export & Sync</h3>
+              <p className="text-sm text-muted-foreground">
+                Export contacts to Planning Center, Breeze, or custom CSV
+                formats for your church management system.
+              </p>
             </CardContent>
           </Card>
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section aria-labelledby="cta-title" className="mb-40" id="signup">
+      {/* CTA Section */}
+      <section aria-labelledby="cta-title" className="mb-40">
         <div className="text-center">
           <h2 id="cta-title" className="text-3xl font-bold mb-4">
-            Join Us in Solving Monday Morning Data Entry
+            Ready to Get Started?
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8">
-            Tested at NewLife. Ready for your church.
+            Sign in to access your dashboard and start processing connect cards.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <Link
-              className={buttonVariants({
-                size: "lg",
-              })}
-              href="/signup"
-            >
-              Request Early Access
-            </Link>
-            <Link
-              className={buttonVariants({
-                size: "lg",
-                variant: "outline",
-              })}
-              href="/demo"
-            >
-              Schedule a Demo
-            </Link>
-          </div>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <AdminLink session={session} />
 
-          <p className="text-sm text-muted-foreground">
-            Developed with NewLife Church • Processing 500+ weekly cards • 5
-            campuses running live
-          </p>
-        </div>
-      </section>
-
-      {/* Trust Footer */}
-      <section className="mb-20">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 text-center text-sm text-muted-foreground">
-            <div>
-              <p className="font-semibold mb-1">In partnership with</p>
-              <p>NewLife Church</p>
-            </div>
-            <div>
-              <p className="font-semibold mb-1">Field-tested since</p>
-              <p>October 2024</p>
-            </div>
-            <div>
-              <p className="font-semibold mb-1">Your data stays</p>
-              <p>Completely private</p>
-            </div>
-            <div>
-              <p className="font-semibold mb-1">No questions asked</p>
-              <p>30-day guarantee</p>
-            </div>
+            {!session && (
+              <Link
+                className={buttonVariants({
+                  size: "lg",
+                })}
+                href="/login"
+              >
+                Sign In
+              </Link>
+            )}
           </div>
         </div>
       </section>
