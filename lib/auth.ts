@@ -190,8 +190,16 @@ export const auth = betterAuth({
           }
 
           // Don't throw in development since we log the OTP
-          if (process.env.NODE_ENV === "production") {
-            throw error; // In production, email must work
+          // 🚨 DEMO MODE: Also don't throw for .test/.example emails (they can't receive mail)
+          const isTestEmail =
+            email.endsWith(".test") || email.endsWith(".example");
+          if (process.env.NODE_ENV === "production" && !isTestEmail) {
+            throw error; // In production with real emails, email must work
+          }
+          if (isTestEmail) {
+            console.log(
+              `⚠️  Test email (${email}) - OTP logged above, email not sent`
+            );
           }
         }
       },
