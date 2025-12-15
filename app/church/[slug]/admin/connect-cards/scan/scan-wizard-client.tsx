@@ -227,7 +227,7 @@ export function ScanWizardClient({
   // Handle capture button press - crops to card alignment guide
   const handleCapture = async () => {
     // Capture image from camera
-    const result = await captureImage();
+    const result = await captureImage(true);
     if (!result) {
       toast.error("Failed to capture image");
       return;
