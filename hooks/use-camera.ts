@@ -18,7 +18,9 @@ export interface UseCameraReturn {
   state: CameraState;
   startCamera: () => Promise<void>;
   stopCamera: () => void;
-  captureImage: () => Promise<{ blob: Blob; dataUrl: string } | null>;
+  captureImage: (
+    cropToGuide?: boolean
+  ) => Promise<{ blob: Blob; dataUrl: string } | null>;
   switchCamera: () => Promise<void>;
 }
 
