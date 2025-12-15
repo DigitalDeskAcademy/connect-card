@@ -16,6 +16,7 @@ import {
   toValidationIssuesJson,
   validateJsonSize,
 } from "@/lib/prisma/json-types";
+import { validateScanSession } from "@/lib/auth/scan-session";
 
 /**
  * Normalize Visit Status
@@ -195,12 +196,30 @@ export async function saveConnectCard(
   locationId?: string | null
 ): Promise<ApiResponse<{ id: string }>> {
   // 1. Authentication and authorization
-  const { session, organization } = await requireDashboardAccess(slug);
+  // Supports two auth methods:
+  // - Better Auth session (normal logged-in users)
+  // - Scan session cookie (phone QR code scanning)
+  let userId: string;
+  let organizationId: string;
+
+  // Check for scan session first (phone QR code flow)
+  const scanSession = await validateScanSession();
+
+  if (scanSession && scanSession.slug === slug) {
+    // Phone scanning via QR code - already validated via token
+    userId = scanSession.userId;
+    organizationId = scanSession.organizationId;
+  } else {
+    // Standard dashboard access (logged-in user)
+    const { session, organization } = await requireDashboardAccess(slug);
+    userId = session.user.id;
+    organizationId = organization.id;
+  }
 
   // 2. Rate limiting
   const req = await request();
   const decision = await aj.protect(req, {
-    fingerprint: `${session.user.id}_${organization.id}_save_connect_card`,
+    fingerprint: `${userId}_${organizationId}_save_connect_card`,
   });
 
   if (decision.isDenied()) {
@@ -239,7 +258,7 @@ export async function saveConnectCard(
   if (sizeCheck.warning) {
     console.warn(
       `[MONITORING] Large extractedData payload: ${sizeCheck.bytes} bytes`,
-      { organizationId: organization.id, userId: session.user.id }
+      { organizationId, userId }
     );
   }
 
@@ -264,7 +283,7 @@ export async function saveConnectCard(
   } else {
     // Fallback to user's default location
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: { defaultLocationId: true },
     });
     finalLocationId = user?.defaultLocationId || null;
@@ -275,7 +294,7 @@ export async function saveConnectCard(
     const locationExists = await prisma.location.findFirst({
       where: {
         id: finalLocationId,
-        organizationId: organization.id, // Multi-tenant isolation
+        organizationId: organizationId, // Multi-tenant isolation
         isActive: true, // Only accept active locations
       },
       select: { id: true },
@@ -301,15 +320,12 @@ export async function saveConnectCard(
     // Future enhancement: Link to existing ChurchMember records instead of blocking.
 
     // 6. Get or create active batch for this upload
-    const batch = await getOrCreateActiveBatch(
-      session.user.id,
-      organization.id
-    );
+    const batch = await getOrCreateActiveBatch(userId, organizationId);
 
     // 7. Save to database with batch assignment and image hash
     const connectCard = await prisma.connectCard.create({
       data: {
-        organizationId: organization.id,
+        organizationId: organizationId,
         imageKey: validation.data.imageKey,
         imageHash,
         backImageKey,
@@ -332,7 +348,7 @@ export async function saveConnectCard(
         status: "EXTRACTED",
         // Store validation issues for review UI (type-safe JSON conversion)
         validationIssues: toValidationIssuesJson(validationResult.issues),
-        scannedBy: session.user.id,
+        scannedBy: userId,
         scannedAt: new Date(),
         // Use provided locationId or staff member's default campus
         locationId: finalLocationId,

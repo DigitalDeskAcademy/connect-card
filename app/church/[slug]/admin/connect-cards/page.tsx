@@ -103,7 +103,6 @@ export default async function ConnectCardsPage({
     <PageContainer as="main" variant="tabs">
       <ConnectCardsClient
         slug={slug}
-        locations={locations}
         defaultLocationId={defaultLocationId}
         batches={batches}
         pendingBatchCount={pendingBatchCount}

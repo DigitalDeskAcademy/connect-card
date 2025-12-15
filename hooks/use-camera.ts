@@ -38,23 +38,24 @@ export function useCamera(): UseCameraReturn {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Check camera support (calculated once at init)
-  const getInitialSupport = () => {
-    if (typeof window === "undefined") return false;
-    return (
-      typeof navigator !== "undefined" &&
-      "mediaDevices" in navigator &&
-      "getUserMedia" in navigator.mediaDevices
-    );
-  };
-
-  const [state, setState] = useState<CameraState>(() => ({
-    isSupported: getInitialSupport(),
+  // Initialize with false to avoid hydration mismatch - update in useEffect
+  const [state, setState] = useState<CameraState>({
+    isSupported: false,
     isReady: false,
     isActive: false,
     error: null,
     facing: "environment", // Default to rear camera for scanning cards
-  }));
+  });
+
+  // Check camera support on client only (after hydration)
+  useEffect(() => {
+    const isSupported =
+      typeof navigator !== "undefined" &&
+      "mediaDevices" in navigator &&
+      "getUserMedia" in navigator.mediaDevices;
+
+    setState(prev => ({ ...prev, isSupported }));
+  }, []);
 
   // Clean up stream on unmount
   useEffect(() => {

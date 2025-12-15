@@ -1,8 +1,20 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-14
+**Last Updated:** 2025-12-15
 **Update Frequency:** After each significant work session
+
+---
+
+## 🚨🚨🚨 SECURITY: PRE-LAUNCH CHECKLIST 🚨🚨🚨
+
+> **BEFORE LAUNCHING WITH REAL USERS, YOU MUST:**
+>
+> - [ ] **Remove OTP logging in production** - `lib/auth.ts` line ~105-142
+>   - Currently logs OTP codes to Vercel logs for demo purposes
+>   - Delete `isProduction` from `shouldLogOTP` condition
+> - [ ] **Verify custom domain in Resend** - Required to send emails to any address
+> - [ ] **Update `RESEND_FROM_EMAIL`** - Change from `onboarding@resend.dev` to your domain
 
 ---
 
@@ -10,7 +22,7 @@
 
 | Worktree           | Port | Branch                         | Status              | Current Focus                       |
 | ------------------ | ---- | ------------------------------ | ------------------- | ----------------------------------- |
-| **main**           | 3000 | `feature/general`              | 🟢 Active           | Project management, docs            |
+| **main**           | 3000 | `main`                         | 🟢 Active           | Project management, docs            |
 | **connect-card**   | 3001 | `feature/connect-card`         | 🟡 **UX Priority**  | Upload UX Overhaul (high priority)  |
 | **prayer**         | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
 | **volunteer**      | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
@@ -34,8 +46,23 @@
 >
 > **Next Priority:** Connect card upload UX overhaul for non-technical church staff.
 
+---
+
+## ⚠️ POST-DEMO TODO
+
+**Restore after NewLife demo is complete:**
+
+| Item         | Current State             | Restore From                      | Notes                     |
+| ------------ | ------------------------- | --------------------------------- | ------------------------- |
+| Landing Page | Demo version (simplified) | `app/(public)/page.marketing.tsx` | Rename back to `page.tsx` |
+
+The marketing landing page with "25 Founding Churches" messaging was temporarily replaced with a clean demo page that removes NewLife references. After demo, restore the marketing page.
+
+---
+
 **Recently Completed (PRs Merged):**
 
+- ✅ connect-card #73 - QR code scan flow with token authentication (Dec 15)
 - ✅ tech-debt #72 - GHL Integration Phase 1: Service Layer + SMS (Dec 14)
 - ✅ main #71 - Dashboard UX improvements + Review Batches action (Dec 14)
 - ✅ main #70 - Documentation audit + responsive UI fixes (Dec 13)

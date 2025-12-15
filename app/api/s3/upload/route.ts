@@ -60,6 +60,7 @@ import arcjet, { fixedWindow } from "@/lib/arcjet";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { randomBytes } from "crypto";
+import { getScanSessionForApi } from "@/lib/auth/scan-session";
 
 /**
  * Validate if origin is allowed for CORS
@@ -267,40 +268,51 @@ export async function POST(request: Request) {
   /**
    * Authentication & Authorization Check
    *
-   * SECURITY NOTE: This implementation uses direct session checking instead of requireAdmin()
-   * to support multi-tenant access (platform admins AND agency admins can upload).
+   * Supports two authentication methods:
+   * 1. Better Auth session (standard logged-in users)
+   * 2. Scan session cookie (phone QR code scanning - token-validated users)
    *
-   * TODO: SECURITY REVIEW - Schedule a comprehensive security audit of this authentication
-   * pattern to ensure it maintains the same security guarantees as requireAdmin() while
-   * supporting multi-tenant access. Key areas to review:
-   * - Session validation consistency
-   * - Role checking implementation
-   * - Error message information leakage
-   * - Rate limiting per organization
-   *
-   * @security-review-needed
+   * The scan session is a secure signed cookie created after QR code token validation,
+   * allowing phone users to upload images without a full login session.
    */
+  let userId: string;
+  let userRole: string | undefined;
+
+  // Try Better Auth session first (standard authentication)
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  // Return 401 for unauthenticated requests (no session)
-  if (!session) {
-    return NextResponse.json(
-      { error: "Authentication required" },
-      { status: 401 }
-    );
+  if (session) {
+    userId = session.user.id;
+    userRole = session.user.role ?? undefined;
+  } else {
+    // Fall back to scan session cookie (phone QR code flow)
+    const scanSession = await getScanSessionForApi();
+    if (scanSession) {
+      userId = scanSession.userId;
+      // Scan sessions are implicitly authorized (token was validated)
+      // They can only upload connect cards for their organization
+      userRole = "scan_session";
+    } else {
+      // No valid authentication method found
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
   }
 
-  // Allow platform admins, church admins/owners, and church staff to upload files
-  // Church staff need upload access for core connect card processing workflow
+  // Allow platform admins, church admins/owners, church staff, and scan sessions to upload
+  // Scan sessions are pre-authorized during token validation
   const allowedRoles = [
     "platform_admin",
     "church_owner",
     "church_admin",
     "user",
+    "scan_session", // Phone QR code scanning
   ];
-  if (!session.user.role || !allowedRoles.includes(session.user.role)) {
+  if (!userRole || !allowedRoles.includes(userRole)) {
     return NextResponse.json(
       { error: "Insufficient permissions" },
       { status: 403 }
@@ -320,7 +332,7 @@ export async function POST(request: Request) {
     // Apply rate limiting to prevent upload abuse and cost attacks
     // Uses user ID as fingerprint for per-user limiting (5 requests/minute)
     const decision = await aj.protect(request, {
-      fingerprint: session?.user.id as string,
+      fingerprint: userId,
     });
 
     // Block requests that exceed rate limits with user-friendly error
