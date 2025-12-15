@@ -10,6 +10,7 @@ import {
   getOrCreateActiveBatch,
 } from "@/lib/data/connect-card-batch";
 import { prisma } from "@/lib/db";
+import { validateScanSession } from "@/lib/auth/scan-session";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -38,11 +39,26 @@ export async function getActiveBatchAction(slug: string): Promise<
     cardCount: number;
   }>
 > {
-  const { session, organization } = await requireDashboardAccess(slug);
+  // Authentication: supports Better Auth session or scan session cookie
+  let userId: string;
+  let organizationId: string;
+
+  // Check for scan session first (phone QR code flow)
+  const scanSession = await validateScanSession();
+
+  if (scanSession && scanSession.slug === slug) {
+    userId = scanSession.userId;
+    organizationId = scanSession.organizationId;
+  } else {
+    // Standard dashboard access (logged-in user)
+    const { session, organization } = await requireDashboardAccess(slug);
+    userId = session.user.id;
+    organizationId = organization.id;
+  }
 
   const req = await request();
   const decision = await aj.protect(req, {
-    fingerprint: `${session.user.id}_${organization.id}_get_active_batch`,
+    fingerprint: `${userId}_${organizationId}_get_active_batch`,
   });
 
   if (decision.isDenied()) {
@@ -53,10 +69,7 @@ export async function getActiveBatchAction(slug: string): Promise<
   }
 
   try {
-    const batch = await getOrCreateActiveBatch(
-      session.user.id,
-      organization.id
-    );
+    const batch = await getOrCreateActiveBatch(userId, organizationId);
 
     return {
       status: "success",

@@ -7,6 +7,7 @@ import { request } from "@arcjet/next";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/db";
+import { getScanSessionForApi } from "@/lib/auth/scan-session";
 
 /**
  * Calculate SHA-256 hash of image data for duplicate detection
@@ -32,12 +33,23 @@ const aj = arcjet.withRule(
 
 export async function POST(nextRequest: NextRequest) {
   try {
-    // 1. Authentication check
+    // 1. Authentication check - supports Better Auth session or scan session cookie
+    let userId: string;
+    let organizationId: string | null = null;
+
     const session = await auth.api.getSession({
       headers: await headers(),
     });
 
-    if (!session?.user) {
+    // Check for scan session cookie (phone QR code flow)
+    const scanSession = await getScanSessionForApi();
+
+    if (session?.user) {
+      userId = session.user.id;
+    } else if (scanSession) {
+      userId = scanSession.userId;
+      organizationId = scanSession.organizationId;
+    } else {
       return NextResponse.json(
         { error: "Unauthorized - authentication required" },
         { status: 401 }
@@ -81,31 +93,49 @@ export async function POST(nextRequest: NextRequest) {
     }
 
     // 3. Verify user has access to organization
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        organizationId: true,
-        organization: {
-          select: {
-            id: true,
-            slug: true,
+    // For scan sessions, organizationId is already validated from the token
+    if (scanSession) {
+      // Verify the slug matches the scan session's organization
+      const org = await prisma.organization.findUnique({
+        where: { id: scanSession.organizationId },
+        select: { slug: true },
+      });
+      if (!org || org.slug !== organizationSlug) {
+        return NextResponse.json(
+          { error: "Forbidden - invalid organization access" },
+          { status: 403 }
+        );
+      }
+      organizationId = scanSession.organizationId;
+    } else {
+      // For Better Auth sessions, lookup the user's organization
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          organizationId: true,
+          organization: {
+            select: {
+              id: true,
+              slug: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!user?.organization || user.organization.slug !== organizationSlug) {
-      return NextResponse.json(
-        { error: "Forbidden - invalid organization access" },
-        { status: 403 }
-      );
+      if (!user?.organization || user.organization.slug !== organizationSlug) {
+        return NextResponse.json(
+          { error: "Forbidden - invalid organization access" },
+          { status: 403 }
+        );
+      }
+      organizationId = user.organization.id;
     }
 
     // 4. Rate limiting
     const req = await request();
     const decision = await aj.protect(req, {
-      fingerprint: `${session.user.id}_${user.organization.id}_extract`,
+      fingerprint: `${userId}_${organizationId}_extract`,
     });
 
     if (decision.isDenied()) {
@@ -131,7 +161,7 @@ export async function POST(nextRequest: NextRequest) {
     // 6. Check for duplicate image in database (check front image hash)
     const existingCard = await prisma.connectCard.findFirst({
       where: {
-        organizationId: user.organization.id,
+        organizationId: organizationId!,
         imageHash: frontImageHash,
       },
       select: {
