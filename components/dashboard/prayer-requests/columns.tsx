@@ -18,7 +18,6 @@ import {
   IconChevronDown,
 } from "@tabler/icons-react";
 import type { PrayerRequestListItem } from "@/lib/types/prayer-request";
-import type { PrayerRequestStatus } from "@/lib/generated/prisma";
 
 /**
  * Format time ago in simplified format
@@ -38,38 +37,6 @@ function formatTimeAgo(date: Date): string {
   if (diffDays < 7) return `${diffDays} days`;
   if (diffWeeks < 4) return `> 1 week`;
   return `> 1 month`;
-}
-
-/**
- * Prayer Request Status Badge Component
- *
- * Displays a color-coded badge based on prayer request status
- */
-function StatusBadge({ status }: { status: PrayerRequestStatus }) {
-  const variants: Record<
-    PrayerRequestStatus,
-    "default" | "secondary" | "destructive" | "outline"
-  > = {
-    PENDING: "secondary",
-    ASSIGNED: "default",
-    PRAYING: "default",
-    ANSWERED: "outline",
-    ARCHIVED: "outline",
-  };
-
-  const labels: Record<PrayerRequestStatus, string> = {
-    PENDING: "Pending",
-    ASSIGNED: "Assigned",
-    PRAYING: "Praying",
-    ANSWERED: "Answered",
-    ARCHIVED: "Archived",
-  };
-
-  return (
-    <Badge variant={variants[status]} className="whitespace-nowrap">
-      {labels[status]}
-    </Badge>
-  );
 }
 
 /**
@@ -268,31 +235,6 @@ export const prayerRequestColumns: ColumnDef<PrayerRequestListItem>[] = [
     },
   },
   {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Status
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4" />
-          )}
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      return <StatusBadge status={row.getValue("status")} />;
-    },
-  },
-  {
     accessorKey: "submittedBy",
     header: ({ column }) => {
       return (
@@ -330,36 +272,6 @@ export const prayerRequestColumns: ColumnDef<PrayerRequestListItem>[] = [
       return (
         <div className="text-sm">
           {submittedBy || <span className="text-muted-foreground">—</span>}
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "assignedToName",
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="-ml-3 h-8"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        >
-          Assigned To
-          {column.getIsSorted() === "asc" ? (
-            <IconSortAscending className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <IconSortDescending className="ml-2 h-4 w-4" />
-          ) : (
-            <IconArrowsSort className="ml-2 h-4 w-4" />
-          )}
-        </Button>
-      );
-    },
-    cell: ({ row }) => {
-      const assignedTo = row.getValue("assignedToName") as string | null;
-      return (
-        <div className="text-sm">
-          {assignedTo || <span className="text-muted-foreground">—</span>}
         </div>
       );
     },
