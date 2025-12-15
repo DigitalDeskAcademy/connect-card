@@ -114,6 +114,7 @@
     "@tailwindcss/typography": "^0.5.16",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
+    "@types/qrcode.react": "^3.0.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-dropzone": "^5.1.0",
