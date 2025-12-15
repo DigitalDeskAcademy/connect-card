@@ -6,123 +6,47 @@
 
 ---
 
-## 🔄 Worktree Coordination: Volunteer Export
+## 🔄 Design Decision: Unified Export
 
-**Volunteer data layer lives in `feature/volunteer-management` worktree.** This worktree owns the export UI.
+**Decision:** Export all ChurchMember data through a single unified export flow. No separate tabs for visitors vs volunteers.
 
-### This Worktree Owns
+### Rationale
 
-| Item                                 | Status      |
-| ------------------------------------ | ----------- |
-| Export page UI (`/admin/export`)     | ✅ Complete |
-| Visitors tab (ConnectCard export)    | ✅ Complete |
-| **Volunteers tab (NEW)**             | 📋 Pending  |
-| Volunteer CSV formats (PCO/Breeze)   | 📋 Pending  |
-| `createVolunteerExport()` action     | 📋 Pending  |
-| `getVolunteerExportPreview()` action | 📋 Pending  |
+A volunteer is just a person with additional attributes. ChMS systems (Planning Center, Breeze) import **people**, not separate entity types. Splitting exports creates:
 
-### Volunteer Worktree Provides
+- Duplicate entries (same person exported twice)
+- Sync confusion ("Did I already export Sarah?")
+- Extra clicks (two exports instead of one)
+- Cognitive overhead (staff thinks about data types instead of "sync to ChMS")
 
-| Item                           | Status      |
-| ------------------------------ | ----------- |
-| Volunteer data model           | ✅ Complete |
-| `readyForExport` field         | ✅ Complete |
-| `getExportableVolunteers()` fn | 📋 Pending  |
-| `ExportableVolunteer` type     | 📋 Pending  |
+### Unified Approach
 
-### Merge Order
+The existing export pulls from `ConnectCard` → `ChurchMember`. When a ChurchMember has a linked `Volunteer` profile, we enrich the export with volunteer-specific columns:
 
-1. **Volunteer worktree merges first** → Provides `getExportableVolunteers()` function
-2. **This worktree merges second** → Adds Volunteers tab, calls data function
+| Column             | Source                          | When Included         |
+| ------------------ | ------------------------------- | --------------------- |
+| First Name         | churchMember.name (split)       | Always                |
+| Last Name          | churchMember.name (split)       | Always                |
+| Email              | churchMember.email              | Always                |
+| Phone              | churchMember.phone              | Always                |
+| Campus             | location.name                   | Always                |
+| Volunteer Interest | connectCard.volunteerCategory   | If has volunteer data |
+| Volunteer Status   | volunteer.status                | If has volunteer data |
+| Background Check   | volunteer.backgroundCheckStatus | If has volunteer data |
 
-### Interface Contract (From Volunteer Worktree)
+### What's Complete
 
-```typescript
-// lib/data/volunteers.ts - Volunteer worktree provides this
-export async function getExportableVolunteers(
-  organizationId: string,
-  filters?: {
-    locationId?: string;
-    category?: VolunteerCategoryType;
-    onlyNew?: boolean; // Not yet exported (exportedAt is null)
-  }
-): Promise<ExportableVolunteer[]>;
+| Item                             | Status      |
+| -------------------------------- | ----------- |
+| Export page UI (`/admin/export`) | ✅ Complete |
+| CSV export (PCO/Breeze/Generic)  | ✅ Complete |
+| Field selection                  | ✅ Complete |
+| Export history                   | ✅ Complete |
+| `getExportableVolunteers()` fn   | ✅ Complete |
 
-export type ExportableVolunteer = {
-  id: string;
-  category: string;
-  backgroundCheckStatus: string;
-  readyForExport: boolean;
-  readyForExportDate: Date | null;
-  exportedAt: Date | null;
-  // From churchMember relation
-  name: string;
-  email: string | null;
-  phone: string | null;
-  location: { name: string } | null;
-};
-```
+### Future Enhancement (Optional)
 
----
-
-## 📋 Volunteer Export Tab (To Implement)
-
-### UI Changes
-
-Add "Volunteers" tab to existing export page:
-
-```
-/church/[slug]/admin/export
-├── Tab: Visitors       ← Current (ConnectCards)
-├── Tab: Volunteers     ← NEW
-└── Tab: History        ← Combined history
-```
-
-### Volunteer Export Columns
-
-**Planning Center Format:**
-| Column | Source |
-|--------|--------|
-| First Name | churchMember.firstName |
-| Last Name | churchMember.lastName |
-| Email | churchMember.email |
-| Mobile Phone | churchMember.phone |
-| Campus | location.name |
-| Volunteer Status | "Ready" |
-| Volunteer Team | category |
-| Background Check | backgroundCheckStatus |
-
-**Breeze Format:**
-| Column | Source |
-|--------|--------|
-| Name | churchMember.firstName + lastName |
-| Email Address | churchMember.email |
-| Mobile Phone | churchMember.phone |
-| Status | "Volunteer" |
-| Campus | location.name |
-| Tags | category |
-
-### Files to Create
-
-```
-lib/export/formats/volunteer-planning-center.ts
-lib/export/formats/volunteer-breeze.ts
-lib/export/formats/volunteer-generic.ts
-actions/export/create-volunteer-export.ts
-actions/export/get-volunteer-export-preview.ts
-```
-
-### Sync Status Card Update
-
-Show both visitor and volunteer counts:
-
-```
-┌─────────────────────────┬─────────────────────────┐
-│  VISITORS               │  VOLUNTEERS             │
-│  Ready to Sync: 12      │  Ready to Sync: 5       │
-│  Last synced: 3 days    │  Last synced: 1 week    │
-└─────────────────────────┴─────────────────────────┘
-```
+If needed, add volunteer-specific columns to the existing format definitions. No separate export flow required.
 
 ---
 
@@ -363,18 +287,13 @@ But CSV export remains the universal fallback for churches using any ChMS.
   - DataTable for full-featured tables
   - Consistent height/scroll handling
 
-### 📋 Phase 3 Planned (Volunteer Export)
+### ✅ Phase 3 Complete (Unified Export)
 
-**Depends on:** `feature/volunteer-management` merging first with `getExportableVolunteers()`.
+**Decision:** No separate volunteer export. Volunteer data is included in the unified ChurchMember export when present.
 
-- [ ] Add "Volunteers" tab to export page
-- [ ] Volunteer CSV format for Planning Center
-- [ ] Volunteer CSV format for Breeze
-- [ ] Volunteer CSV format for Generic
-- [ ] `createVolunteerExport()` server action
-- [ ] `getVolunteerExportPreview()` server action
-- [ ] Update sync status card with dual counts (visitors + volunteers)
-- [ ] Combined export history (type indicator for visitor vs volunteer)
+- [x] `getExportableVolunteers()` function available (for future enrichment)
+- [x] Unified export approach documented
+- [x] No separate tabs needed - single export covers all people data
 
 ### 📋 Phase 4 Planned
 
