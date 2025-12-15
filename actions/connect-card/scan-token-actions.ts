@@ -74,9 +74,9 @@ export async function createScanTokenAction(slug: string): Promise<
       },
     });
 
-    // Build scan URL
+    // Build scan URL (public route, not under /admin)
     const baseUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-    const scanUrl = `${baseUrl}/church/${slug}/admin/connect-cards/scan?token=${token}`;
+    const scanUrl = `${baseUrl}/church/${slug}/scan?token=${token}`;
 
     return {
       status: "success",

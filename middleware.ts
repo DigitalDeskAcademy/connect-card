@@ -71,15 +71,10 @@ export default createMiddleware(aj, async (request: NextRequest) => {
   // Apply auth middleware to protected routes
   // - /platform/* - Platform admin routes
   // - /church/*/admin/* - Church admin dashboard routes
-  // EXCEPTION: Scan route with token allows phone QR code access without session
-  const isScanRouteWithToken =
-    /^\/church\/[^\/]+\/admin\/connect-cards\/scan/.test(pathname) &&
-    request.nextUrl.searchParams.has("token");
-
+  // NOTE: /church/*/scan is PUBLIC (token-based auth handled by page)
   if (
-    !isScanRouteWithToken &&
-    (pathname.startsWith("/platform/") ||
-      /^\/church\/[^\/]+\/admin/.test(pathname))
+    pathname.startsWith("/platform/") ||
+    /^\/church\/[^\/]+\/admin/.test(pathname)
   ) {
     return authMiddleware(request);
   }
