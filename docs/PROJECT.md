@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-12
+**Last Updated:** 2025-12-14
 
 ---
 
@@ -280,6 +280,22 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 14, 2025
+
+- ✅ **QR Code Scan Flow** (PR #73)
+  - Public `/connect/[token]` route for digital connect cards
+  - Token-based authentication for card submission
+  - Digital connect card form with all standard fields
+  - Auto-processing into batches like scanned cards
+- ✅ **GHL Integration Phase 1** (PR #72)
+  - Complete service layer (`lib/ghl/`) for GoHighLevel API
+  - Contact sync to GHL on volunteer activation
+  - Welcome SMS on onboarding checkbox
+  - Demo goal achieved: checkbox → SMS + email sent
+- ✅ **Dashboard UX Improvements** (PR #71)
+  - Review Batches action in quick actions grid
+  - Badge component polish
 
 ### Week of Dec 10, 2025
 
