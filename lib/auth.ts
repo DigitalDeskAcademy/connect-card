@@ -26,8 +26,13 @@ import { anonymous } from "better-auth/plugins";
  * This approach is the industry standard used by Vercel, Supabase, Clerk, etc.
  */
 function getBaseUrl(): string {
-  // For Vercel deployments (preview & production), use automatic VERCEL_URL
-  // This is secure because VERCEL_URL is provided by Vercel's infrastructure, not user input
+  // For Vercel PRODUCTION, use the known production URL
+  // VERCEL_URL gives deployment-specific URLs which break OAuth callbacks
+  if (process.env.VERCEL_ENV === "production") {
+    return "https://connect-card-two.vercel.app";
+  }
+
+  // For Vercel PREVIEW deployments, use the dynamic URL
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
