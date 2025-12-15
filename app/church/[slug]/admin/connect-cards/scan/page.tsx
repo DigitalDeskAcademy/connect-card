@@ -24,7 +24,6 @@ import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { ScanWizardClient } from "./scan-wizard-client";
 import { TokenExpiredError } from "./_components/token-expired-error";
-import { createScanSession } from "@/lib/auth/scan-session";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -89,9 +88,8 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
 
     userId = scanToken.userId;
     organizationId = scanToken.organizationId;
-
-    // Create scan session cookie for subsequent API calls
-    await createScanSession(userId, organizationId, slug);
+    // Note: Scan session cookie is created by ScanWizardClient via API call
+    // (Server Components cannot modify cookies in Next.js 15)
   } else {
     // Session-based authentication (direct access when logged in)
     const { session, organization, member } =
@@ -133,6 +131,7 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
         slug={slug}
         locations={locations}
         defaultLocationId={defaultLocationId}
+        scanToken={token}
       />
     </PageContainer>
   );
