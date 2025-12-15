@@ -7,9 +7,8 @@ import { Button } from "@/components/ui/button";
 import {
   AlertTriangle,
   Lock,
-  MapPin,
   Check,
-  Sparkles,
+  CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,7 +36,7 @@ interface PrayerCardProps {
 /**
  * Prayer Card Component
  *
- * A clean, devotional-focused card for displaying individual prayer requests.
+ * A compact, devotional-focused card for displaying individual prayer requests.
  * Designed for readability during prayer sessions, both digital and print.
  */
 export function PrayerCard({
@@ -59,95 +58,83 @@ export function PrayerCard({
     }
   };
 
+  // Get display name - always hide for private prayers
+  const displayName = prayer.isPrivate ? null : prayer.submittedBy;
+
   return (
     <Card
       className={cn(
-        "transition-all print:shadow-none print:border print:break-inside-avoid",
-        isAnswered && "opacity-60 bg-muted/30",
-        isCritical &&
-          !isAnswered &&
-          "border-red-200 bg-red-50/50 dark:bg-red-950/20",
-        prayer.isPrivate &&
-          !isAnswered &&
-          "border-slate-300 bg-slate-50/50 dark:bg-slate-950/20"
+        "py-2 gap-0 transition-all print:shadow-none print:border print:break-inside-avoid",
+        isAnswered && "opacity-50",
+        isCritical && !isAnswered && "border-red-500/30"
       )}
     >
-      <CardContent className="pt-4 pb-4">
-        {/* Header: Name, Location, Badges */}
-        <div className="flex items-start justify-between gap-2 mb-3">
-          <div className="flex-1 min-w-0">
-            {/* Submitter name */}
-            <div className="font-semibold text-base">
-              {prayer.isPrivate && !prayer.submittedBy ? (
-                <span className="text-muted-foreground italic flex items-center gap-1.5">
-                  <Lock className="h-3.5 w-3.5" />
+      <CardContent className="px-4">
+        {/* Header: Name, Date, and Badges */}
+        <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Submitter name or Anonymous */}
+            <span className="font-medium text-sm truncate">
+              {displayName || (
+                <span className="text-muted-foreground italic flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
                   Anonymous
                 </span>
-              ) : (
-                prayer.submittedBy || (
-                  <span className="text-muted-foreground">Unknown</span>
-                )
               )}
-            </div>
-
-            {/* Location and date */}
-            <div className="flex items-center gap-3 text-sm text-muted-foreground mt-0.5">
-              {prayer.locationName && (
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {prayer.locationName}
-                </span>
-              )}
-              <span>{format(new Date(prayer.createdAt), "MMM d, yyyy")}</span>
-            </div>
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {format(new Date(prayer.createdAt), "MMM d")}
+            </span>
           </div>
 
-          {/* Status badges */}
-          <div className="flex items-center gap-1.5 flex-shrink-0 print:hidden">
+          {/* Badges - minimal and subtle */}
+          <div className="flex items-center gap-1 flex-shrink-0 flex-wrap justify-end print:hidden">
             {isCritical && (
               <Badge
                 variant="destructive"
-                className="gap-1 text-xs font-medium"
+                className="gap-0.5 text-[10px] px-1.5 py-0 h-5 font-medium"
               >
-                <AlertTriangle className="h-3 w-3" />
+                <AlertTriangle className="h-2.5 w-2.5" />
                 Critical
-              </Badge>
-            )}
-            {prayer.isPrivate && (
-              <Badge variant="secondary" className="gap-1 text-xs font-medium">
-                <Lock className="h-3 w-3" />
-                Private
               </Badge>
             )}
             {prayer.isUrgent && !isCritical && (
               <Badge
                 variant="outline"
-                className="gap-1 text-xs font-medium border-orange-300 text-orange-700 bg-orange-50"
+                className="text-[10px] px-1.5 py-0 h-5 font-medium text-amber-600 border-amber-600/30"
               >
-                <AlertTriangle className="h-3 w-3" />
                 Urgent
+              </Badge>
+            )}
+            {/* Category badge - subtle outline */}
+            {prayer.category && !isCritical && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 h-5 font-normal text-muted-foreground"
+              >
+                {prayer.category === "Other" ? "General" : prayer.category}
               </Badge>
             )}
             {isAnswered && (
               <Badge
                 variant="outline"
-                className="gap-1 text-xs font-medium border-green-300 text-green-700 bg-green-50"
+                className="gap-0.5 text-[10px] px-1.5 py-0 h-5 font-medium text-green-600 border-green-600/30"
               >
-                <Sparkles className="h-3 w-3" />
+                <Check className="h-2.5 w-2.5" />
                 Answered
               </Badge>
             )}
           </div>
 
           {/* Print-only badges */}
-          <div className="hidden print:flex items-center gap-1.5 flex-shrink-0">
+          <div className="hidden print:flex items-center gap-1 flex-shrink-0">
             {isCritical && (
-              <span className="text-xs font-bold text-red-600 border border-red-300 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-bold text-red-600 border border-red-300 px-1 py-0 rounded">
                 CRITICAL
               </span>
             )}
             {prayer.isPrivate && (
-              <span className="text-xs font-bold text-slate-600 border border-slate-300 px-1.5 py-0.5 rounded">
+              <span className="text-[10px] font-bold text-slate-600 border border-slate-300 px-1 py-0 rounded">
                 PRIVATE
               </span>
             )}
@@ -157,40 +144,31 @@ export function PrayerCard({
         {/* Prayer request text */}
         <div
           className={cn(
-            "text-base leading-relaxed",
+            "text-sm leading-relaxed",
             isAnswered && "line-through decoration-green-500"
           )}
         >
           {prayer.request}
         </div>
 
-        {/* Category tag */}
-        {prayer.category && (
-          <div className="mt-3">
-            <Badge variant="outline" className="text-xs">
-              {prayer.category}
-            </Badge>
-          </div>
-        )}
-
-        {/* Actions */}
+        {/* Actions - CTA button right-aligned */}
         {showActions && !isAnswered && (
-          <div className="mt-4 flex gap-2 print:hidden">
+          <div className="mt-2 flex justify-end print:hidden">
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               onClick={handleMarkAnswered}
               disabled={isLoading}
-              className="gap-1.5"
+              className="gap-1.5 h-7 px-3 text-xs"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3 w-3 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <CheckCircle2 className="h-3 w-3" />
                   Mark Answered
                 </>
               )}
@@ -198,11 +176,11 @@ export function PrayerCard({
           </div>
         )}
 
-        {/* Answered indicator */}
+        {/* Answered indicator - more compact */}
         {isAnswered && (
-          <div className="mt-4 flex items-center gap-2 text-green-600 print:hidden">
-            <Check className="h-4 w-4" />
-            <span className="text-sm font-medium">Prayer Answered</span>
+          <div className="mt-2 flex items-center gap-1.5 text-green-600 print:hidden">
+            <Check className="h-3.5 w-3.5" />
+            <span className="text-xs font-medium">Answered</span>
           </div>
         )}
       </CardContent>

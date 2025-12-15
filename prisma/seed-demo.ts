@@ -740,77 +740,277 @@ async function main() {
   console.log("🙏 Creating prayer requests...");
 
   const prayerRequests = [
-    // PENDING (4 requests)
+    // PENDING - Health category (with critical keywords)
     {
-      submittedBy: "John Smith",
-      request: "Pray for wisdom in a major life decision",
-      isPrivate: false,
-      category: "GUIDANCE",
-      status: "PENDING" as const,
-    },
-    {
-      submittedBy: "Sarah Johnson",
-      request: "My father was diagnosed with cancer, need healing prayers",
-      isPrivate: true,
-      category: "HEALING",
-      status: "PENDING" as const,
-    },
-    {
-      submittedBy: "Michael Chen",
+      submittedBy: "Kevin White",
       request:
-        "Lost my job last week, praying for provision and new opportunity",
+        "My mother has been diagnosed with terminal cancer. She's in hospice now. Please pray for peace and comfort for our family.",
       isPrivate: false,
-      category: "PROVISION",
+      isUrgent: true,
+      category: "Health",
       status: "PENDING" as const,
+      location: bainbridgeLocation,
     },
     {
-      submittedBy: "Emily Rodriguez",
-      request: "Struggling with anxiety and depression, need peace",
-      isPrivate: true,
-      category: "MENTAL_HEALTH",
+      submittedBy: "Patricia Moore",
+      request: "Recovering from knee surgery, praying for quick healing",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Health",
       status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    {
+      submittedBy: null,
+      request:
+        "Struggling with chronic pain, need strength to get through each day",
+      isPrivate: true,
+      isUrgent: false,
+      category: "Health",
+      status: "PENDING" as const,
+      location: bremertonLocation,
+    },
+    {
+      submittedBy: "Margaret Robinson",
+      request:
+        "My brother was in a serious car accident and is in the ICU. Doctors say it's critical condition.",
+      isPrivate: false,
+      isUrgent: true,
+      category: "Health",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    {
+      submittedBy: "Helen White",
+      request:
+        "Emergency surgery scheduled for tomorrow morning. Stage 4 cancer diagnosis.",
+      isPrivate: false,
+      isUrgent: true,
+      category: "Health",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    // PENDING - Family category
+    {
+      submittedBy: "James Wilson",
+      request:
+        "My son is going through a divorce. Pray for his kids and everyone involved.",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Family",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    {
+      submittedBy: "Maria Garcia",
+      request:
+        "We're expecting our first grandchild! Pray for healthy delivery next month.",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Family",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    {
+      submittedBy: null,
+      request: "Dealing with family conflict, please pray for reconciliation",
+      isPrivate: true,
+      isUrgent: true,
+      category: "Family",
+      status: "PENDING" as const,
+      location: bremertonLocation,
+    },
+    {
+      submittedBy: "William Jackson",
+      request:
+        "My wife passed away last week. We were married for 42 years. Need strength to go on.",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Family",
+      status: "PENDING" as const,
+      location: bremertonLocation,
+    },
+    // PENDING - Salvation category
+    {
+      submittedBy: "Susan Clark",
+      request:
+        "Please pray for my husband Mark to come to know Jesus. We've been married 20 years and he's still not interested.",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Salvation",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    {
+      submittedBy: "Thomas Brown",
+      request:
+        "My adult children have walked away from the faith. Praying they return.",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Salvation",
+      status: "PENDING" as const,
+      location: bremertonLocation,
+    },
+    // PENDING - Financial category
+    {
+      submittedBy: "Richard Davis",
+      request:
+        "Lost my job last week and have a family to support. Need wisdom and provision.",
+      isPrivate: false,
+      isUrgent: true,
+      category: "Financial",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    {
+      submittedBy: null,
+      request: "Facing possible foreclosure on our home, need a miracle",
+      isPrivate: true,
+      isUrgent: true,
+      category: "Financial",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    // PENDING - Work/Career category
+    {
+      submittedBy: "Nancy Johnson",
+      request: "Starting a new job next week, pray for favor with my new team",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Work/Career",
+      status: "PENDING" as const,
+      location: bremertonLocation,
+    },
+    {
+      submittedBy: "Steven Miller",
+      request:
+        "Toxic work environment is affecting my mental health. Need wisdom on whether to stay or go.",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Work/Career",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    // PENDING - Relationships category
+    {
+      submittedBy: "Karen Williams",
+      request:
+        "My best friend betrayed my trust. Praying for healing and forgiveness.",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Relationships",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    {
+      submittedBy: null,
+      request:
+        "Struggling with loneliness, pray I find genuine Christian community",
+      isPrivate: true,
+      isUrgent: false,
+      category: "Relationships",
+      status: "PENDING" as const,
+      location: bremertonLocation,
+    },
+    // PENDING - Spiritual Growth category
+    {
+      submittedBy: "Dorothy Taylor",
+      request: "Want to grow deeper in my prayer life, feel spiritually dry",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Spiritual Growth",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    {
+      submittedBy: "Charles Anderson",
+      request: "God has called me to ministry but I don't know where to start",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Spiritual Growth",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    // PENDING - Other/General category
+    {
+      submittedBy: "Betty Thompson",
+      request: "Safe travels for our mission trip to Guatemala next week",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Other",
+      status: "PENDING" as const,
+      location: bremertonLocation,
+    },
+    {
+      submittedBy: "George Martinez",
+      request: "Praise report - finally got my green card after 5 years!",
+      isPrivate: false,
+      isUrgent: false,
+      category: "Other",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
+    },
+    // PENDING - Critical (Private)
+    {
+      submittedBy: null,
+      request: "Struggling with suicidal thoughts, please pray urgently",
+      isPrivate: true,
+      isUrgent: true,
+      category: "Health",
+      status: "PENDING" as const,
+      location: bainbridgeLocation,
     },
 
-    // PRAYING (5 requests)
+    // PRAYING (5 requests - assigned to team)
     {
       submittedBy: "David Martinez",
       request: "Marriage going through difficult season, pray for restoration",
       isPrivate: true,
-      category: "FAMILY",
+      isUrgent: false,
+      category: "Family",
       status: "PRAYING" as const,
       assignedTo: churchAdmin,
+      location: bainbridgeLocation,
     },
     {
       submittedBy: "Lisa Anderson",
       request: "Upcoming surgery next week, pray for successful outcome",
       isPrivate: true,
-      category: "HEALING",
+      isUrgent: true,
+      category: "Health",
       status: "PRAYING" as const,
       assignedTo: churchAdmin,
+      location: bainbridgeLocation,
     },
     {
       submittedBy: "Robert Taylor",
       request: "Son away at college making poor choices, pray for wisdom",
       isPrivate: true,
-      category: "FAMILY",
+      isUrgent: false,
+      category: "Family",
       status: "PRAYING" as const,
       assignedTo: churchStaff,
+      location: bremertonLocation,
     },
     {
       submittedBy: "Jennifer Lee",
       request: "New job opportunity, pray for God's direction",
       isPrivate: false,
-      category: "GUIDANCE",
+      isUrgent: false,
+      category: "Work/Career",
       status: "PRAYING" as const,
       assignedTo: churchStaff,
+      location: bainbridgeLocation,
     },
     {
       submittedBy: "Christopher Wilson",
       request: "Struggling with addiction, need freedom and accountability",
       isPrivate: true,
-      category: "MENTAL_HEALTH",
+      isUrgent: true,
+      category: "Health",
       status: "PRAYING" as const,
       assignedTo: churchAdmin,
+      location: bainbridgeLocation,
     },
 
     // ANSWERED (3 requests)
@@ -818,31 +1018,52 @@ async function main() {
       submittedBy: "Amanda Brown",
       request: "Needed provision for medical bills - God provided!",
       isPrivate: false,
-      category: "PROVISION",
+      isUrgent: false,
+      category: "Financial",
       status: "ANSWERED" as const,
       assignedTo: churchAdmin,
+      location: bainbridgeLocation,
     },
     {
       submittedBy: "Daniel Garcia",
       request: "Daughter's health improving after prayer - thank you!",
       isPrivate: true,
-      category: "HEALING",
+      isUrgent: false,
+      category: "Health",
       status: "ANSWERED" as const,
       assignedTo: churchStaff,
+      location: bremertonLocation,
     },
     {
       submittedBy: "Michelle Thompson",
       request: "Found new job, God's timing was perfect",
       isPrivate: false,
-      category: "PROVISION",
+      isUrgent: false,
+      category: "Work/Career",
       status: "ANSWERED" as const,
       assignedTo: churchAdmin,
+      location: bainbridgeLocation,
     },
   ];
 
-  for (const prayer of prayerRequests) {
+  const pendingCount = prayerRequests.filter(
+    p => p.status === "PENDING"
+  ).length;
+  const prayingCount = prayerRequests.filter(
+    p => p.status === "PRAYING"
+  ).length;
+  const answeredCount = prayerRequests.filter(
+    p => p.status === "ANSWERED"
+  ).length;
+
+  for (let i = 0; i < prayerRequests.length; i++) {
+    const prayer = prayerRequests[i];
     const createdAt = new Date(lastSunday);
-    if (prayer.status === "ANSWERED") {
+    // Spread pending prayers across recent days
+    if (prayer.status === "PENDING") {
+      createdAt.setDate(lastSunday.getDate() - Math.floor(i / 4)); // Spread across days
+      createdAt.setHours(9 + (i % 8)); // Spread across hours
+    } else if (prayer.status === "ANSWERED") {
       createdAt.setDate(lastSunday.getDate() - 14); // 2 weeks ago
     } else if (prayer.status === "PRAYING") {
       createdAt.setDate(lastSunday.getDate() - 7); // 1 week ago
@@ -851,10 +1072,11 @@ async function main() {
     await prisma.prayerRequest.create({
       data: {
         organizationId: newlifeOrg.id,
-        locationId: bainbridgeLocation.id,
+        locationId: prayer.location.id,
         submittedBy: prayer.submittedBy,
         request: prayer.request,
         isPrivate: prayer.isPrivate,
+        isUrgent: prayer.isUrgent ?? false,
         category: prayer.category,
         status: prayer.status,
         assignedToId: prayer.assignedTo?.id || null,
@@ -863,10 +1085,12 @@ async function main() {
     });
   }
 
-  console.log(`   ✅ 12 prayer requests created`);
-  console.log(`      - 4 pending (unassigned)`);
-  console.log(`      - 5 praying (assigned)`);
-  console.log(`      - 3 answered (completed)\n`);
+  console.log(`   ✅ ${prayerRequests.length} prayer requests created`);
+  console.log(
+    `      - ${pendingCount} pending (unassigned) - ready for batch assignment`
+  );
+  console.log(`      - ${prayingCount} praying (assigned)`);
+  console.log(`      - ${answeredCount} answered (completed)\n`);
 
   // ========================================
   // FINAL SUMMARY
@@ -891,7 +1115,9 @@ async function main() {
   console.log("      - Bainbridge: ~620 cards (larger campus)");
   console.log("      - Bremerton: ~330 cards (smaller campus)");
   console.log("   👔 Volunteer Pipeline: 2 volunteers in onboarding");
-  console.log("   🙏 Prayer Requests: 12 (4 pending, 5 praying, 3 answered)\n");
+  console.log(
+    `   🙏 Prayer Requests: ${prayerRequests.length} (${pendingCount} pending, ${prayingCount} praying, ${answeredCount} answered)\n`
+  );
 
   console.log("🔐 Test Credentials (Email OTP):");
   console.log("   platform@test.com       (platform_admin)");

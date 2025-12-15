@@ -39,15 +39,19 @@ interface PrayerBatchesClientProps {
 function getStatusBadge(status: string) {
   switch (status) {
     case "PENDING":
-      return <Badge variant="secondary">Pending Assignment</Badge>;
-    case "IN_REVIEW":
-      return <Badge variant="default">Assigned</Badge>;
-    case "COMPLETED":
       return (
         <Badge
           variant="outline"
-          className="bg-green-50 text-green-700 border-green-200"
+          className="text-amber-600 border-amber-500 bg-amber-500/10"
         >
+          Needs Assignment
+        </Badge>
+      );
+    case "IN_REVIEW":
+      return <Badge variant="secondary">In Progress</Badge>;
+    case "COMPLETED":
+      return (
+        <Badge variant="outline" className="text-green-600 border-green-500/30">
           Completed
         </Badge>
       );
@@ -62,11 +66,17 @@ export function PrayerBatchesClient({
   batches,
   slug,
 }: PrayerBatchesClientProps) {
-  const [filter, setFilter] = useState<string>("all");
+  // Default to "active" to hide completed batches (per user request)
+  const [filter, setFilter] = useState<string>("active");
+
+  // Filter out empty batches first (no prayers)
+  const nonEmptyBatches = batches.filter(b => b._count.prayerRequests > 0);
 
   // Filter batches by status
-  const filteredBatches = batches.filter(batch => {
+  const filteredBatches = nonEmptyBatches.filter(batch => {
     if (filter === "all") return true;
+    if (filter === "active")
+      return batch.status !== "COMPLETED" && batch.status !== "ARCHIVED";
     if (filter === "pending") return batch.status === "PENDING";
     if (filter === "assigned")
       return batch.status === "IN_REVIEW" || batch.assignedTo !== null;
@@ -74,29 +84,36 @@ export function PrayerBatchesClient({
     return true;
   });
 
-  const pendingCount = batches.filter(b => b.status === "PENDING").length;
-  const assignedCount = batches.filter(
+  const activeCount = nonEmptyBatches.filter(
+    b => b.status !== "COMPLETED" && b.status !== "ARCHIVED"
+  ).length;
+  const pendingCount = nonEmptyBatches.filter(
+    b => b.status === "PENDING"
+  ).length;
+  const assignedCount = nonEmptyBatches.filter(
     b => b.status === "IN_REVIEW" || b.assignedTo !== null
   ).length;
-  const completedCount = batches.filter(b => b.status === "COMPLETED").length;
+  const completedCount = nonEmptyBatches.filter(
+    b => b.status === "COMPLETED"
+  ).length;
 
   return (
     <div className="space-y-4">
       {/* Filter buttons */}
       <div className="flex flex-wrap gap-2">
         <Button
-          variant={filter === "all" ? "default" : "outline"}
+          variant={filter === "active" ? "default" : "outline"}
           size="sm"
-          onClick={() => setFilter("all")}
+          onClick={() => setFilter("active")}
         >
-          All ({batches.length})
+          Active ({activeCount})
         </Button>
         <Button
           variant={filter === "pending" ? "default" : "outline"}
           size="sm"
           onClick={() => setFilter("pending")}
         >
-          Pending ({pendingCount})
+          Needs Assignment ({pendingCount})
         </Button>
         <Button
           variant={filter === "assigned" ? "default" : "outline"}
@@ -111,6 +128,13 @@ export function PrayerBatchesClient({
           onClick={() => setFilter("completed")}
         >
           Completed ({completedCount})
+        </Button>
+        <Button
+          variant={filter === "all" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter("all")}
+        >
+          All ({nonEmptyBatches.length})
         </Button>
       </div>
 
