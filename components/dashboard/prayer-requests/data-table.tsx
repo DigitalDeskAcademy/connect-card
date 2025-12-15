@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
 import {
   ColumnDef,
   ColumnFiltersState,
+  RowSelectionState,
   SortingState,
   flexRender,
   getCoreRowModel,
@@ -49,9 +50,14 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { IconSearch, IconPray } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import { IconSearch, IconPray, IconX } from "@tabler/icons-react";
+import { Loader2, UserPlus, CheckSquare } from "lucide-react";
 import { CreatePrayerRequestDialog } from "./create-prayer-request-dialog";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { createBatchAndAssign } from "@/actions/prayer-requests/create-batch-and-assign";
+import type { PrayerRequestListItem } from "@/lib/types/prayer-request";
 
 interface Location {
   id: string;
@@ -60,7 +66,7 @@ interface Location {
 
 interface TeamMember {
   id: string;
-  name: string;
+  name: string | null;
   email: string;
 }
 
@@ -77,14 +83,13 @@ interface DataTableProps<TData, TValue> {
 /**
  * Prayer Request Data Table Component
  *
- * Simple table for viewing prayer requests.
- * Used in prayer batch detail pages.
+ * Inbox view for unassigned prayer requests with bulk assignment.
  *
  * Features:
- * - Sorting (click column headers)
+ * - Row selection with checkboxes
+ * - Bulk assignment: Select prayers → Pick team member → Create batch & assign
  * - Search by request text
- * - Status filtering
- * - Pagination (10 items per page)
+ * - Pagination
  * - Empty state
  *
  * Built with TanStack Table v8 and shadcn/ui components
@@ -96,13 +101,16 @@ export function PrayerRequestDataTable<TData, TValue>({
   pageSize = 10,
   slug,
   locations,
+  teamMembers,
 }: DataTableProps<TData, TValue>) {
   const router = useRouter();
   const [sorting, setSorting] = useState<SortingState>([
     { id: "createdAt", desc: true }, // Newest first by default
   ]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [statusFilter, setStatusFilter] = useState<string>("ALL");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [isPending, startTransition] = useTransition();
 
   // Handle successful prayer request creation
   const handlePrayerRequestCreated = () => {
@@ -118,9 +126,11 @@ export function PrayerRequestDataTable<TData, TValue>({
     getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
     initialState: {
       pagination: {
@@ -134,14 +144,61 @@ export function PrayerRequestDataTable<TData, TValue>({
     table.getColumn("request")?.setFilterValue(value);
   };
 
-  // Handle status filter change
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    if (value === "ALL") {
-      table.getColumn("status")?.setFilterValue(undefined);
-    } else {
-      table.getColumn("status")?.setFilterValue(value);
+  // Calculate selection count
+  const selectedCount = Object.keys(rowSelection).filter(
+    key => rowSelection[key]
+  ).length;
+
+  // Get selected prayer request IDs
+  const getSelectedIds = (): string[] => {
+    return Object.entries(rowSelection)
+      .filter(([, selected]) => selected)
+      .map(([index]) => {
+        const row = table.getRowModel().rows[parseInt(index)];
+        return (row?.original as PrayerRequestListItem)?.id;
+      })
+      .filter(Boolean) as string[];
+  };
+
+  // Handle "Select All" on current page
+  const handleSelectAll = () => {
+    table.toggleAllPageRowsSelected(true);
+  };
+
+  // Clear selection
+  const handleClearSelection = () => {
+    setRowSelection({});
+    setSelectedUserId("");
+  };
+
+  // Handle create batch and assign
+  const handleCreateBatchAndAssign = () => {
+    if (!selectedUserId) {
+      toast.error("Please select a team member");
+      return;
     }
+
+    const selectedIds = getSelectedIds();
+    if (selectedIds.length === 0) {
+      toast.error("Please select at least one prayer request");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await createBatchAndAssign(slug, {
+        prayerRequestIds: selectedIds,
+        assignedToId: selectedUserId,
+      });
+
+      if (result.status === "success") {
+        toast.success(result.message);
+        router.refresh();
+        setRowSelection({});
+        setSelectedUserId("");
+      } else {
+        toast.error(result.message);
+      }
+    });
   };
 
   // Calculate pagination details
@@ -166,9 +223,88 @@ export function PrayerRequestDataTable<TData, TValue>({
           />
         </div>
 
-        {/* Action Bar */}
+        {/* Bulk Action Bar - Only show when items selected OR has data */}
+        {data.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3 p-3 bg-muted/50 rounded-lg border">
+            {selectedCount > 0 ? (
+              <>
+                {/* Selection Count */}
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <CheckSquare className="h-4 w-4 text-primary" />
+                  <span>{selectedCount} selected</span>
+                </div>
+
+                <div className="h-4 w-px bg-border" />
+
+                {/* Team Member Dropdown */}
+                <Select
+                  value={selectedUserId}
+                  onValueChange={setSelectedUserId}
+                >
+                  <SelectTrigger className="w-[200px]">
+                    <SelectValue placeholder="Assign to..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {teamMembers.map(member => (
+                      <SelectItem key={member.id} value={member.id}>
+                        {member.name || member.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {/* Create Batch & Assign Button */}
+                <Button
+                  onClick={handleCreateBatchAndAssign}
+                  disabled={isPending || !selectedUserId}
+                  size="sm"
+                >
+                  {isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Assigning...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Create Batch & Assign
+                    </>
+                  )}
+                </Button>
+
+                {/* Clear Selection */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleClearSelection}
+                  className="ml-auto"
+                >
+                  <IconX className="h-4 w-4 mr-1" />
+                  Clear
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Default state - Select All prompt */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSelectAll}
+                  className="gap-2"
+                >
+                  <CheckSquare className="h-4 w-4" />
+                  Select All on Page
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Select prayers to create a batch and assign to a team member
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Search Bar */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Search Input */}
           <InputGroup className="flex-1 min-w-[200px]">
             <InputGroupAddon>
               <IconSearch className="h-4 w-4" />
@@ -181,21 +317,6 @@ export function PrayerRequestDataTable<TData, TValue>({
               onChange={e => handleSearchChange(e.target.value)}
             />
           </InputGroup>
-
-          {/* Status Filter */}
-          <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
-            <SelectTrigger className="w-full sm:w-[150px] flex-shrink-0">
-              <SelectValue placeholder="Filter by status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="ALL">All Status</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="ASSIGNED">Assigned</SelectItem>
-              <SelectItem value="PRAYING">Praying</SelectItem>
-              <SelectItem value="ANSWERED">Answered</SelectItem>
-              <SelectItem value="ARCHIVED">Archived</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </CardHeader>
 
@@ -231,7 +352,10 @@ export function PrayerRequestDataTable<TData, TValue>({
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map(row => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                  >
                     {row.getVisibleCells().map(cell => (
                       <TableCell
                         key={cell.id}
@@ -258,10 +382,10 @@ export function PrayerRequestDataTable<TData, TValue>({
                         <EmptyMedia variant="icon">
                           <IconPray className="h-6 w-6" />
                         </EmptyMedia>
-                        <EmptyTitle>No prayer requests found</EmptyTitle>
+                        <EmptyTitle>No unassigned prayers</EmptyTitle>
                         <EmptyDescription>
-                          Prayer requests will appear here as they come in from
-                          connect cards.
+                          All prayer requests have been assigned. New prayers
+                          will appear here when connect cards are processed.
                         </EmptyDescription>
                       </EmptyHeader>
                     </Empty>

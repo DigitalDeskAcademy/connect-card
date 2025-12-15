@@ -519,9 +519,21 @@ export function ScanWizardClient({
   const _failedCards = queue.filter(q => q.status === "failed");
   void _failedCards;
 
-  // Finish batch and go to review
+  // Track if user finished scanning (for phone users)
+  const [showComplete, setShowComplete] = useState(false);
+
+  // Finish batch and go to review (or show done screen for phone users)
   const handleFinishBatch = () => {
     clearSession();
+
+    // Phone users (token-based auth) can't access admin pages
+    // Show a completion screen instead
+    if (scanToken) {
+      setShowComplete(true);
+      return;
+    }
+
+    // Logged-in users go to review page
     if (activeBatch) {
       router.push(
         `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
@@ -534,331 +546,362 @@ export function ScanWizardClient({
   // Render based on current step
   return (
     <div className="flex flex-col min-h-[calc(100vh-12rem)]">
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col">
-        {/* SETUP STEP */}
-        {step === "setup" && (
-          <div className="flex-1 flex flex-col">
-            {/* Back button - full width, top left */}
-            <div className="p-4">
-              <Button variant="outline" size="sm" asChild>
-                <Link href={`/church/${slug}/admin/connect-cards`}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Link>
-              </Button>
-            </div>
-
-            {/* Centered content */}
-            <div className="flex-1 flex flex-col justify-center space-y-6 px-6 pb-6 max-w-md mx-auto w-full">
-              <div className="text-center mb-4">
-                <Camera className="h-12 w-12 mx-auto mb-4 text-primary" />
-                <h2 className="text-xl font-semibold mb-2">
-                  Ready to Scan Cards
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Configure your scanning session
-                </p>
-              </div>
-
-              {/* Card Type Selection */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium">Card Type</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button
-                    variant={cardType === "single" ? "default" : "outline"}
-                    className="h-20 flex-col gap-2"
-                    onClick={() => setCardType("single")}
-                  >
-                    <Square className="h-6 w-6" />
-                    <span className="text-xs">1-Sided</span>
-                  </Button>
-                  <Button
-                    variant={cardType === "double" ? "default" : "outline"}
-                    className="h-20 flex-col gap-2"
-                    onClick={() => setCardType("double")}
-                  >
-                    <Layers className="h-6 w-6" />
-                    <span className="text-xs">2-Sided</span>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Location Selection */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium flex items-center gap-2">
-                  <MapPin className="h-4 w-4" />
-                  Location
-                </label>
-                <Select value={locationId} onValueChange={setLocationId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map(loc => (
-                      <SelectItem key={loc.id} value={loc.id}>
-                        {loc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Start Button */}
-              <Button
-                size="lg"
-                className="w-full mt-6"
-                onClick={() => setStep("capture-front")}
-              >
-                <Camera className="mr-2 h-5 w-5" />
-                Start Scanning
-              </Button>
-
-              {/* Resume indicator */}
-              {cardsScanned > 0 && activeBatch && (
-                <Alert>
-                  <AlertDescription className="text-sm">
-                    Resuming session: {cardsScanned} cards in &quot;
-                    {activeBatch.name}&quot;
-                  </AlertDescription>
-                </Alert>
-              )}
-            </div>
+      {/* COMPLETION SCREEN (phone users only) */}
+      {showComplete && (
+        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-green-100 dark:bg-green-900/30 rounded-full p-6 mb-6">
+            <Check className="h-16 w-16 text-green-600 dark:text-green-400" />
           </div>
-        )}
+          <h2 className="text-2xl font-bold mb-2">All Done!</h2>
+          <p className="text-muted-foreground mb-2">
+            {queueStats.complete} card{queueStats.complete !== 1 ? "s" : ""}{" "}
+            uploaded successfully
+          </p>
+          <p className="text-sm text-muted-foreground mb-6">
+            Cards will be reviewed on the admin dashboard.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            You can close this page now.
+          </p>
+        </div>
+      )}
 
-        {/* CAPTURE STEPS (front and back) */}
-        {(step === "capture-front" || step === "capture-back") && (
-          <div className="flex-1 flex flex-col">
-            {/* Camera not supported error */}
-            {!cameraState.isSupported && (
-              <div className="flex-1 flex items-center justify-center p-6">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Camera is not supported on this device or browser.
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )}
-
-            {/* Camera error */}
-            {cameraState.error && (
-              <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 max-w-md mx-auto">
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{cameraState.error}</AlertDescription>
-                </Alert>
-                {cameraState.error.includes("permission") && (
-                  <div className="text-sm text-muted-foreground text-center space-y-2">
-                    <p>To allow camera access:</p>
-                    <ol className="text-left list-decimal list-inside space-y-1">
-                      <li>
-                        Click the lock <Lock className="h-3.5 w-3.5 inline" />,
-                        tune{" "}
-                        <SlidersHorizontal className="h-3.5 w-3.5 inline" />, or
-                        info <Info className="h-3.5 w-3.5 inline" /> icon in
-                        your address bar
-                      </li>
-                      <li>Select &quot;Site settings&quot; if needed</li>
-                      <li>
-                        Find &quot;Camera&quot; and set it to &quot;Allow&quot;
-                      </li>
-                      <li>Refresh the page</li>
-                    </ol>
-                  </div>
-                )}
-                <Button onClick={startCamera}>
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Try Again
-                </Button>
-              </div>
-            )}
-
-            {/* Live viewfinder */}
-            {cameraState.isSupported && !cameraState.error && (
-              <>
-                {/* Header row with back button, card indicator, and review button */}
-                <div className="flex items-center justify-between px-4 mb-4">
+      {/* Main content area */}
+      {!showComplete && (
+        <div className="flex-1 flex flex-col">
+          {/* SETUP STEP */}
+          {step === "setup" && (
+            <div className="flex-1 flex flex-col">
+              {/* Back button - only show for logged-in users, not phone/QR users */}
+              {!scanToken && (
+                <div className="p-4">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/church/${slug}/admin/connect-cards`}>
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Back
                     </Link>
                   </Button>
-
-                  {/* Center: Current card indicator */}
-                  <div className="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium">
-                    {queue.length > 0
-                      ? `Card #${queue.length + 1}`
-                      : step === "capture-front"
-                        ? cardType === "double"
-                          ? "Front of Card"
-                          : "Capture Card"
-                        : "Back of Card"}
-                  </div>
-
-                  {/* Right: Review Batch button */}
-                  {queue.length > 0 ? (
-                    <Button
-                      size="sm"
-                      onClick={handleFinishBatch}
-                      disabled={
-                        queueStats.processing > 0 || queueStats.pending > 0
-                      }
-                    >
-                      Review Batch
-                    </Button>
-                  ) : (
-                    <div className="w-24" />
-                  )}
                 </div>
-
-                {/* Video element */}
-                <div className="flex-1 relative bg-black rounded-lg overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="absolute inset-0 w-full h-full object-cover"
-                  />
-
-                  {/* Dark mask overlay - hides area outside card bounds */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div
-                      className="w-[85%] aspect-[3/2] border-2 border-white rounded-lg relative"
-                      style={{
-                        boxShadow: "0 0 0 9999px rgba(0, 0, 0, 1)",
-                      }}
-                    >
-                      <p className="absolute bottom-3 left-0 right-0 text-center text-white/80 text-sm">
-                        Align card within frame
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Hidden canvas for capture */}
-                <canvas ref={canvasRef} className="hidden" />
-
-                {/* Camera controls */}
-                <div className="bg-black/90 p-6 flex items-center justify-center gap-8">
-                  {/* Switch camera */}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-white h-12 w-12"
-                    onClick={switchCamera}
-                  >
-                    <FlipHorizontal className="h-6 w-6" />
-                  </Button>
-
-                  {/* Capture button */}
-                  <Button
-                    size="icon"
-                    className="h-16 w-16 rounded-full bg-primary hover:bg-primary/90"
-                    onClick={handleCapture}
-                    disabled={!cameraState.isActive}
-                  >
-                    <div className="h-12 w-12 rounded-full border-4 border-primary-foreground" />
-                  </Button>
-
-                  {/* Placeholder for symmetry */}
-                  <div className="h-12 w-12" />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* PREVIEW STEPS (front and back) */}
-        {(step === "preview-front" || step === "preview-back") && (
-          <div className="flex-1 flex flex-col">
-            {/* Preview image */}
-            <div className="flex-1 relative bg-black">
-              {(step === "preview-front" ? frontImage : backImage) && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={
-                    (step === "preview-front" ? frontImage : backImage)?.dataUrl
-                  }
-                  alt={`${step === "preview-front" ? "Front" : "Back"} of card`}
-                  className="absolute inset-0 w-full h-full object-contain"
-                />
               )}
 
-              {/* Step indicator */}
-              <div className="absolute top-4 left-0 right-0 z-10 flex justify-center">
-                <div className="bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
-                  {step === "preview-front"
-                    ? cardType === "double"
-                      ? "Review Front"
-                      : "Review Card"
-                    : "Review Back"}
+              {/* Centered content */}
+              <div className="flex-1 flex flex-col justify-center space-y-6 px-6 pb-6 max-w-md mx-auto w-full">
+                <div className="text-center mb-4">
+                  <Camera className="h-12 w-12 mx-auto mb-4 text-primary" />
+                  <h2 className="text-xl font-semibold mb-2">
+                    Ready to Scan Cards
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Configure your scanning session
+                  </p>
                 </div>
-              </div>
-            </div>
 
-            {/* Accept/Retake controls */}
-            <div className="bg-background p-6 flex items-center justify-center gap-6">
-              <Button
-                variant="outline"
-                size="lg"
-                className="flex-1 max-w-32"
-                onClick={handleRetake}
-              >
-                <RotateCcw className="mr-2 h-4 w-4" />
-                Retake
-              </Button>
-              <Button
-                size="lg"
-                className="flex-1 max-w-32"
-                onClick={handleAccept}
-              >
-                <Check className="mr-2 h-4 w-4" />
-                Accept
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* QUEUE LIST - Shows all cards with status */}
-        {queue.length > 0 &&
-          (step === "capture-front" || step === "capture-back") && (
-            <div className="bg-muted/50 border-t px-4 py-3 max-h-48 overflow-y-auto">
-              <div className="max-w-md mx-auto space-y-1">
-                {/* Card list - simple one line per card */}
-                {queue.map((card, index) => (
-                  <div
-                    key={card.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span>Card #{index + 1}</span>
-                    <span
-                      className={
-                        card.status === "complete"
-                          ? "text-green-600"
-                          : card.status === "failed"
-                            ? "text-destructive"
-                            : card.status === "pending"
-                              ? "text-muted-foreground"
-                              : "text-primary"
-                      }
+                {/* Card Type Selection */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium">Card Type</label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant={cardType === "single" ? "default" : "outline"}
+                      className="h-20 flex-col gap-2"
+                      onClick={() => setCardType("single")}
                     >
-                      {card.status === "complete" && "Uploaded"}
-                      {card.status === "failed" && "Failed"}
-                      {card.status === "pending" && "Queued"}
-                      {card.status === "uploading" && "Uploading..."}
-                      {card.status === "extracting" && "Analyzing..."}
-                      {card.status === "saving" && "Saving..."}
-                    </span>
+                      <Square className="h-6 w-6" />
+                      <span className="text-xs">1-Sided</span>
+                    </Button>
+                    <Button
+                      variant={cardType === "double" ? "default" : "outline"}
+                      className="h-20 flex-col gap-2"
+                      onClick={() => setCardType("double")}
+                    >
+                      <Layers className="h-6 w-6" />
+                      <span className="text-xs">2-Sided</span>
+                    </Button>
                   </div>
-                ))}
+                </div>
+
+                {/* Location Selection */}
+                <div className="space-y-3">
+                  <label className="text-sm font-medium flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Location
+                  </label>
+                  <Select value={locationId} onValueChange={setLocationId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map(loc => (
+                        <SelectItem key={loc.id} value={loc.id}>
+                          {loc.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Start Button */}
+                <Button
+                  size="lg"
+                  className="w-full mt-6"
+                  onClick={() => setStep("capture-front")}
+                >
+                  <Camera className="mr-2 h-5 w-5" />
+                  Start Scanning
+                </Button>
+
+                {/* Resume indicator */}
+                {cardsScanned > 0 && activeBatch && (
+                  <Alert>
+                    <AlertDescription className="text-sm">
+                      Resuming session: {cardsScanned} cards in &quot;
+                      {activeBatch.name}&quot;
+                    </AlertDescription>
+                  </Alert>
+                )}
               </div>
             </div>
           )}
-      </div>
+
+          {/* CAPTURE STEPS (front and back) */}
+          {(step === "capture-front" || step === "capture-back") && (
+            <div className="flex-1 flex flex-col">
+              {/* Camera not supported error */}
+              {!cameraState.isSupported && (
+                <div className="flex-1 flex items-center justify-center p-6">
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>
+                      Camera is not supported on this device or browser.
+                    </AlertDescription>
+                  </Alert>
+                </div>
+              )}
+
+              {/* Camera error */}
+              {cameraState.error && (
+                <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 max-w-md mx-auto">
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{cameraState.error}</AlertDescription>
+                  </Alert>
+                  {cameraState.error.includes("permission") && (
+                    <div className="text-sm text-muted-foreground text-center space-y-2">
+                      <p>To allow camera access:</p>
+                      <ol className="text-left list-decimal list-inside space-y-1">
+                        <li>
+                          Click the lock <Lock className="h-3.5 w-3.5 inline" />
+                          , tune{" "}
+                          <SlidersHorizontal className="h-3.5 w-3.5 inline" />,
+                          or info <Info className="h-3.5 w-3.5 inline" /> icon
+                          in your address bar
+                        </li>
+                        <li>Select &quot;Site settings&quot; if needed</li>
+                        <li>
+                          Find &quot;Camera&quot; and set it to
+                          &quot;Allow&quot;
+                        </li>
+                        <li>Refresh the page</li>
+                      </ol>
+                    </div>
+                  )}
+                  <Button onClick={startCamera}>
+                    <RotateCcw className="mr-2 h-4 w-4" />
+                    Try Again
+                  </Button>
+                </div>
+              )}
+
+              {/* Live viewfinder */}
+              {cameraState.isSupported && !cameraState.error && (
+                <>
+                  {/* Header row with back button, card indicator, and review button */}
+                  <div className="flex items-center justify-between px-4 mb-4">
+                    {/* Back button - only show for logged-in users */}
+                    {!scanToken ? (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/church/${slug}/admin/connect-cards`}>
+                          <ArrowLeft className="mr-2 h-4 w-4" />
+                          Back
+                        </Link>
+                      </Button>
+                    ) : (
+                      <div className="w-16" />
+                    )}
+
+                    {/* Center: Current card indicator */}
+                    <div className="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium">
+                      {queue.length > 0
+                        ? `Card #${queue.length + 1}`
+                        : step === "capture-front"
+                          ? cardType === "double"
+                            ? "Front of Card"
+                            : "Capture Card"
+                          : "Back of Card"}
+                    </div>
+
+                    {/* Right: Review Batch button */}
+                    {queue.length > 0 ? (
+                      <Button
+                        size="sm"
+                        onClick={handleFinishBatch}
+                        disabled={
+                          queueStats.processing > 0 || queueStats.pending > 0
+                        }
+                      >
+                        Review Batch
+                      </Button>
+                    ) : (
+                      <div className="w-24" />
+                    )}
+                  </div>
+
+                  {/* Video element */}
+                  <div className="flex-1 relative bg-black rounded-lg overflow-hidden">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+
+                    {/* Dark mask overlay - hides area outside card bounds */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div
+                        className="w-[85%] aspect-[3/2] border-2 border-white rounded-lg relative"
+                        style={{
+                          boxShadow: "0 0 0 9999px rgba(0, 0, 0, 1)",
+                        }}
+                      >
+                        <p className="absolute bottom-3 left-0 right-0 text-center text-white/80 text-sm">
+                          Align card within frame
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Hidden canvas for capture */}
+                  <canvas ref={canvasRef} className="hidden" />
+
+                  {/* Camera controls */}
+                  <div className="bg-black/90 p-6 flex items-center justify-center gap-8">
+                    {/* Switch camera */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-white h-12 w-12"
+                      onClick={switchCamera}
+                    >
+                      <FlipHorizontal className="h-6 w-6" />
+                    </Button>
+
+                    {/* Capture button */}
+                    <Button
+                      size="icon"
+                      className="h-16 w-16 rounded-full bg-primary hover:bg-primary/90"
+                      onClick={handleCapture}
+                      disabled={!cameraState.isActive}
+                    >
+                      <div className="h-12 w-12 rounded-full border-4 border-primary-foreground" />
+                    </Button>
+
+                    {/* Placeholder for symmetry */}
+                    <div className="h-12 w-12" />
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* PREVIEW STEPS (front and back) */}
+          {(step === "preview-front" || step === "preview-back") && (
+            <div className="flex-1 flex flex-col">
+              {/* Preview image */}
+              <div className="flex-1 relative bg-black">
+                {(step === "preview-front" ? frontImage : backImage) && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={
+                      (step === "preview-front" ? frontImage : backImage)
+                        ?.dataUrl
+                    }
+                    alt={`${step === "preview-front" ? "Front" : "Back"} of card`}
+                    className="absolute inset-0 w-full h-full object-contain"
+                  />
+                )}
+
+                {/* Step indicator */}
+                <div className="absolute top-4 left-0 right-0 z-10 flex justify-center">
+                  <div className="bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
+                    {step === "preview-front"
+                      ? cardType === "double"
+                        ? "Review Front"
+                        : "Review Card"
+                      : "Review Back"}
+                  </div>
+                </div>
+              </div>
+
+              {/* Accept/Retake controls */}
+              <div className="bg-background p-6 flex items-center justify-center gap-6">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="flex-1 max-w-32"
+                  onClick={handleRetake}
+                >
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Retake
+                </Button>
+                <Button
+                  size="lg"
+                  className="flex-1 max-w-32"
+                  onClick={handleAccept}
+                >
+                  <Check className="mr-2 h-4 w-4" />
+                  Accept
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* QUEUE LIST - Shows all cards with status */}
+          {queue.length > 0 &&
+            (step === "capture-front" || step === "capture-back") && (
+              <div className="bg-muted/50 border-t px-4 py-3 max-h-48 overflow-y-auto">
+                <div className="max-w-md mx-auto space-y-1">
+                  {/* Card list - simple one line per card */}
+                  {queue.map((card, index) => (
+                    <div
+                      key={card.id}
+                      className="flex items-center justify-between text-sm"
+                    >
+                      <span>Card #{index + 1}</span>
+                      <span
+                        className={
+                          card.status === "complete"
+                            ? "text-green-600"
+                            : card.status === "failed"
+                              ? "text-destructive"
+                              : card.status === "pending"
+                                ? "text-muted-foreground"
+                                : "text-primary"
+                        }
+                      >
+                        {card.status === "complete" && "Uploaded"}
+                        {card.status === "failed" && "Failed"}
+                        {card.status === "pending" && "Queued"}
+                        {card.status === "uploading" && "Uploading..."}
+                        {card.status === "extracting" && "Analyzing..."}
+                        {card.status === "saving" && "Saving..."}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+        </div>
+      )}
     </div>
   );
 }

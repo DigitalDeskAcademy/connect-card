@@ -24,12 +24,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-interface Location {
-  id: string;
-  name: string;
-  slug: string;
-}
-
 interface Batch {
   id: string;
   name: string;
@@ -49,7 +43,6 @@ interface Batch {
 
 interface ConnectCardsClientProps {
   slug: string;
-  locations: Location[];
   defaultLocationId: string | null;
   batches: Batch[];
   pendingBatchCount: number;
@@ -58,7 +51,6 @@ interface ConnectCardsClientProps {
 
 export default function ConnectCardsClient({
   slug,
-  locations,
   defaultLocationId,
   batches,
   pendingBatchCount,
@@ -82,10 +74,7 @@ export default function ConnectCardsClient({
 
       {/* Tab Content */}
       {activeTab === "upload" && (
-        <ConnectCardUploadClient
-          locations={locations}
-          defaultLocationId={defaultLocationId}
-        />
+        <ConnectCardUploadClient defaultLocationId={defaultLocationId} />
       )}
 
       {activeTab === "batches" && (
