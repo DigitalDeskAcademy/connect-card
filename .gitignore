@@ -102,3 +102,5 @@ public/dev-assets/
 
 # Playwright auth state
 tests/.auth/
+.env.vercel
+.env.production.template

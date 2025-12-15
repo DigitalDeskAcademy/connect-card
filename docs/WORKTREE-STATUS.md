@@ -1,8 +1,20 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-14
+**Last Updated:** 2025-12-15
 **Update Frequency:** After each significant work session
+
+---
+
+## 🚨🚨🚨 SECURITY: PRE-LAUNCH CHECKLIST 🚨🚨🚨
+
+> **BEFORE LAUNCHING WITH REAL USERS, YOU MUST:**
+>
+> - [ ] **Remove OTP logging in production** - `lib/auth.ts` line ~105-142
+>   - Currently logs OTP codes to Vercel logs for demo purposes
+>   - Delete `isProduction` from `shouldLogOTP` condition
+> - [ ] **Verify custom domain in Resend** - Required to send emails to any address
+> - [ ] **Update `RESEND_FROM_EMAIL`** - Change from `onboarding@resend.dev` to your domain
 
 ---
 
@@ -33,6 +45,20 @@
 > **Note:** GHL Phase 1 COMPLETE! Demo goal achieved: volunteer checkbox → SMS + email sent.
 >
 > **Next Priority:** Connect card upload UX overhaul for non-technical church staff.
+
+---
+
+## ⚠️ POST-DEMO TODO
+
+**Restore after NewLife demo is complete:**
+
+| Item         | Current State             | Restore From                      | Notes                     |
+| ------------ | ------------------------- | --------------------------------- | ------------------------- |
+| Landing Page | Demo version (simplified) | `app/(public)/page.marketing.tsx` | Rename back to `page.tsx` |
+
+The marketing landing page with "25 Founding Churches" messaging was temporarily replaced with a clean demo page that removes NewLife references. After demo, restore the marketing page.
+
+---
 
 **Recently Completed (PRs Merged):**
 
