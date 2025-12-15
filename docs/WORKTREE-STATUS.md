@@ -10,7 +10,7 @@
 
 | Worktree           | Port | Branch                         | Status              | Current Focus                       |
 | ------------------ | ---- | ------------------------------ | ------------------- | ----------------------------------- |
-| **main**           | 3000 | `feature/general`              | 🟢 Active           | Project management, docs            |
+| **main**           | 3000 | `main`                         | 🟢 Active           | Project management, docs            |
 | **connect-card**   | 3001 | `feature/connect-card`         | 🟡 **UX Priority**  | Upload UX Overhaul (high priority)  |
 | **prayer**         | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
 | **volunteer**      | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
@@ -36,6 +36,7 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ connect-card #73 - QR code scan flow with token authentication (Dec 15)
 - ✅ tech-debt #72 - GHL Integration Phase 1: Service Layer + SMS (Dec 14)
 - ✅ main #71 - Dashboard UX improvements + Review Batches action (Dec 14)
 - ✅ main #70 - Documentation audit + responsive UI fixes (Dec 13)

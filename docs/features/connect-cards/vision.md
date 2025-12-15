@@ -1,13 +1,23 @@
 # Connect Card Management - Product Vision
 
 **Status:** ✅ **FEATURE COMPLETE** - Ready for Production Testing
-**Current Phase:** Phase 4 Complete - CSV Export + Duplicate Detection
+**Current Phase:** Phase 5 Complete - QR Code Digital Cards + GHL Integration
 **Worktree:** `/church-connect-hub/connect-card`
 **Branch:** `feature/connect-card`
-**Last Updated:** 2025-12-12
+**Last Updated:** 2025-12-14
 
 ### Recent Work (Dec 2025)
 
+- ✅ **QR Code Scan Flow (Phase 5)** - Token-based digital card submission (PR #73)
+  - `ScanToken` Prisma model with 15-min expiry, single-use enforcement
+  - Public `/connect/[token]` route for visitor form submission
+  - Staff generates QR → Volunteer scans → Redirects to digital form
+  - Rate limited: 10 tokens/minute per user
+- ✅ **GHL Integration** - Contact sync + SMS on volunteer activation (PR #72)
+  - Integrated into `updateConnectCard` action
+  - Syncs contact to GHL when "Send onboarding materials" checked
+  - Sends welcome SMS via GHL API
+- ✅ **Review Mode (Phase 4.5)** - See image + type simultaneously (PR #66)
 - ✅ **CSV Export (Phase 4)** - Planning Center, Breeze, Generic formats (PR #48, #58)
 - ✅ **Fuzzy Duplicate Detection** - Checks ChurchMember table, email as strong identifier (PR #50)
 - ✅ **80% Confidence Threshold** - Don't bother reviewer with OCR errors
