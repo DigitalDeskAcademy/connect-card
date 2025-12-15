@@ -36,6 +36,8 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ tech-debt #72 - GHL Integration Phase 1: Service Layer + SMS (Dec 14)
+- ✅ main #71 - Dashboard UX improvements + Review Batches action (Dec 14)
 - ✅ main #70 - Documentation audit + responsive UI fixes (Dec 13)
 - ✅ tech-debt #68 - GitHub-style responsive overflow tabs for NavTabs (Dec 12)
 - ✅ connect-card #66 - Review Mode + Volunteer Assignment UX polish (Dec 12)
@@ -116,18 +118,18 @@ pnpm dev  # Runs on port 3004
 - ✅ PR #68 - GitHub-style responsive overflow tabs for NavTabs
 - ✅ Team page spacing fixes
 
-#### Definition of Done (Phase 1)
+#### Definition of Done (Phase 1) ✅ COMPLETE
 
 - [x] GHL MCP connected and working
 - [x] Service layer created (`lib/ghl/`)
 - [x] Contact syncs to GHL on save
 - [x] Welcome SMS sends when checkbox checked
 - [x] Demo flow works end-to-end
-- [ ] PR created to main
+- [x] PR #72 merged to main
 
 #### Blockers
 
-None - Phase 1 complete, ready for PR.
+None - Phase 1 complete and merged!
 
 ---
 

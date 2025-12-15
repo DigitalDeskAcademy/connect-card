@@ -57,6 +57,7 @@ model Organization {
   volunteerDocuments     VolunteerDocument[]
   backgroundCheckConfig  BackgroundCheckConfig?
   messageTemplates       MessageTemplate[]
+  scanTokens             ScanToken[]
   /// Enable general volunteer automation sequence (Day 1/3/7 messages)
   /// When disabled, GENERAL volunteers are marked readyForExport immediately
   generalVolunteerAutomationEnabled Boolean @default(false)
@@ -1810,4 +1811,33 @@ enum EmailStatus {
   FAILED
   /// Email skipped (dev mode, invalid recipient, etc.)
   SKIPPED
+}
+
+// ============================================================================
+// QR CODE SCAN TOKENS
+// ============================================================================
+
+/// Temporary token for QR code-based mobile scanning
+/// Allows phone to scan cards without re-authenticating
+model ScanToken {
+  id             String    @id @default(cuid())
+  /// Unique token for URL
+  token          String    @unique
+  /// User who created the token
+  userId         String
+  /// Organization scope
+  organizationId String
+  /// Token expiration time (15 minutes from creation)
+  expiresAt      DateTime
+  /// When token was used (null if not yet used, for single-use enforcement)
+  usedAt         DateTime?
+  /// When token was created
+  createdAt      DateTime  @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId, organizationId])
+  @@index([expiresAt])
+  @@map("scan_token")
 }

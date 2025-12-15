@@ -29,18 +29,15 @@
 
 ### Integrations Worktree Owns
 
-| Item                               | Status               |
-| ---------------------------------- | -------------------- |
-| Export page UI (`/admin/export`)   | ✅ Complete (PR #48) |
-| Visitors CSV export (PCO/Breeze)   | ✅ Complete (PR #48) |
-| "Volunteers" tab on export page    | 📋 Phase 2           |
-| Volunteer CSV formats (PCO/Breeze) | 📋 Phase 2           |
-| `createVolunteerExport()` action   | 📋 Phase 2           |
+| Item                             | Status               |
+| -------------------------------- | -------------------- |
+| Export page UI (`/admin/export`) | ✅ Complete (PR #48) |
+| Unified CSV export (PCO/Breeze)  | ✅ Complete (PR #48) |
+| Field selection                  | ✅ Complete (PR #58) |
 
-### Merge Order
+### Design Decision: Unified Export
 
-1. **Volunteer worktree merges first** → Provides data model + `getExportableVolunteers()`
-2. **Integrations worktree merges second** → Adds Volunteers tab, calls data function
+**No separate volunteer export.** A volunteer is just a person with additional attributes. The existing export includes all ChurchMember data; volunteer-specific columns (category, BG check status) are included when the member has a volunteer profile. See `/docs/features/integrations/vision.md` for details.
 
 ### Interface Contract
 
