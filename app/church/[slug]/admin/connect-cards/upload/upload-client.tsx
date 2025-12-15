@@ -1,18 +1,30 @@
 "use client";
-// Force rebuild for tab styling
-import { useState, useTransition, useRef, useEffect } from "react";
+
+import { useState, useTransition, useEffect, useRef, useCallback } from "react";
+
+// File System Access API types (simplified for compatibility)
+interface FSDirectoryHandle {
+  values(): AsyncIterableIterator<FSHandle>;
+  name: string;
+}
+
+interface FSHandle {
+  kind: "file" | "directory";
+  name: string;
+  getFile?: () => Promise<File>;
+}
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -21,6 +33,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Label } from "@/components/ui/label";
 import {
   Upload,
@@ -28,44 +45,76 @@ import {
   CheckCircle2,
   AlertCircle,
   Loader2,
-  Camera,
   Trash2,
   X,
-  FileText,
-  Save,
-  TestTube,
+  Copy,
   ClipboardCheck,
-  MapPin,
-  Package,
-  ArrowRight,
+  Layers,
+  Square,
   Smartphone,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle,
+  Package,
+  ScanLine,
+  FolderOpen,
+  FolderSync,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useDropzone } from "react-dropzone";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
 import { getActiveBatchAction } from "@/actions/connect-card/batch-actions";
-import { useDropzone } from "react-dropzone";
+import { createScanTokenAction } from "@/actions/connect-card/scan-token-actions";
 
-// Type for extracted connect card data (matches Zod schema in lib/zodSchemas.ts)
+// ============================================================================
+// TYPES
+// ============================================================================
+
 interface ExtractedData {
   name: string | null;
   email: string | null;
   phone: string | null;
   prayer_request: string | null;
-  visit_status?: string | null; // New field from AI extraction
-  first_time_visitor?: boolean | null; // Legacy field - optional
+  visit_status?: string | null;
+  first_time_visitor?: boolean | null;
   interests: string[] | null;
   address: string | null;
   age_group: string | null;
   family_info: string | null;
-  // Changed from unknown to string | null for type safety
-  // AI may return any shape - we coerce to string in normalizeExtractedData()
   additional_notes: string | null;
 }
 
-/**
- * Normalizes AI-extracted data to match schema requirements
- * Handles edge cases where AI returns unexpected types
- */
+interface UploadedImage {
+  id: string;
+  file: File;
+  preview: string;
+  key?: string;
+  imageHash?: string;
+  uploading: boolean;
+  uploaded: boolean;
+  error: boolean;
+  extracting: boolean;
+  extracted: boolean;
+  extractedData?: ExtractedData;
+  saved: boolean;
+  savedId?: string;
+  isDuplicate?: boolean;
+  duplicateType?: "image" | "person";
+  duplicateMessage?: string;
+}
+
+interface UploadClientProps {
+  defaultLocationId: string | null;
+}
+
+type CardSide = "single" | "double";
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
 function normalizeExtractedData(data: Record<string, unknown>): ExtractedData {
   return {
     name: typeof data.name === "string" ? data.name : null,
@@ -85,7 +134,6 @@ function normalizeExtractedData(data: Record<string, unknown>): ExtractedData {
     address: typeof data.address === "string" ? data.address : null,
     age_group: typeof data.age_group === "string" ? data.age_group : null,
     family_info: typeof data.family_info === "string" ? data.family_info : null,
-    // Coerce any additional_notes to string (JSON stringify if object)
     additional_notes:
       data.additional_notes === null || data.additional_notes === undefined
         ? null
@@ -95,53 +143,86 @@ function normalizeExtractedData(data: Record<string, unknown>): ExtractedData {
   };
 }
 
-interface UploadedImage {
-  id: string;
-  file: File;
-  preview: string;
-  key?: string;
-  imageHash?: string; // SHA-256 hash from extract API for duplicate detection
-  uploading: boolean;
-  uploaded: boolean;
-  error: boolean;
-  extracting: boolean;
-  extracted: boolean;
-  extractedData?: ExtractedData;
-  saved: boolean;
-  savedId?: string;
-  isDuplicate?: boolean;
-  duplicateType?: "image" | "person";
-  duplicateMessage?: string;
+function validateExtractedData(data: ExtractedData): string[] {
+  const warnings: string[] = [];
+
+  if (data.phone) {
+    const digits = data.phone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      warnings.push(
+        `Phone number has only ${digits.length} digits (expected 10+)`
+      );
+    } else if (digits.length > 11) {
+      warnings.push(
+        `Phone number has ${digits.length} digits (expected 10-11)`
+      );
+    }
+    if (/^(.)\1+$/.test(digits)) {
+      warnings.push("Phone number appears to be all same digit");
+    }
+  }
+
+  if (data.email && !data.email.includes("@")) {
+    warnings.push("Email address missing @ symbol");
+  }
+
+  if (data.name && data.name.length < 2) {
+    warnings.push("Name seems too short");
+  }
+
+  return warnings;
 }
 
-type UploadMode = "files" | "camera" | "test";
-
-interface Location {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-interface UploadClientProps {
-  locations: Location[];
-  defaultLocationId: string | null;
-}
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
 
 export function ConnectCardUploadClient({
-  locations,
   defaultLocationId,
 }: UploadClientProps) {
   const params = useParams();
   const router = useRouter();
   const slug = params.slug as string;
+  const isMobile = useIsMobile();
 
-  const [uploadMode, setUploadMode] = useState<UploadMode>("files");
-  const [selectedLocationId, setSelectedLocationId] = useState<string | null>(
-    defaultLocationId
+  // ========================================================================
+  // SETUP STATE (persisted to localStorage)
+  // ========================================================================
+  const [cardSide, setCardSide] = useState<CardSide>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("connectCard.cardSide");
+      if (saved === "single" || saved === "double") return saved;
+    }
+    return "double"; // Default to double-sided
+  });
+
+  // Persist card type to localStorage
+  useEffect(() => {
+    localStorage.setItem("connectCard.cardSide", cardSide);
+  }, [cardSide]);
+
+  // ========================================================================
+  // QR MODAL STATE
+  // ========================================================================
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [scanUrl, setScanUrl] = useState<string | null>(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrExpiry, setQrExpiry] = useState<Date | null>(null);
+
+  // ========================================================================
+  // DOCUMENT SCANNER MODAL STATE
+  // ========================================================================
+  const [scannerModalOpen, setScannerModalOpen] = useState(false);
+  const [watchedFolderName, setWatchedFolderName] = useState<string | null>(
+    null
   );
+  const [isWatching, setIsWatching] = useState(false);
+
+  // ========================================================================
+  // UPLOAD/PROCESSING STATE
+  // ========================================================================
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [isProcessing, startProcessing] = useTransition();
-  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   // Active batch state
   const [activeBatch, setActiveBatch] = useState<{
@@ -149,32 +230,179 @@ export function ConnectCardUploadClient({
     name: string;
     cardCount: number;
   } | null>(null);
-  const [loadingBatch, setLoadingBatch] = useState(true);
 
-  // DO NOT fetch/create batch on mount - only create when uploading
-  // This prevents empty batches from being created just by viewing the page
-  useEffect(() => {
-    setLoadingBatch(false);
+  // Help guide state
+  const [showHelp, setShowHelp] = useState(false);
+
+  // ========================================================================
+  // FOLDER WATCHING HANDLERS (File System Access API)
+  // ========================================================================
+  const folderHandleRef = useRef<FSDirectoryHandle | null>(null);
+  const seenFilesRef = useRef<Set<string>>(new Set());
+  const watchIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check for new files in the connected folder
+  const checkForNewFiles = useCallback(async () => {
+    const handle = folderHandleRef.current;
+    if (!handle) return;
+
+    try {
+      const newFiles: File[] = [];
+
+      for await (const entry of handle.values()) {
+        if (entry.kind === "file" && entry.getFile) {
+          const file = await entry.getFile();
+          // Check if it's an image
+          if (file.type.startsWith("image/")) {
+            // Create unique key from name + size + lastModified
+            const fileKey = `${file.name}-${file.size}-${file.lastModified}`;
+
+            if (!seenFilesRef.current.has(fileKey)) {
+              newFiles.push(file);
+              seenFilesRef.current.add(fileKey);
+            }
+          }
+        }
+      }
+
+      if (newFiles.length > 0) {
+        // Add new files to upload queue
+        const newImages: UploadedImage[] = newFiles.map(file => ({
+          id: Math.random().toString(36).substring(7),
+          file,
+          preview: URL.createObjectURL(file),
+          uploading: false,
+          uploaded: false,
+          error: false,
+          extracting: false,
+          extracted: false,
+          saved: false,
+        }));
+        setImages(prev => [...prev, ...newImages]);
+        toast.success(
+          `${newFiles.length} new card${newFiles.length > 1 ? "s" : ""} detected`
+        );
+      }
+    } catch {
+      // Folder access may have been revoked
+      setIsWatching(false);
+      setWatchedFolderName(null);
+      folderHandleRef.current = null;
+    }
   }, []);
 
-  // Test mode state
-  const [testImage, setTestImage] = useState<File | null>(null);
-  const [testPreview, setTestPreview] = useState<string | null>(null);
-  const [testImageKey, setTestImageKey] = useState<string | null>(null);
-  const [testImageHash, setTestImageHash] = useState<string | null>(null);
-  const [testExtracting, setTestExtracting] = useState(false);
-  const [testExtractedData, setTestExtractedData] =
-    useState<ExtractedData | null>(null);
-  const [testError, setTestError] = useState<string | null>(null);
-  const [testSavedId, setTestSavedId] = useState<string | null>(null);
-  const [testSaving, startTestSaving] = useTransition();
-  const [imageModalOpen, setImageModalOpen] = useState(false);
+  // Start/stop polling based on isWatching state
+  useEffect(() => {
+    if (isWatching && folderHandleRef.current) {
+      // Check immediately
+      checkForNewFiles();
 
-  // Drag and drop handler
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+      // Then poll every 2 seconds
+      watchIntervalRef.current = setInterval(checkForNewFiles, 2000);
+    }
+
+    return () => {
+      if (watchIntervalRef.current) {
+        clearInterval(watchIntervalRef.current);
+        watchIntervalRef.current = null;
+      }
+    };
+  }, [isWatching, checkForNewFiles]);
+
+  const handleConnectFolder = async () => {
+    try {
+      // Check if API is supported
+      const showDirectoryPicker = (
+        window as unknown as {
+          showDirectoryPicker?: (options?: {
+            mode?: string;
+          }) => Promise<FSDirectoryHandle>;
+        }
+      ).showDirectoryPicker;
+
+      if (!showDirectoryPicker) {
+        toast.error(
+          "Your browser doesn't support folder watching. Try Chrome or Edge."
+        );
+        return;
+      }
+
+      // Request folder access (read-only)
+      const handle = await showDirectoryPicker({
+        mode: "read",
+      });
+
+      folderHandleRef.current = handle;
+      setWatchedFolderName(handle.name);
+      setIsWatching(true);
+      toast.success(`Connected to "${handle.name}" folder`);
+    } catch (error) {
+      // User cancelled the picker
+      if ((error as Error).name !== "AbortError") {
+        toast.error("Failed to connect folder");
+      }
+    }
+  };
+
+  const handleDisconnectFolder = () => {
+    if (watchIntervalRef.current) {
+      clearInterval(watchIntervalRef.current);
+      watchIntervalRef.current = null;
+    }
+    folderHandleRef.current = null;
+    seenFilesRef.current = new Set();
+    setWatchedFolderName(null);
+    setIsWatching(false);
+    toast.info("Folder disconnected");
+  };
+
+  // ========================================================================
+  // QR CODE HANDLERS
+  // ========================================================================
+  const generateQrCode = async () => {
+    setQrLoading(true);
+    try {
+      const result = await createScanTokenAction(slug);
+      if (result.status === "success" && result.data) {
+        setScanUrl(result.data.scanUrl);
+        setQrExpiry(result.data.expiresAt);
+      } else {
+        toast.error("Failed to generate QR code");
+      }
+    } catch {
+      toast.error("Failed to generate QR code");
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const handleOpenQrModal = async () => {
+    if (!scanUrl) {
+      await generateQrCode();
+    }
+    setQrModalOpen(true);
+  };
+
+  const copyLinkToClipboard = () => {
+    if (scanUrl) {
+      navigator.clipboard.writeText(scanUrl);
+      toast.success("Link copied! Paste it in a text or email.");
+    }
+  };
+
+  // ========================================================================
+  // FILE UPLOAD HANDLERS
+  // ========================================================================
+  const {
+    getRootProps,
+    getInputProps,
+    isDragActive,
+    open: openFilePicker,
+  } = useDropzone({
     accept: { "image/*": [] },
     multiple: true,
     disabled: isProcessing,
+    noClick: false,
     onDrop: (acceptedFiles: File[]) => {
       const newImages: UploadedImage[] = acceptedFiles.map(file => ({
         id: Math.random().toString(36).substring(7),
@@ -187,38 +415,12 @@ export function ConnectCardUploadClient({
         extracted: false,
         saved: false,
       }));
-
       setImages(prev => [...prev, ...newImages]);
+      // Close scanner modal if open
+      setScannerModalOpen(false);
     },
   });
 
-  // Camera capture handler
-  function handleCameraCapture(event: React.ChangeEvent<HTMLInputElement>) {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const newImages: UploadedImage[] = Array.from(files).map(file => ({
-      id: Math.random().toString(36).substring(7),
-      file,
-      preview: URL.createObjectURL(file),
-      uploading: false,
-      uploaded: false,
-      error: false,
-      extracting: false,
-      extracted: false,
-      saved: false,
-    }));
-
-    setImages(prev => [...prev, ...newImages]);
-    toast.success(`Added ${files.length} photo${files.length > 1 ? "s" : ""}`);
-
-    // Reset input
-    if (cameraInputRef.current) {
-      cameraInputRef.current.value = "";
-    }
-  }
-
-  // Delete image handler
   function handleDeleteImage(imageId: string) {
     setImages(prev => {
       const imageToDelete = prev.find(img => img.id === imageId);
@@ -229,7 +431,9 @@ export function ConnectCardUploadClient({
     });
   }
 
-  // Upload single image to S3
+  // ========================================================================
+  // UPLOAD & EXTRACTION
+  // ========================================================================
   async function uploadImage(image: UploadedImage): Promise<string | null> {
     try {
       const presignedResponse = await fetch("/api/s3/upload", {
@@ -242,17 +446,22 @@ export function ConnectCardUploadClient({
           isImage: true,
           fileType: "connect-card",
           organizationSlug: slug,
-          cardSide: "front", // Bulk upload treats each image as front (TODO: front/back pairing)
+          cardSide: "front",
         }),
       });
 
       if (!presignedResponse.ok) {
-        throw new Error("Failed to get presigned URL");
+        const errorData = await presignedResponse.json().catch(() => ({}));
+        console.error(
+          "Presigned URL error:",
+          presignedResponse.status,
+          errorData
+        );
+        throw new Error(errorData.error || "Failed to get presigned URL");
       }
 
       const { presignedUrl, key } = await presignedResponse.json();
 
-      // Upload to S3
       const uploadResponse = await fetch(presignedUrl, {
         method: "PUT",
         headers: { "Content-Type": image.file.type },
@@ -270,20 +479,14 @@ export function ConnectCardUploadClient({
     }
   }
 
-  // Extract data from image using base64
-  // Returns both extracted data and imageHash for duplicate detection
   async function extractData(
-    imageKey: string,
+    _imageKey: string,
     imageFile: File
   ): Promise<{ data: ExtractedData; imageHash: string }> {
-    console.log("🔍 Extracting data from image:", imageFile.name);
-
-    // Convert image to base64
     const base64Image = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {
         const base64 = reader.result as string;
-        // Remove data URL prefix (data:image/jpeg;base64,)
         const base64Data = base64.split(",")[1];
         resolve(base64Data);
       };
@@ -303,9 +506,7 @@ export function ConnectCardUploadClient({
 
     const result = await response.json();
 
-    // Handle duplicate detection (409 response)
     if (response.status === 409 && result.duplicate) {
-      console.warn("⚠️ Duplicate image detected:", result.existingCard);
       const error = new Error(
         result.message || "Duplicate image detected"
       ) as Error & {
@@ -318,25 +519,23 @@ export function ConnectCardUploadClient({
     }
 
     if (!response.ok) {
-      console.error("❌ Extraction API error:", result);
       throw new Error(result.error || "Extraction failed");
     }
 
-    console.log("✅ Extraction complete:", result);
-    // Return both normalized data and imageHash from extract API
     return {
       data: normalizeExtractedData(result.data as Record<string, unknown>),
       imageHash: result.imageHash,
     };
   }
 
-  // Process all images
+  // ========================================================================
+  // PROCESS ALL HANDLER
+  // ========================================================================
   async function handleProcessAll() {
     startProcessing(async () => {
       for (let i = 0; i < images.length; i++) {
         const image = images[i];
 
-        // Skip if already processed
         if (image.saved) continue;
 
         // Step 1: Upload to S3
@@ -367,7 +566,7 @@ export function ConnectCardUploadClient({
           )
         );
 
-        // Step 2: Extract data with Claude (duplicate check happens here BEFORE Claude call)
+        // Step 2: Extract data
         setImages(prev =>
           prev.map(img =>
             img.id === image.id ? { ...img, extracting: true } : img
@@ -380,13 +579,8 @@ export function ConnectCardUploadClient({
             image.file
           );
 
-          // Validate extracted data
           const warnings = validateExtractedData(extractedData);
           if (warnings.length > 0) {
-            console.warn(
-              `⚠️ Validation warnings for ${image.file.name}:`,
-              warnings
-            );
             toast.warning(`${image.file.name}: ${warnings.join(", ")}`, {
               duration: 3000,
             });
@@ -411,20 +605,18 @@ export function ConnectCardUploadClient({
             slug,
             {
               imageKey: key,
-              imageHash, // Pass the hash from extract API
+              imageHash,
               extractedData,
             },
-            selectedLocationId
+            defaultLocationId
           );
 
           if (saveResult.status === "success") {
-            // Fetch active batch info after first successful save
-            // (batch is created during save if it doesn't exist)
             if (!activeBatch) {
               const batchResult = await getActiveBatchAction(slug);
               if (batchResult.status === "success" && batchResult.data) {
                 setActiveBatch(batchResult.data);
-                router.refresh(); // Update Batches tab badge count
+                router.refresh();
               }
             }
 
@@ -440,7 +632,6 @@ export function ConnectCardUploadClient({
               )
             );
           } else {
-            // Check if it's a duplicate error
             const isDuplicate =
               saveResult.message?.includes("Duplicate") ||
               saveResult.message?.includes("duplicate");
@@ -462,7 +653,6 @@ export function ConnectCardUploadClient({
               )
             );
 
-            // Show specific duplicate toast
             if (isDuplicate) {
               toast.warning(saveResult.message || "Duplicate card detected");
             } else {
@@ -470,7 +660,6 @@ export function ConnectCardUploadClient({
             }
           }
         } catch (error) {
-          // Check if it's a duplicate error from extract API
           const isDuplicateError =
             error instanceof Error &&
             (error as Error & { isDuplicate?: boolean }).isDuplicate;
@@ -508,7 +697,6 @@ export function ConnectCardUploadClient({
         }
       }
 
-      // Check if all are complete
       const allSaved = images.every(img => img.saved || img.error);
       if (allSaved) {
         toast.success("All cards processed!");
@@ -516,285 +704,61 @@ export function ConnectCardUploadClient({
     });
   }
 
-  // Test mode handlers
-  function handleTestImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    setTestImage(file);
-    setTestPreview(URL.createObjectURL(file));
-    setTestImageKey(null);
-    setTestImageHash(null);
-    setTestExtractedData(null);
-    setTestError(null);
-    setTestSavedId(null);
-  }
-
-  // Validate extracted data for common issues
-  function validateExtractedData(data: ExtractedData): string[] {
-    const warnings: string[] = [];
-
-    // Phone number validation
-    if (data.phone) {
-      const digits = data.phone.replace(/\D/g, ""); // Remove non-digits
-      if (digits.length < 10) {
-        warnings.push(
-          `Phone number has only ${digits.length} digits (expected 10+)`
-        );
-      } else if (digits.length > 11) {
-        warnings.push(
-          `Phone number has ${digits.length} digits (expected 10-11)`
-        );
-      }
-      // Check for obviously wrong patterns
-      if (/^(.)\1+$/.test(digits)) {
-        warnings.push("Phone number appears to be all same digit");
-      }
-    }
-
-    // Email validation (basic)
-    if (data.email && !data.email.includes("@")) {
-      warnings.push("Email address missing @ symbol");
-    }
-
-    // Name validation
-    if (data.name && data.name.length < 2) {
-      warnings.push("Name seems too short");
-    }
-
-    return warnings;
-  }
-
-  async function handleTestExtract() {
-    if (!testImage) {
-      setTestError("Please upload an image first");
-      return;
-    }
-
-    setTestExtracting(true);
-    setTestError(null);
-    setTestExtractedData(null);
-    setTestImageHash(null);
-
-    try {
-      console.log("🔍 Extracting data from test image:", testImage.name);
-
-      // Convert image to base64
-      const base64Image = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const base64 = reader.result as string;
-          const base64Data = base64.split(",")[1];
-          resolve(base64Data);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(testImage);
-      });
-
-      const response = await fetch("/api/connect-cards/extract", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          imageData: base64Image,
-          mediaType: testImage.type,
-          organizationSlug: slug,
-        }),
-      });
-
-      const result = await response.json();
-
-      // Handle duplicate detection (409 response)
-      if (response.status === 409 && result.duplicate) {
-        throw new Error(result.message || "Duplicate image detected");
-      }
-
-      if (!response.ok) {
-        throw new Error(result.error || "Extraction failed");
-      }
-
-      console.log("✅ Test extraction complete:", result);
-
-      // Validate extracted data
-      const warnings = validateExtractedData(result.data);
-      if (warnings.length > 0) {
-        console.warn("⚠️ Validation warnings:", warnings);
-        toast.warning(`Data extracted with warnings: ${warnings.join(", ")}`, {
-          duration: 5000,
-        });
-      } else {
-        toast.success("Data extracted successfully!");
-      }
-
-      setTestExtractedData(result.data);
-      setTestImageHash(result.imageHash); // Store hash for save action
-    } catch (error) {
-      console.error("❌ Test extraction error:", error);
-      setTestError(error instanceof Error ? error.message : "Unknown error");
-    } finally {
-      setTestExtracting(false);
-    }
-  }
-
-  async function handleTestSave() {
-    if (!testImage || !testExtractedData || !testImageHash) return;
-
-    startTestSaving(async () => {
-      try {
-        // Upload to S3 first if not already uploaded
-        let imageKey = testImageKey;
-        if (!imageKey) {
-          const presignedResponse = await fetch("/api/s3/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileName: testImage.name,
-              contentType: testImage.type,
-              size: testImage.size,
-              isImage: true,
-              fileType: "connect-card",
-              organizationSlug: slug,
-              cardSide: "front",
-            }),
-          });
-
-          if (!presignedResponse.ok) {
-            throw new Error("Failed to get presigned URL");
-          }
-
-          const { presignedUrl, key } = await presignedResponse.json();
-
-          const uploadResponse = await fetch(presignedUrl, {
-            method: "PUT",
-            headers: { "Content-Type": testImage.type },
-            body: testImage,
-          });
-
-          if (!uploadResponse.ok) {
-            throw new Error("Failed to upload to S3");
-          }
-
-          imageKey = key;
-          setTestImageKey(key);
-        }
-
-        // Save to database
-        const result = await saveConnectCard(
-          slug,
-          {
-            imageKey: imageKey!,
-            imageHash: testImageHash, // Pass the hash from extract API
-            extractedData: testExtractedData,
-          },
-          selectedLocationId
-        );
-
-        if (result.status === "success") {
-          // Fetch active batch info after first successful save
-          if (!activeBatch) {
-            const batchResult = await getActiveBatchAction(slug);
-            if (batchResult.status === "success" && batchResult.data) {
-              setActiveBatch(batchResult.data);
-              router.refresh(); // Update Batches tab badge count
-            }
-          }
-          toast.success("Connect card saved to database!");
-          setTestSavedId(result.data?.id || null);
-        } else {
-          toast.error(result.message);
-          setTestError(result.message);
-        }
-      } catch (error) {
-        console.error("Save error:", error);
-        const errorMessage =
-          error instanceof Error ? error.message : "Failed to save";
-        toast.error(errorMessage);
-        setTestError(errorMessage);
-      }
-    });
-  }
-
-  function handleTestReset() {
-    setTestImage(null);
-    setTestPreview(null);
-    setTestImageKey(null);
-    setTestImageHash(null);
-    setTestExtractedData(null);
-    setTestError(null);
-    setTestSavedId(null);
-  }
-
+  // ========================================================================
+  // COMPUTED VALUES
+  // ========================================================================
   const savedCount = images.filter(img => img.saved).length;
   const duplicateCount = images.filter(img => img.isDuplicate).length;
   const errorCount = images.filter(img => img.error && !img.isDuplicate).length;
   const processedCount = savedCount + duplicateCount + errorCount;
   const isAllProcessed = images.length > 0 && processedCount === images.length;
 
-  // Reset to start new upload session
   function handleNewUploadSession() {
     setImages([]);
     toast.info("Ready for new upload session");
   }
 
-  return (
-    <div className="space-y-6">
-      {/* Action Bar */}
-      <div className="flex items-center justify-between">
-        {/* Left side - Primary actions */}
-        <div className="flex gap-3">
-          {/* State 1: Images added, not all processed yet */}
-          {images.length > 0 && !isAllProcessed && !isProcessing && (
-            <>
-              {/* Add More Images - Only before processing */}
-              {uploadMode === "files" ? (
-                <div {...getRootProps()}>
-                  <input {...getInputProps()} />
-                  <Button variant="outline" size="lg">
-                    <FileImage className="mr-2 w-4 h-4" />
-                    Add More Images
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => cameraInputRef.current?.click()}
-                >
-                  <Camera className="mr-2 w-4 h-4" />
-                  Take More Photos
+  // ========================================================================
+  // RENDER: Processing State (images selected)
+  // ========================================================================
+  if (images.length > 0) {
+    return (
+      <div className="space-y-6">
+        {/* Action Bar */}
+        <div className="flex items-center justify-between">
+          <div className="flex gap-3">
+            {!isAllProcessed && !isProcessing && (
+              <>
+                <Button variant="outline" size="lg" onClick={openFilePicker}>
+                  <FileImage className="mr-2 w-4 h-4" />
+                  Add More
                 </Button>
-              )}
+                <Button onClick={handleProcessAll} size="lg">
+                  <CheckCircle2 className="mr-2 w-5 h-5" />
+                  Process All Cards
+                </Button>
+              </>
+            )}
 
-              {/* Process All Cards */}
-              <Button onClick={handleProcessAll} size="lg">
-                <CheckCircle2 className="mr-2 w-5 h-5" />
-                Process All Cards
+            {isProcessing && (
+              <Button disabled size="lg">
+                <Loader2 className="mr-2 w-5 h-5 animate-spin" />
+                Processing {savedCount} of {images.length}...
               </Button>
-            </>
-          )}
+            )}
 
-          {/* State 2: Processing in progress */}
-          {isProcessing && (
-            <Button disabled size="lg">
-              <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-              Processing {savedCount} of {images.length}...
-            </Button>
-          )}
+            {isAllProcessed && !isProcessing && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleNewUploadSession}
+              >
+                <Upload className="mr-2 w-4 h-4" />
+                Upload More
+              </Button>
+            )}
+          </div>
 
-          {/* State 3: Processing complete */}
-          {isAllProcessed && !isProcessing && (
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleNewUploadSession}
-            >
-              <Upload className="mr-2 w-4 h-4" />
-              Upload More
-            </Button>
-          )}
-        </div>
-
-        {/* Right side - Cancel button (clears upload session) */}
-        {images.length > 0 && (
           <Button
             variant="outline"
             size="lg"
@@ -804,610 +768,604 @@ export function ConnectCardUploadClient({
             <X className="mr-2 w-4 h-4" />
             Cancel
           </Button>
-        )}
-      </div>
-
-      {/* Removed separate stat cards - now combined in batch completion card below */}
-
-      {/* Upload Tabs */}
-      {images.length === 0 && !testPreview && (
-        <Tabs
-          defaultValue="files"
-          value={uploadMode}
-          onValueChange={value => setUploadMode(value as UploadMode)}
-          className="w-full"
-        >
-          {/* Step 1: Verify Location */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">
-                1
-              </div>
-              <h3 className="text-lg font-semibold">Verify Location</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Select the campus location where these connect cards were
-              collected.
-            </p>
-            {locations.length > 0 && (
-              <div className="flex items-center gap-3">
-                <Label
-                  htmlFor="location-select"
-                  className="text-sm font-medium flex items-center gap-2"
-                >
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  Location:
-                </Label>
-                <Select
-                  value={selectedLocationId || ""}
-                  onValueChange={value =>
-                    setSelectedLocationId(value || defaultLocationId)
-                  }
-                >
-                  <SelectTrigger className="w-[200px]" id="location-select">
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map(location => (
-                      <SelectItem key={location.id} value={location.id}>
-                        {location.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-
-          {/* Step 2: Upload Connect Cards */}
-          <div className="mb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground text-sm font-semibold">
-                2
-              </div>
-              <h3 className="text-lg font-semibold">Upload Connect Cards</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              Choose your upload method below.
-            </p>
-          </div>
-
-          <TabsList className="h-auto -space-x-px bg-background p-0 shadow-xs rtl:space-x-reverse mb-6">
-            <TabsTrigger
-              value="files"
-              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
-            >
-              <FileImage className="mr-2 w-4 h-4" />
-              Upload Files
-            </TabsTrigger>
-            <TabsTrigger
-              value="camera"
-              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
-            >
-              <Camera className="mr-2 w-4 h-4" />
-              Mobile Scan
-            </TabsTrigger>
-            <TabsTrigger
-              value="test"
-              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 first:rounded-s last:rounded-e data-[state=active]:bg-muted data-[state=active]:after:bg-primary"
-            >
-              <TestTube className="mr-2 w-4 h-4" />
-              Test Single
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="files">
-            {/* Batch Creation Info */}
-            <Alert className="mb-4">
-              <Package className="h-4 w-4" />
-              <AlertDescription>
-                {(() => {
-                  const selectedLocation = locations.find(
-                    loc => loc.id === selectedLocationId
-                  );
-                  const today = new Date();
-                  const monthNames = [
-                    "Jan",
-                    "Feb",
-                    "Mar",
-                    "Apr",
-                    "May",
-                    "Jun",
-                    "Jul",
-                    "Aug",
-                    "Sep",
-                    "Oct",
-                    "Nov",
-                    "Dec",
-                  ];
-                  const batchName = selectedLocation
-                    ? `${selectedLocation.name} - ${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
-                    : "Select a location to create a batch";
-                  return (
-                    <>
-                      Uploading cards will create batch:{" "}
-                      <span className="font-semibold text-primary">
-                        {batchName}
-                      </span>
-                    </>
-                  );
-                })()}
-              </AlertDescription>
-            </Alert>
-
-            <Card
-              {...getRootProps()}
-              className={`border-2 border-dashed transition-colors cursor-pointer ${
-                isDragActive
-                  ? "border-primary bg-primary/10"
-                  : "border-border hover:border-primary"
-              }`}
-            >
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <input {...getInputProps()} />
-                <Upload className="w-12 h-12 mb-4 text-muted-foreground" />
-                <p className="text-lg font-medium mb-2">
-                  {isDragActive
-                    ? "Drop images here..."
-                    : "Drag & drop connect card images"}
-                </p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  or click to browse files
-                </p>
-                <Button>Select Images</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="camera">
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-12">
-                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
-                  <Smartphone className="w-8 h-8 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Mobile Scanner</h3>
-                <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
-                  Scan connect cards using your device&apos;s camera with a live
-                  viewfinder. Supports both single and two-sided cards.
-                </p>
-                <div className="flex flex-col gap-3 items-center">
-                  <Button size="lg" asChild>
-                    <Link href={`/church/${slug}/admin/connect-cards/scan`}>
-                      <Camera className="mr-2 w-5 h-5" />
-                      Launch Scanner
-                      <ArrowRight className="ml-2 w-4 h-4" />
-                    </Link>
-                  </Button>
-                  <p className="text-xs text-muted-foreground">
-                    Best on mobile devices
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="test">
-            {!testPreview ? (
-              <>
-                {/* Batch Creation Info */}
-                <Alert className="mb-4">
-                  <Package className="h-4 w-4" />
-                  <AlertDescription>
-                    {(() => {
-                      const selectedLocation = locations.find(
-                        loc => loc.id === selectedLocationId
-                      );
-                      const today = new Date();
-                      const monthNames = [
-                        "Jan",
-                        "Feb",
-                        "Mar",
-                        "Apr",
-                        "May",
-                        "Jun",
-                        "Jul",
-                        "Aug",
-                        "Sep",
-                        "Oct",
-                        "Nov",
-                        "Dec",
-                      ];
-                      const batchName = selectedLocation
-                        ? `${selectedLocation.name} - ${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`
-                        : "Select a location to create a batch";
-                      return (
-                        <>
-                          Test mode - Cards will be saved to batch:{" "}
-                          <span className="font-semibold text-primary">
-                            {batchName}
-                          </span>
-                        </>
-                      );
-                    })()}
-                  </AlertDescription>
-                </Alert>
-
-                {/* Test Image Upload */}
-                <Card className="border-2 border-dashed border-border">
-                  <CardContent className="flex flex-col items-center justify-center py-12">
-                    <Upload className="w-12 h-12 mb-4 text-muted-foreground" />
-                    <p className="text-lg font-medium mb-2">
-                      Test Single Connect Card
-                    </p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                      Select a connect card image to test extraction
-                    </p>
-                    <Button
-                      onClick={() =>
-                        document.getElementById("test-file-input")?.click()
-                      }
-                    >
-                      Choose Image
-                    </Button>
-                    <input
-                      id="test-file-input"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleTestImageSelect}
-                    />
-                  </CardContent>
-                </Card>
-              </>
-            ) : null}
-          </TabsContent>
-        </Tabs>
-      )}
-
-      {/* Test Mode - Full Page View */}
-      {testPreview && (
-        <div className="space-y-6">
-          {/* Test Mode Action Bar */}
-          <div className="flex items-center justify-between">
-            <div className="flex gap-3">
-              {!testExtractedData && !testExtracting && (
-                <Button onClick={handleTestExtract} size="lg">
-                  <CheckCircle2 className="mr-2 w-5 h-5" />
-                  Extract Data
-                </Button>
-              )}
-
-              {testExtracting && (
-                <Button disabled size="lg">
-                  <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                  Extracting...
-                </Button>
-              )}
-
-              {testExtractedData && !testSavedId && (
-                <Button
-                  onClick={handleTestSave}
-                  disabled={testSaving}
-                  size="lg"
-                >
-                  {testSaving ? (
-                    <>
-                      <Loader2 className="mr-2 w-5 h-5 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="mr-2 w-5 h-5" />
-                      Save to Database
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {testSavedId && (
-                <Button variant="outline" size="lg" onClick={handleTestReset}>
-                  <Upload className="mr-2 w-4 h-4" />
-                  Test Another Card
-                </Button>
-              )}
-            </div>
-
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleTestReset}
-              className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground"
-            >
-              <X className="mr-2 w-4 h-4" />
-              Cancel
-            </Button>
-          </div>
-
-          {/* Error Alert */}
-          {testError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{testError}</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Test Card Display */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Image Preview */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Connect Card Image</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div
-                  className="relative rounded-lg overflow-hidden border cursor-zoom-in hover:opacity-90 transition-opacity aspect-[3/4]"
-                  onClick={() => setImageModalOpen(true)}
-                  title="Click to view full size"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={testPreview}
-                    alt="Test connect card"
-                    className="w-full h-full object-contain bg-muted"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Extracted Data */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Extracted Data</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!testExtractedData && !testError && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <FileText className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No data extracted yet</p>
-                    <p className="text-sm mt-2">
-                      Click &quot;Extract Data&quot; to process
-                    </p>
-                  </div>
-                )}
-
-                {testExtractedData && (
-                  <div className="bg-muted p-4 rounded-lg">
-                    <pre className="text-sm overflow-auto max-h-[500px]">
-                      {JSON.stringify(testExtractedData, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
         </div>
-      )}
 
-      {/* Image Grid */}
-      {images.length > 0 && (
-        <>
-          {/* Simple Batch Indicator - Only show before processing complete */}
-          {activeBatch && !loadingBatch && savedCount < images.length && (
-            <Alert className="mb-4">
-              <Package className="h-4 w-4" />
-              <AlertDescription>
-                These cards will be added to batch:{" "}
-                <span className="font-semibold text-primary">
-                  {activeBatch.name}
-                </span>
-              </AlertDescription>
-            </Alert>
-          )}
+        {/* Batch Indicator */}
+        {activeBatch && !isAllProcessed && (
+          <Alert className="mb-4">
+            <Package className="h-4 w-4" />
+            <AlertDescription>
+              Cards will be added to batch:{" "}
+              <span className="font-semibold text-primary">
+                {activeBatch.name}
+              </span>
+            </AlertDescription>
+          </Alert>
+        )}
 
-          {/* Batch Summary - Only show after all cards processed (saved, duplicate, or error) */}
-          {activeBatch && !loadingBatch && isAllProcessed && (
-            <Card className="mb-6">
-              <CardContent className="py-4">
-                {/* Header row: Batch name + Review button */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                      <CheckCircle2 className="h-5 w-5" />
-                    </div>
-                    <p className="text-sm font-medium">
-                      Batch &quot;{activeBatch.name}&quot; complete
-                    </p>
+        {/* Batch Summary (after processing) */}
+        {activeBatch && isAllProcessed && (
+          <Card className="mb-6">
+            <CardContent className="py-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+                    <CheckCircle2 className="h-5 w-5" />
                   </div>
-                  {savedCount > 0 && (
-                    <Button
-                      onClick={() =>
-                        router.push(
-                          `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
-                        )
-                      }
-                    >
-                      <ClipboardCheck className="mr-2 w-4 h-4" />
-                      Review Batch
-                    </Button>
-                  )}
-                </div>
-
-                {/* Stats row - compact inline display */}
-                <div className="flex items-center flex-wrap gap-4 text-sm border-t pt-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-green-500" />
-                    <span className="text-muted-foreground">Saved:</span>
-                    <span className="font-semibold">{savedCount}</span>
-                  </div>
-                  {duplicateCount > 0 && (
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-yellow-500" />
-                      <span className="text-muted-foreground">Duplicates:</span>
-                      <span className="font-semibold">{duplicateCount}</span>
-                    </div>
-                  )}
-                  {errorCount > 0 && (
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4 text-destructive" />
-                      <span className="text-muted-foreground">Failed:</span>
-                      <span className="font-semibold">{errorCount}</span>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Progress */}
-          {isProcessing && (
-            <Alert>
-              <AlertDescription>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Processing connect cards...</span>
-                    <span>
-                      {savedCount} / {images.length} complete
-                    </span>
-                  </div>
-                  <Progress
-                    value={(savedCount / images.length) * 100}
-                    className="h-2"
-                  />
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Image Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {images.map(image => (
-              <Card key={image.id} className="overflow-hidden relative group">
-                {/* Delete Button - Only show for unprocessed cards */}
-                {!isProcessing &&
-                  !image.saved &&
-                  !image.error &&
-                  !image.uploading && (
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 z-10 transition-all hover:scale-110 hover:shadow-lg"
-                      onClick={() => handleDeleteImage(image.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-
-                <div className="aspect-square relative">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={image.preview}
-                    alt="Connect card"
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  {/* Status Overlay */}
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                    {image.uploading && (
-                      <Loader2 className="w-8 h-8 text-white animate-spin" />
-                    )}
-                    {image.extracting && (
-                      <Loader2 className="w-8 h-8 text-white animate-spin" />
-                    )}
-                    {image.saved && (
-                      <CheckCircle2 className="w-8 h-8 text-primary" />
-                    )}
-                    {image.error && !image.isDuplicate && (
-                      <AlertCircle className="w-8 h-8 text-destructive" />
-                    )}
-                    {image.isDuplicate && (
-                      <div className="flex flex-col items-center gap-2">
-                        <AlertCircle className="w-8 h-8 text-yellow-500" />
-                        <span className="text-xs text-yellow-500 font-semibold">
-                          {image.duplicateType === "image"
-                            ? "Duplicate Image"
-                            : "Duplicate Person"}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground truncate mb-2">
-                    {image.file.name}
+                  <p className="text-sm font-medium">
+                    Batch &quot;{activeBatch.name}&quot; complete
                   </p>
-                  <div className="text-xs font-medium space-y-1">
-                    <p className="flex items-center gap-1.5">
-                      {image.uploading && "Uploading..."}
-                      {image.uploaded &&
-                        !image.extracting &&
-                        !image.isDuplicate &&
-                        !image.error &&
-                        "Uploaded"}
-                      {image.extracting && "Analyzing..."}
-                      {image.extracted &&
-                        !image.saved &&
-                        !image.error &&
-                        "Saving..."}
-                      {image.saved && (
-                        <>
-                          <CheckCircle2 className="w-3 h-3 text-primary" />
-                          <span>Saved</span>
-                        </>
-                      )}
-                      {(image.isDuplicate || (image.error && image.uploaded)) &&
-                        "Uploaded"}
-                    </p>
-                    {image.isDuplicate && (
-                      <p
-                        className="text-yellow-600 flex items-center gap-1"
-                        title={image.duplicateMessage}
-                      >
-                        ⚠️{" "}
+                </div>
+                {savedCount > 0 && (
+                  <Button
+                    onClick={() =>
+                      router.push(
+                        `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
+                      )
+                    }
+                  >
+                    <ClipboardCheck className="mr-2 w-4 h-4" />
+                    Review Batch
+                  </Button>
+                )}
+              </div>
+
+              <div className="flex items-center flex-wrap gap-4 text-sm border-t pt-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                  <span className="text-muted-foreground">Saved:</span>
+                  <span className="font-semibold">{savedCount}</span>
+                </div>
+                {duplicateCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-yellow-500" />
+                    <span className="text-muted-foreground">Duplicates:</span>
+                    <span className="font-semibold">{duplicateCount}</span>
+                  </div>
+                )}
+                {errorCount > 0 && (
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    <span className="text-muted-foreground">Failed:</span>
+                    <span className="font-semibold">{errorCount}</span>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Progress */}
+        {isProcessing && (
+          <Alert>
+            <AlertDescription>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Processing connect cards...</span>
+                  <span>
+                    {savedCount} / {images.length} complete
+                  </span>
+                </div>
+                <Progress
+                  value={(savedCount / images.length) * 100}
+                  className="h-2"
+                />
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Image Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {images.map(image => (
+            <Card key={image.id} className="overflow-hidden relative group">
+              {!isProcessing &&
+                !image.saved &&
+                !image.error &&
+                !image.uploading && (
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 z-10 transition-all hover:scale-110 hover:shadow-lg"
+                    onClick={() => handleDeleteImage(image.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
+
+              <div className="aspect-square relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.preview}
+                  alt="Connect card"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  {image.uploading && (
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                  )}
+                  {image.extracting && (
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                  )}
+                  {image.saved && (
+                    <CheckCircle2 className="w-8 h-8 text-primary" />
+                  )}
+                  {image.error && !image.isDuplicate && (
+                    <AlertCircle className="w-8 h-8 text-destructive" />
+                  )}
+                  {image.isDuplicate && (
+                    <div className="flex flex-col items-center gap-2">
+                      <AlertCircle className="w-8 h-8 text-yellow-500" />
+                      <span className="text-xs text-yellow-500 font-semibold">
                         {image.duplicateType === "image"
                           ? "Duplicate Image"
                           : "Duplicate Person"}
-                      </p>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground truncate mb-2">
+                  {image.file.name}
+                </p>
+                <div className="text-xs font-medium space-y-1">
+                  <p className="flex items-center gap-1.5">
+                    {image.uploading && "Uploading..."}
+                    {image.uploaded &&
+                      !image.extracting &&
+                      !image.isDuplicate &&
+                      !image.error &&
+                      "Uploaded"}
+                    {image.extracting && "Analyzing..."}
+                    {image.extracted &&
+                      !image.saved &&
+                      !image.error &&
+                      "Saving..."}
+                    {image.saved && (
+                      <>
+                        <CheckCircle2 className="w-3 h-3 text-primary" />
+                        <span>Saved</span>
+                      </>
                     )}
-                    {image.error && !image.isDuplicate && (
-                      <p className="text-destructive flex items-center gap-1">
-                        ❌ Failed
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    {(image.isDuplicate || (image.error && image.uploaded)) &&
+                      "Uploaded"}
+                  </p>
+                  {image.isDuplicate && (
+                    <p
+                      className="text-yellow-600 flex items-center gap-1"
+                      title={image.duplicateMessage}
+                    >
+                      {image.duplicateType === "image"
+                        ? "Duplicate Image"
+                        : "Duplicate Person"}
+                    </p>
+                  )}
+                  {image.error && !image.isDuplicate && (
+                    <p className="text-destructive flex items-center gap-1">
+                      Failed
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ========================================================================
+  // RENDER: Setup Page (no images yet)
+  // ========================================================================
+  return (
+    <div className="space-y-6">
+      {/* Upload Options Card */}
+      <div className="relative overflow-hidden rounded-lg border bg-gradient-to-br from-primary/5 via-transparent to-transparent">
+        {/* Decorative elements */}
+        <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
+        <div className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full bg-primary/5 blur-xl" />
+
+        <div className="relative z-10 p-6">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <Upload className="h-5 w-5" />
+            </div>
+            <h2 className="text-lg font-semibold">Upload Connect Cards</h2>
           </div>
-        </>
-      )}
 
-      {/* Hidden camera input for camera mode */}
-      <input
-        ref={cameraInputRef}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        multiple
-        className="hidden"
-        onChange={handleCameraCapture}
-      />
+          {/* Action Buttons */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button
+              onClick={() => {
+                if (isMobile) {
+                  router.push(`/church/${slug}/admin/connect-cards/scan`);
+                } else {
+                  handleOpenQrModal();
+                }
+              }}
+              className="group relative overflow-hidden rounded-lg border-2 border-primary bg-primary/5 p-5 text-left transition-all hover:bg-primary/10 hover:shadow-lg hover:shadow-primary/5"
+            >
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform group-hover:scale-110">
+                  <Smartphone className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="font-semibold">Scan with Phone</p>
+                  <p className="text-sm text-muted-foreground">
+                    Use your phone camera
+                  </p>
+                </div>
+                <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                  Recommended
+                </span>
+              </div>
+            </button>
 
-      {/* Image Modal */}
-      <Dialog open={imageModalOpen} onOpenChange={setImageModalOpen}>
-        <DialogContent
-          className="p-2 [&>button]:bg-white [&>button]:text-black [&>button]:hover:bg-gray-200 [&>button]:rounded-full [&>button]:h-10 [&>button]:w-10 [&>button]:flex [&>button]:items-center [&>button]:justify-center"
-          style={{
-            maxWidth: "90vw",
-            width: "90vw",
-            maxHeight: "calc(100vh - 4rem)",
-          }}
+            <button
+              onClick={() => setScannerModalOpen(true)}
+              className="group relative overflow-hidden rounded-lg border-2 border-border bg-card/50 p-5 text-left transition-all hover:border-muted-foreground/50 hover:shadow-lg"
+            >
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground transition-transform group-hover:scale-110 group-hover:bg-muted-foreground/20">
+                  <FileImage className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="font-semibold">Document Scanner</p>
+                  <p className="text-sm text-muted-foreground">
+                    Use a flatbed or sheet-fed scanner
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Drop Zone - with "Already scanned?" header */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <ScanLine className="h-4 w-4" />
+          <span>Already scanned your cards? Drop the files below.</span>
+        </div>
+        <div
+          {...getRootProps()}
+          className={`group relative overflow-hidden rounded-lg border-2 border-dashed transition-all cursor-pointer ${
+            isDragActive
+              ? "border-primary bg-primary/10 scale-[1.02]"
+              : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
+          }`}
         >
-          <DialogHeader className="sr-only">
-            <DialogTitle>Connect Card Image</DialogTitle>
+          <input {...getInputProps()} />
+          <div className="flex flex-col items-center justify-center py-10 px-4">
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-full mb-4 transition-all ${
+                isDragActive
+                  ? "bg-primary text-primary-foreground scale-110"
+                  : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+              }`}
+            >
+              <Upload className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-medium mb-1">
+              {isDragActive ? "Drop files here..." : "Drag and drop images"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              or click to browse your files
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Help Guide - Collapsible */}
+      <Collapsible open={showHelp} onOpenChange={setShowHelp}>
+        <Card>
+          <CollapsibleTrigger asChild>
+            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <HelpCircle className="h-5 w-5 text-muted-foreground" />
+                  <CardTitle className="text-base">Need help?</CardTitle>
+                </div>
+                {showHelp ? (
+                  <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                )}
+              </div>
+            </CardHeader>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <CardContent className="pt-0">
+              <div className="grid gap-6 sm:grid-cols-2">
+                {/* Phone Camera Help */}
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Smartphone className="h-4 w-4" />
+                    Using Phone Camera
+                  </h4>
+                  <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                    <li>Click &quot;Scan with Phone&quot; to get a QR code</li>
+                    <li>Scan the QR with your phone camera</li>
+                    <li>Capture each card, front and back</li>
+                  </ol>
+                </div>
+                {/* Document Scanner Help */}
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <FileImage className="h-4 w-4" />
+                    Using Document Scanner
+                  </h4>
+                  <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+                    <li>Scan cards as JPG/PNG images (not PDF)</li>
+                    <li>Click &quot;Upload Files&quot; or drag to drop zone</li>
+                    <li>AI will extract the information automatically</li>
+                  </ol>
+                </div>
+              </div>
+            </CardContent>
+          </CollapsibleContent>
+        </Card>
+      </Collapsible>
+
+      {/* QR Code Modal (Desktop only) */}
+      <Dialog open={qrModalOpen} onOpenChange={setQrModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5" />
+              Scan with Your Phone
+            </DialogTitle>
+            <DialogDescription>
+              Scan this QR code with your phone camera to start capturing
+              connect cards. The link expires in 15 minutes.
+            </DialogDescription>
           </DialogHeader>
-          {testPreview && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={testPreview}
-              alt="Connect card full size"
-              className="w-full h-auto object-contain"
-              style={{ maxHeight: "calc(100vh - 5rem)" }}
-              decoding="async"
-            />
-          )}
+
+          {/* Card Type Selector */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Card Type</Label>
+            <Select
+              value={cardSide}
+              onValueChange={v => setCardSide(v as CardSide)}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="double">
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-4 w-4" />
+                    <span>Double-sided cards</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="single">
+                  <div className="flex items-center gap-2">
+                    <Square className="h-4 w-4" />
+                    <span>Single-sided cards</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {cardSide === "double"
+                ? "You'll capture front and back of each card"
+                : "You'll capture one side per card"}
+            </p>
+          </div>
+
+          <div className="flex flex-col items-center py-4">
+            {qrLoading ? (
+              <div className="h-64 w-64 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              </div>
+            ) : scanUrl ? (
+              <div className="bg-white p-4 rounded-lg">
+                <QRCodeSVG
+                  value={scanUrl}
+                  size={256}
+                  level="M"
+                  marginSize={0}
+                />
+              </div>
+            ) : (
+              <div className="h-64 w-64 flex items-center justify-center border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground text-center px-4">
+                  Failed to generate QR code.
+                  <br />
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto"
+                    onClick={generateQrCode}
+                  >
+                    Try again
+                  </Button>
+                </p>
+              </div>
+            )}
+
+            {qrExpiry && (
+              <p className="text-xs text-muted-foreground mt-4">
+                Expires at{" "}
+                {qrExpiry.toLocaleTimeString([], {
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={copyLinkToClipboard}
+              disabled={!scanUrl}
+            >
+              <Copy className="mr-2 h-4 w-4" />
+              Copy Link
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Or copy the link and text/email it to yourself
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Document Scanner Modal */}
+      <Dialog open={scannerModalOpen} onOpenChange={setScannerModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileImage className="h-5 w-5" />
+              Document Scanner
+            </DialogTitle>
+            <DialogDescription>
+              Connect your scanner folder for automatic uploads
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Folder Connection Status */}
+            {isWatching && watchedFolderName ? (
+              <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-500/20">
+                      <FolderSync className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                        Watching for new scans
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Folder: {watchedFolderName}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDisconnectFolder}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Just scan your cards — they&apos;ll appear here automatically.
+                </p>
+              </div>
+            ) : (
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <FolderOpen className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">
+                      Auto-detect scanned cards
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Connect your scanner&apos;s output folder and we&apos;ll
+                      automatically detect new scans. No more dragging files!
+                    </p>
+                  </div>
+                </div>
+                <Button onClick={handleConnectFolder} className="w-full">
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  Connect Scanner Folder
+                </Button>
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  Works in Chrome &amp; Edge • Read-only access • You choose the
+                  folder
+                </p>
+              </div>
+            )}
+
+            {/* Setup help link */}
+            <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+              <HelpCircle className="h-3 w-3" />
+              <span>First time?</span>
+              <a
+                href="#"
+                className="text-primary underline underline-offset-2 hover:no-underline inline-flex items-center gap-1"
+                onClick={e => {
+                  e.preventDefault();
+                  toast.info("Setup guide coming soon!");
+                }}
+              >
+                Setup instructions
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+
+            {/* Tips */}
+            <div className="rounded-lg bg-muted/50 p-3">
+              <p className="text-xs font-medium mb-1.5">Scanner settings</p>
+              <ul className="text-xs text-muted-foreground space-y-0.5">
+                <li>• Save as JPG or PNG (not PDF)</li>
+                <li>• 300 DPI for best results</li>
+              </ul>
+            </div>
+
+            {/* Double-sided note */}
+            <div className="rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
+              <p className="text-xs">
+                <span className="font-medium text-amber-600 dark:text-amber-400">
+                  Double-sided cards?
+                </span>{" "}
+                Use{" "}
+                <button
+                  type="button"
+                  className="text-primary underline underline-offset-2 hover:no-underline"
+                  onClick={() => {
+                    setScannerModalOpen(false);
+                    if (isMobile) {
+                      router.push(`/church/${slug}/admin/connect-cards/scan`);
+                    } else {
+                      handleOpenQrModal();
+                    }
+                  }}
+                >
+                  phone camera
+                </button>{" "}
+                if your scanner doesn&apos;t have duplex.
+              </p>
+            </div>
+          </div>
+
+          {/* Manual drop zone as fallback */}
+          <div
+            {...getRootProps()}
+            className={`rounded-lg border-2 border-dashed transition-all cursor-pointer ${
+              isDragActive
+                ? "border-primary bg-primary/10"
+                : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/50"
+            }`}
+          >
+            <input {...getInputProps()} />
+            <div className="flex flex-col items-center justify-center py-6 px-4">
+              <Upload className="w-6 h-6 text-muted-foreground mb-2" />
+              <p className="text-sm text-muted-foreground">
+                {isDragActive
+                  ? "Drop files here..."
+                  : "Or drop files here manually"}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setScannerModalOpen(false)}
+            >
+              Close
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
