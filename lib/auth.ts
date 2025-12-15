@@ -102,22 +102,42 @@ export const auth = betterAuth({
     ...(process.env.NODE_ENV === "development" ? [anonymous()] : []),
     emailOTP({
       async sendVerificationOTP({ email, otp }) {
-        // In development mode OR Vercel preview, log OTP to console for easy testing
+        /**
+         * ╔═══════════════════════════════════════════════════════════════════╗
+         * ║  🚨🚨🚨 SECURITY TODO: REMOVE BEFORE REAL PRODUCTION 🚨🚨🚨       ║
+         * ║                                                                    ║
+         * ║  OTP logging is enabled for ALL environments including production ║
+         * ║  This is ONLY for demo purposes while using Resend test mode.     ║
+         * ║                                                                    ║
+         * ║  BEFORE LAUNCH WITH REAL USERS:                                   ║
+         * ║  1. Verify custom domain in Resend                                ║
+         * ║  2. Set RESEND_FROM_EMAIL to your domain                          ║
+         * ║  3. Remove the isProduction condition below (revert to original)  ║
+         * ║                                                                    ║
+         * ╚═══════════════════════════════════════════════════════════════════╝
+         */
         const isPreview = process.env.VERCEL_ENV === "preview";
         const isDevelopment = process.env.NODE_ENV === "development";
+        const isProduction = process.env.VERCEL_ENV === "production";
 
-        // Always log in preview/dev that we're attempting to send OTP
-        if (isDevelopment || isPreview) {
+        // 🚨 DEMO MODE: Log OTP in ALL environments (remove isProduction before real launch)
+        const shouldLogOTP = isDevelopment || isPreview || isProduction;
+
+        if (shouldLogOTP) {
           console.log(`[OTP] Attempting to send OTP for ${email}`);
           console.log(
-            `[OTP] Environment - Preview: ${isPreview}, Dev: ${isDevelopment}`
+            `[OTP] Environment - Preview: ${isPreview}, Dev: ${isDevelopment}, Prod: ${isProduction}`
           );
           console.log(`[OTP] VERCEL_ENV: ${process.env.VERCEL_ENV}`);
           console.log(`[OTP] NODE_ENV: ${process.env.NODE_ENV}`);
         }
 
-        if (isDevelopment || isPreview) {
-          const envLabel = isPreview ? "PREVIEW" : "DEVELOPMENT";
+        if (shouldLogOTP) {
+          const envLabel = isProduction
+            ? "🚨 PRODUCTION"
+            : isPreview
+              ? "PREVIEW"
+              : "DEVELOPMENT";
           console.log("\n" + "=".repeat(60));
           console.log(`🔐 ${envLabel} OTP CODE: ${otp}`);
           console.log(`📧 For email: ${email}`);
