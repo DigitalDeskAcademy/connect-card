@@ -46,6 +46,20 @@
 >
 > **Next Priority:** Connect card upload UX overhaul for non-technical church staff.
 
+---
+
+## ⚠️ POST-DEMO TODO
+
+**Restore after NewLife demo is complete:**
+
+| Item         | Current State             | Restore From                      | Notes                     |
+| ------------ | ------------------------- | --------------------------------- | ------------------------- |
+| Landing Page | Demo version (simplified) | `app/(public)/page.marketing.tsx` | Rename back to `page.tsx` |
+
+The marketing landing page with "25 Founding Churches" messaging was temporarily replaced with a clean demo page that removes NewLife references. After demo, restore the marketing page.
+
+---
+
 **Recently Completed (PRs Merged):**
 
 - ✅ connect-card #73 - QR code scan flow with token authentication (Dec 15)
