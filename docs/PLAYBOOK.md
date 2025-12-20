@@ -3,7 +3,7 @@
 **Purpose:** THE authoritative guide for building Church Connect Hub. If there's a conflict, this document wins.
 **Status:** 🟡 **PRODUCTION BLOCKERS FIXED** - Phase 1 complete, ready for pilot
 **Health Score:** 78/100 (C+)
-**Last Updated:** 2025-12-14
+**Last Updated:** 2025-12-17
 **Applies To:** All worktrees, all features, all developers
 
 > ⚠️ **This is the law.** When in doubt, follow this document. All other docs are supplementary.
@@ -63,11 +63,13 @@ where: {
 ```
 /church-connect-hub/
 ├── .bare/            # Bare repository
-├── main/             # Main branch (port 3000)
-├── connect-card/     # Feature worktree (port 3001)
-├── prayer/           # Feature worktree (port 3002)
-├── volunteer/        # Feature worktree (port 3003)
-└── tech-debt/        # Tech debt fixes (port 3004)
+├── main/             # Project management (port 3000) - 🔴 Red
+├── connect-card/     # MVP fine-tuning (port 3001) - 🟣 Purple
+├── prayer/           # PAUSED (port 3002) - 🔵 Blue
+├── volunteer/        # Event tracking (port 3003) - 🟢 Green
+├── tech-debt/        # Keyword detection (port 3004) - 🟡 Yellow
+├── e2e/              # Playwright tests (port 3005) - 🔵 Cyan
+└── integrations/     # Planning Center API (port 3006) - ⬜ Grey
 ```
 
 **Each worktree:**
@@ -519,15 +521,17 @@ import { SomeUtil } from "@/lib/utils";
 
 **Phase 1 critical issues are FIXED.** We're now focused on Phase 2 (performance) and feature completion.
 
-**Current priorities:**
+**Current priorities (post-demo Dec 2025):**
 
 1. ✅ ~~Emergency fixes (Phase 1)~~ - Complete
-2. 🔄 Performance fixes (Phase 2) - In progress (caching, optimization)
-3. 🔄 Feature completion - Connect Card UX, Volunteer Export
-4. ⏳ Code quality (Phase 3) - After pilot
+2. 🔴 Planning Center API Integration → `integrations` worktree
+3. 🔴 Deduplication Enhancement → `connect-card` worktree
+4. 🟢 Keyword Detection → `tech-debt` worktree
+5. 🟡 Volunteer Event Tracking → `volunteer` worktree
+6. ⏸️ Prayer enhancements - Deprioritized (Planning Center handles it)
 
 **This document is the law. When in doubt, check here. If it conflicts with other docs, this wins.**
 
 ---
 
-_Last audit: 2025-12-12 | Next audit: After pilot church deployment_
+_Last audit: 2025-12-17 | Next audit: January 2026 customer meeting_

@@ -27,6 +27,7 @@ import { headers } from "next/headers";
 
 import Link from "next/link";
 import AdminLink from "./_components/AdminLink";
+import { IntegrationFAQ } from "./_components/integration-faq";
 
 export const metadata: Metadata = {
   title: "Church Sync - Connect Card Management",
@@ -236,6 +237,9 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      {/* Data & Security FAQ Section */}
+      <IntegrationFAQ />
 
       {/* CTA Section */}
       <section className="py-20 px-4">
