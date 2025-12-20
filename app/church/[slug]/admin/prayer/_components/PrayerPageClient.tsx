@@ -4,13 +4,13 @@
  * Prayer Page Client Component with NavTabs
  *
  * Provides URL-based tabbed navigation for prayer management:
- * - Requests: Prayer request table with search/filter
- * - Batches: Daily prayer batches for assignment
+ * - Requests: Unassigned prayers inbox (select & assign to create batches)
+ * - Batches: View/manage assigned prayer batches
  * - My Prayer Sheet: Personal prayer session view
  */
 
 import { NavTabs } from "@/components/layout/nav-tabs";
-import { FileText, Package, BookOpen } from "lucide-react";
+import { Inbox, Package, BookOpen } from "lucide-react";
 import { PrayerRequestDataTable } from "@/components/dashboard/prayer-requests/data-table";
 import { prayerRequestColumns } from "@/components/dashboard/prayer-requests/columns";
 import { PrayerBatchesClient } from "../../prayer-batches/prayer-batches-client";
@@ -47,11 +47,18 @@ interface Location {
   name: string;
 }
 
+interface TeamMember {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
 interface PrayerPageClientProps {
   slug: string;
-  // All Requests tab data
+  // Requests tab data (unassigned prayers)
   prayerRequests: PrayerRequestListItem[];
   locations: Location[];
+  teamMembers: TeamMember[];
   // Batches tab data
   batches: PrayerBatch[];
   // My Prayer Sheet tab data
@@ -61,25 +68,33 @@ interface PrayerPageClientProps {
   activeTab: string;
   pendingBatchCount: number;
   myPrayerCount: number;
+  unassignedCount: number;
 }
 
 export function PrayerPageClient({
   slug,
   prayerRequests,
   locations,
+  teamMembers,
   batches,
   myPrayers,
   userName,
   activeTab,
   pendingBatchCount,
   myPrayerCount,
+  unassignedCount,
 }: PrayerPageClientProps) {
   return (
     <>
       <NavTabs
         baseUrl={`/church/${slug}/admin/prayer`}
         tabs={[
-          { label: "Requests", value: "requests", icon: FileText },
+          {
+            label: "Inbox",
+            value: "requests",
+            icon: Inbox,
+            count: unassignedCount > 0 ? unassignedCount : undefined,
+          },
           {
             label: "Batches",
             value: "batches",
@@ -100,11 +115,11 @@ export function PrayerPageClient({
         <PrayerRequestDataTable
           columns={prayerRequestColumns}
           data={prayerRequests}
-          title="Prayer Requests"
+          title="Unassigned Prayer Requests"
           pageSize={10}
           slug={slug}
           locations={locations}
-          teamMembers={[]}
+          teamMembers={teamMembers}
         />
       )}
 

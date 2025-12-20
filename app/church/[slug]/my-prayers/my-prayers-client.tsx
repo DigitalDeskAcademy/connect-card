@@ -238,7 +238,7 @@ export function MyPrayersClient({
       </div>
 
       {/* Prayer Sections */}
-      <main className="max-w-3xl mx-auto px-4 py-6 sm:px-6 space-y-8 print:px-6 print:py-4">
+      <main className="max-w-3xl mx-auto px-4 py-4 sm:px-6 space-y-4 print:px-6 print:py-4">
         {isPending && (
           <div className="fixed top-4 right-4 bg-background border rounded-lg shadow-lg p-3 flex items-center gap-2 print:hidden">
             <Loader2 className="h-4 w-4 animate-spin" />

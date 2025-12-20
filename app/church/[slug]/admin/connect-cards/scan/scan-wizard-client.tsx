@@ -89,6 +89,7 @@ interface ScanWizardClientProps {
   slug: string;
   locations: Location[];
   defaultLocationId: string | null;
+  scanToken?: string; // Token from QR code scan (for phone auth)
 }
 
 // Session storage key for persistence
@@ -106,6 +107,7 @@ export function ScanWizardClient({
   slug,
   locations,
   defaultLocationId,
+  scanToken,
 }: ScanWizardClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -142,6 +144,28 @@ export function ScanWizardClient({
     captureImage,
     switchCamera,
   } = useCamera();
+
+  // Create scan session cookie on mount (for phone QR code flow)
+  // This enables subsequent API calls to authenticate via cookie
+  useEffect(() => {
+    if (!scanToken) return;
+
+    const createSession = async () => {
+      try {
+        await fetch("/api/scan/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: scanToken, slug }),
+        });
+        // Cookie is now set - API calls will work
+      } catch {
+        // Session creation failed - API calls may fail
+        // but page is already loaded so don't block
+      }
+    };
+
+    createSession();
+  }, [scanToken, slug]);
 
   // Restore session from storage on mount
   useEffect(() => {
@@ -203,7 +227,7 @@ export function ScanWizardClient({
   // Handle capture button press - crops to card alignment guide
   const handleCapture = async () => {
     // Capture image from camera
-    const result = await captureImage();
+    const result = await captureImage(true);
     if (!result) {
       toast.error("Failed to capture image");
       return;

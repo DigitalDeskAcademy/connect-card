@@ -2,8 +2,8 @@
  * Prayer Request Management
  *
  * Unified prayer management with tabbed navigation:
- * - All Requests: Prayer request table with search/filter
- * - Batches: Daily prayer batches for assignment
+ * - Requests: Unassigned prayers inbox (select & assign to create batches)
+ * - Batches: View/manage assigned prayer batches
  * - My Prayer Sheet: Personal prayer session view
  */
 
@@ -14,6 +14,7 @@ import { getOrganizationLocations } from "@/lib/data/locations";
 import { getPrayerBatches } from "@/lib/data/prayer-batches";
 import { getMyAssignedPrayers } from "@/lib/data/prayer-requests";
 import { PrayerPageClient } from "./_components/PrayerPageClient";
+import { prisma } from "@/lib/db";
 import type { PrayerRequestListItem } from "@/lib/types/prayer-request";
 
 interface PrayerPageProps {
@@ -33,15 +34,23 @@ export default async function PrayerPage({
     await requireDashboardAccess(slug);
 
   // 2. Fetch all data in parallel for all three tabs
-  const [prayerRequestsResult, locations, batches, myPrayers] =
+  const [prayerRequestsResult, locations, batches, myPrayers, teamMembers] =
     await Promise.all([
-      // All Requests tab
-      getPrayerRequestsForScope(dataScope, session.user.id),
+      // Requests tab - Only PENDING (unassigned) prayers
+      getPrayerRequestsForScope(dataScope, session.user.id, {
+        status: "PENDING",
+      }),
       getOrganizationLocations(organization.id),
       // Batches tab
       getPrayerBatches(organization.id),
       // My Prayer Sheet tab
       getMyAssignedPrayers(organization.id, session.user.id),
+      // Team members for assignment dropdown
+      prisma.user.findMany({
+        where: { organizationId: organization.id },
+        select: { id: true, name: true, email: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
 
   // 3. Transform prayer requests to list items for table
@@ -77,10 +86,24 @@ export default async function PrayerPage({
         locations={locations}
         batches={batches}
         myPrayers={myPrayers}
+        teamMembers={teamMembers}
         userName={session.user.name || session.user.email}
         activeTab={activeTab}
-        pendingBatchCount={batches.filter(b => b.status === "PENDING").length}
-        myPrayerCount={myPrayers.length}
+        pendingBatchCount={
+          batches.filter(
+            b =>
+              b.status !== "COMPLETED" &&
+              b.status !== "ARCHIVED" &&
+              b._count.prayerRequests > 0
+          ).length
+        }
+        myPrayerCount={
+          batches.filter(
+            b =>
+              b.assignedTo?.id === session.user.id && b.status !== "COMPLETED"
+          ).length
+        }
+        unassignedCount={prayerRequests.length}
       />
     </PageContainer>
   );

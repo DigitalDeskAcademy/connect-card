@@ -55,12 +55,16 @@ export async function createScanTokenAction(slug: string): Promise<
     // Token expires in 15 minutes
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    // Delete any existing unused tokens for this user (cleanup)
+    // Delete any existing unused OR expired tokens for this user (lazy cleanup)
+    // This prevents token accumulation over time without needing a cron job
     await prisma.scanToken.deleteMany({
       where: {
         userId: session.user.id,
         organizationId: organization.id,
-        usedAt: null,
+        OR: [
+          { usedAt: null }, // unused tokens
+          { expiresAt: { lt: new Date() } }, // expired tokens
+        ],
       },
     });
 
@@ -74,9 +78,9 @@ export async function createScanTokenAction(slug: string): Promise<
       },
     });
 
-    // Build scan URL
+    // Build scan URL (public route, not under /admin)
     const baseUrl = env.NEXT_PUBLIC_APP_URL || "http://localhost:3001";
-    const scanUrl = `${baseUrl}/church/${slug}/admin/connect-cards/scan?token=${token}`;
+    const scanUrl = `${baseUrl}/church/${slug}/scan?token=${token}`;
 
     return {
       status: "success",

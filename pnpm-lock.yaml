@@ -245,6 +245,9 @@ importers:
       "@types/node":
         specifier: ^20
         version: 20.19.1
+      "@types/qrcode.react":
+        specifier: ^3.0.0
+        version: 3.0.0(react@19.1.0)
       "@types/react":
         specifier: ^19
         version: 19.1.8
@@ -4680,6 +4683,13 @@ packages:
       {
         integrity: sha512-jJD50LtlD2dodAEO653i3YF04NWak6jN3ky+Ri3Em3mGR39/glWiboM/IePaRbgwSfqM1TpGXfAg8ohn/4dTgA==,
       }
+
+  "@types/qrcode.react@3.0.0":
+    resolution:
+      {
+        integrity: sha512-VPHYhnDfvt4LjlWajpYWRBVqmftEEza3GJVhe8sS5Wew0n4nTkg3+2MYunAiU6t04AZt0s/hkkMovefWeENjAQ==,
+      }
+    deprecated: This is a stub types definition. qrcode.react provides its own type definitions, so you do not need this installed.
 
   "@types/react-dom@19.1.6":
     resolution:
@@ -13757,6 +13767,12 @@ snapshots:
   "@types/node@20.19.1":
     dependencies:
       undici-types: 6.21.0
+
+  "@types/qrcode.react@3.0.0(react@19.1.0)":
+    dependencies:
+      qrcode.react: 4.2.0(react@19.1.0)
+    transitivePeerDependencies:
+      - react
 
   "@types/react-dom@19.1.6(@types/react@19.1.8)":
     dependencies:

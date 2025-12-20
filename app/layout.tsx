@@ -68,6 +68,12 @@ export const metadata: Metadata = {
   title: "Church Connect Hub",
   description:
     "Multi-tenant church management platform with AI-powered connect card scanning, volunteer onboarding, and prayer management.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Card Scanner",
+  },
 };
 
 export default function RootLayout({

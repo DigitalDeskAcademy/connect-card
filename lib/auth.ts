@@ -26,8 +26,13 @@ import { anonymous } from "better-auth/plugins";
  * This approach is the industry standard used by Vercel, Supabase, Clerk, etc.
  */
 function getBaseUrl(): string {
-  // For Vercel deployments (preview & production), use automatic VERCEL_URL
-  // This is secure because VERCEL_URL is provided by Vercel's infrastructure, not user input
+  // For Vercel PRODUCTION, use the known production URL
+  // VERCEL_URL gives deployment-specific URLs which break OAuth callbacks
+  if (process.env.VERCEL_ENV === "production") {
+    return "https://connect-card-two.vercel.app";
+  }
+
+  // For Vercel PREVIEW deployments, use the dynamic URL
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
@@ -87,7 +92,14 @@ export const auth = betterAuth({
   // Include localhost for development and the dynamic Vercel URL for previews
   trustedOrigins: [
     "http://localhost:3000",
+    // Production URL (Vercel alias)
+    "https://connect-card-two.vercel.app",
+    // Dynamic preview URLs
     ...(process.env.VERCEL_URL ? [`https://${process.env.VERCEL_URL}`] : []),
+    // Production URL from Vercel env (if set)
+    ...(process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? [`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`]
+      : []),
     ...(env.BETTER_AUTH_URL ? [env.BETTER_AUTH_URL] : []),
   ].filter(Boolean),
 
@@ -190,8 +202,16 @@ export const auth = betterAuth({
           }
 
           // Don't throw in development since we log the OTP
-          if (process.env.NODE_ENV === "production") {
-            throw error; // In production, email must work
+          // 🚨 DEMO MODE: Also don't throw for .test/.example emails (they can't receive mail)
+          const isTestEmail =
+            email.endsWith(".test") || email.endsWith(".example");
+          if (process.env.NODE_ENV === "production" && !isTestEmail) {
+            throw error; // In production with real emails, email must work
+          }
+          if (isTestEmail) {
+            console.log(
+              `⚠️  Test email (${email}) - OTP logged above, email not sent`
+            );
           }
         }
       },

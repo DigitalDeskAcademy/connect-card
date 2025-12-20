@@ -982,7 +982,7 @@ export function ConnectCardUploadClient({
             <button
               onClick={() => {
                 if (isMobile) {
-                  router.push(`/church/${slug}/admin/connect-cards/scan`);
+                  router.push(`/church/${slug}/scan`);
                 } else {
                   handleOpenQrModal();
                 }
@@ -1325,7 +1325,7 @@ export function ConnectCardUploadClient({
                   onClick={() => {
                     setScannerModalOpen(false);
                     if (isMobile) {
-                      router.push(`/church/${slug}/admin/connect-cards/scan`);
+                      router.push(`/church/${slug}/scan`);
                     } else {
                       handleOpenQrModal();
                     }

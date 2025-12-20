@@ -71,6 +71,7 @@ export default createMiddleware(aj, async (request: NextRequest) => {
   // Apply auth middleware to protected routes
   // - /platform/* - Platform admin routes
   // - /church/*/admin/* - Church admin dashboard routes
+  // NOTE: /church/*/scan is PUBLIC (token-based auth handled by page)
   if (
     pathname.startsWith("/platform/") ||
     /^\/church\/[^\/]+\/admin/.test(pathname)

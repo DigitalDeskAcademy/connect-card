@@ -19,7 +19,6 @@
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
 import { getOrganizationLocations } from "@/lib/data/locations";
-import { PageContainer } from "@/components/layout/page-container";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { ScanWizardClient } from "./scan-wizard-client";
@@ -125,14 +124,13 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
       ? user.defaultLocationId
       : locations[0]?.id || null;
 
+  // No PageContainer - scan wizard uses fixed positioning for full-screen camera
   return (
-    <PageContainer as="main">
-      <ScanWizardClient
-        slug={slug}
-        locations={locations}
-        defaultLocationId={defaultLocationId}
-        scanToken={token}
-      />
-    </PageContainer>
+    <ScanWizardClient
+      slug={slug}
+      locations={locations}
+      defaultLocationId={defaultLocationId}
+      scanToken={token}
+    />
   );
 }
