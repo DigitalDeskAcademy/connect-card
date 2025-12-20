@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-15 (Demo UI PR #78)
+**Last Updated:** 2025-12-19 (Keyword Detection PR #80)
 **Update Frequency:** After each significant work session
 
 ---
@@ -48,6 +48,7 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ tech-debt #80 - Campaign keyword detection and tracking (Dec 19) ✓ MERGED
 - ✅ tech-debt #78 - Demo UI: Modernized landing page + comprehensive seed data (Dec 15) ✓ MERGED
 - ✅ prayer #77 - Prayer inbox workflow with batch assignment + My Prayers redesign (Dec 15)
 - ✅ connect-card #73 - QR code scan flow with token authentication (Dec 15)
@@ -77,7 +78,7 @@
 
 ### 🟢 tech-debt (Port 3004) - Active
 
-**Status:** ✅ GHL Phase 1 Complete, Demo seed fixed
+**Status:** ✅ GHL Phase 1 Complete, Keyword Detection Complete
 **Branch:** `feature/tech-debt`
 **Vision Doc:** `/docs/features/ghl-integration/vision.md`
 
