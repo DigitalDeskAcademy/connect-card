@@ -1,8 +1,14 @@
 # Member Management - Product Vision
 
+> 📋 **STATUS: FUTURE WORK (Dec 2025)**
+>
+> This feature is not yet built and is planned for a future phase.
+> Post-demo priorities focus on: Planning Center API, Deduplication,
+> Keyword Detection, and Volunteer Event Tracking.
+
 **Status:** ❌ **NOT YET BUILT**
-**Planned Phase:** Phase 4 (Dec 2025 - Jan 2026)
-**Last Updated:** 2025-11-16
+**Planned Phase:** Phase 3+ (January 2026+)
+**Last Updated:** 2025-12-17
 
 ---
 
@@ -221,10 +227,10 @@ Churches struggle to track visitor journey from first-time visitor → returning
 ## 📖 Related Documentation
 
 - **Database Schema**: `/prisma/schema.prisma` - ChurchMember model
-- **Feature Roadmap**: `/docs/ROADMAP.md` - Phase 4 timeline
+- **Project Roadmap**: `/docs/PROJECT.md` - Timeline and phases
 - **Connect Cards**: `/docs/features/connect-cards/vision.md` - Integration point
-- **Volunteer Management**: `/docs/features/volunteer-management/vision.md` - Integration point
+- **Volunteer**: `/docs/features/volunteer/vision.md` - Integration point
 
 ---
 
-**Last Updated:** 2025-11-16 (Planning Phase - Not Yet Built)
+**Last Updated:** 2025-12-17 (Planning Phase - Not Yet Built)

@@ -213,7 +213,8 @@ export function Navbar() {
                 href="/login"
                 className={buttonVariants({
                   variant: "secondary",
-                  className: "h-11",
+                  size: "sm",
+                  className: "w-24 justify-center",
                 })}
               >
                 Login
@@ -223,7 +224,10 @@ export function Navbar() {
               {!isAgencyPage && (
                 <Link
                   href="/signup"
-                  className={buttonVariants({ className: "h-11" })}
+                  className={buttonVariants({
+                    size: "sm",
+                    className: "w-24 justify-center",
+                  })}
                 >
                   Free Trial
                 </Link>

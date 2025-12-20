@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-14
+**Last Updated:** 2025-12-17
 
 ---
 
@@ -35,6 +35,30 @@ Churches lose 70% of first-time visitors because:
 - AI finally good enough for handwriting (Claude Vision)
 - Churches willing to pay $200-500/month for efficiency
 - Competition still using manual processes
+
+---
+
+## 📣 Post-Demo Priorities (Dec 15, 2025)
+
+> **Pilot church demo completed. Priorities have shifted based on feedback.**
+>
+> **Key Validated:**
+>
+> - Time savings: 10-15 hrs/week per location
+> - Deduplication is THE biggest selling point
+> - Planning Center API integration path confirmed
+>
+> **New Requests:**
+>
+> - Planning Center API sync (real-time duplicate checking)
+> - Keyword detection (campaign triggers like "impacted", "coffee oasis")
+> - Volunteer event tracking (capacity view, quick outreach)
+>
+> **Deprioritized:**
+>
+> - Prayer enhancements (Planning Center handles it)
+>
+> **Next customer meeting:** January 2026
 
 ---
 
@@ -149,7 +173,6 @@ See PLAYBOOK.md for Phase 2 performance improvements.
   - Contact sync on Save & Next
   - Welcome SMS on volunteer onboarding
 - [ ] **Onboarding & Card Mapping** → `main` worktree
-  - Implementation plan: `/docs/features/onboarding/implementation-plan.md`
   - Hybrid onboarding: Setup checklist + AI-powered card mapping
   - Universal field detection (works without template)
   - Optional template creation for custom fields
@@ -188,7 +211,7 @@ See PLAYBOOK.md for Phase 2 performance improvements.
   - Compose with calendar links & document attachments
   - Send via GHL (SMS/Email)
   - Delivery tracking
-  - See `/docs/features/volunteer-management/bulk-messaging-spec.md`
+  - See `/docs/features/volunteer/bulk-messaging-spec.md`
 - [ ] **Church Software Sync (API)** → `connect-card` worktree
   - Planning Center OAuth integration
   - Breeze OAuth integration
@@ -267,8 +290,7 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ### For Product
 
 - [Feature specs](features/) - Detailed feature documentation
-- [Architecture decisions](technical/architecture-decisions.md)
-- [Integration guides](technical/integrations.md)
+- [Testing strategy](technical/testing-strategy.md)
 
 ### Resources
 
@@ -280,6 +302,14 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 17, 2025
+
+- ✅ **Post-Demo Documentation Audit**
+  - Refactored WORKTREE-STATUS.md for post-demo priorities
+  - Removed stale documentation files
+  - Updated all doc references to valid paths
+  - Added new worktrees: e2e (Playwright testing), integrations (ChMS API)
 
 ### Week of Dec 14, 2025
 
@@ -337,13 +367,11 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ### Week of Dec 7, 2025
 
 - ✅ Onboarding & Card Mapping plan complete (PR #59)
-  - Implementation plan: 5 phases, all data models defined
   - Hybrid approach: AI fallback + optional templates
   - Setup checklist with tiered steps
   - Accuracy tracking via staff corrections
 - ✅ Starry Night theme added (PR #59)
 - ✅ CLAUDE.md coding guidelines created (PR #59)
-- ✅ FINISH-LINE.md MVP checklist created (PR #59)
 - ✅ DataTable consolidation for export (PR #58)
 
 ### Week of Dec 6, 2025

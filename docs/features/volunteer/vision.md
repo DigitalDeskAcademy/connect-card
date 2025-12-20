@@ -1,10 +1,10 @@
 # Volunteer Onboarding Pipeline - Product Vision
 
-**Status:** 🟢 **Phase 2 MVP Complete** - Onboarding automation merged (PR #61)
+**Status:** 🟡 **Phase 3 Planning** - Events MVP spec complete, ready for implementation
 **Worktree:** `/church-connect-hub/volunteer`
 **Branch:** `feature/volunteer-management`
-**Last Updated:** 2025-12-13
-**Focus:** Onboarding Automation (Not Volunteer Management)
+**Last Updated:** 2025-12-17
+**Focus:** Volunteer Events MVP (Demo Feedback Priority)
 
 ---
 
@@ -868,7 +868,19 @@ CategoryLeaderAssignment {
 - Document auto-send (email volunteer their required docs based on ministry)
 - Ready for export flag + filter (auto-set when BG check done or not required)
 
-**📋 Planned (Future):**
+**📋 Phase 3: Volunteer Events MVP (HIGH PRIORITY):**
+
+Based on pilot church demo feedback (Dec 2025), churches need simple event capacity tracking:
+
+- Create events with volunteer needs ("Sunday Kids Check-in - Dec 22, need 5")
+- At-a-glance capacity status (Full / Partial / Needs Help)
+- Quick outreach to fill gaps via GHL (SMS/Email)
+- Track confirmations and attendance
+
+**NOT building:** Full scheduling, shift management, time tracking (Planning Center's job).
+**See:** [Events MVP Spec](./events-mvp-spec.md) for detailed requirements.
+
+**📋 Future (Planning Center Integration):**
 
 1. **ChMS API Integration** - Direct API push to Planning Center when ready
 
@@ -890,14 +902,17 @@ CategoryLeaderAssignment {
 
 ---
 
-**Last Updated:** 2025-12-08
-**Document Purpose:** Clarify product vision - we're building onboarding automation, not volunteer management
+**Last Updated:** 2025-12-17
+**Document Purpose:** Clarify product vision - onboarding automation + simple event tracking
 **Strategic Position:** Feed Planning Center, don't compete with it
+**Current Priority:** Phase 3 - Volunteer Events MVP (from demo feedback)
 **Recent PRs:** #61 (Phase 2 MVP), #53 (Check All fix), #52 (export tracking), #47 (email automation)
 
 ---
 
 ## 📚 Related Documentation
 
+- [Events MVP Spec](./events-mvp-spec.md) - Volunteer event capacity tracking (Phase 3 - HIGH PRIORITY)
 - [Bulk Messaging Spec](./bulk-messaging-spec.md) - Detailed spec for volunteer outreach feature
 - [Church Software Sync](/docs/features/integrations/church-software-sync-spec.md) - Export volunteers to Planning Center
+- [Demo Feedback](/docs/features/demo-feedback-dec-2025.md) - Pilot church requirements

@@ -12,7 +12,8 @@ import type {
  * Get Volunteers for Organization
  *
  * Fetches volunteers with location-based filtering applied per user's DataScope.
- * Includes related church member data, skills, availability, and shift counts.
+ * Includes related church member data, categories, and skills.
+ * NOTE: Shift scheduling moved to Planning Center (Dec 2025)
  *
  * @param dataScope - User's data scope (includes organizationId and location permissions)
  * @param filters - Optional filters (status, search, location)
@@ -73,30 +74,7 @@ export async function getVolunteersForScope(
           skillName: "asc",
         },
       },
-      availability: {
-        select: {
-          id: true,
-          availabilityType: true,
-          dayOfWeek: true,
-          startTime: true,
-          endTime: true,
-          startDate: true,
-          endDate: true,
-          isAvailable: true,
-        },
-        orderBy: [{ availabilityType: "asc" }, { dayOfWeek: "asc" }],
-      },
-      _count: {
-        select: {
-          shifts: {
-            where: {
-              status: {
-                notIn: ["CANCELLED", "NO_SHOW"],
-              },
-            },
-          },
-        },
-      },
+      // REMOVED: availability, shifts (Dec 2025) - Shift scheduling moved to Planning Center
     },
     orderBy: [
       { status: "asc" }, // ACTIVE volunteers first
@@ -109,7 +87,8 @@ export async function getVolunteersForScope(
 /**
  * Get Single Volunteer by ID
  *
- * Fetches detailed volunteer information with all related data.
+ * Fetches detailed volunteer information with related data.
+ * NOTE: Shift scheduling moved to Planning Center (Dec 2025)
  *
  * @param dataScope - User's data scope
  * @param volunteerId - Volunteer ID
@@ -140,28 +119,16 @@ export async function getVolunteerById(
           skillName: "asc",
         },
       },
-      availability: {
-        orderBy: [
-          { availabilityType: "asc" },
-          { dayOfWeek: "asc" },
-          { startDate: "desc" },
-        ],
-      },
-      shifts: {
-        include: {
-          servingOpportunity: {
-            select: {
-              id: true,
-              name: true,
-              category: true,
-            },
-          },
+      categories: {
+        select: {
+          id: true,
+          category: true,
         },
         orderBy: {
-          shiftDate: "desc",
+          category: "asc",
         },
-        take: 20, // Recent shifts only for detail view
       },
+      // REMOVED: availability, shifts (Dec 2025) - Shift scheduling moved to Planning Center
     },
   });
 }
@@ -169,8 +136,8 @@ export async function getVolunteerById(
 /**
  * Get Volunteers Needing Background Checks
  *
- * Returns volunteers with expired or missing background checks who are
- * scheduled for kids ministry or other sensitive roles.
+ * Returns volunteers with expired or missing background checks.
+ * NOTE: Shift-based detection removed (Dec 2025) - now checks by volunteer categories
  *
  * @param organizationId - Organization ID
  * @returns Array of volunteers needing attention
@@ -186,14 +153,12 @@ export async function getVolunteersNeedingBackgroundCheck(
       status: "ACTIVE",
       OR: [
         {
-          // No background check at all
+          // No background check at all for volunteers in kids categories
           backgroundCheckStatus: "NOT_STARTED",
-          shifts: {
+          categories: {
             some: {
-              servingOpportunity: {
-                category: {
-                  in: ["Kids Ministry", "Children", "Youth", "Nursery"],
-                },
+              category: {
+                in: ["KIDS_MINISTRY"],
               },
             },
           },
@@ -216,28 +181,12 @@ export async function getVolunteersNeedingBackgroundCheck(
           phone: true,
         },
       },
-      shifts: {
-        where: {
-          shiftDate: {
-            gte: today,
-          },
-          status: {
-            in: ["SCHEDULED", "CONFIRMED"],
-          },
+      categories: {
+        select: {
+          category: true,
         },
-        include: {
-          servingOpportunity: {
-            select: {
-              name: true,
-              category: true,
-            },
-          },
-        },
-        orderBy: {
-          shiftDate: "asc",
-        },
-        take: 5, // Upcoming shifts
       },
+      // REMOVED: shifts (Dec 2025) - Shift scheduling moved to Planning Center
     },
     orderBy: {
       backgroundCheckExpiry: "asc", // Most urgent first
@@ -250,6 +199,7 @@ export async function getVolunteersNeedingBackgroundCheck(
  * Get Volunteer Statistics
  *
  * Returns aggregate statistics for volunteer management dashboard.
+ * NOTE: Shift statistics removed (Dec 2025) - Shift scheduling moved to Planning Center
  *
  * @param organizationId - Organization ID
  * @param locationId - Optional location filter
@@ -264,198 +214,45 @@ export async function getVolunteerStats(
     ...(locationId && { locationId }),
   };
 
-  const [
-    totalVolunteers,
-    activeVolunteers,
-    inactiveVolunteers,
-    needingBackgroundCheck,
-    scheduledShiftsThisMonth,
-  ] = await Promise.all([
-    // Total volunteers
-    prisma.volunteer.count({ where }),
+  const [totalVolunteers, activeVolunteers, inactiveVolunteers, pendingReview] =
+    await Promise.all([
+      // Total volunteers
+      prisma.volunteer.count({ where }),
 
-    // Active volunteers
-    prisma.volunteer.count({
-      where: { ...where, status: "ACTIVE" },
-    }),
+      // Active volunteers
+      prisma.volunteer.count({
+        where: { ...where, status: "ACTIVE" },
+      }),
 
-    // Inactive volunteers
-    prisma.volunteer.count({
-      where: { ...where, status: "INACTIVE" },
-    }),
+      // Inactive volunteers
+      prisma.volunteer.count({
+        where: { ...where, status: "INACTIVE" },
+      }),
 
-    // Volunteers needing background checks
-    prisma.volunteer.count({
-      where: {
-        ...where,
-        status: "ACTIVE",
-        OR: [
-          { backgroundCheckStatus: { in: ["NOT_STARTED", "IN_PROGRESS"] } },
-          {
-            backgroundCheckStatus: "CLEARED",
-            backgroundCheckExpiry: { lt: new Date() },
-          },
-        ],
-      },
-    }),
-
-    // Shifts scheduled this month
-    prisma.volunteerShift.count({
-      where: {
-        organizationId,
-        ...(locationId && { locationId }),
-        shiftDate: {
-          gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-          lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+      // Pending BG check review
+      prisma.volunteer.count({
+        where: {
+          ...where,
+          backgroundCheckStatus: "PENDING_REVIEW",
         },
-        status: {
-          in: ["SCHEDULED", "CONFIRMED", "CHECKED_IN"],
-        },
-      },
-    }),
-  ]);
+      }),
+    ]);
 
   return {
     totalVolunteers,
     activeVolunteers,
     inactiveVolunteers,
-    needingBackgroundCheck,
-    scheduledShiftsThisMonth,
+    pendingReview,
+    // REMOVED: scheduledShiftsThisMonth, needingBackgroundCheck (Dec 2025)
   };
 }
 
-/**
- * Get Available Volunteers for Opportunity
- *
- * Returns volunteers who:
- * - Are ACTIVE
- * - Have required skills for the opportunity
- * - Have valid background check (if needed)
- * - Don't have time conflicts on the shift date
- * - Aren't on blackout for the date
- *
- * @param organizationId - Organization ID
- * @param servingOpportunityId - Serving opportunity ID
- * @param shiftDate - Date of the shift
- * @param startTime - Start time (HH:MM format)
- * @param endTime - End time (HH:MM format)
- * @returns Array of available volunteers
- */
-export async function getAvailableVolunteersForShift(
-  organizationId: string,
-  servingOpportunityId: string,
-  shiftDate: Date,
-  startTime: string,
-  endTime: string
-) {
-  // Get opportunity with required skills
-  const opportunity = await prisma.servingOpportunity.findFirst({
-    where: {
-      id: servingOpportunityId,
-      organizationId,
-    },
-    include: {
-      requiredSkills: true,
-    },
-  });
-
-  if (!opportunity) return [];
-
-  const kidsMinistryCategories = [
-    "Kids Ministry",
-    "Children",
-    "Youth",
-    "Nursery",
-  ];
-  const requiresBackgroundCheck =
-    opportunity.category &&
-    kidsMinistryCategories.some(cat => opportunity.category?.includes(cat));
-
-  // Get active volunteers with limit for memory safety
-  const volunteers = await prisma.volunteer.findMany({
-    where: {
-      organizationId,
-      status: "ACTIVE",
-      // Background check filter (if required)
-      ...(requiresBackgroundCheck && {
-        backgroundCheckStatus: "CLEARED",
-        OR: [
-          { backgroundCheckExpiry: null },
-          { backgroundCheckExpiry: { gte: new Date() } },
-        ],
-      }),
-    },
-    include: {
-      churchMember: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-        },
-      },
-      skills: {
-        select: {
-          skillName: true,
-          proficiency: true,
-        },
-      },
-      availability: true,
-      shifts: {
-        where: {
-          shiftDate,
-          status: {
-            notIn: ["CANCELLED", "NO_SHOW"],
-          },
-        },
-      },
-    },
-    take: 200, // Limit candidates - filter further in memory
-  });
-
-  // Filter volunteers based on requirements
-  return volunteers.filter(volunteer => {
-    // Check for time conflicts
-    const hasTimeConflict = volunteer.shifts.some(shift => {
-      const shiftStart = shift.startTime;
-      const shiftEnd = shift.endTime;
-
-      // Time overlap logic
-      return (
-        (startTime >= shiftStart && startTime < shiftEnd) || // New shift starts during existing
-        (endTime > shiftStart && endTime <= shiftEnd) || // New shift ends during existing
-        (startTime <= shiftStart && endTime >= shiftEnd) // New shift contains existing
-      );
-    });
-
-    if (hasTimeConflict) return false;
-
-    // Check blackout dates
-    const isBlackedOut = volunteer.availability.some(avail => {
-      return (
-        avail.availabilityType === "BLACKOUT" &&
-        !avail.isAvailable &&
-        avail.startDate &&
-        avail.startDate <= shiftDate &&
-        (avail.endDate === null || avail.endDate >= shiftDate)
-      );
-    });
-
-    if (isBlackedOut) return false;
-
-    // Check required skills
-    const requiredSkills = opportunity.requiredSkills.filter(s => s.isRequired);
-    if (requiredSkills.length > 0) {
-      const volunteerSkillNames = volunteer.skills.map(s => s.skillName);
-      const hasAllRequiredSkills = requiredSkills.every(reqSkill =>
-        volunteerSkillNames.includes(reqSkill.skillName)
-      );
-      if (!hasAllRequiredSkills) return false;
-    }
-
-    return true;
-  });
-}
+// REMOVED: getAvailableVolunteersForShift (Dec 2025)
+// Shift scheduling moved to Planning Center. This function referenced:
+// - requiredSkills (ServingOpportunitySkill model - removed)
+// - availability (VolunteerAvailability model - removed)
+// - shifts (VolunteerShift model - removed)
+// If needed in future, implement via Planning Center API integration.
 
 // ============================================================================
 // VOLUNTEER EXPORT FUNCTIONS

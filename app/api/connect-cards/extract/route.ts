@@ -254,6 +254,7 @@ Extract these visitor-specific fields:
 - Address (if visitor filled it in)
 - Age or age group (if visitor indicated)
 - Family information (spouse, children - only if visitor wrote this)
+- Campaign keywords: Look for standalone words or short phrases (1-2 words) written separately from other content, often at the bottom of the card or in margins. These are trigger words the church asks visitors to write (e.g., "impacted", "coffee oasis", "next steps"). They don't fit into other fields and stand alone.
 
 DO NOT INCLUDE:
 - Church name, branding, or logos
@@ -275,6 +276,7 @@ Return ONLY a JSON object with this structure:
   "address": "extracted address or null",
   "age_group": "extracted age group or null",
   "family_info": "extracted family info or null",
+  "keywords": ["standalone keywords or short phrases, lowercase"] or null if none found,
   "additional_notes": "any other marked checkboxes or visitor-written information not captured above, or null"
 }
 
@@ -300,6 +302,7 @@ Extract these visitor-specific fields:
 - Address (if visitor filled it in)
 - Age or age group (if visitor indicated)
 - Family information (spouse, children - only if visitor wrote this)
+- Campaign keywords: Look for standalone words or short phrases (1-2 words) written separately from other content, often at the bottom of the card or in margins. These are trigger words the church asks visitors to write (e.g., "impacted", "coffee oasis", "next steps"). They don't fit into other fields and stand alone.
 
 DO NOT INCLUDE:
 - Church name, branding, or logos
@@ -321,6 +324,7 @@ Return ONLY a JSON object with this structure:
   "address": "extracted address or null",
   "age_group": "extracted age group or null",
   "family_info": "extracted family info or null",
+  "keywords": ["standalone keywords or short phrases, lowercase"] or null if none found,
   "additional_notes": "any other marked checkboxes or visitor-written information not captured above, or null"
 }
 

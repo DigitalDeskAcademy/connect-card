@@ -246,6 +246,117 @@ export function toErrorResponseDataJson(
 }
 
 // =============================================================================
+// MEMBER KEYWORD JSON TYPE
+// =============================================================================
+
+/**
+ * Campaign keyword detected from a connect card
+ * Stored on ChurchMember for filtering/searching
+ */
+export interface MemberKeyword {
+  keyword: string;
+  detectedAt: string; // ISO 8601 date string
+}
+
+/**
+ * Branded type for MemberKeyword[] stored in Prisma Json field
+ */
+export type MemberKeywordsJson = Prisma.JsonValue & {
+  readonly __brand: unique symbol;
+};
+
+/**
+ * Converts MemberKeyword[] to Prisma-compatible JSON
+ *
+ * @param keywords - Array of keywords with timestamps
+ * @returns Branded JSON type safe for Prisma storage
+ */
+export function toMemberKeywordsJson(
+  keywords: MemberKeyword[]
+): MemberKeywordsJson {
+  if (!Array.isArray(keywords)) {
+    throw new Error("MemberKeywords must be an array");
+  }
+
+  for (const kw of keywords) {
+    if (typeof kw.keyword !== "string" || typeof kw.detectedAt !== "string") {
+      throw new Error("Invalid MemberKeyword structure");
+    }
+  }
+
+  return keywords as unknown as MemberKeywordsJson;
+}
+
+/**
+ * Converts Prisma JSON back to typed MemberKeyword[]
+ *
+ * @param json - Raw JSON from Prisma query
+ * @returns Typed array of keywords, empty array if null/invalid
+ */
+export function fromMemberKeywordsJson(
+  json: Prisma.JsonValue | null | undefined
+): MemberKeyword[] {
+  if (!json) return [];
+
+  if (!Array.isArray(json)) {
+    console.error("Invalid detectedKeywords JSON structure: expected array");
+    return [];
+  }
+
+  const validated = json.filter((kw): boolean => {
+    return (
+      typeof kw === "object" &&
+      kw !== null &&
+      "keyword" in kw &&
+      typeof (kw as Record<string, unknown>).keyword === "string" &&
+      "detectedAt" in kw &&
+      typeof (kw as Record<string, unknown>).detectedAt === "string"
+    );
+  });
+
+  return validated as unknown as MemberKeyword[];
+}
+
+/**
+ * Merges new keywords into existing keywords array
+ * Avoids duplicates (same keyword within same day)
+ *
+ * @param existing - Current keywords on member
+ * @param newKeywords - Keywords from newly processed connect card
+ * @returns Merged array with no duplicates
+ */
+export function mergeKeywords(
+  existing: MemberKeyword[],
+  newKeywords: string[]
+): MemberKeyword[] {
+  const now = new Date().toISOString();
+  const today = now.split("T")[0]; // YYYY-MM-DD
+
+  const merged = [...existing];
+
+  for (const keyword of newKeywords) {
+    const normalizedKeyword = keyword.toLowerCase().trim();
+    if (!normalizedKeyword) continue;
+
+    // Check if this keyword was already detected today
+    const alreadyExists = merged.some(
+      kw =>
+        kw.keyword === normalizedKeyword &&
+        kw.detectedAt.split("T")[0] === today
+    );
+
+    if (!alreadyExists) {
+      merged.push({
+        keyword: normalizedKeyword,
+        detectedAt: now,
+      });
+    }
+  }
+
+  return merged;
+}
+
+// =============================================================================
 // JSON SIZE VALIDATION UTILITIES
 // =============================================================================
 

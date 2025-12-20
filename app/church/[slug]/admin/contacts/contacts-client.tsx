@@ -58,12 +58,14 @@ interface ContactsClientProps {
   pageSize: number;
   totalPages: number;
   availableTags: string[];
+  availableKeywords: string[];
   organizationId: string;
   slug: string;
   dataScope: DataScope;
   initialSearch?: string;
   initialMemberType?: MemberType;
   initialTag?: string;
+  initialKeyword?: string;
 }
 
 // ============================================================================
@@ -123,9 +125,11 @@ export default function ContactsClient({
   contacts,
   totalCount,
   availableTags,
+  availableKeywords,
   slug,
   dataScope,
   initialMemberType,
+  initialKeyword,
 }: ContactsClientProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -134,6 +138,9 @@ export default function ContactsClient({
   // Filters
   const [memberTypeFilter, setMemberTypeFilter] = useState<string>(
     initialMemberType ?? "all"
+  );
+  const [keywordFilter, setKeywordFilter] = useState<string>(
+    initialKeyword ?? "all"
   );
 
   // Handle filter changes
@@ -144,6 +151,18 @@ export default function ContactsClient({
       params.delete("memberType");
     } else {
       params.set("memberType", value);
+    }
+    params.set("page", "1"); // Reset to first page
+    router.push(`?${params.toString()}`);
+  };
+
+  const handleKeywordChange = (value: string) => {
+    setKeywordFilter(value);
+    const params = new URLSearchParams(window.location.search);
+    if (value === "all") {
+      params.delete("keyword");
+    } else {
+      params.set("keyword", value);
     }
     params.set("page", "1"); // Reset to first page
     router.push(`?${params.toString()}`);
@@ -256,6 +275,32 @@ export default function ContactsClient({
               {tags.length > 2 && (
                 <Badge variant="outline" className="text-xs">
                   +{tags.length - 2}
+                </Badge>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        id: "keywords",
+        header: "Keywords",
+        cell: ({ row }) => {
+          const keywords = row.original.detectedKeywords;
+          if (!keywords.length) {
+            return <span className="text-muted-foreground">—</span>;
+          }
+          // Extract just the keyword strings for display
+          const keywordStrings = keywords.map(k => k.keyword);
+          return (
+            <div className="flex flex-wrap gap-1">
+              {keywordStrings.slice(0, 2).map(kw => (
+                <Badge key={kw} variant="secondary" className="text-xs">
+                  {kw}
+                </Badge>
+              ))}
+              {keywordStrings.length > 2 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{keywordStrings.length - 2}
                 </Badge>
               )}
             </div>
@@ -423,6 +468,23 @@ export default function ContactsClient({
                 ))}
               </SelectContent>
             </Select>
+
+            {/* Keyword filter (only show if keywords exist) */}
+            {availableKeywords.length > 0 && (
+              <Select value={keywordFilter} onValueChange={handleKeywordChange}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="All Keywords" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Keywords</SelectItem>
+                  {availableKeywords.map(kw => (
+                    <SelectItem key={kw} value={kw}>
+                      {kw}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {/* Add contact button */}
             {dataScope.filters.canEditData && (
