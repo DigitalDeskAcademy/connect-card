@@ -1,9 +1,15 @@
 # Prayer Management - Product Vision
 
+> ⏸️ **STATUS: DEPRIORITIZED (Dec 2025)**
+>
+> Feature is complete but deprioritized based on pilot church feedback.
+> Pilot church uses Planning Center for prayer management.
+> This worktree is paused until further notice.
+
 **Status:** ✅ **COMPLETE** - PR #49 merged Dec 4, PR #51 fixed N+1, PR #56 added privacy redaction, PR #57 added My Prayer Sheet
 **Worktree:** `/church-connect-hub/prayer`
 **Branch:** `feature/prayer-enhancements`
-**Last Updated:** 2025-12-12
+**Last Updated:** 2025-12-17
 **Owner:** Church Operations Team
 
 ---
@@ -490,13 +496,12 @@ Monday morning
 
 ## 📖 Related Documentation
 
-- **Implementation Details:** `/docs/technical/architecture-decisions.md` (ADR-XXX)
 - **Database Schema:** `/prisma/schema.prisma` (PrayerRequest model)
 - **E2E Tests:** `/tests/e2e/09-prayer-management.spec.ts`
 - **Data Layer:** `/lib/data/prayer-requests.ts`
 
 ---
 
-**Last Updated:** 2025-12-04
-**Status:** ✅ Feature complete - All PRs merged
-**Next Review:** When connect card integration is prioritized
+**Last Updated:** 2025-12-17
+**Status:** ⏸️ Feature complete but deprioritized - Planning Center handles prayer for pilot church
+**Next Review:** When prayer feature is re-prioritized

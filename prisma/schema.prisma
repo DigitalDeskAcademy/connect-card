@@ -38,7 +38,6 @@ model Organization {
   createdAt             DateTime           @default(now())
   /// Last modification date
   updatedAt             DateTime           @updatedAt
-  courses               Course[]
   invitations           Invitation[]
   members               Member[]
   users                 User[]
@@ -181,9 +180,6 @@ model User {
   /// Volunteer categories this user can lead (e.g., "Kids Ministry", "Worship Team", "Hospitality")
   /// Used for assignment workflow when connect card users select specific volunteer interests
   volunteerCategories  String[] @default([])
-  courses              Course[]
-  enrollment        Enrollment[]
-  lessonProgress    LessonProgress[]
   accounts          Account[]
   memberships       Member[]
   sessions          Session[]
@@ -254,153 +250,6 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
-}
-
-/// Course catalog entity representing individual learning modules with hierarchical content structure
-/// Supports Stripe payment integration, multi-level difficulty progression, and instructor management
-model Course {
-  id                  String        @id @default(uuid())
-  /// Display title for course catalog and student dashboard
-  title               String
-  /// Rich text course description supporting JSON format for Tiptap editor
-  description         String
-  /// S3/Tigris storage key for course thumbnail and promotional materials
-  fileKey             String
-  /// Course price in dollars (converted to cents for Stripe processing)
-  price               Int
-  /// Indicates if course is free within organization subscription
-  isFree              Boolean       @default(true)
-  /// Estimated completion time in minutes for progress tracking
-  duration            Int
-  /// Skill level requirement for student filtering
-  level               CourseLevel   @default(Beginner)
-  /// Stripe Price ID for payment processing and subscription management (optional for free courses)
-  stripePriceId       String?       @unique
-  /// Course categorization for catalog organization (Development, Design, etc.)
-  category            String
-  /// Brief course summary for card displays and SEO meta descriptions
-  smallDescription    String
-  /// URL-friendly identifier for course routing and SEO
-  slug                String        @unique
-  /// Publication workflow state for instructor content management
-  status              CourseStatus  @default(Draft)
-  /// Course creation timestamp for analytics and sorting
-  createdAt           DateTime      @default(now())
-  /// Last modification date for content freshness tracking
-  updatedAt           DateTime      @updatedAt
-  userId              String
-  /// Organization ID for multi-tenant course management (null for platform courses)
-  organizationId      String?
-  /// Church control to hide courses from members
-  isHiddenFromClients Boolean       @default(false)
-  /// Platform course flag for system-provided courses
-  isPlatformCourse    Boolean       @default(false)
-  /// S3/Tigris directory prefix for all course files (enables efficient bulk deletion)
-  s3Prefix            String?
-  chapter             Chapter[]
-  organization        Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  enrollment          Enrollment[]
-}
-
-/// Chapter organization entity for course content structuring and sequential lesson delivery
-/// Supports drag-and-drop reordering through DND Kit integration for instructor content management
-model Chapter {
-  id        String   @id @default(uuid())
-  /// URL-friendly identifier for chapter routing and customer support
-  slug      String
-  /// Chapter heading displayed in course navigation and student progress tracking
-  title     String
-  /// Ordinal sequence number for chapter ordering within course (1, 2, 3...)
-  position  Int
-  /// Chapter creation timestamp for content development tracking
-  createdAt DateTime @default(now())
-  /// Last modification date for instructor workflow management
-  updatedAt DateTime @updatedAt
-  courseId  String
-  Course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  lessons   Lesson[]
-
-  @@unique([courseId, slug])
-}
-
-/// Individual lesson content entity supporting video delivery and progress tracking
-/// Core learning unit with multimedia content hosted on S3/Tigris storage
-model Lesson {
-  id             String           @id @default(uuid())
-  /// URL-friendly identifier for lesson routing and customer support
-  slug           String
-  /// Lesson display title for navigation and student dashboard
-  title          String
-  /// Optional rich text lesson description (JSON format for Tiptap editor)
-  description    String?
-  /// S3/Tigris storage key for lesson preview image and video poster
-  thumbnailKey   String?
-  /// S3/Tigris storage key for primary lesson video content
-  videoKey       String?
-  /// Sequential order within chapter for structured learning progression
-  position       Int
-  /// S3/Tigris directory prefix for all lesson files (enables efficient bulk deletion)
-  s3Prefix       String?
-  /// Lesson creation timestamp for instructor workflow tracking
-  createdAt      DateTime         @default(now())
-  /// Last modification date for content management
-  updatedAt      DateTime         @updatedAt
-  chapterId      String
-  Chapter        Chapter          @relation(fields: [chapterId], references: [id], onDelete: Cascade)
-  lessonProgress LessonProgress[]
-
-  @@unique([chapterId, slug])
-}
-
-/// Course enrollment record supporting both staff users and church members
-/// Manages course access control and integrates with Stripe webhook payment processing
-/// Supports flexible enrollment: staff self-enrollment or member assignment
-model Enrollment {
-  id              String           @id @default(uuid())
-  /// Payment amount in dollars (Stripe processes in cents, stored as dollars)
-  amount          Int
-  /// Payment and enrollment lifecycle state
-  status          EnrollmentStatus @default(Pending)
-  /// Enrollment creation timestamp for payment processing tracking
-  createdAt       DateTime         @default(now())
-  /// Status update timestamp for webhook-driven state changes
-  updatedAt       DateTime         @updatedAt
-  courseId        String
-  /// User ID for staff enrollments (church admins, volunteer leaders)
-  userId          String?
-  /// Church member ID for member enrollments (visitors, members, volunteers)
-  churchMemberId  String?
-  Course          Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  User            User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ChurchMember    ChurchMember?    @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, courseId])
-  @@unique([churchMemberId, courseId])
-}
-
-/// Individual lesson completion tracking for progress analytics and course advancement
-/// Supports confetti celebrations, progress bars, and learning path unlocking features
-/// Tracks progress for both staff users and church members
-model LessonProgress {
-  id             String        @id @default(uuid())
-  /// Binary completion state - lesson watched and marked complete
-  completed      Boolean       @default(false)
-  /// Initial progress record creation (lesson first accessed)
-  createdAt      DateTime      @default(now())
-  /// Completion timestamp for learning analytics and certificates
-  updatedAt      DateTime      @updatedAt
-  /// User ID for staff progress tracking
-  userId         String?
-  /// Church member ID for member progress tracking
-  churchMemberId String?
-  lessonId       String
-  Lesson         Lesson        @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  User           User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ChurchMember   ChurchMember? @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, lessonId])
-  @@unique([churchMemberId, lessonId])
 }
 
 /// GoHighLevel OAuth token storage for API integration per organization
@@ -628,10 +477,6 @@ model ChurchMember {
   /// CRM fields
   tags           String[]              @default([])
   customFields   Json?
-  /// Learning assignments and course access (LMS features)
-  enrollments    Enrollment[]
-  /// Progress tracking across all courses
-  lessonProgress LessonProgress[]
   /// External system integrations (GHL, etc.)
   integrations   MemberIntegration[]
   /// CRM relationships
@@ -879,8 +724,6 @@ model Volunteer {
   churchMember          ChurchMember               @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
   categories            VolunteerCategory[]
   skills                VolunteerSkill[]
-  availability          VolunteerAvailability[]
-  shifts                VolunteerShift[]
 
   @@index([organizationId])
   @@index([organizationId, status])
@@ -922,6 +765,8 @@ model VolunteerCategory {
 
 /// Serving opportunities - ministry roles that need volunteers
 /// Examples: Greeter, Usher, Kids Ministry, Worship Team, Parking, Coffee/Hospitality
+/// NOTE: Simplified model - shift scheduling moved to Planning Center
+/// This can be repurposed as an Event model for capacity tracking
 model ServingOpportunity {
   id                 String                        @id @default(uuid())
   /// Organization for multi-tenant isolation
@@ -946,8 +791,6 @@ model ServingOpportunity {
   isActive           Boolean                       @default(true)
   /// Whether this is a recurring opportunity (weekly, bi-weekly)
   isRecurring        Boolean                       @default(true)
-  /// Recurrence pattern for scheduling (weekly, biweekly, monthly)
-  recurrencePattern  RecurrencePattern?            @default(WEEKLY)
   /// Sort order for display
   sortOrder          Int                           @default(0)
   /// Custom fields for church-specific data
@@ -958,9 +801,6 @@ model ServingOpportunity {
   createdAt          DateTime                      @default(now())
   /// Last update timestamp
   updatedAt          DateTime                      @updatedAt
-  /// Relations
-  requiredSkills     ServingOpportunitySkill[]
-  shifts             VolunteerShift[]
 
   @@index([organizationId])
   @@index([organizationId, isActive])
@@ -999,110 +839,10 @@ model VolunteerSkill {
   @@map("volunteer_skill")
 }
 
-/// Many-to-many relationship between serving opportunities and required skills
-model ServingOpportunitySkill {
-  id                   String             @id @default(uuid())
-  /// Serving opportunity requiring this skill
-  servingOpportunityId String
-  /// Required skill name
-  skillName            String
-  /// Whether this skill is required (true) or preferred (false)
-  isRequired           Boolean            @default(true)
-  /// Creation timestamp
-  createdAt            DateTime           @default(now())
-  /// Relations
-  servingOpportunity   ServingOpportunity @relation(fields: [servingOpportunityId], references: [id], onDelete: Cascade)
-
-  @@unique([servingOpportunityId, skillName])
-  @@index([servingOpportunityId])
-  @@map("serving_opportunity_skill")
-}
-
-/// Volunteer availability patterns and blackout dates
-model VolunteerAvailability {
-  id                String             @id @default(uuid())
-  /// Volunteer this availability belongs to
-  volunteerId       String
-  /// Type of availability (recurring schedule or specific blackout date)
-  availabilityType  AvailabilityType
-  /// Day of week (0=Sunday, 6=Saturday) for recurring availability
-  dayOfWeek         Int?
-  /// Start date for availability or blackout period
-  startDate         DateTime?
-  /// End date for blackout period (null for recurring availability)
-  endDate           DateTime?
-  /// Start time for recurring availability (e.g., "09:00")
-  startTime         String?
-  /// End time for recurring availability (e.g., "12:00")
-  endTime           String?
-  /// Whether volunteer is available (true) or unavailable (false) during this time
-  isAvailable       Boolean            @default(true)
-  /// Reason for unavailability (vacation, work conflict, etc.)
-  reason            String?
-  /// Recurrence pattern (weekly, biweekly, monthly)
-  recurrencePattern RecurrencePattern? @default(WEEKLY)
-  /// Notes about this availability
-  notes             String?
-  /// Creation timestamp
-  createdAt         DateTime           @default(now())
-  /// Last update timestamp
-  updatedAt         DateTime           @updatedAt
-  /// Relations
-  volunteer         Volunteer          @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
-
-  @@index([volunteerId])
-  @@index([volunteerId, availabilityType])
-  @@index([startDate, endDate])
-  @@map("volunteer_availability")
-}
-
-/// Scheduled volunteer shifts - assignments of volunteers to serving opportunities
-model VolunteerShift {
-  id                   String             @id @default(uuid())
-  /// Organization for multi-tenant isolation
-  organizationId       String
-  /// Location for multi-campus churches
-  locationId           String?
-  /// Volunteer assigned to this shift
-  volunteerId          String
-  /// Serving opportunity for this shift
-  servingOpportunityId String
-  /// Shift date
-  shiftDate            DateTime
-  /// Shift start time
-  startTime            String
-  /// Shift end time
-  endTime              String
-  /// Current shift status
-  status               ShiftStatus        @default(SCHEDULED)
-  /// Whether volunteer confirmed they'll attend
-  isConfirmed          Boolean            @default(false)
-  /// Check-in timestamp (when volunteer arrived)
-  checkInTime          DateTime?
-  /// Check-out timestamp (when volunteer left)
-  checkOutTime         DateTime?
-  /// Whether reminder was sent
-  reminderSent         Boolean            @default(false)
-  /// Notes about this shift
-  notes                String?
-  /// Optimistic locking version for concurrent edit protection
-  version              Int                @default(0)
-  /// Creation timestamp
-  createdAt            DateTime           @default(now())
-  /// Last update timestamp
-  updatedAt            DateTime           @updatedAt
-  /// Relations
-  volunteer            Volunteer          @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
-  servingOpportunity   ServingOpportunity @relation(fields: [servingOpportunityId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId])
-  @@index([organizationId, shiftDate])
-  @@index([organizationId, locationId])
-  @@index([volunteerId])
-  @@index([servingOpportunityId])
-  @@index([shiftDate, status])
-  @@map("volunteer_shift")
-}
+// ============================================================================
+// REMOVED: Shift Scheduling Models (Dec 2025)
+// ServingOpportunitySkill, VolunteerAvailability, VolunteerShift moved to Planning Center
+// ============================================================================
 
 // ============================================================================
 // VOLUNTEER MANAGEMENT ENUMS
@@ -1195,47 +935,8 @@ enum VolunteerCategoryType {
   OTHER
 }
 
-/// Availability type for scheduling
-enum AvailabilityType {
-  /// Regular weekly/recurring availability
-  RECURRING
-  /// Specific blackout date or unavailable period
-  BLACKOUT
-  /// One-time availability for special event
-  ONE_TIME
-}
-
-/// Recurrence pattern for schedules
-enum RecurrencePattern {
-  /// Every week
-  WEEKLY
-  /// Every two weeks
-  BIWEEKLY
-  /// Once per month
-  MONTHLY
-  /// First [day] of the month
-  FIRST_OF_MONTH
-  /// Third [day] of the month
-  THIRD_OF_MONTH
-  /// Does not repeat
-  ONE_TIME
-}
-
-/// Volunteer shift status
-enum ShiftStatus {
-  /// Shift is scheduled but not confirmed
-  SCHEDULED
-  /// Volunteer confirmed attendance
-  CONFIRMED
-  /// Volunteer checked in (arrived)
-  CHECKED_IN
-  /// Shift completed successfully
-  COMPLETED
-  /// Volunteer did not show up
-  NO_SHOW
-  /// Shift was cancelled
-  CANCELLED
-}
+// REMOVED: AvailabilityType, RecurrencePattern, ShiftStatus enums (Dec 2025)
+// Shift scheduling moved to Planning Center
 
 /// Organization types for business logic and access control
 enum OrganizationType {
@@ -1271,38 +972,6 @@ enum InvitationStatus {
   DECLINED
   /// Invitation expired or revoked
   EXPIRED
-}
-
-/// Course difficulty progression levels for student skill matching and content filtering
-enum CourseLevel {
-  /// Essential features that must be learned first
-  Core
-  /// Entry-level courses requiring no prior experience
-  Beginner
-  /// Courses requiring basic foundational knowledge in the subject area
-  Intermediate
-  /// Expert-level courses for experienced practitioners
-  Advanced
-}
-
-/// Course publication and lifecycle management states for instructor workflow
-enum CourseStatus {
-  /// Course under development, not visible to students in catalog
-  Draft
-  /// Live course available for enrollment and purchase
-  Published
-  /// Discontinued course, existing enrollments maintained but no new sales
-  Archived
-}
-
-/// Enrollment payment and access lifecycle states for Stripe webhook processing
-enum EnrollmentStatus {
-  /// Initial state after course purchase, awaiting payment confirmation
-  Pending
-  /// Payment confirmed, student has full course access and can track progress
-  Active
-  /// Payment failed or refunded, course access revoked but enrollment record preserved
-  Cancelled
 }
 
 /// User roles for multi-tenant access control and business logic

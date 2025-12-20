@@ -213,11 +213,6 @@ export function getPlatformNavigation(): NavigationConfig {
         icon: IconCode,
         items: [
           {
-            title: "Courses",
-            url: "/platform/admin/courses",
-            icon: IconSchool,
-          },
-          {
             title: "Analytics",
             url: "/platform/admin/analytics",
             icon: IconChartBar,
