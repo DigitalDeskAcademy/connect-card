@@ -17,6 +17,14 @@ function formatInterests(interests: string[]): string {
 }
 
 /**
+ * Format keywords array as comma-separated list
+ */
+function formatKeywords(keywords: string[]): string {
+  if (!keywords || keywords.length === 0) return "";
+  return keywords.join(", ");
+}
+
+/**
  * Generic CSV format
  *
  * Includes all available fields with human-readable column names.
@@ -59,6 +67,11 @@ export const genericFormat: ExportFormat = {
     {
       header: "Volunteer Category",
       getValue: (card: ExportableConnectCard) => card.volunteerCategory || "",
+    },
+    {
+      header: "Campaign Keywords",
+      getValue: (card: ExportableConnectCard) =>
+        formatKeywords(card.detectedKeywords),
     },
     {
       header: "Location",

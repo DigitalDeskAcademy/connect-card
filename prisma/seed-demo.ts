@@ -323,6 +323,38 @@ const volunteerStatuses = [
   "ADDED_TO_PCO",
 ] as const;
 
+// Map string categories to VolunteerCategoryType enum
+const categoryToEnum: Record<string, string> = {
+  "Kids Ministry": "KIDS_MINISTRY",
+  "Youth Ministry": "OTHER",
+  Worship: "WORSHIP_TEAM",
+  "AV Tech": "AV_TECH",
+  Hospitality: "HOSPITALITY",
+  Greeting: "GREETER",
+  Parking: "PARKING",
+  "Small Groups": "OTHER",
+  "Prayer Team": "PRAYER_TEAM",
+  Missions: "OTHER",
+  "Coffee Team": "HOSPITALITY",
+  "Setup/Teardown": "OTHER",
+  Security: "OTHER",
+  "First Impressions": "GREETER",
+};
+
+// Map onboarding status to Volunteer model fields
+const onboardingToVolunteerStatus: Record<
+  string,
+  { status: string; bgStatus: string }
+> = {
+  INQUIRY: { status: "PENDING_APPROVAL", bgStatus: "NOT_STARTED" },
+  WELCOME_SENT: { status: "PENDING_APPROVAL", bgStatus: "NOT_STARTED" },
+  DOCUMENTS_SHARED: { status: "PENDING_APPROVAL", bgStatus: "IN_PROGRESS" },
+  LEADER_CONNECTED: { status: "PENDING_APPROVAL", bgStatus: "IN_PROGRESS" },
+  ORIENTATION_SET: { status: "PENDING_APPROVAL", bgStatus: "PENDING_REVIEW" },
+  READY: { status: "ACTIVE", bgStatus: "CLEARED" },
+  ADDED_TO_PCO: { status: "ACTIVE", bgStatus: "CLEARED" },
+};
+
 // ============================================
 // MAIN SEED FUNCTION
 // ============================================
@@ -772,6 +804,8 @@ async function main() {
   for (const [status, count] of Object.entries(volunteersPerStatus)) {
     for (let i = 0; i < count; i++) {
       const volName = generateName();
+      const volEmail = generateEmail(volName);
+      const volPhone = generatePhone();
       const location = locations[i % locations.length];
       const category =
         volunteerCategories[
@@ -804,6 +838,11 @@ async function main() {
       ].includes(status);
       const isComplete = ["READY", "ADDED_TO_PCO"].includes(status);
 
+      // Get mapped status values for Volunteer model
+      const volStatusMapping = onboardingToVolunteerStatus[status];
+      const enumCategory = categoryToEnum[category] || "GENERAL";
+
+      // Create ConnectCard (original behavior)
       await prisma.connectCard.create({
         data: {
           organizationId: org.id,
@@ -814,8 +853,8 @@ async function main() {
             now.getTime() - daysAgo[status] * 24 * 60 * 60 * 1000
           ),
           name: volName,
-          email: generateEmail(volName),
-          phone: generatePhone(),
+          email: volEmail,
+          phone: volPhone,
           visitType: "First Visit",
           interests: ["Volunteering"],
           volunteerCategory: category,
@@ -829,7 +868,7 @@ async function main() {
                 "Background Check Form": true,
                 "Ministry Handbook": true,
               }
-            : null,
+            : undefined,
           volunteerOrientationDate: hasOrientation
             ? isComplete
               ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000) // Past orientation
@@ -846,10 +885,89 @@ async function main() {
           },
         },
       });
+
+      // Create ChurchMember for this volunteer
+      const churchMember = await prisma.churchMember.create({
+        data: {
+          organizationId: org.id,
+          name: volName,
+          email: volEmail,
+          phone: volPhone,
+          memberType: isComplete ? "MEMBER" : "VISITOR",
+          visitDate: new Date(
+            now.getTime() - daysAgo[status] * 24 * 60 * 60 * 1000
+          ),
+        },
+      });
+
+      // Create Volunteer record linked to ChurchMember
+      const volunteer = await prisma.volunteer.create({
+        data: {
+          churchMemberId: churchMember.id,
+          organizationId: org.id,
+          locationId: location.id,
+          status: volStatusMapping.status as
+            | "ACTIVE"
+            | "PENDING_APPROVAL"
+            | "ON_BREAK"
+            | "INACTIVE",
+          backgroundCheckStatus: volStatusMapping.bgStatus as
+            | "NOT_STARTED"
+            | "IN_PROGRESS"
+            | "PENDING_REVIEW"
+            | "CLEARED"
+            | "FLAGGED",
+          startDate: new Date(
+            now.getTime() - daysAgo[status] * 24 * 60 * 60 * 1000
+          ),
+          backgroundCheckDate: isComplete
+            ? new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+            : null,
+          backgroundCheckExpiry: isComplete
+            ? new Date(now.getTime() + 365 * 2 * 24 * 60 * 60 * 1000) // 2 years out
+            : null,
+          documentsSentAt: hasDocs
+            ? new Date(
+                now.getTime() - (daysAgo[status] - 2) * 24 * 60 * 60 * 1000
+              )
+            : null,
+          readyForExport: status === "READY",
+          exportedAt:
+            status === "ADDED_TO_PCO"
+              ? new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+              : null,
+          notes: isComplete
+            ? "Completed orientation, now serving weekly!"
+            : null,
+        },
+      });
+
+      // Create VolunteerCategory assignment
+      await prisma.volunteerCategory.create({
+        data: {
+          volunteerId: volunteer.id,
+          organizationId: org.id,
+          category: enumCategory as
+            | "GENERAL"
+            | "GREETER"
+            | "USHER"
+            | "KIDS_MINISTRY"
+            | "WORSHIP_TEAM"
+            | "PARKING"
+            | "HOSPITALITY"
+            | "AV_TECH"
+            | "PRAYER_TEAM"
+            | "OTHER",
+          assignedBy: matchingLeader.id,
+        },
+      });
+
       totalVolunteers++;
     }
   }
-  console.log(`   ✅ ${totalVolunteers} volunteers in pipeline\n`);
+  console.log(
+    `   ✅ ${totalVolunteers} volunteers in pipeline (with Volunteer records)\n`
+  );
 
   // ============================================
   // STEP 7: CREATE PRAYER REQUESTS

@@ -11,7 +11,11 @@
  */
 
 import { requireDashboardAccess } from "@/app/data/dashboard/require-dashboard-access";
-import { getContacts, getContactTags } from "@/lib/data/contacts";
+import {
+  getContacts,
+  getContactTags,
+  getContactKeywords,
+} from "@/lib/data/contacts";
 import ContactsClient from "./contacts-client";
 
 interface PageProps {
@@ -22,6 +26,7 @@ interface PageProps {
     search?: string;
     memberType?: string;
     tag?: string;
+    keyword?: string;
   }>;
 }
 
@@ -46,6 +51,7 @@ export default async function ContactsPage({
     | "STAFF"
     | undefined;
   const tag = search.tag;
+  const keyword = search.keyword;
 
   // Fetch contacts with filters
   const result = await getContacts({
@@ -53,12 +59,16 @@ export default async function ContactsPage({
     search: searchQuery,
     memberType,
     tags: tag ? [tag] : undefined,
+    keyword,
     page,
     pageSize,
   });
 
-  // Fetch available tags for filtering
-  const availableTags = await getContactTags(organization.id);
+  // Fetch available tags and keywords for filtering (in parallel)
+  const [availableTags, availableKeywords] = await Promise.all([
+    getContactTags(organization.id),
+    getContactKeywords(organization.id),
+  ]);
 
   return (
     <ContactsClient
@@ -68,12 +78,14 @@ export default async function ContactsPage({
       pageSize={result.pageSize}
       totalPages={result.totalPages}
       availableTags={availableTags}
+      availableKeywords={availableKeywords}
       organizationId={organization.id}
       slug={slug}
       dataScope={dataScope}
       initialSearch={searchQuery}
       initialMemberType={memberType}
       initialTag={tag}
+      initialKeyword={keyword}
     />
   );
 }

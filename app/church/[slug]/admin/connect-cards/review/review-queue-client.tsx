@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,6 +59,7 @@ import {
   Maximize2,
   Minimize2,
   X,
+  Tag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { updateConnectCard } from "@/actions/connect-card/update-connect-card";
@@ -1287,6 +1289,32 @@ export function ReviewQueueClient({
                 disabled={isPending}
               />
             </div>
+
+            {/* Detected Keywords (read-only) */}
+            {currentCard.detectedKeywords &&
+              currentCard.detectedKeywords.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Tag className="h-4 w-4" />
+                    Detected Keywords
+                  </Label>
+                  <div className="flex flex-wrap gap-2">
+                    {currentCard.detectedKeywords.map((keyword, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="text-xs"
+                      >
+                        {keyword}
+                      </Badge>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Campaign keywords detected by AI. These will be cleared
+                    after 30 days.
+                  </p>
+                </div>
+              )}
 
             {/* Action Buttons */}
             <div className="pt-4 space-y-3">

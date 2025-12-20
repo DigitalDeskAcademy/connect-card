@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/db";
 import { MemberType, Prisma } from "@/lib/generated/prisma";
+import { fromMemberKeywordsJson, MemberKeyword } from "@/lib/prisma/json-types";
 
 // ============================================================================
 // TYPES
@@ -24,6 +25,8 @@ export interface Contact {
   // Volunteer info (if applicable)
   isVolunteer: boolean;
   volunteerStatus: string | null;
+  // Campaign keywords (for filtering)
+  detectedKeywords: MemberKeyword[];
 }
 
 export interface ContactsQueryParams {
@@ -32,6 +35,7 @@ export interface ContactsQueryParams {
   search?: string;
   memberType?: MemberType;
   tags?: string[];
+  keyword?: string; // Filter by campaign keyword
   page?: number;
   pageSize?: number;
   sortBy?: "name" | "createdAt" | "updatedAt";
@@ -63,6 +67,7 @@ export async function getContacts(
     search,
     memberType,
     tags,
+    keyword,
     page = 1,
     pageSize = 25,
     sortBy = "createdAt",
@@ -88,6 +93,15 @@ export async function getContacts(
     };
   }
 
+  // Filter by campaign keyword
+  // Note: Uses string matching on JSON field. Works well for simple keywords.
+  // For complex queries, consider raw SQL with @> JSONB operator.
+  if (keyword) {
+    where.detectedKeywords = {
+      string_contains: `"keyword":"${keyword}"`,
+    };
+  }
+
   // Search by name, email, or phone
   if (search && search.trim()) {
     const searchTerm = search.trim();
@@ -110,7 +124,17 @@ export async function getContacts(
   const [contacts, totalCount] = await Promise.all([
     prisma.churchMember.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        address: true,
+        memberType: true,
+        tags: true,
+        createdAt: true,
+        updatedAt: true,
+        detectedKeywords: true,
         connectCards: {
           select: { id: true },
         },
@@ -147,6 +171,7 @@ export async function getContacts(
     connectCardCount: member.connectCards.length,
     isVolunteer: member.volunteer !== null,
     volunteerStatus: member.volunteer?.status ?? null,
+    detectedKeywords: fromMemberKeywordsJson(member.detectedKeywords),
   }));
 
   return {
@@ -234,6 +259,46 @@ export async function getContactTags(
   const uniqueTags = [...new Set(allTags)].sort();
 
   return uniqueTags;
+}
+
+/**
+ * Get all unique campaign keywords used in an organization's contacts.
+ * Only returns keywords from the last 30 days (matching cleanup retention).
+ */
+export async function getContactKeywords(
+  organizationId: string
+): Promise<string[]> {
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - 30);
+  const cutoffIso = cutoffDate.toISOString();
+
+  const members = await prisma.churchMember.findMany({
+    where: {
+      organizationId,
+      // Only query members with non-empty keywords
+      NOT: {
+        detectedKeywords: {
+          equals: [],
+        },
+      },
+    },
+    select: { detectedKeywords: true },
+  });
+
+  // Extract and deduplicate keywords, filtering by date
+  const keywords = new Set<string>();
+
+  for (const member of members) {
+    const memberKeywords = fromMemberKeywordsJson(member.detectedKeywords);
+    for (const kw of memberKeywords) {
+      // Only include keywords from the last 30 days
+      if (kw.detectedAt >= cutoffIso) {
+        keywords.add(kw.keyword);
+      }
+    }
+  }
+
+  return [...keywords].sort();
 }
 
 /**

@@ -80,6 +80,7 @@ interface ExtractedData {
   visit_status?: string | null;
   first_time_visitor?: boolean | null;
   interests: string[] | null;
+  keywords: string[] | null;
   address: string | null;
   age_group: string | null;
   family_info: string | null;
@@ -130,6 +131,9 @@ function normalizeExtractedData(data: Record<string, unknown>): ExtractedData {
         : null,
     interests: Array.isArray(data.interests)
       ? data.interests.filter((i): i is string => typeof i === "string")
+      : null,
+    keywords: Array.isArray(data.keywords)
+      ? data.keywords.filter((k): k is string => typeof k === "string")
       : null,
     address: typeof data.address === "string" ? data.address : null,
     age_group: typeof data.age_group === "string" ? data.age_group : null,
