@@ -167,6 +167,22 @@ function normalizeInterests(interests: string[] | null): string[] {
   return normalized;
 }
 
+/**
+ * Normalize Keywords
+ *
+ * Ensures all detected campaign keywords are stored in lowercase.
+ * Keywords are standalone words/phrases visitors write on cards
+ * (e.g., "impacted", "coffee oasis", "next steps").
+ *
+ * @param keywords - Raw array of keywords from AI extraction
+ * @returns Normalized array of lowercase keywords
+ */
+function normalizeKeywords(keywords: string[] | null): string[] {
+  if (!keywords || keywords.length === 0) return [];
+
+  return keywords.map(k => k.toLowerCase().trim()).filter(k => k.length > 0);
+}
+
 const aj = arcjet.withRule(
   fixedWindow({
     mode: arcjetMode,
@@ -343,6 +359,10 @@ export async function saveConnectCard(
           validation.data.extractedData.visit_status || null
         ),
         interests: normalizeInterests(validation.data.extractedData.interests),
+        // Campaign keywords (e.g., "impacted", "coffee oasis") - cleared after 30 days
+        detectedKeywords: normalizeKeywords(
+          validation.data.extractedData.keywords
+        ),
         // Status: All cards go to review queue initially (EXTRACTED)
         // Staff can batch approve or review individually
         status: "EXTRACTED",

@@ -33,6 +33,8 @@ export const env = createEnv({
     GHL_PIT: z.string().min(1).optional(), // Private Integration Token
     GHL_LOCATION_ID: z.string().min(1).optional(), // GHL Location ID (sub-account)
     GHL_CALL_IN_DEV: z.string().optional(), // Set to "true" to make API calls in dev
+    // Cron job authentication
+    CRON_SECRET: z.string().min(1).optional(), // Secret for authenticating cron job requests
   },
 
   client: {
