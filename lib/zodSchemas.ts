@@ -1,90 +1,5 @@
 import { z } from "zod";
 
-export const courseLevels = [
-  "Core",
-  "Beginner",
-  "Intermediate",
-  "Advanced",
-] as const;
-export const courseStatus = ["Draft", "Published", "Archived"] as const;
-
-export const courseCategories = [
-  "Essentials",
-  "CRM & Contacts",
-  "Marketing Automation",
-  "Sales & Funnels",
-  "Social Media Management",
-  "AI & Automation",
-  "Integrations",
-  "Advanced Features",
-  "Agency Operations",
-] as const;
-
-export const courseSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: "Title must be at least 3 characters long" })
-    .max(100, { message: "Title must be at most 100 characters long" }),
-  description: z
-    .string()
-    .min(3, { message: "Description must be at least 3 characters long" }),
-
-  fileKey: z.string().min(1, { message: "File is required" }),
-
-  price: z.coerce
-    .number()
-    .min(0, { message: "Price cannot be negative" })
-    .max(999999, { message: "Price too high" }),
-
-  duration: z.coerce
-    .number()
-    .min(1, { message: "Duration must be at least 1 hour" })
-    .max(500, { message: "Duration must be at most 500 hours" }),
-
-  level: z.enum(courseLevels, {
-    message: "Level is required",
-  }),
-  category: z.enum(courseCategories, {
-    message: "Category is required",
-  }),
-  smallDescription: z
-    .string()
-    .min(3, { message: "Small Description must be at least 3 characters long" })
-    .max(200, {
-      message: "Small Description must be at most 200 characters long",
-    }),
-
-  slug: z
-    .string()
-    .min(3, { message: "Slug must be at least 3 characters long" }),
-
-  status: z.enum(courseStatus, {
-    message: "Status is required",
-  }),
-});
-
-export const chapterSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Name must be at least 3 characters long" }),
-  courseId: z.string().uuid({ message: "Invalid course id" }),
-});
-
-export const lessonSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Name must be at least 3 characters long" }),
-  // Accept any non-empty string for IDs (supports both UUIDs and slug-based IDs from seed scripts)
-  chapterId: z.string().min(1, { message: "Chapter ID is required" }),
-  courseId: z.string().min(1, { message: "Course ID is required" }),
-  description: z
-    .string()
-    .min(3, { message: "Description must be at least 3 characters long" })
-    .optional(),
-
-  videoKey: z.string().optional(),
-});
-
 // Industries for organization setup
 export const organizationIndustries = [
   "SaaS",
@@ -241,31 +156,8 @@ export const volunteerCategoryTypes = [
   "OTHER",
 ] as const;
 
-// Availability type enum
-export const availabilityTypes = ["RECURRING", "BLACKOUT", "ONE_TIME"] as const;
-
-// Recurrence pattern enum
-export const recurrencePatterns = [
-  "WEEKLY",
-  "BIWEEKLY",
-  "MONTHLY",
-  "FIRST_OF_MONTH",
-  "THIRD_OF_MONTH",
-  "ONE_TIME",
-] as const;
-
-// Shift status enum
-export const shiftStatuses = [
-  "SCHEDULED",
-  "CONFIRMED",
-  "CHECKED_IN",
-  "COMPLETED",
-  "NO_SHOW",
-  "CANCELLED",
-] as const;
-
-// Day of week (0=Sunday, 6=Saturday)
-export const daysOfWeek = [0, 1, 2, 3, 4, 5, 6] as const;
+// REMOVED: availabilityTypes, recurrencePatterns, shiftStatuses, daysOfWeek (Dec 2025)
+// Shift scheduling moved to Planning Center
 
 // Volunteer profile schema (create/update)
 export const volunteerSchema = z.object({
@@ -370,43 +262,11 @@ export const servingOpportunitySchema = z.object({
     .optional(),
   isActive: z.boolean().default(true),
   isRecurring: z.boolean().default(true),
-  recurrencePattern: z
-    .enum(recurrencePatterns, { message: "Invalid recurrence pattern" })
-    .nullable()
-    .optional(),
+  // REMOVED: recurrencePattern (Dec 2025) - Shift scheduling moved to Planning Center
   sortOrder: z.coerce.number().int().min(0).default(0),
 });
 
-// Volunteer shift schema (create/update)
-export const volunteerShiftSchema = z.object({
-  organizationId: z.string().uuid({ message: "Invalid organization ID" }),
-  locationId: z
-    .string()
-    .uuid({ message: "Invalid location ID" })
-    .nullable()
-    .optional(),
-  volunteerId: z.string().uuid({ message: "Invalid volunteer ID" }),
-  servingOpportunityId: z
-    .string()
-    .uuid({ message: "Invalid serving opportunity ID" }),
-  shiftDate: z.coerce.date({ message: "Shift date is required" }),
-  startTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
-    message: "Invalid time format (HH:MM)",
-  }),
-  endTime: z.string().regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
-    message: "Invalid time format (HH:MM)",
-  }),
-  status: z.enum(shiftStatuses, { message: "Status is required" }),
-  isConfirmed: z.boolean().default(false),
-  checkInTime: z.coerce.date().nullable().optional(),
-  checkOutTime: z.coerce.date().nullable().optional(),
-  reminderSent: z.boolean().default(false),
-  notes: z
-    .string()
-    .max(500, { message: "Notes must be at most 500 characters" })
-    .nullable()
-    .optional(),
-});
+// REMOVED: volunteerShiftSchema (Dec 2025) - Shift scheduling moved to Planning Center
 
 // Volunteer skill schema (create/update)
 export const volunteerSkillSchema = z.object({
@@ -430,67 +290,9 @@ export const volunteerSkillSchema = z.object({
     .optional(),
 });
 
-// Volunteer availability schema (create/update)
-export const volunteerAvailabilitySchema = z.object({
-  volunteerId: z.string().uuid({ message: "Invalid volunteer ID" }),
-  availabilityType: z.enum(availabilityTypes, {
-    message: "Availability type is required",
-  }),
-  dayOfWeek: z
-    .number()
-    .int()
-    .min(0, { message: "Invalid day" })
-    .max(6, { message: "Invalid day" })
-    .nullable()
-    .optional(),
-  startDate: z.coerce.date().nullable().optional(),
-  endDate: z.coerce.date().nullable().optional(),
-  startTime: z
-    .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
-      message: "Invalid time format (HH:MM)",
-    })
-    .nullable()
-    .optional(),
-  endTime: z
-    .string()
-    .regex(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/, {
-      message: "Invalid time format (HH:MM)",
-    })
-    .nullable()
-    .optional(),
-  isAvailable: z.boolean().default(true),
-  reason: z
-    .string()
-    .max(200, { message: "Reason must be at most 200 characters" })
-    .nullable()
-    .optional(),
-  recurrencePattern: z
-    .enum(recurrencePatterns, { message: "Invalid recurrence pattern" })
-    .nullable()
-    .optional(),
-  notes: z
-    .string()
-    .max(500, { message: "Notes must be at most 500 characters" })
-    .nullable()
-    .optional(),
-});
+// REMOVED: volunteerAvailabilitySchema (Dec 2025) - Shift scheduling moved to Planning Center
+// REMOVED: servingOpportunitySkillSchema (Dec 2025) - Shift scheduling moved to Planning Center
 
-// Serving opportunity skill schema (create)
-export const servingOpportunitySkillSchema = z.object({
-  servingOpportunityId: z
-    .string()
-    .uuid({ message: "Invalid serving opportunity ID" }),
-  skillName: z
-    .string()
-    .min(2, { message: "Skill name must be at least 2 characters" })
-    .max(100, { message: "Skill name must be at most 100 characters" }),
-  isRequired: z.boolean().default(true),
-});
-
-export type CourseSchemaType = z.infer<typeof courseSchema>;
-export type ChapterSchemaType = z.infer<typeof chapterSchema>;
-export type LessonSchemaType = z.infer<typeof lessonSchema>;
 export type OrganizationSetupSchemaType = z.infer<
   typeof organizationSetupSchema
 >;
@@ -502,14 +304,10 @@ export type VolunteerSchemaType = z.infer<typeof volunteerSchema>;
 export type ServingOpportunitySchemaType = z.infer<
   typeof servingOpportunitySchema
 >;
-export type VolunteerShiftSchemaType = z.infer<typeof volunteerShiftSchema>;
+// REMOVED: VolunteerShiftSchemaType (Dec 2025) - Shift scheduling moved to Planning Center
 export type VolunteerSkillSchemaType = z.infer<typeof volunteerSkillSchema>;
-export type VolunteerAvailabilitySchemaType = z.infer<
-  typeof volunteerAvailabilitySchema
->;
-export type ServingOpportunitySkillSchemaType = z.infer<
-  typeof servingOpportunitySkillSchema
->;
+// REMOVED: VolunteerAvailabilitySchemaType, ServingOpportunitySkillSchemaType (Dec 2025)
+// Shift scheduling moved to Planning Center
 
 // ========================================
 // PRAYER REQUEST SCHEMAS

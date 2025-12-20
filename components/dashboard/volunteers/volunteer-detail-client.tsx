@@ -3,8 +3,12 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VolunteerOverviewTab } from "./volunteer-overview-tab";
-import { IconUser, IconHistory, IconNotes } from "@tabler/icons-react";
-import type { Volunteer, VolunteerSkill } from "@/lib/generated/prisma";
+import { IconUser, IconNotes } from "@tabler/icons-react";
+import type {
+  Volunteer,
+  VolunteerSkill,
+  VolunteerCategory,
+} from "@/lib/generated/prisma";
 
 /**
  * Volunteer Detail Client Component
@@ -13,11 +17,10 @@ import type { Volunteer, VolunteerSkill } from "@/lib/generated/prisma";
  *
  * Tabs:
  * 1. Overview - Profile info, background check status, emergency contacts
- * 2. Shift History - Past/upcoming shifts with reliability metrics
- * 3. Notes - Internal notes and observations
+ * 2. Notes - Internal notes and observations
  *
- * Note: Skills, certifications, and availability are managed in external church software
- * (e.g., Planning Center). Background checks are handled in the Overview tab.
+ * Note: Shift scheduling, availability, and service history are managed in Planning Center.
+ * Background checks are handled in the Overview tab.
  */
 
 interface VolunteerDetailClientProps {
@@ -30,31 +33,11 @@ interface VolunteerDetailClientProps {
       address: string | null;
     };
     skills: VolunteerSkill[];
-    availability: Array<{
+    categories: Array<{
       id: string;
-      availabilityType: string;
-      dayOfWeek: number | null;
-      startTime: string | null;
-      endTime: string | null;
-      startDate: Date | null;
-      endDate: Date | null;
-      reason: string | null;
-      recurrencePattern: string | null;
+      category: VolunteerCategory["category"];
     }>;
-    shifts: Array<{
-      id: string;
-      shiftDate: Date;
-      startTime: string;
-      endTime: string;
-      status: string;
-      checkInTime: Date | null;
-      checkOutTime: Date | null;
-      servingOpportunity: {
-        id: string;
-        name: string;
-        category: string | null;
-      };
-    }>;
+    // REMOVED: availability, shifts (Dec 2025) - Shift scheduling moved to Planning Center
   };
 }
 
@@ -83,13 +66,7 @@ export function VolunteerDetailClient({
               Overview
             </TabsTrigger>
 
-            <TabsTrigger
-              value="shifts"
-              className="relative overflow-hidden rounded-none border py-2 after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-background data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
-            >
-              <IconHistory className="mr-2 h-4 w-4" />
-              Shift History ({volunteer.shifts.length})
-            </TabsTrigger>
+            {/* REMOVED: Shift History tab (Dec 2025) - Shift scheduling moved to Planning Center */}
 
             <TabsTrigger
               value="notes"
@@ -106,11 +83,7 @@ export function VolunteerDetailClient({
           <VolunteerOverviewTab volunteer={volunteer} />
         </TabsContent>
 
-        <TabsContent value="shifts" className="mt-6">
-          <div className="rounded-lg border p-8 text-center text-muted-foreground">
-            Shift History tab - Coming soon
-          </div>
-        </TabsContent>
+        {/* REMOVED: Shift History TabsContent (Dec 2025) - Shift scheduling moved to Planning Center */}
 
         <TabsContent value="notes" className="mt-6">
           <div className="rounded-lg border p-8 text-center text-muted-foreground">

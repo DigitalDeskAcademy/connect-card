@@ -1,10 +1,17 @@
 # Platform Admin Modernization
 
+> 📋 **STATUS: FUTURE WORK (Dec 2025)**
+>
+> This is a wishlist item. Not being actively worked on.
+> Post-demo priorities focus on: Planning Center API, Deduplication,
+> Keyword Detection, and Volunteer Event Tracking.
+> Platform admin modernization deferred until those are complete.
+
 **Status:** Planning
-**Priority:** High (post-demo)
-**Branch:** `feature/platform-admin` (to be created)
-**Port:** 3005 (reassign from integrations, now merged)
-**Last Updated:** 2025-12-13
+**Priority:** Future (post-MVP)
+**Branch:** `feature/platform-admin` (not yet created)
+**Port:** 3005
+**Last Updated:** 2025-12-17
 
 ---
 
