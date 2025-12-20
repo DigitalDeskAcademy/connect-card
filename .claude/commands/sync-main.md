@@ -2,96 +2,226 @@
 description: Sync latest main into current worktree safely
 ---
 
-# Sync Main
+# Sync Main (Smart)
 
-Safely pull latest main into current worktree without losing work.
-
----
-
-## Step 1: Capture Current State
-
-```bash
-# Get current branch and check for uncommitted work
-CURRENT_BRANCH=$(git branch --show-current)
-UNCOMMITTED=$(git status --short | wc -l)
-echo "Branch: $CURRENT_BRANCH"
-echo "Uncommitted files: $UNCOMMITTED"
-```
+Intelligently sync with main - uses RESET when safe, MERGE when needed.
 
 ---
 
-## Step 2: Stash Uncommitted Work (if any)
-
-If uncommitted files > 0:
+## Step 1: Analyze Current State
 
 ```bash
-git stash push -m "sync-main: auto-stash before merge"
-```
-
----
-
-## Step 3: Fetch and Merge Main
-
-```bash
-# Fetch latest from origin
+# Fetch latest
 git fetch origin main
 
-# Merge main into current branch
-git merge origin/main --no-edit
+# Get metrics
+CURRENT_BRANCH=$(git branch --show-current)
+UNCOMMITTED=$(git status --short | wc -l)
+BEHIND=$(git rev-list HEAD..origin/main --count 2>/dev/null || echo "0")
+UNIQUE=$(git rev-list origin/main..HEAD --count 2>/dev/null || echo "0")
+
+echo "Branch: $CURRENT_BRANCH"
+echo "Uncommitted files: $UNCOMMITTED"
+echo "Behind main: $BEHIND commits"
+echo "Unique commits (not in main): $UNIQUE"
 ```
-
-**If merge conflicts:**
-
-1. Show conflicting files: `git diff --name-only --diff-filter=U`
-2. Ask user: "Resolve conflicts manually or abort?"
-3. If abort: `git merge --abort` then restore stash
 
 ---
 
-## Step 4: Restore Stashed Work
+## Step 2: Determine Strategy
 
-If work was stashed in Step 2:
+| Uncommitted | Unique Commits | Strategy                | Reason                           |
+| ----------- | -------------- | ----------------------- | -------------------------------- |
+| 0           | 0              | **RESET**               | No work to preserve, clean slate |
+| 0           | > 0            | **MERGE**               | Preserve unmerged work           |
+| > 0         | 0              | **STASH + RESET + POP** | Save work, reset, restore        |
+| > 0         | > 0            | **STASH + MERGE + POP** | Safe merge preserving all work   |
+
+### Decision Tree
+
+```
+Has uncommitted files?
+├── YES → Stash first
+│   └── Has unique commits?
+│       ├── YES → MERGE (preserve commits)
+│       └── NO → RESET (clean slate)
+│   └── Pop stash after
+│
+└── NO
+    └── Has unique commits?
+        ├── YES → MERGE (preserve commits)
+        └── NO → RESET (clean slate, fastest)
+```
+
+---
+
+## Step 3: Execute Strategy
+
+### If RESET Strategy (no unique commits):
 
 ```bash
-git stash pop
+# Safe to reset - no unique work to lose
+echo "No unique commits. Resetting to main..."
+
+# Stash if uncommitted files
+if [ "$UNCOMMITTED" -gt 0 ]; then
+  git stash push -m "sync-main: auto-stash before reset"
+  STASHED=true
+fi
+
+# Reset to main
+git reset --hard origin/main
+
+# Restore stash if we stashed
+if [ "$STASHED" = true ]; then
+  git stash pop
+fi
+
+echo "✅ Reset to main complete"
 ```
 
-**If stash conflicts:** Show files and let user resolve manually.
+### If MERGE Strategy (has unique commits):
+
+```bash
+# Has unique commits - must merge to preserve them
+echo "Has $UNIQUE unique commits. Merging main..."
+
+# Stash if uncommitted files
+if [ "$UNCOMMITTED" -gt 0 ]; then
+  git stash push -m "sync-main: auto-stash before merge"
+  STASHED=true
+fi
+
+# Merge main
+git merge origin/main --no-edit
+
+# Check for conflicts
+if [ $? -ne 0 ]; then
+  echo "⚠️ MERGE CONFLICT"
+  echo "Conflicting files:"
+  git diff --name-only --diff-filter=U
+  echo ""
+  echo "Options:"
+  echo "  1. Resolve conflicts manually, then: git add . && git commit"
+  echo "  2. Abort merge: git merge --abort"
+
+  # Don't pop stash if merge failed
+  exit 1
+fi
+
+# Restore stash if we stashed
+if [ "$STASHED" = true ]; then
+  git stash pop
+  if [ $? -ne 0 ]; then
+    echo "⚠️ Stash conflict - resolve manually"
+    echo "Your stashed changes are in: git stash list"
+    exit 1
+  fi
+fi
+
+echo "✅ Merge complete"
+```
 
 ---
 
-## Step 4.5: Regenerate Prisma Client
+## Step 4: Regenerate Prisma Client
 
-**ALWAYS run after merge** - ensures TypeScript types match any schema changes from main:
+**ALWAYS run after sync** - ensures TypeScript types match any schema changes:
 
 ```bash
 pnpm prisma generate
 ```
-
-⚠️ **Why this matters:** Schema changes from main require Prisma client regeneration. Without this, you'll get TypeScript errors like `'fieldName' does not exist on type 'ModelSelect'` even though the field exists in schema.
 
 ---
 
 ## Step 5: Verify & Report
 
 ```bash
-git log --oneline -3
-git status
+echo "=== Sync Complete ==="
+echo "HEAD: $(git log -1 --oneline)"
+echo "Ahead of main: $(git rev-list origin/main..HEAD --count)"
+echo "Behind main: $(git rev-list HEAD..origin/main --count)"
+echo "Uncommitted: $(git status --short | wc -l)"
 ```
 
-Report:
+### Success Report
 
 ```
 SYNC COMPLETE
 =============
-Branch: feature/prayer-enhancements
-Merged: X commits from main
-Status: Clean (or: X uncommitted files restored)
+Branch: feature/volunteer-management
+Strategy: RESET (no unique commits)
+Status: Clean - 0 ahead, 0 behind main
+
+Ready for new work!
 ```
+
+Or:
+
+```
+SYNC COMPLETE
+=============
+Branch: feature/connect-card
+Strategy: MERGE (preserved 3 unique commits)
+Status: Synced - 3 ahead (your work), 0 behind main
+
+Continue your work!
+```
+
+---
+
+## Quick Reference
+
+**When to use `/sync-main`:**
+
+- Starting a new work session (sync first)
+- Before creating a PR (ensure up-to-date)
+- After someone else's PR merges to main
+
+**When NOT to use:**
+
+- Right after YOUR PR merges → Use `/feature-wrap-up` instead (it resets)
+- In the middle of complex uncommitted changes → Commit first
+
+---
+
+## Why RESET vs MERGE?
+
+### RESET (when no unique commits)
+
+```
+Your branch:  A---B---C (same as main)
+Main:         A---B---C---D---E
+
+After reset:  A---B---C---D---E (identical to main)
+```
+
+- Cleanest result
+- No merge commits
+- Fastest
+
+### MERGE (when you have unique commits)
+
+```
+Your branch:  A---B---C---X---Y (X,Y are your work)
+Main:         A---B---C---D---E
+
+After merge:  A---B---C---D---E---M (merge commit)
+                      \       /
+                       X---Y
+```
+
+- Preserves your unmerged work
+- Creates merge commit
+- Necessary when you have WIP
 
 ---
 
 ## Error Recovery
 
-**Merge failed:** `git merge --abort` → restore stash → report failure
-**Stash conflict:** Leave stash in place, show `git stash list`, manual resolution needed
+| Issue                 | Solution                                                      |
+| --------------------- | ------------------------------------------------------------- |
+| Merge conflict        | Resolve manually or `git merge --abort`                       |
+| Stash conflict        | `git stash show` to see changes, resolve manually             |
+| Wrong strategy chosen | `git reflog` to find previous state, `git reset --hard <ref>` |
+| Lost uncommitted work | Check `git stash list` - may be there                         |

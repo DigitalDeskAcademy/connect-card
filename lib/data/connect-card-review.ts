@@ -24,6 +24,7 @@ export interface ConnectCardForReview {
   prayerRequest: string | null;
   visitType: string | null;
   interests: string[];
+  detectedKeywords: string[]; // Campaign keywords (e.g., "impacted", "coffee oasis")
   volunteerCategory: string | null;
   assignedLeaderId: string | null;
   smsAutomationEnabled: boolean;
@@ -71,6 +72,7 @@ export async function getConnectCardsForReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      detectedKeywords: true, // Campaign keywords
       volunteerCategory: true,
       assignedLeaderId: true,
       smsAutomationEnabled: true,
@@ -132,6 +134,7 @@ export async function getConnectCardForReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      detectedKeywords: true, // Campaign keywords
       volunteerCategory: true,
       assignedLeaderId: true,
       smsAutomationEnabled: true,
@@ -265,6 +268,7 @@ export async function getConnectCardsForBatchReview(
       prayerRequest: true,
       visitType: true,
       interests: true,
+      detectedKeywords: true, // Campaign keywords
       volunteerCategory: true,
       assignedLeaderId: true,
       smsAutomationEnabled: true,

@@ -163,6 +163,8 @@ export const extractedDataSchema = z.object({
   visit_status: z.string().max(100).nullish(),
   first_time_visitor: z.boolean().nullish(),
   interests: z.array(z.string().max(100)).max(20).nullable(),
+  // Campaign keywords - standalone words/phrases visitors write (e.g., "impacted", "coffee oasis")
+  keywords: z.array(z.string().max(50)).max(10).nullable(),
   address: z.string().max(500).nullable(),
   age_group: z.string().max(50).nullable(),
   family_info: z.string().max(500).nullable(),

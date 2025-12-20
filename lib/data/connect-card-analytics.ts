@@ -253,6 +253,7 @@ export async function getRecentConnectCards(
       visitType: true,
       prayerRequest: true,
       interests: true,
+      detectedKeywords: true, // Campaign keywords for filtering
       scannedAt: true,
       createdAt: true,
     },

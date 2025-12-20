@@ -40,6 +40,7 @@ interface ExtractedData {
   visit_status?: string | null;
   first_time_visitor?: boolean | null;
   interests: string[] | null;
+  keywords: string[] | null;
   address: string | null;
   age_group: string | null;
   family_info: string | null;

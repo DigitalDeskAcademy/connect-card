@@ -4,11 +4,12 @@ description: Complete end-to-end feature workflow - worktree-aware with conflict
 
 # Feature Wrap-Up (Worktree-Aware)
 
-Complete feature workflow: build → commit → PR → merge → sync main → handoff.
+Complete feature workflow: build → commit → PR → merge → **RESET to main** → handoff.
 
 **Key Features:**
 
-- Updates main worktree after merge
+- **RESETS branch to main after merge** (not merge - prevents drift)
+- Updates documentation in main worktree
 - Optional sync of other worktrees (safety-first)
 - NO doc updates in feature branch (prevents conflicts)
 - Generates copyable handoff text
@@ -87,7 +88,7 @@ done
 git add docs/PROJECT.md docs/PLAYBOOK.md 2>/dev/null || true
 
 # 4. Report what was deferred
-echo "📋 Deferred doc updates to Stage 8:"
+echo "Deferred doc updates to Stage 8:"
 ls -1 .claude/pending-docs/*.patch 2>/dev/null | xargs -I {} basename {} .patch
 ```
 
@@ -110,8 +111,6 @@ ls -1 .claude/pending-docs/*.patch 2>/dev/null | xargs -I {} basename {} .patch
 ```bash
 pnpm prisma generate
 ```
-
-⚠️ **Why this matters:** After merging from main, the Prisma client types may be stale even if schemas match. This causes TypeScript errors like `'fieldName' does not exist on type 'ModelSelect'`. Always regenerate to be safe.
 
 ### 2.1: Build Check
 
@@ -243,9 +242,7 @@ Ask: "Need manual testing before merge? (yes/no)"
 gh pr merge <pr-number> --squash
 ```
 
-**Note:** We do NOT use `--delete-branch` because worktrees keep feature branches for continued development. The branch stays on the remote and locally in the worktree.
-
-### 6.3: Verify
+### 6.3: Verify Merge
 
 ```bash
 gh pr view <pr-number> --json state,mergedAt
@@ -253,46 +250,96 @@ gh pr view <pr-number> --json state,mergedAt
 
 ---
 
-## Stage 7: Update Current Worktree
+## Stage 7: Reset Current Worktree to Main (CRITICAL)
 
-### 7.1: Pull Latest Main
+> **WHY RESET, NOT MERGE?**
+>
+> After your PR merges, your work IS in main. The feature branch's commit history
+> is now irrelevant. Resetting to main gives you a clean slate and prevents the
+> "25 commits ahead, 17 commits behind" drift problem.
+
+### 7.1: Verify PR is Merged
+
+```bash
+# Confirm the PR merged successfully
+gh pr view <pr-number> --json state | grep -q '"MERGED"' && echo "PR merged successfully"
+```
+
+### 7.2: Fetch Latest Main
 
 ```bash
 git fetch origin main
-git merge origin/main --no-edit
 ```
 
-### 7.2: Schema Migration (if needed)
+### 7.3: Check for Any Uncommitted Work
 
-If schema.prisma was modified:
+```bash
+UNCOMMITTED=$(git status --short | wc -l)
+if [ "$UNCOMMITTED" -gt 0 ]; then
+  echo "WARNING: You have $UNCOMMITTED uncommitted files!"
+  echo "These will be LOST if you reset. Commit or stash them first."
+  git status --short
+  exit 1
+fi
+```
+
+### 7.4: Reset to Main
+
+```bash
+# This is safe because:
+# 1. PR is merged - your work is IN main
+# 2. No uncommitted files - nothing to lose
+# 3. Gives clean slate for next feature
+
+git reset --hard origin/main
+```
+
+### 7.5: Verify Clean State
+
+```bash
+echo "=== Post-Reset Verification ==="
+echo "HEAD: $(git log -1 --oneline)"
+echo "Ahead of main: $(git rev-list origin/main..HEAD --count)"
+echo "Behind main: $(git rev-list HEAD..origin/main --count)"
+```
+
+Expected output: 0 ahead, 0 behind.
+
+### 7.6: Regenerate Prisma Client
 
 ```bash
 pnpm prisma generate
-pnpm prisma db push
 ```
 
 ---
 
-## Stage 8: Documentation Update
+## Stage 8: Documentation Update (in Main Worktree)
 
-**REQUIRED** - Run BEFORE syncing other worktrees so they get the doc changes.
+**REQUIRED** - Run in MAIN worktree so doc changes are centralized.
 
-### 8.0: Apply Deferred Doc Updates
+### 8.0: Switch to Main Worktree
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/main
+git pull origin main
+```
+
+### 8.1: Apply Deferred Doc Updates
 
 Check for and apply any patches deferred from Stage 1.2:
 
 ```bash
-# Check for pending patches
-PENDING_DIR=".claude/pending-docs"
+# Check for pending patches in the feature worktree
+FEATURE_WORKTREE="/home/digitaldesk/Desktop/church-connect-hub/<worktree-name>"
+PENDING_DIR="$FEATURE_WORKTREE/.claude/pending-docs"
 
 if [ -d "$PENDING_DIR" ] && ls "$PENDING_DIR"/*.patch 1>/dev/null 2>&1; then
-  echo "📋 Applying deferred doc updates..."
+  echo "Applying deferred doc updates..."
 
   for patch in "$PENDING_DIR"/*.patch; do
     FILENAME=$(basename "$patch" .patch)
     echo "  → Applying $FILENAME changes"
 
-    # Try to apply the patch
     if git apply "$patch" 2>/dev/null; then
       rm "$patch"
       echo "  ✅ Applied successfully"
@@ -301,55 +348,51 @@ if [ -d "$PENDING_DIR" ] && ls "$PENDING_DIR"/*.patch 1>/dev/null 2>&1; then
       cat "$patch"
     fi
   done
-else
-  echo "No deferred doc updates to apply"
 fi
 ```
 
-### 8.1: Analyze What Was Built
+### 8.2: Update WORKTREE-STATUS.md
 
-```bash
-gh pr view <pr-number> --json title,body,files
-git log -1 --stat
-```
-
-### 8.2: Update PROJECT.md (if needed)
-
-Move feature from "In Progress" to "Complete":
+Update the section for the worktree that just completed:
 
 ```markdown
-## Working Features
+### worktree-name (Port XXXX)
 
-### <Feature Name> - COMPLETE (Nov 2025)
-
-- <Key accomplishment 1>
-- <Key accomplishment 2>
+**Status:** ✅ Phase X Complete - PR #YY merged
+...
 ```
 
 ### 8.3: Commit and Push Documentation
 
 ```bash
-git add docs/ .claude/
+git add docs/
 git commit -m "docs: update after <feature> merge (PR #<number>)"
 git push origin main
 ```
 
+### 8.4: Return to Feature Worktree
+
+```bash
+cd /home/digitaldesk/Desktop/church-connect-hub/<worktree-name>
+```
+
 ---
 
-## Stage 9: Sync Other Worktrees
+## Stage 9: Sync Other Worktrees (Optional)
 
 **Run AFTER documentation is pushed** so all worktrees get doc changes.
 
 ### 9.1: Check Worktree Status
 
 ```bash
-# Check each worktree status
-for worktree in connect-card prayer volunteer tech-debt integrations; do
+for worktree in connect-card prayer volunteer tech-debt; do
   echo "==== $worktree ===="
   cd /home/digitaldesk/Desktop/church-connect-hub/$worktree 2>/dev/null && \
   git fetch origin main 2>/dev/null && \
-  echo "Uncommitted: $(git status --short | wc -l)" && \
-  echo "Behind: $(git rev-list HEAD..origin/main --count 2>/dev/null || echo 'N/A')"
+  UNCOMMITTED=$(git status --short | wc -l) && \
+  BEHIND=$(git rev-list HEAD..origin/main --count 2>/dev/null || echo 'N/A') && \
+  UNIQUE=$(git rev-list origin/main..HEAD --count 2>/dev/null || echo 'N/A') && \
+  echo "Uncommitted: $UNCOMMITTED | Behind: $BEHIND | Unique commits: $UNIQUE"
 done
 ```
 
@@ -359,39 +402,40 @@ Show status table:
 WORKTREE STATUS
 ===============
 
-Worktree     | Uncommitted | Behind Main | Recommendation
--------------|-------------|-------------|---------------
-connect-card | 0 files     | 3 commits   | Safe to sync
-prayer       | 5 files     | 2 commits   | Skip (active)
-volunteer    | 0 files     | 1 commit    | Safe to sync
+Worktree     | Uncommitted | Behind | Unique | Recommendation
+-------------|-------------|--------|--------|---------------
+connect-card | 0 files     | 3      | 0      | RESET (no unique work)
+prayer       | 5 files     | 2      | 3      | Skip (active work)
+volunteer    | 0 files     | 1      | 0      | RESET (no unique work)
 ```
 
-### 9.2: Sync Clean Worktrees
+### 9.2: Sync Logic
 
-Options:
+**For each worktree:**
 
-1. Sync all CLEAN worktrees (recommended)
-2. Ask for each individually
-3. Skip all (manual sync later)
-
-For clean worktrees:
+| Uncommitted | Unique Commits | Action                                  |
+| ----------- | -------------- | --------------------------------------- |
+| 0           | 0              | `git reset --hard origin/main` (safe)   |
+| 0           | > 0            | `git merge origin/main` (preserve work) |
+| > 0         | any            | Skip - has active work                  |
 
 ```bash
-cd /path/to/worktree
+# For worktrees with no uncommitted and no unique commits:
+git reset --hard origin/main
+pnpm prisma generate
+
+# For worktrees with unique commits but no uncommitted:
 git merge origin/main --no-edit
+pnpm prisma generate
 ```
 
 ---
 
 ## Stage 10: Handoff
 
-### 10.1: Ask About Next Feature
+### 10.1: Generate Completion Report
 
-"What feature should we work on next?"
-
-### 10.2: Generate Handoff
-
-````
+```
 FEATURE WRAP-UP COMPLETE
 ========================
 
@@ -407,86 +451,45 @@ FEATURE WRAP-UP COMPLETE
 - <file 2>
 
 ## Worktree Status
-- main: Updated
-- Others: <status>
+- Current worktree: Reset to main ✅
+- Other worktrees: <status>
+
+## Branch Health
+- Ahead of main: 0 commits ✅
+- Behind main: 0 commits ✅
+- Clean slate for next feature
 
 ---
 
-## HANDOFF FOR NEXT SESSION
+## NEXT STEPS
 
-Copy this to your next Claude Code session:
+1. Run `/clear` to start fresh session
+2. Run `/session-start <next-feature>` to begin new work
+3. Or check `docs/WORKTREE-STATUS.md` for priorities
 
----START---
-
-# Session Handoff
-
-**Date**: <date>
-**Completed**: <feature> (PR #<number>)
-**Next**: <next-feature>
-
-## Just Completed
-<summary of what was built>
-
-## Project State
-- Connect Cards: Ready for PR
-- Prayer: 65% - Blocking
-- Volunteer: In Progress
-- Tech Debt: Critical items
-- Integrations: Planning
-
-## Worktree Setup
 ```
-.bare/                 (bare repo)
-main/                  (main branch)
-connect-card/          (feature/connect-card)
-prayer/                (feature/prayer-enhancements)
-volunteer/             (feature/volunteer-management)
-tech-debt/             (feature/tech-debt)
-integrations/          (feature/integrations)
-```
-
-## Key Commands
-```bash
-git -C ../.bare worktree list     # See all worktrees
-cd /path/to/worktree              # Switch context
-git merge main                    # Update from main
-```
-
-## Documentation
-- PROJECT.md - Current state & roadmap
-- PLAYBOOK.md - Technical decisions & patterns
-- docs/features/*/vision.md - Feature specs
-
-## Next Steps
-1. cd to appropriate worktree
-2. Run `/session-start <feature>` or continue work
-3. Use `/feature-wrap-up` when done
-
----END---
-
-````
 
 ---
 
 ## Error Handling
 
-**Build Failures**: Stop, report errors, offer to fix
-**Merge Conflicts**: GitHub shows conflicts during PR - resolve before merge
-**Worktree Issues**: Skip active worktrees, provide manual instructions
-**Documentation**: Strong warning if skipped
+| Error                    | Recovery                                   |
+| ------------------------ | ------------------------------------------ |
+| Build fails              | Stop, report errors, fix before continuing |
+| PR merge conflicts       | Resolve in GitHub UI, then continue        |
+| Reset would lose work    | Commit or stash first, then reset          |
+| Worktree has active work | Skip sync, provide manual instructions     |
 
 ---
 
-## When to Use
+## Key Principle: Reset After Merge
 
-**Use when:**
+```
+BEFORE (wrong):
+  PR merges → git merge origin/main → creates merge commits → DRIFT
 
-- Feature complete and tested
-- Ready to merge to main
-- Need automated wrap-up workflow
+AFTER (correct):
+  PR merges → git reset --hard origin/main → clean slate → NO DRIFT
+```
 
-**Don't use if:**
-
-- Feature incomplete
-- Build broken
-- Not in worktree setup
+**Your work is IN main after PR merges. Reset to main. Start fresh.**

@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-15
+**Last Updated:** 2025-12-15 (Demo UI PR #78)
 **Update Frequency:** After each significant work session
 
 ---
@@ -26,7 +26,7 @@
 | **connect-card**   | 3001 | `feature/connect-card`         | 🟡 **UX Priority**  | Upload UX Overhaul (high priority)  |
 | **prayer**         | 3002 | `feature/prayer-enhancements`  | 🟢 **COMPLETE**     | PR #49, #51, #56, #57 merged        |
 | **volunteer**      | 3003 | `feature/volunteer-management` | 🟢 **Phase 2 Done** | PR #61 MVP Automation merged        |
-| **tech-debt**      | 3004 | `feature/ghl-integration`      | 🟢 **Phase 1 Done** | GHL Integration (Phase 1 Complete)  |
+| **tech-debt**      | 3004 | `feature/tech-debt`            | 🟢 **Active**       | Technical debt & seed fixes         |
 | **platform-admin** | 3005 | `feature/platform-admin`       | 🔴 **Planning**     | Modernize platform admin (7 phases) |
 
 ---
@@ -48,6 +48,7 @@
 
 **Recently Completed (PRs Merged):**
 
+- ✅ tech-debt #78 - Demo UI: Modernized landing page + comprehensive seed data (Dec 15) ✓ MERGED
 - ✅ prayer #77 - Prayer inbox workflow with batch assignment + My Prayers redesign (Dec 15)
 - ✅ connect-card #73 - QR code scan flow with token authentication (Dec 15)
 - ✅ tech-debt #72 - GHL Integration Phase 1: Service Layer + SMS (Dec 14)
@@ -74,10 +75,10 @@
 
 ---
 
-### 🟢 tech-debt (Port 3004) - GHL Integration Phase 1 COMPLETE
+### 🟢 tech-debt (Port 3004) - Active
 
-**Status:** ✅ Phase 1 Complete - Ready for PR
-**Branch:** `feature/ghl-integration`
+**Status:** ✅ GHL Phase 1 Complete, Demo seed fixed
+**Branch:** `feature/tech-debt`
 **Vision Doc:** `/docs/features/ghl-integration/vision.md`
 
 #### GHL Integration Overview

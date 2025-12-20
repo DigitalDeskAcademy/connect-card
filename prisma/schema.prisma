@@ -496,6 +496,8 @@ model ConnectCard {
   visitType        String?
   /// Areas of interest or ministry preferences
   interests        String[]           @default([])
+  /// Detected campaign keywords (e.g., "impacted", "coffee oasis") - stored lowercase
+  detectedKeywords String[]           @default([])
   /// Specific volunteer category if "Volunteering" interest selected
   volunteerCategory String?
   /// Assigned volunteer leader for follow-up (only for non-General volunteer categories)
@@ -627,6 +629,10 @@ model ChurchMember {
   servingTeamId  String?
   /// CRM fields
   tags           String[]              @default([])
+  /// Campaign keywords detected from connect cards (e.g., "impacted", "coffee oasis")
+  /// Stored as JSON array: [{ keyword: string, detectedAt: DateTime }]
+  /// Auto-cleared after 30 days by cleanup job
+  detectedKeywords Json                @default("[]")
   customFields   Json?
   /// Learning assignments and course access (LMS features)
   enrollments    Enrollment[]
