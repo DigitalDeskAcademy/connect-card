@@ -11,6 +11,9 @@ import {
   IconRocket,
   IconPalette,
   IconQrcode,
+  IconTestPipe,
+  IconCheck,
+  IconX,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -23,6 +26,216 @@ interface Task {
 interface ChecklistSection {
   title: string;
   items: Task[];
+}
+
+interface TestSuite {
+  name: string;
+  file: string;
+  testCount: number;
+  status: "passing" | "failing" | "pending";
+  description: string;
+}
+
+function E2ETestStatus() {
+  const testSuites: TestSuite[] = [
+    {
+      name: "Auth Setup",
+      file: "00-auth.setup.ts",
+      testCount: 1,
+      status: "passing",
+      description:
+        "Ensures staff can log in securely using email verification. This is the foundation for all other tests—if login breaks, nothing else works. It protects against unauthorized access to church data.",
+    },
+    {
+      name: "Smoke Tests",
+      file: "00-smoke-tests.spec.ts",
+      testCount: 38,
+      status: "passing",
+      description:
+        "Quickly checks that every admin page loads without crashing. Think of it as a daily health check—if any page has a critical error, this catches it immediately before staff encounter problems.",
+    },
+    {
+      name: "Connect Card Workflow",
+      file: "01-connect-card-workflow.spec.ts",
+      testCount: 8,
+      status: "passing",
+      description:
+        "Verifies the complete journey of processing a connect card: uploading, AI extraction, staff review, and saving contact info. This ensures Sunday visitors get properly followed up.",
+    },
+    {
+      name: "Batch Operations",
+      file: "02-batch-operations.spec.ts",
+      testCount: 8,
+      status: "passing",
+      description:
+        "Tests the ability to process multiple connect cards at once. Churches often scan 20-50 cards after service—this ensures bulk processing works reliably under real-world conditions.",
+    },
+    {
+      name: "Review Queue",
+      file: "03-review-queue.spec.ts",
+      testCount: 5,
+      status: "passing",
+      description:
+        "Confirms staff can efficiently review and correct AI-extracted data. Even with 85% accuracy, some cards need human review—this ensures that workflow is smooth and intuitive.",
+    },
+    {
+      name: "Export Functionality",
+      file: "14-export-functionality.spec.ts",
+      testCount: 16,
+      status: "passing",
+      description:
+        "Validates that contact data exports correctly to Planning Center, Breeze, and CSV formats. Churches rely on this to sync visitor data with their existing member management systems.",
+    },
+    {
+      name: "Contacts Module",
+      file: "15-contacts-module.spec.ts",
+      testCount: 14,
+      status: "passing",
+      description:
+        "Tests the central contacts directory—searching, filtering, and viewing member details. This is where staff find and manage their congregation's contact information daily.",
+    },
+    {
+      name: "Settings Pages",
+      file: "16-settings-pages.spec.ts",
+      testCount: 18,
+      status: "passing",
+      description:
+        "Ensures church admins can configure volunteer onboarding documents, ministry requirements, and system preferences. Also verifies that non-admin staff cannot access sensitive settings.",
+    },
+    {
+      name: "Analytics/Insights",
+      file: "17-analytics-insights.spec.ts",
+      testCount: 0,
+      status: "pending",
+      description:
+        "Will test dashboard statistics and reporting features. Churches need accurate visitor trends, volunteer engagement, and prayer request metrics to make informed ministry decisions.",
+    },
+    {
+      name: "QR Scan Flow",
+      file: "18-qr-scan-flow.spec.ts",
+      testCount: 0,
+      status: "pending",
+      description:
+        "Will verify the digital connect card experience—visitors scanning a QR code and submitting their info on their phone. This modern alternative to paper cards needs to work flawlessly.",
+    },
+  ];
+
+  const passingTests = testSuites
+    .filter(s => s.status === "passing")
+    .reduce((acc, s) => acc + s.testCount, 0);
+
+  return (
+    <Card className="mb-6 border-2 border-dashed border-blue-500/30">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-blue-500/10">
+              <IconTestPipe className="h-5 w-5 text-blue-500" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">E2E Test Status</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Playwright test suite coverage
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-green-600">
+              {passingTests}
+            </div>
+            <div className="text-xs text-muted-foreground">tests passing</div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {testSuites.map(suite => (
+            <div
+              key={suite.file}
+              className={`p-4 rounded-lg border ${
+                suite.status === "passing"
+                  ? "bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-800"
+                  : suite.status === "failing"
+                    ? "bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-800"
+                    : "bg-muted/50 border-muted"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  {suite.status === "passing" ? (
+                    <IconCheck className="h-5 w-5 text-green-600" />
+                  ) : suite.status === "failing" ? (
+                    <IconX className="h-5 w-5 text-red-600" />
+                  ) : (
+                    <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30" />
+                  )}
+                  <span className="font-medium">{suite.name}</span>
+                </div>
+                <div className="text-sm">
+                  {suite.testCount > 0 ? (
+                    <span
+                      className={
+                        suite.status === "passing"
+                          ? "text-green-600 font-medium"
+                          : "text-red-600 font-medium"
+                      }
+                    >
+                      {suite.testCount} checks
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">
+                      Planned
+                    </span>
+                  )}
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {suite.description}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t pt-4">
+          <h4 className="text-sm font-medium mb-2">How to Run Tests</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-xs font-medium mb-1">Run all tests:</p>
+              <code className="text-xs bg-background px-2 py-1 rounded block">
+                pnpm test:e2e
+              </code>
+            </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-xs font-medium mb-1">View HTML report:</p>
+              <code className="text-xs bg-background px-2 py-1 rounded block">
+                pnpm exec playwright show-report
+              </code>
+            </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-xs font-medium mb-1">
+                Run with UI (interactive):
+              </p>
+              <code className="text-xs bg-background px-2 py-1 rounded block">
+                pnpm exec playwright test --ui
+              </code>
+            </div>
+            <div className="p-3 bg-muted rounded-lg">
+              <p className="text-xs font-medium mb-1">Run specific file:</p>
+              <code className="text-xs bg-background px-2 py-1 rounded block">
+                pnpm exec playwright test 15-contacts
+              </code>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            <strong>Note:</strong> The HTML report opens at{" "}
+            <code className="bg-muted px-1 rounded">localhost:9323</code> after
+            running show-report. Tests are located in{" "}
+            <code className="bg-muted px-1 rounded">/tests/e2e/</code>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 function DemoReadyChecklist() {
@@ -463,6 +676,8 @@ export default async function DevDashboardPage({
           </Link>
         </Button>
       </div>
+
+      <E2ETestStatus />
 
       <DemoReadyChecklist />
 

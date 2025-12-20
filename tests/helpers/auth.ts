@@ -114,13 +114,15 @@ export async function loginWithOTP(
   await page.click('button:has-text("Verify Account")');
 
   // Wait for redirect after successful verification (goes to /auth/callback first)
+  // Higher timeout for dev server compilation
   await page.waitForURL(url => !url.pathname.includes("/verify-request"), {
-    timeout: 10000,
+    timeout: 20000,
   });
 
   // Wait for the callback redirect to complete (goes to final destination)
+  // This can take longer due to compilation of dashboard routes
   await page.waitForURL(url => !url.pathname.includes("/auth/callback"), {
-    timeout: 10000,
+    timeout: 30000,
   });
 
   return otpCode;
