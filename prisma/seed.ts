@@ -8,7 +8,6 @@
  * - Connect Cards & Batches (ready for review queue UI)
  * - Prayer Requests (various states and privacy levels)
  * - Volunteers (basic profiles with background checks)
- * - LMS Courses (platform + church-specific training)
  *
  * Run: pnpm seed:all
  */
@@ -815,168 +814,6 @@ async function main() {
   }
 
   // ============================================================================
-  // PHASE 7: LMS (Learning Management System)
-  // ============================================================================
-
-  console.log("\n📚 Creating LMS courses...");
-
-  // Platform course (visible to all)
-  const platformCourse = await prisma.course.create({
-    data: {
-      title: "Platform Essentials",
-      description: "Learn the basics of Church Connect Card platform",
-      smallDescription: "Essential platform training for all users",
-      fileKey: "courses/platform-essentials/thumbnail.jpg",
-      price: 0,
-      isFree: true,
-      duration: 60,
-      level: "Core",
-      category: "Essentials",
-      slug: "platform-essentials",
-      status: "Published",
-      userId: userIds["platform@test.com"],
-      organizationId: null, // Platform course
-      isPlatformCourse: true,
-      s3Prefix: "courses/platform-essentials/",
-    },
-  });
-  console.log(`✅ ${platformCourse.title} (Platform)`);
-
-  // Newlife church courses
-  const memberCourse = await prisma.course.create({
-    data: {
-      title: "New Member Orientation",
-      description:
-        "Welcome to Newlife Church! Learn about our mission, values, and community.",
-      smallDescription: "Essential orientation for new members",
-      fileKey: "courses/new-member-orientation/thumbnail.jpg",
-      price: 0,
-      isFree: true,
-      duration: 90,
-      level: "Beginner",
-      category: "Essentials",
-      slug: "new-member-orientation",
-      status: "Published",
-      userId: userIds["test@playwright.dev"],
-      organizationId: newlifeOrg.id,
-      s3Prefix: "courses/new-member-orientation/",
-    },
-  });
-  console.log(`✅ ${memberCourse.title} (Newlife)`);
-
-  const leadershipCourse = await prisma.course.create({
-    data: {
-      title: "Leadership Training",
-      description:
-        "Advanced training for ministry leaders and volunteer coordinators",
-      smallDescription: "Develop your leadership skills",
-      fileKey: "courses/leadership-training/thumbnail.jpg",
-      price: 0,
-      isFree: true,
-      duration: 120,
-      level: "Intermediate",
-      category: "Agency Operations",
-      slug: "leadership-training",
-      status: "Draft",
-      userId: userIds["test@playwright.dev"],
-      organizationId: newlifeOrg.id,
-      s3Prefix: "courses/leadership-training/",
-    },
-  });
-  console.log(`✅ ${leadershipCourse.title} (Newlife - Draft)`);
-
-  console.log("\n📖 Creating chapters and lessons...");
-
-  // Platform course chapters
-  const ch1 = await prisma.chapter.create({
-    data: {
-      courseId: platformCourse.id,
-      slug: "getting-started",
-      title: "Getting Started",
-      position: 1,
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      chapterId: ch1.id,
-      slug: "introduction",
-      title: "Platform Introduction",
-      position: 1,
-      videoKey: "courses/platform-essentials/lesson-1.mp4",
-      s3Prefix: "courses/platform-essentials/lesson-1/",
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      chapterId: ch1.id,
-      slug: "navigation",
-      title: "Navigating the Dashboard",
-      position: 2,
-      videoKey: "courses/platform-essentials/lesson-2.mp4",
-      s3Prefix: "courses/platform-essentials/lesson-2/",
-    },
-  });
-
-  // Member orientation chapters
-  const ch2 = await prisma.chapter.create({
-    data: {
-      courseId: memberCourse.id,
-      slug: "welcome",
-      title: "Welcome to Newlife",
-      position: 1,
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      chapterId: ch2.id,
-      slug: "our-story",
-      title: "Our Church Story",
-      position: 1,
-      videoKey: "courses/new-member-orientation/lesson-1.mp4",
-      s3Prefix: "courses/new-member-orientation/lesson-1/",
-    },
-  });
-
-  await prisma.lesson.create({
-    data: {
-      chapterId: ch2.id,
-      slug: "mission-values",
-      title: "Mission and Values",
-      position: 2,
-      videoKey: "courses/new-member-orientation/lesson-2.mp4",
-      s3Prefix: "courses/new-member-orientation/lesson-2/",
-    },
-  });
-
-  console.log(`✅ 2 courses, 2 chapters, 4 lessons created`);
-
-  console.log("\n🎓 Creating course enrollments...");
-
-  // Enroll users in courses
-  await prisma.enrollment.create({
-    data: {
-      courseId: platformCourse.id,
-      userId: userIds["admin@newlife.test"],
-      amount: 0,
-      status: "Active",
-    },
-  });
-
-  await prisma.enrollment.create({
-    data: {
-      courseId: memberCourse.id,
-      userId: userIds["staff@newlife.test"],
-      amount: 0,
-      status: "Active",
-    },
-  });
-
-  console.log(`✅ 2 enrollments created`);
-
-  // ============================================================================
   // SUMMARY
   // ============================================================================
 
@@ -994,10 +831,7 @@ async function main() {
   console.log(`   📋 Connect Card Batches: 2 (IN_REVIEW, PENDING)`);
   console.log(`   📄 Connect Cards: 10 (Various states for review queue)`);
   console.log(`   🙏 Prayer Requests: 10 (All statuses, privacy levels)`);
-  console.log(`   🙋 Volunteers: 4 (With background checks)`);
-  console.log(`   📚 LMS Courses: 3 (Platform + Church-specific)`);
-  console.log(`   📖 Chapters: 2, Lessons: 4`);
-  console.log(`   🎓 Enrollments: 2\n`);
+  console.log(`   🙋 Volunteers: 4 (With background checks)\n`);
 
   console.log("🔐 TEST CREDENTIALS (Email OTP Login):");
   console.log(`   platform@test.com       (Platform Admin)`);
@@ -1013,8 +847,7 @@ async function main() {
   console.log(`   📋 Review Queue: /church/newlife/admin/n2n (Review tab)`);
   console.log(`   🙏 Prayer Management: /church/newlife/admin/prayer`);
   console.log(`   🙋 Volunteer Directory: /church/newlife/admin/volunteer`);
-  console.log(`   👥 Team Management: /church/newlife/admin/team`);
-  console.log(`   📚 Learning Center: /church/newlife/learning\n`);
+  console.log(`   👥 Team Management: /church/newlife/admin/team\n`);
 }
 
 main()

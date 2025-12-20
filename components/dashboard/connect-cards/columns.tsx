@@ -24,6 +24,7 @@ export interface ConnectCardRow {
   visitType: string | null;
   prayerRequest: string | null;
   interests: string[];
+  detectedKeywords: string[]; // Campaign keywords (e.g., "impacted", "coffee oasis")
   scannedAt: Date;
   createdAt: Date;
 }
@@ -210,6 +211,34 @@ export const connectCardColumns: ColumnDef<ConnectCardRow>[] = [
       ) : (
         <span className="text-muted-foreground italic text-sm">None</span>
       );
+    },
+  },
+  {
+    accessorKey: "detectedKeywords",
+    header: "Keywords",
+    cell: ({ row }) => {
+      const keywords = row.getValue("detectedKeywords") as string[];
+      return keywords.length > 0 ? (
+        <div className="flex flex-wrap gap-1">
+          {keywords.slice(0, 2).map((keyword, idx) => (
+            <Badge key={idx} variant="secondary" className="text-xs">
+              {keyword}
+            </Badge>
+          ))}
+          {keywords.length > 2 && (
+            <Badge variant="secondary" className="text-xs">
+              +{keywords.length - 2}
+            </Badge>
+          )}
+        </div>
+      ) : (
+        <span className="text-muted-foreground italic text-sm">—</span>
+      );
+    },
+    filterFn: (row, id, filterValue) => {
+      if (!filterValue || filterValue === "ALL") return true;
+      const keywords = row.getValue(id) as string[];
+      return keywords.includes(filterValue);
     },
   },
   {

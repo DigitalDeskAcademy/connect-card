@@ -25,6 +25,11 @@ import {
 import { env } from "@/lib/env";
 import { getS3Url } from "@/lib/S3Client";
 import { syncConnectCardToGHL, isGHLConfigured } from "@/lib/ghl";
+import {
+  fromMemberKeywordsJson,
+  mergeKeywords,
+  toMemberKeywordsJson,
+} from "@/lib/prisma/json-types";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -133,6 +138,12 @@ export async function updateConnectCard(
         id: validation.data.id,
         organizationId: organization.id,
       },
+      select: {
+        id: true,
+        locationId: true,
+        batchId: true,
+        detectedKeywords: true, // Campaign keywords to copy to member
+      },
     });
 
     if (!existingCard) {
@@ -145,6 +156,7 @@ export async function updateConnectCard(
     const cardEmail = validation.data.email?.trim().toLowerCase();
     const cardName = validation.data.name?.trim();
     const cardPhone = formatPhoneNumber(validation.data.phone);
+    const cardKeywords = (existingCard.detectedKeywords as string[]) || [];
     let memberCreated = false;
     let memberUpdated = false;
     let volunteerCreated = false;
@@ -168,10 +180,20 @@ export async function updateConnectCard(
         // Email match found - check name match
         if (namesMatch(existingMember.name, cardName)) {
           // Exact match: Auto-update member with new contact info
+          // Also merge any campaign keywords from the card
+          const existingKeywords = fromMemberKeywordsJson(
+            existingMember.detectedKeywords
+          );
+          const mergedKeywords =
+            cardKeywords.length > 0
+              ? mergeKeywords(existingKeywords, cardKeywords)
+              : existingKeywords;
+
           await prisma.churchMember.update({
             where: { id: existingMember.id },
             data: {
               phone: cardPhone || existingMember.phone,
+              detectedKeywords: toMemberKeywordsJson(mergedKeywords),
               updatedAt: new Date(),
             },
           });
@@ -180,6 +202,22 @@ export async function updateConnectCard(
         } else {
           // Email match but name different - flag for review but still link
           // Per spec: Flag for manual review when name differs
+          // Still copy keywords to the existing member
+          if (cardKeywords.length > 0) {
+            const existingKeywords = fromMemberKeywordsJson(
+              existingMember.detectedKeywords
+            );
+            const mergedKeywords = mergeKeywords(
+              existingKeywords,
+              cardKeywords
+            );
+            await prisma.churchMember.update({
+              where: { id: existingMember.id },
+              data: {
+                detectedKeywords: toMemberKeywordsJson(mergedKeywords),
+              },
+            });
+          }
           nameMismatchWarning = true;
           churchMemberId = existingMember.id;
         }
@@ -238,6 +276,12 @@ export async function updateConnectCard(
         }
       } else {
         // No email match - create new ChurchMember
+        // Include initial keywords from the card
+        const initialKeywords =
+          cardKeywords.length > 0
+            ? toMemberKeywordsJson(mergeKeywords([], cardKeywords))
+            : undefined;
+
         const newMember = await prisma.churchMember.create({
           data: {
             organizationId: organization.id,
@@ -246,6 +290,7 @@ export async function updateConnectCard(
             phone: cardPhone,
             memberType: "MEMBER", // Per spec: Everyone created as MEMBER
             visitDate: new Date(),
+            ...(initialKeywords && { detectedKeywords: initialKeywords }),
           },
         });
         churchMemberId = newMember.id;
@@ -277,46 +322,11 @@ export async function updateConnectCard(
           volunteerCreated = true;
         }
       }
-    } else if (cardName) {
-      // No email but has name - create member without email (can be matched later)
-      const newMember = await prisma.churchMember.create({
-        data: {
-          organizationId: organization.id,
-          name: cardName,
-          phone: cardPhone,
-          memberType: "MEMBER",
-          visitDate: new Date(),
-        },
-      });
-      churchMemberId = newMember.id;
-      memberCreated = true;
-
-      // Create Volunteer if category selected
-      if (validation.data.volunteerCategory) {
-        const categoryType = mapToVolunteerCategoryType(
-          validation.data.volunteerCategory
-        );
-        const newVolunteer = await prisma.volunteer.create({
-          data: {
-            churchMemberId: newMember.id,
-            organizationId: organization.id,
-            locationId: existingCard.locationId,
-            status: "PENDING_APPROVAL",
-          },
-        });
-
-        if (categoryType) {
-          await prisma.volunteerCategory.create({
-            data: {
-              volunteerId: newVolunteer.id,
-              organizationId: organization.id,
-              category: categoryType,
-            },
-          });
-        }
-        volunteerCreated = true;
-      }
     }
+    // Note: If no email is provided, we do NOT create a ChurchMember.
+    // Cards without email are still processed (prayer requests created, card marked PROCESSED)
+    // but no member record is created. This keeps the database clean.
+    // Staff can manually create members for name-only cards if needed.
 
     // 5b. Handle GENERAL volunteers when automation is disabled
     // If GENERAL + automation disabled → readyForExport = true immediately
