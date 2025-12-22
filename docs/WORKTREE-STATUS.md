@@ -48,7 +48,7 @@
 | **main**         | 🔴 Red    | `feature/production-deploy`    | 📋 PM     | Project management (no building) |
 | **integrations** | ⬜ Grey   | `feature/integrations`         | 🔨 Active | Planning Center / ChMS API sync  |
 | **connect-card** | 🟣 Purple | `feature/connect-card`         | 🔨 Active | Fine-tuning MVP                  |
-| **tech-debt**    | 🟡 Yellow | `feature/tech-debt`            | 🔨 Active | Keyword detection                |
+| **tech-debt**    | 🟡 Yellow | `feature/member-unification`   | 🔨 Active | Member model unification         |
 | **e2e**          | 🔵 Cyan   | `feature/e2e`                  | 🔨 Active | Playwright tests                 |
 | **volunteer**    | 🟢 Green  | `feature/volunteer-management` | 🔨 Active | Event tracking                   |
 | **prayer**       | 🔵 Blue   | `feature/prayer-enhancements`  | ⏸️ Paused | Deprioritized                    |
@@ -138,35 +138,43 @@
 
 ---
 
-### 🟡 tech-debt - Keyword Detection
+### 🟡 tech-debt - Member Unification
 
-**Branch:** `feature/tech-debt`
-**Focus:** AI keyword extraction from connect cards
+**Branch:** `feature/member-unification`
+**Focus:** Consolidate ChurchMember + Volunteer into unified model
 
-**Recently Completed:**
+**Architecture Doc:** `/docs/member-unification-architecture.md`
+**Implementation Plan:** `/docs/member-unification-implementation-plan.md`
 
-- ✅ PR #80 - Campaign keyword detection and tracking (Dec 20)
-  - AI prompt extracts standalone keywords
-  - `detectedKeywords: String[]` added to schema
-  - Keywords visible in review UI and exports
-  - Filter connect cards by keyword
-  - Keywords synced to ChurchMember profiles
+**Why:**
 
-**What to Build:**
+- Eliminates JOINs on every volunteer query
+- Simplifies messaging, event invites, and exports
+- Matches Planning Center's architecture
+- Single profile view instead of assembling from multiple sources
 
-| Task                                            | Status |
-| ----------------------------------------------- | ------ |
-| Update AI prompt to extract standalone keywords | [x]    |
-| Add `detectedKeywords: String[]` to schema      | [x]    |
-| Display keyword chips in review UI              | [x]    |
-| Filter connect cards by keyword                 | [x]    |
-| Include keywords in export                      | [x]    |
+**Phases:**
 
-**Wishlist:**
+| Phase | Focus                           | Status |
+| ----- | ------------------------------- | ------ |
+| 1     | Schema additions (non-breaking) | [ ]    |
+| 2     | Data migration script           | [ ]    |
+| 3     | Update data layer               | [ ]    |
+| 4     | Update server actions           | [ ]    |
+| 5     | Update UI components            | [ ]    |
+| 6     | Cleanup & removal               | [ ]    |
 
-- [ ] Keyword analytics/counts
-- [ ] Auto-tag contacts based on keywords
-- [ ] Keyword-triggered automation (GHL workflows)
+**Key Decisions:**
+
+- Keep `ChurchMember` name (rename later)
+- MemberType → journeyStatus + role booleans
+- VolunteerCategory → flatten to `String[]`
+- VolunteerSkill → keep model (expiring certs)
+- Split name → firstName + lastName
+
+**Previously Completed:**
+
+- ✅ PR #80 - Keyword detection (Dec 20)
 
 ---
 
