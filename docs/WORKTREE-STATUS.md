@@ -122,6 +122,7 @@
 
 **Wishlist:**
 
+- [ ] Async scan processing - Upload to S3 as cards are captured, process in background (no wait at end)
 - [ ] Bulk re-process failed cards
 - [ ] Card template customization
 - [ ] Multi-language support

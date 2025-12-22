@@ -107,3 +107,15 @@ public/dev-assets/
 tests/.auth/
 .env.vercel
 .env.production.template
+
+# Archived/experimental code (local development backups)
+archive/
+
+# Experimental hooks (not in use)
+hooks/use-document-detection.ts
+hooks/use-image-quality.ts
+lib/utils/image-quality.ts
+types/jscanify.d.ts
+
+# Issue screenshots (dev-only debugging images)
+public/issue-screenshots/

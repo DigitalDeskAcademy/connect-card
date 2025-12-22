@@ -55,12 +55,16 @@ export async function createScanTokenAction(slug: string): Promise<
     // Token expires in 15 minutes
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    // Delete any existing unused tokens for this user (cleanup)
+    // Delete any existing unused OR expired tokens for this user (lazy cleanup)
+    // This prevents token accumulation over time without needing a cron job
     await prisma.scanToken.deleteMany({
       where: {
         userId: session.user.id,
         organizationId: organization.id,
-        usedAt: null,
+        OR: [
+          { usedAt: null }, // unused tokens
+          { expiresAt: { lt: new Date() } }, // expired tokens
+        ],
       },
     });
 
