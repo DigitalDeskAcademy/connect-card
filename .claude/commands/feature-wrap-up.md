@@ -294,18 +294,41 @@ fi
 git reset --hard origin/main
 ```
 
-### 7.5: Verify Clean State
+### 7.5: Update Remote Branch (CRITICAL)
+
+**After reset, the remote feature branch is stale.** Force push to sync it:
 
 ```bash
+# Get current branch name
+CURRENT_BRANCH=$(git branch --show-current)
+
+# Update remote to match local (prevents "49 commits ahead" on next PR)
+git push --force-with-lease origin $CURRENT_BRANCH
+
+echo "✅ Remote branch updated to match main"
+```
+
+**Why this matters:**
+
+- Your PR merged → commits went to main
+- You reset local to main → local is current
+- Remote feature branch still points to old commit → causes confusion
+- Force push updates remote to match → clean slate for next feature
+
+### 7.6: Verify Clean State
+
+```bash
+CURRENT_BRANCH=$(git branch --show-current)
 echo "=== Post-Reset Verification ==="
 echo "HEAD: $(git log -1 --oneline)"
 echo "Ahead of main: $(git rev-list origin/main..HEAD --count)"
 echo "Behind main: $(git rev-list HEAD..origin/main --count)"
+echo "Ahead of remote branch: $(git rev-list origin/$CURRENT_BRANCH..HEAD --count)"
 ```
 
-Expected output: 0 ahead, 0 behind.
+**Expected output:** All counts should be 0.
 
-### 7.6: Regenerate Prisma Client
+### 7.7: Regenerate Prisma Client
 
 ```bash
 pnpm prisma generate
@@ -413,21 +436,24 @@ volunteer    | 0 files     | 1      | 0      | RESET (no unique work)
 
 **For each worktree:**
 
-| Uncommitted | Unique Commits | Action                                  |
-| ----------- | -------------- | --------------------------------------- |
-| 0           | 0              | `git reset --hard origin/main` (safe)   |
-| 0           | > 0            | `git merge origin/main` (preserve work) |
-| > 0         | any            | Skip - has active work                  |
+| Uncommitted | Unique Commits | Action                                            |
+| ----------- | -------------- | ------------------------------------------------- |
+| 0           | 0              | `reset --hard` + `push --force-with-lease` (safe) |
+| 0           | > 0            | `git merge origin/main` (preserve work)           |
+| > 0         | any            | Skip - has active work                            |
 
 ```bash
 # For worktrees with no uncommitted and no unique commits:
 git reset --hard origin/main
+git push --force-with-lease origin $(git branch --show-current)  # Update remote!
 pnpm prisma generate
 
 # For worktrees with unique commits but no uncommitted:
 git merge origin/main --no-edit
 pnpm prisma generate
 ```
+
+**Key insight:** After reset, always force push to sync the remote branch. This prevents the "49 commits ahead" problem.
 
 ---
 
@@ -457,6 +483,7 @@ FEATURE WRAP-UP COMPLETE
 ## Branch Health
 - Ahead of main: 0 commits ✅
 - Behind main: 0 commits ✅
+- Remote branch synced: ✅
 - Clean slate for next feature
 
 ---
@@ -482,14 +509,17 @@ FEATURE WRAP-UP COMPLETE
 
 ---
 
-## Key Principle: Reset After Merge
+## Key Principle: Reset + Force Push After Merge
 
 ```
 BEFORE (wrong):
   PR merges → git merge origin/main → creates merge commits → DRIFT
 
-AFTER (correct):
-  PR merges → git reset --hard origin/main → clean slate → NO DRIFT
+STILL WRONG:
+  PR merges → git reset --hard origin/main → local clean BUT remote stale → "49 COMMITS AHEAD"
+
+CORRECT:
+  PR merges → git reset --hard origin/main → git push --force-with-lease → BOTH CLEAN
 ```
 
-**Your work is IN main after PR merges. Reset to main. Start fresh.**
+**Your work is IN main after PR merges. Reset local. Force push remote. Start fresh.**
