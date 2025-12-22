@@ -1,9 +1,21 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition, useRef } from "react";
-import { useRouter } from "next/navigation";
+/**
+ * Scan Wizard v2 - Clean Implementation
+ *
+ * Flow:
+ * 1. Setup - Select card type (1-sided/2-sided) and location
+ * 2. Capture Front - Take photo of front
+ * 3. Preview Front - Review, retake or accept
+ * 4. Capture Back (if 2-sided) - Take photo of back
+ * 5. Preview Back - Review, retake or accept
+ * 6. Card complete - Add to queue, continue to next card
+ * 7. Done - Upload all cards and process via Claude Vision
+ */
+
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -13,95 +25,47 @@ import {
 } from "@/components/ui/select";
 import {
   Camera,
-  RotateCcw,
-  Check,
-  AlertCircle,
   FlipHorizontal,
+  X,
+  Maximize,
+  Minimize,
+  Check,
+  RotateCcw,
   Square,
   Layers,
   MapPin,
-  Lock,
-  SlidersHorizontal,
-  Info,
-  ArrowLeft,
+  Upload,
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
-import Link from "next/link";
 import { toast } from "sonner";
-import { useCamera } from "@/hooks/use-camera";
-import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
-import { getActiveBatchAction } from "@/actions/connect-card/batch-actions";
-
-// Type for extracted connect card data (matches Zod schema)
-interface ExtractedData {
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-  prayer_request: string | null;
-  visit_status?: string | null;
-  first_time_visitor?: boolean | null;
-  interests: string[] | null;
-  keywords: string[] | null;
-  address: string | null;
-  age_group: string | null;
-  family_info: string | null;
-  additional_notes: string | null;
-}
-
-// Wizard steps - simplified for continuous scanning
-type WizardStep =
-  | "setup" // Select card type and location
-  | "capture-front" // Live viewfinder for front
-  | "preview-front" // Review front capture
-  | "capture-back" // Live viewfinder for back (2-sided only)
-  | "preview-back"; // Review back capture (2-sided only)
-
-type CardType = "single" | "double";
-
-interface CapturedImage {
-  blob: Blob;
-  dataUrl: string;
-  file?: File;
-}
-
-// Queue item for background processing
-type QueueStatus =
-  | "pending"
-  | "uploading"
-  | "extracting"
-  | "saving"
-  | "complete"
-  | "failed";
-
-interface QueuedCard {
-  id: string;
-  frontImage: CapturedImage;
-  backImage: CapturedImage | null;
-  status: QueueStatus;
-  error?: string;
-}
-
-interface Location {
-  id: string;
-  name: string;
-  slug: string;
-}
+import { useConnectCardUpload } from "@/hooks/use-connect-card-upload";
 
 interface ScanWizardClientProps {
   slug: string;
-  locations: Location[];
+  locations: { id: string; name: string; slug: string }[];
   defaultLocationId: string | null;
-  scanToken?: string; // Token from QR code scan (for phone auth)
+  scanToken?: string;
+  defaultCardType?: "single" | "double";
 }
 
-// Session storage key for persistence
-const SESSION_KEY = "connect-card-scan-session";
+type WizardStep =
+  | "setup"
+  | "capture-front"
+  | "preview-front"
+  | "capture-back"
+  | "preview-back"
+  | "submitting"
+  | "complete"
+  | "finished";
 
-interface ScanSession {
-  cardType: CardType;
-  locationId: string;
-  cardsScanned: number;
-  batchId?: string;
-  batchName?: string;
+type CardType = "single" | "double";
+
+interface CapturedCard {
+  id: string;
+  frontImage: string;
+  backImage: string | null;
 }
 
 export function ScanWizardClient({
@@ -109,142 +73,317 @@ export function ScanWizardClient({
   locations,
   defaultLocationId,
   scanToken,
+  defaultCardType = "single",
 }: ScanWizardClientProps) {
-  const router = useRouter();
-  const [, startTransition] = useTransition();
+  // Session state
+  const [sessionReady, setSessionReady] = useState(!scanToken); // Ready immediately if no token (logged in user)
+  const [sessionError, setSessionError] = useState<string | null>(null);
 
-  // Wizard state
-  const [step, setStep] = useState<WizardStep>("setup");
-  const [cardType, setCardType] = useState<CardType>("single");
-  const [locationId, setLocationId] = useState<string>(
-    defaultLocationId || locations[0]?.id || ""
-  );
-
-  // Captured images (current card being captured)
-  const [frontImage, setFrontImage] = useState<CapturedImage | null>(null);
-  const [backImage, setBackImage] = useState<CapturedImage | null>(null);
-
-  // Background processing queue
-  const [queue, setQueue] = useState<QueuedCard[]>([]);
-  const processingRef = useRef(false); // Lock to prevent concurrent processing
-
-  // Session tracking
-  const [cardsScanned, setCardsScanned] = useState(0);
-  const [activeBatch, setActiveBatch] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
-
-  // Camera hook
-  const {
-    videoRef,
-    canvasRef,
-    state: cameraState,
-    startCamera,
-    stopCamera,
-    captureImage,
-    switchCamera,
-  } = useCamera();
-
-  // Create scan session cookie on mount (for phone QR code flow)
-  // This enables subsequent API calls to authenticate via cookie
+  // Create scan session cookie when component mounts (for token-based auth)
   useEffect(() => {
-    if (!scanToken) return;
+    if (!scanToken) return; // Skip if no token (already logged in)
 
     const createSession = async () => {
       try {
-        await fetch("/api/scan/session", {
+        const response = await fetch("/api/scan/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: scanToken, slug }),
         });
-        // Cookie is now set - API calls will work
+
+        if (!response.ok) {
+          const data = await response.json();
+          setSessionError(data.error || "Failed to create session");
+          return;
+        }
+
+        setSessionReady(true);
       } catch {
-        // Session creation failed - API calls may fail
-        // but page is already loaded so don't block
+        setSessionError("Network error. Please try again.");
       }
     };
 
     createSession();
   }, [scanToken, slug]);
 
-  // Restore session from storage on mount
-  useEffect(() => {
-    const savedSession = sessionStorage.getItem(SESSION_KEY);
-    if (savedSession) {
-      try {
-        const session: ScanSession = JSON.parse(savedSession);
-        setCardType(session.cardType);
-        setLocationId(session.locationId);
-        setCardsScanned(session.cardsScanned);
-        if (session.batchId && session.batchName) {
-          setActiveBatch({ id: session.batchId, name: session.batchName });
-        }
-      } catch {
-        // Invalid session, ignore
-      }
-    }
-  }, []);
+  // Wizard state
+  const [step, setStep] = useState<WizardStep>("setup");
+  const [cardType, setCardType] = useState<CardType>(defaultCardType);
+  const [locationId, setLocationId] = useState<string>(
+    defaultLocationId || locations[0]?.id || ""
+  );
 
-  // Save session to storage
-  const saveSession = useCallback(() => {
-    const session: ScanSession = {
-      cardType,
-      locationId,
-      cardsScanned,
-      batchId: activeBatch?.id,
-      batchName: activeBatch?.name,
+  // Current card being captured
+  const [frontImage, setFrontImage] = useState<string | null>(null);
+  const [backImage, setBackImage] = useState<string | null>(null);
+
+  // Queue of completed cards
+  const [capturedCards, setCapturedCards] = useState<CapturedCard[]>([]);
+
+  // Upload hook
+  const {
+    uploadStates,
+    processCards,
+    reset: resetUpload,
+  } = useConnectCardUpload({
+    slug,
+    locationId,
+  });
+
+  // Camera state
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<"environment" | "user">(
+    "environment"
+  );
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+
+  // Detect orientation and iOS
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
     };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  }, [cardType, locationId, cardsScanned, activeBatch]);
 
-  // Save session when relevant state changes
-  useEffect(() => {
-    if (step !== "setup") {
-      saveSession();
-    }
-  }, [cardsScanned, activeBatch, saveSession, step]);
+    // Check if iOS (fullscreen not supported)
+    const checkIOS = () => {
+      const ua = navigator.userAgent;
+      setIsIOS(
+        /iPad|iPhone|iPod/.test(ua) &&
+          !(window as unknown as { MSStream?: unknown }).MSStream
+      );
+    };
 
-  // Clear session
-  const clearSession = useCallback(() => {
-    sessionStorage.removeItem(SESSION_KEY);
-    setCardsScanned(0);
-    setActiveBatch(null);
-  }, []);
+    checkOrientation();
+    checkIOS();
 
-  // Start camera when entering capture step
-  useEffect(() => {
-    if (step === "capture-front" || step === "capture-back") {
-      startCamera();
-    } else {
-      stopCamera();
-    }
+    window.addEventListener("resize", checkOrientation);
+    window.addEventListener("orientationchange", checkOrientation);
 
     return () => {
-      stopCamera();
+      window.removeEventListener("resize", checkOrientation);
+      window.removeEventListener("orientationchange", checkOrientation);
     };
-  }, [step, startCamera, stopCamera]);
+  }, []);
 
-  // Handle capture button press - crops to card alignment guide
-  const handleCapture = async () => {
-    // Capture image from camera, cropped to the card guide frame
-    const result = await captureImage(true);
-    if (!result) {
-      toast.error("Failed to capture image");
-      return;
+  // Refs
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Toggle fullscreen
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current?.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch {
+      console.log("Fullscreen not supported");
     }
+  }, []);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  // Start camera
+  const startCamera = useCallback(async () => {
+    try {
+      setError(null);
+
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: facingMode,
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        setIsStreaming(true);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Camera failed");
+      }
+    }
+  }, [facingMode]);
+
+  // Stop camera
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsStreaming(false);
+  }, []);
+
+  // Switch camera - stops current stream, updates facing mode, restarts
+  const switchCamera = useCallback(async () => {
+    const newFacingMode = facingMode === "environment" ? "user" : "environment";
+    setFacingMode(newFacingMode);
+
+    // Restart camera with new facing mode if currently streaming
+    if (isStreaming) {
+      try {
+        // Stop current stream
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+        }
+
+        // Get new stream with new facing mode
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: newFacingMode,
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+          audio: false,
+        });
+
+        streamRef.current = stream;
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError("Camera switch failed");
+        }
+      }
+    }
+  }, [facingMode, isStreaming]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Capture current frame - crops to visible area (WYSIWYG)
+  const captureFrame = useCallback(() => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    // Get the display dimensions (what user sees)
+    const displayWidth = video.clientWidth;
+    const displayHeight = video.clientHeight;
+
+    // Get the actual video dimensions
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+
+    // Calculate aspect ratios
+    const displayAspect = displayWidth / displayHeight;
+    const videoAspect = videoWidth / videoHeight;
+
+    // Calculate the visible portion of the video (object-cover behavior)
+    let sx = 0,
+      sy = 0,
+      sWidth = videoWidth,
+      sHeight = videoHeight;
+
+    if (videoAspect > displayAspect) {
+      // Video is wider than display - crop horizontally
+      sWidth = videoHeight * displayAspect;
+      sx = (videoWidth - sWidth) / 2;
+    } else {
+      // Video is taller than display - crop vertically
+      sHeight = videoWidth / displayAspect;
+      sy = (videoHeight - sHeight) / 2;
+    }
+
+    // Set canvas to match the cropped dimensions (maintain quality)
+    canvas.width = sWidth;
+    canvas.height = sHeight;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Draw only the visible portion
+    ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
+
+    const imageData = canvas.toDataURL("image/jpeg", 0.9);
 
     if (step === "capture-front") {
-      setFrontImage(result);
+      setFrontImage(imageData);
       setStep("preview-front");
     } else if (step === "capture-back") {
-      setBackImage(result);
+      setBackImage(imageData);
       setStep("preview-back");
     }
-  };
+  }, [step]);
 
-  // Handle retake - go back to capture
-  const handleRetake = () => {
+  // Start scanning (from setup)
+  const startScanning = useCallback(() => {
+    setStep("capture-front");
+    startCamera();
+  }, [startCamera]);
+
+  // Accept front image
+  const acceptFront = useCallback(() => {
+    if (cardType === "double") {
+      setStep("capture-back");
+    } else {
+      // Single-sided card complete - add to queue
+      const newCard: CapturedCard = {
+        id: crypto.randomUUID(),
+        frontImage: frontImage!,
+        backImage: null,
+      };
+      setCapturedCards(prev => [...prev, newCard]);
+      setFrontImage(null);
+      setStep("capture-front"); // Continue scanning
+    }
+  }, [cardType, frontImage]);
+
+  // Accept back image (card complete)
+  const acceptBack = useCallback(() => {
+    const newCard: CapturedCard = {
+      id: crypto.randomUUID(),
+      frontImage: frontImage!,
+      backImage: backImage,
+    };
+    setCapturedCards(prev => [...prev, newCard]);
+    setFrontImage(null);
+    setBackImage(null);
+    setStep("capture-front"); // Continue scanning
+  }, [frontImage, backImage]);
+
+  // Retake current image
+  const retake = useCallback(() => {
     if (step === "preview-front") {
       setFrontImage(null);
       setStep("capture-front");
@@ -252,655 +391,500 @@ export function ScanWizardClient({
       setBackImage(null);
       setStep("capture-back");
     }
-  };
+  }, [step]);
 
-  // Handle accept - add to queue and continue scanning
-  const handleAccept = () => {
-    if (step === "preview-front") {
-      if (cardType === "double") {
-        // Two-sided card: capture back next
-        setStep("capture-back");
-      } else {
-        // Single-sided card: add to queue and reset for next card
-        addToQueue(frontImage!, null);
-      }
-    } else if (step === "preview-back") {
-      // Two-sided card complete: add to queue and reset
-      addToQueue(frontImage!, backImage!);
+  // Submit all captured cards
+  const submitCards = useCallback(async () => {
+    if (capturedCards.length === 0) return;
+
+    stopCamera();
+    setStep("submitting");
+
+    const cardsToProcess = capturedCards.map(card => ({
+      id: card.id,
+      frontImage: card.frontImage,
+      backImage: card.backImage,
+    }));
+
+    const { successCount, errorCount } = await processCards(cardsToProcess);
+
+    setStep("complete");
+
+    if (successCount > 0) {
+      toast.success(
+        `${successCount} card${successCount !== 1 ? "s" : ""} uploaded successfully!`
+      );
     }
-  };
+    if (errorCount > 0) {
+      toast.error(
+        `${errorCount} card${errorCount !== 1 ? "s" : ""} failed to upload`
+      );
+    }
+  }, [capturedCards, stopCamera, processCards]);
 
-  // Add card to processing queue
-  const addToQueue = (front: CapturedImage, back: CapturedImage | null) => {
-    const newItem: QueuedCard = {
-      id: crypto.randomUUID(),
-      frontImage: front,
-      backImage: back,
-      status: "pending",
-    };
-    setQueue(prev => [...prev, newItem]);
-    setCardsScanned(prev => prev + 1);
-
-    // Reset for next card
+  // Reset wizard to start over
+  const resetWizard = useCallback(() => {
+    setCapturedCards([]);
     setFrontImage(null);
     setBackImage(null);
-    setStep("capture-front");
-    toast.success("Card queued - keep scanning!");
-  };
+    resetUpload();
+    setStep("setup");
+  }, [resetUpload]);
 
-  // Update queue item status
-  const updateQueueItem = useCallback(
-    (id: string, updates: Partial<QueuedCard>) => {
-      setQueue(prev =>
-        prev.map(item => (item.id === id ? { ...item, ...updates } : item))
-      );
-    },
-    []
-  );
+  // Get current preview image
+  const currentPreviewImage = step === "preview-front" ? frontImage : backImage;
+  const isCapturing = step === "capture-front" || step === "capture-back";
+  const isPreviewing = step === "preview-front" || step === "preview-back";
 
-  // Process a single queue item
-  const processQueueItem = useCallback(
-    async (item: QueuedCard) => {
-      try {
-        // Step 1: Upload front image
-        updateQueueItem(item.id, { status: "uploading" });
-        const frontKey = await uploadImage(item.frontImage.blob, "front");
-        if (!frontKey) throw new Error("Failed to upload front image");
+  // ========== RENDER ==========
 
-        // Step 2: Upload back image if exists
-        let backKey: string | null = null;
-        if (item.backImage) {
-          backKey = await uploadImage(item.backImage.blob, "back");
-          if (!backKey) throw new Error("Failed to upload back image");
-        }
+  // Show loading while session is being created
+  if (!sessionReady) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center p-6">
+        <Loader2 className="h-12 w-12 text-white mb-4 animate-spin" />
+        <h1 className="text-xl font-semibold text-white mb-2">Setting up...</h1>
+        <p className="text-white/70 text-center">
+          Preparing your scanning session
+        </p>
+      </div>
+    );
+  }
 
-        // Step 3: Extract data with Claude Vision
-        updateQueueItem(item.id, { status: "extracting" });
-        const { extractedData, frontImageHash, backImageHash } =
-          await extractData(item.frontImage.blob, item.backImage?.blob || null);
+  // Show error if session creation failed
+  if (sessionError) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center p-6">
+        <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
+        <h1 className="text-xl font-semibold text-white mb-2">Session Error</h1>
+        <p className="text-white/70 text-center mb-4">{sessionError}</p>
+        <p className="text-white/50 text-sm text-center">
+          Please scan the QR code again to get a new link.
+        </p>
+      </div>
+    );
+  }
 
-        // Step 4: Save to database
-        updateQueueItem(item.id, { status: "saving" });
-        const saveResult = await saveConnectCard(
-          slug,
-          {
-            imageKey: frontKey,
-            imageHash: frontImageHash,
-            backImageKey: backKey,
-            backImageHash: backImageHash,
-            extractedData,
-          },
-          locationId
-        );
-
-        if (saveResult.status !== "success") {
-          throw new Error(saveResult.message || "Failed to save card");
-        }
-
-        // Update batch info on first success
-        if (!activeBatch) {
-          startTransition(async () => {
-            const batchResult = await getActiveBatchAction(slug);
-            if (batchResult.status === "success" && batchResult.data) {
-              setActiveBatch(batchResult.data);
-            }
-          });
-        }
-
-        // Success!
-        updateQueueItem(item.id, { status: "complete" });
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Processing failed";
-        updateQueueItem(item.id, { status: "failed", error: message });
-      }
-    },
-    [slug, locationId, activeBatch, startTransition, updateQueueItem]
-  );
-
-  // Background queue processor
-  useEffect(() => {
-    const processNext = async () => {
-      // Don't start if already processing
-      if (processingRef.current) return;
-
-      // Find next pending item
-      const pendingItem = queue.find(item => item.status === "pending");
-      if (!pendingItem) return;
-
-      // Lock and process
-      processingRef.current = true;
-      await processQueueItem(pendingItem);
-      processingRef.current = false;
-    };
-
-    processNext();
-  }, [queue, processQueueItem]);
-
-  // Retry a failed card (used by retry button in queue list)
-  const retryCard = useCallback(
-    (id: string) => {
-      updateQueueItem(id, { status: "pending", error: undefined });
-    },
-    [updateQueueItem]
-  );
-
-  // Remove a failed card from queue (used by remove button in queue list)
-  const removeFromQueue = useCallback((id: string) => {
-    setQueue(prev => prev.filter(item => item.id !== id));
-  }, []);
-
-  // Expose retry/remove for future UI use
-  void retryCard;
-  void removeFromQueue;
-
-  // Upload image to S3
-  const uploadImage = async (
-    blob: Blob,
-    side: "front" | "back"
-  ): Promise<string | null> => {
-    try {
-      const fileName = `connect-card-${side}-${Date.now()}.jpg`;
-
-      const presignedResponse = await fetch("/api/s3/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName,
-          contentType: "image/jpeg",
-          size: blob.size,
-          isImage: true,
-          fileType: "connect-card", // Use connect-card type for proper S3 organization
-          organizationSlug: slug,
-          cardSide: side, // front or back for two-sided cards
-        }),
-      });
-
-      if (!presignedResponse.ok) {
-        throw new Error("Failed to get presigned URL");
-      }
-
-      const { presignedUrl, key } = await presignedResponse.json();
-
-      const uploadResponse = await fetch(presignedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "image/jpeg" },
-        body: blob,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload to S3");
-      }
-
-      return key;
-    } catch {
-      return null;
-    }
-  };
-
-  // Extract data using Claude Vision API
-  const extractData = async (
-    frontBlob: Blob,
-    backBlob: Blob | null
-  ): Promise<{
-    extractedData: ExtractedData;
-    frontImageHash: string;
-    backImageHash: string | null;
-  }> => {
-    // Convert blobs to base64
-    const frontBase64 = await blobToBase64(frontBlob);
-    const backBase64 = backBlob ? await blobToBase64(backBlob) : null;
-
-    const requestBody: Record<string, unknown> = {
-      organizationSlug: slug,
-    };
-
-    if (backBase64) {
-      // Two-sided format
-      requestBody.frontImageData = frontBase64;
-      requestBody.frontMediaType = "image/jpeg";
-      requestBody.backImageData = backBase64;
-      requestBody.backMediaType = "image/jpeg";
-    } else {
-      // Single-sided format (backward compatible)
-      requestBody.imageData = frontBase64;
-      requestBody.mediaType = "image/jpeg";
-    }
-
-    const response = await fetch("/api/connect-cards/extract", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
-
-    const result = await response.json();
-
-    if (response.status === 409 && result.duplicate) {
-      throw new Error(result.message || "Duplicate image detected");
-    }
-
-    if (!response.ok) {
-      throw new Error(result.error || "Extraction failed");
-    }
-
-    return {
-      extractedData: result.data,
-      frontImageHash: result.imageHash,
-      backImageHash: result.backImageHash || null,
-    };
-  };
-
-  // Helper: Blob to base64
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove data URL prefix
-        const base64 = result.split(",")[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  // Computed queue stats
-  const queueStats = {
-    pending: queue.filter(q => q.status === "pending").length,
-    processing: queue.filter(q =>
-      ["uploading", "extracting", "saving"].includes(q.status)
-    ).length,
-    complete: queue.filter(q => q.status === "complete").length,
-    failed: queue.filter(q => q.status === "failed").length,
-    total: queue.length,
-  };
-
-  // For future use: show failed cards with retry option
-  const _failedCards = queue.filter(q => q.status === "failed");
-  void _failedCards;
-
-  // Track if user finished scanning (for phone users)
-  const [showComplete, setShowComplete] = useState(false);
-
-  // Finish batch and go to review (or show done screen for phone users)
-  const handleFinishBatch = () => {
-    clearSession();
-
-    // Phone users (token-based auth) can't access admin pages
-    // Show a completion screen instead
-    if (scanToken) {
-      setShowComplete(true);
-      return;
-    }
-
-    // Logged-in users go to review page
-    if (activeBatch) {
-      router.push(
-        `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
-      );
-    } else {
-      router.push(`/church/${slug}/admin/connect-cards`);
-    }
-  };
-
-  // Render based on current step
   return (
-    <div className="flex flex-col min-h-[calc(100vh-12rem)]">
-      {/* COMPLETION SCREEN (phone users only) */}
-      {showComplete && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-          <div className="bg-green-100 dark:bg-green-900/30 rounded-full p-6 mb-6">
-            <Check className="h-16 w-16 text-green-600 dark:text-green-400" />
+    <div ref={containerRef} className="fixed inset-0 bg-black flex flex-col">
+      <canvas ref={canvasRef} className="hidden" />
+
+      {/* SETUP STEP */}
+      {step === "setup" && (
+        <div className="flex-1 flex flex-col items-center pt-8 p-4">
+          <Camera className="h-10 w-10 text-white mb-2" />
+          <h1 className="text-lg font-semibold text-white mb-4">
+            Ready to Scan
+          </h1>
+
+          <div className="w-full max-w-sm space-y-4">
+            {/* Card Type */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white">
+                Card Type
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant={cardType === "single" ? "default" : "outline"}
+                  className="h-14 flex-col gap-1"
+                  onClick={() => setCardType("single")}
+                >
+                  <Square className="h-5 w-5" />
+                  <span className="text-xs">1-Sided</span>
+                </Button>
+                <Button
+                  variant={cardType === "double" ? "default" : "outline"}
+                  className="h-14 flex-col gap-1"
+                  onClick={() => setCardType("double")}
+                >
+                  <Layers className="h-5 w-5" />
+                  <span className="text-xs">2-Sided</span>
+                </Button>
+              </div>
+            </div>
+
+            {/* Location */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-white flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Location
+              </label>
+              <Select value={locationId} onValueChange={setLocationId}>
+                <SelectTrigger className="bg-white/10 border-white/20 text-white">
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations.map(loc => (
+                    <SelectItem key={loc.id} value={loc.id}>
+                      {loc.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Start Button - full width */}
+            <Button size="lg" className="w-full" onClick={startScanning}>
+              <Camera className="mr-2 h-5 w-5" />
+              Start Scanning
+            </Button>
+
+            {/* Show count if we have captured cards */}
+            {capturedCards.length > 0 && (
+              <p className="text-white/50 text-center text-sm">
+                {capturedCards.length} card
+                {capturedCards.length !== 1 ? "s" : ""} captured
+              </p>
+            )}
           </div>
-          <h2 className="text-2xl font-bold mb-2">All Done!</h2>
-          <p className="text-muted-foreground mb-2">
-            {queueStats.complete} card{queueStats.complete !== 1 ? "s" : ""}{" "}
-            uploaded successfully
-          </p>
-          <p className="text-sm text-muted-foreground mb-6">
-            Cards will be reviewed on the admin dashboard.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            You can close this page now.
-          </p>
         </div>
       )}
 
-      {/* Main content area */}
-      {!showComplete && (
-        <div className="flex-1 flex flex-col">
-          {/* SETUP STEP */}
-          {step === "setup" && (
-            <div className="flex-1 flex flex-col">
-              {/* Back button - only show for logged-in users, not phone/QR users */}
-              {!scanToken && (
-                <div className="p-4">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href={`/church/${slug}/admin/connect-cards`}>
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back
-                    </Link>
-                  </Button>
-                </div>
-              )}
+      {/* CAMERA / PREVIEW VIEW */}
+      {(isCapturing || isPreviewing) && (
+        <div className={`flex-1 flex ${isLandscape ? "flex-row" : "flex-col"}`}>
+          {/* Header - shows card progress and which side */}
+          <div
+            className={`bg-black/80 p-3 flex items-center justify-center gap-3 ${
+              isLandscape ? "hidden" : ""
+            }`}
+          >
+            {/* Card count */}
+            <span className="text-white text-sm font-medium">
+              Card {capturedCards.length + 1}
+            </span>
 
-              {/* Centered content */}
-              <div className="flex-1 flex flex-col justify-center space-y-6 px-6 pb-6 max-w-md mx-auto w-full">
-                <div className="text-center mb-4">
-                  <Camera className="h-12 w-12 mx-auto mb-4 text-primary" />
-                  <h2 className="text-xl font-semibold mb-2">
-                    Ready to Scan Cards
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Configure your scanning session
-                  </p>
-                </div>
+            {capturedCards.length > 0 && (
+              <>
+                <span className="text-white/30">•</span>
+                <span className="text-white/60 text-sm">
+                  {capturedCards.length} done
+                </span>
+              </>
+            )}
 
-                {/* Card Type Selection */}
-                <div className="space-y-3">
-                  <label className="text-sm font-medium">Card Type</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button
-                      variant={cardType === "single" ? "default" : "outline"}
-                      className="h-20 flex-col gap-2"
-                      onClick={() => setCardType("single")}
-                    >
-                      <Square className="h-6 w-6" />
-                      <span className="text-xs">1-Sided</span>
-                    </Button>
-                    <Button
-                      variant={cardType === "double" ? "default" : "outline"}
-                      className="h-20 flex-col gap-2"
-                      onClick={() => setCardType("double")}
-                    >
-                      <Layers className="h-6 w-6" />
-                      <span className="text-xs">2-Sided</span>
-                    </Button>
-                  </div>
-                </div>
+            <span className="text-white/30">|</span>
 
-                {/* Location Selection */}
-                <div className="space-y-3">
-                  <label className="text-sm font-medium flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Location
-                  </label>
-                  <Select value={locationId} onValueChange={setLocationId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map(loc => (
-                        <SelectItem key={loc.id} value={loc.id}>
-                          {loc.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+            {/* Which side */}
+            <span className="text-white font-medium">
+              {step.includes("front") ? "Front" : "Back"}
+            </span>
+            {cardType === "double" && (
+              <span className="text-white/60 text-sm">
+                ({step.includes("front") ? "1" : "2"}/2)
+              </span>
+            )}
+          </div>
 
-                {/* Start Button */}
-                <Button
-                  size="lg"
-                  className="w-full mt-6"
-                  onClick={() => setStep("capture-front")}
-                >
-                  <Camera className="mr-2 h-5 w-5" />
-                  Start Scanning
-                </Button>
+          {/* Main view - takes most space */}
+          <div className="flex-1 relative">
+            {/* Video (when capturing) */}
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className={`absolute inset-0 w-full h-full object-cover ${
+                isCapturing && isStreaming ? "block" : "hidden"
+              }`}
+            />
 
-                {/* Resume indicator */}
-                {cardsScanned > 0 && activeBatch && (
-                  <Alert>
-                    <AlertDescription className="text-sm">
-                      Resuming session: {cardsScanned} cards in &quot;
-                      {activeBatch.name}&quot;
-                    </AlertDescription>
-                  </Alert>
-                )}
-              </div>
-            </div>
-          )}
+            {/* Preview image */}
+            {isPreviewing && currentPreviewImage && (
+              <img
+                src={currentPreviewImage}
+                alt="Captured"
+                className="absolute inset-0 w-full h-full object-contain bg-black"
+              />
+            )}
 
-          {/* CAPTURE STEPS (front and back) */}
-          {(step === "capture-front" || step === "capture-back") && (
-            <div className="flex-1 flex flex-col">
-              {/* Camera not supported error */}
-              {!cameraState.isSupported && (
-                <div className="flex-1 flex items-center justify-center p-6">
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>
-                      Camera is not supported on this device or browser.
-                    </AlertDescription>
-                  </Alert>
-                </div>
-              )}
-
-              {/* Camera error */}
-              {cameraState.error && (
-                <div className="flex-1 flex flex-col items-center justify-center p-6 gap-4 max-w-md mx-auto">
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{cameraState.error}</AlertDescription>
-                  </Alert>
-                  {cameraState.error.includes("permission") && (
-                    <div className="text-sm text-muted-foreground text-center space-y-2">
-                      <p>To allow camera access:</p>
-                      <ol className="text-left list-decimal list-inside space-y-1">
-                        <li>
-                          Click the lock <Lock className="h-3.5 w-3.5 inline" />
-                          , tune{" "}
-                          <SlidersHorizontal className="h-3.5 w-3.5 inline" />,
-                          or info <Info className="h-3.5 w-3.5 inline" /> icon
-                          in your address bar
-                        </li>
-                        <li>Select &quot;Site settings&quot; if needed</li>
-                        <li>
-                          Find &quot;Camera&quot; and set it to
-                          &quot;Allow&quot;
-                        </li>
-                        <li>Refresh the page</li>
-                      </ol>
-                    </div>
-                  )}
-                  <Button onClick={startCamera}>
-                    <RotateCcw className="mr-2 h-4 w-4" />
+            {/* Error */}
+            {error && (
+              <div className="absolute inset-0 flex items-center justify-center p-6">
+                <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6 max-w-sm text-center">
+                  <X className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                  <p className="text-white mb-4">{error}</p>
+                  <Button onClick={startCamera} variant="secondary">
                     Try Again
                   </Button>
                 </div>
-              )}
-
-              {/* Live viewfinder */}
-              {cameraState.isSupported && !cameraState.error && (
-                <>
-                  {/* Header row with back button, card indicator, and review button */}
-                  <div className="flex items-center justify-between px-4 mb-4">
-                    {/* Back button - only show for logged-in users */}
-                    {!scanToken ? (
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/church/${slug}/admin/connect-cards`}>
-                          <ArrowLeft className="mr-2 h-4 w-4" />
-                          Back
-                        </Link>
-                      </Button>
-                    ) : (
-                      <div className="w-16" />
-                    )}
-
-                    {/* Center: Current card indicator */}
-                    <div className="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium">
-                      {queue.length > 0
-                        ? `Card #${queue.length + 1}`
-                        : step === "capture-front"
-                          ? cardType === "double"
-                            ? "Front of Card"
-                            : "Capture Card"
-                          : "Back of Card"}
-                    </div>
-
-                    {/* Right: Review Batch button */}
-                    {queue.length > 0 ? (
-                      <Button
-                        size="sm"
-                        onClick={handleFinishBatch}
-                        disabled={
-                          queueStats.processing > 0 || queueStats.pending > 0
-                        }
-                      >
-                        Review Batch
-                      </Button>
-                    ) : (
-                      <div className="w-24" />
-                    )}
-                  </div>
-
-                  {/* Video element */}
-                  <div className="flex-1 relative bg-black rounded-lg overflow-hidden">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-
-                    {/* Dark mask overlay - hides area outside card bounds */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div
-                        className="w-[85%] aspect-[3/2] border-2 border-white rounded-lg relative"
-                        style={{
-                          boxShadow: "0 0 0 9999px rgba(0, 0, 0, 1)",
-                        }}
-                      >
-                        <p className="absolute bottom-3 left-0 right-0 text-center text-white/80 text-sm">
-                          Align card within frame
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Hidden canvas for capture */}
-                  <canvas ref={canvasRef} className="hidden" />
-
-                  {/* Camera controls */}
-                  <div className="bg-black/90 p-6 flex items-center justify-center gap-8">
-                    {/* Switch camera */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-white h-12 w-12"
-                      onClick={switchCamera}
-                    >
-                      <FlipHorizontal className="h-6 w-6" />
-                    </Button>
-
-                    {/* Capture button */}
-                    <Button
-                      size="icon"
-                      className="h-16 w-16 rounded-full bg-primary hover:bg-primary/90"
-                      onClick={handleCapture}
-                      disabled={!cameraState.isActive}
-                    >
-                      <div className="h-12 w-12 rounded-full border-4 border-primary-foreground" />
-                    </Button>
-
-                    {/* Placeholder for symmetry */}
-                    <div className="h-12 w-12" />
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* PREVIEW STEPS (front and back) */}
-          {(step === "preview-front" || step === "preview-back") && (
-            <div className="flex-1 flex flex-col">
-              {/* Preview image */}
-              <div className="flex-1 relative bg-black">
-                {(step === "preview-front" ? frontImage : backImage) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={
-                      (step === "preview-front" ? frontImage : backImage)
-                        ?.dataUrl
-                    }
-                    alt={`${step === "preview-front" ? "Front" : "Back"} of card`}
-                    className="absolute inset-0 w-full h-full object-contain"
-                  />
-                )}
-
-                {/* Step indicator */}
-                <div className="absolute top-4 left-0 right-0 z-10 flex justify-center">
-                  <div className="bg-black/60 text-white px-4 py-2 rounded-full text-sm font-medium">
-                    {step === "preview-front"
-                      ? cardType === "double"
-                        ? "Review Front"
-                        : "Review Card"
-                      : "Review Back"}
-                  </div>
-                </div>
-              </div>
-
-              {/* Accept/Retake controls */}
-              <div className="bg-background p-6 flex items-center justify-center gap-6">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="flex-1 max-w-32"
-                  onClick={handleRetake}
-                >
-                  <RotateCcw className="mr-2 h-4 w-4" />
-                  Retake
-                </Button>
-                <Button
-                  size="lg"
-                  className="flex-1 max-w-32"
-                  onClick={handleAccept}
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Accept
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* QUEUE LIST - Shows all cards with status */}
-          {queue.length > 0 &&
-            (step === "capture-front" || step === "capture-back") && (
-              <div className="bg-muted/50 border-t px-4 py-3 max-h-48 overflow-y-auto">
-                <div className="max-w-md mx-auto space-y-1">
-                  {/* Card list - simple one line per card */}
-                  {queue.map((card, index) => (
-                    <div
-                      key={card.id}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <span>Card #{index + 1}</span>
-                      <span
-                        className={
-                          card.status === "complete"
-                            ? "text-green-600"
-                            : card.status === "failed"
-                              ? "text-destructive"
-                              : card.status === "pending"
-                                ? "text-muted-foreground"
-                                : "text-primary"
-                        }
-                      >
-                        {card.status === "complete" && "Uploaded"}
-                        {card.status === "failed" && "Failed"}
-                        {card.status === "pending" && "Queued"}
-                        {card.status === "uploading" && "Uploading..."}
-                        {card.status === "extracting" && "Analyzing..."}
-                        {card.status === "saving" && "Saving..."}
-                      </span>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
+
+            {/* Landscape header overlay */}
+            {isLandscape && (
+              <div className="absolute top-0 left-0 right-0 bg-black/60 p-2 flex items-center justify-center gap-3">
+                <span className="text-white text-sm font-medium">
+                  Card {capturedCards.length + 1}
+                </span>
+
+                {capturedCards.length > 0 && (
+                  <>
+                    <span className="text-white/30">•</span>
+                    <span className="text-white/60 text-sm">
+                      {capturedCards.length} done
+                    </span>
+                  </>
+                )}
+
+                <span className="text-white/30">|</span>
+
+                <span className="text-white text-sm font-medium">
+                  {step.includes("front") ? "Front" : "Back"}
+                </span>
+                {cardType === "double" && (
+                  <span className="text-white/60 text-sm">
+                    ({step.includes("front") ? "1" : "2"}/2)
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Controls - Capture mode */}
+          {isCapturing && isStreaming && (
+            <div
+              className={`bg-black p-4 flex items-center justify-center gap-4 ${
+                isLandscape ? "flex-col w-20" : "flex-row"
+              }`}
+            >
+              {/* Fullscreen - hide on iOS */}
+              {!isIOS && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 text-white hover:bg-white/20"
+                  onClick={toggleFullscreen}
+                >
+                  {isFullscreen ? (
+                    <Minimize className="h-5 w-5" />
+                  ) : (
+                    <Maximize className="h-5 w-5" />
+                  )}
+                </Button>
+              )}
+
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 text-white hover:bg-white/20"
+                onClick={switchCamera}
+              >
+                <FlipHorizontal className="h-5 w-5" />
+              </Button>
+
+              <button
+                className="h-16 w-16 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform"
+                onClick={captureFrame}
+              >
+                <div className="h-14 w-14 rounded-full border-4 border-black" />
+              </button>
+
+              {/* Done button - visible when cards are captured */}
+              {capturedCards.length > 0 ? (
+                <Button
+                  size="sm"
+                  className={`gap-1 ${isLandscape ? "w-full" : ""}`}
+                  onClick={submitCards}
+                >
+                  <Upload className="h-4 w-4" />
+                  <span className={isLandscape ? "hidden" : ""}>Done</span>
+                  <span>({capturedCards.length})</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 text-white hover:bg-white/20"
+                  onClick={() => {
+                    stopCamera();
+                    setStep("setup");
+                  }}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
+          )}
+
+          {/* Controls - Preview mode */}
+          {isPreviewing && (
+            <div
+              className={`bg-black p-4 flex items-center justify-center gap-4 ${
+                isLandscape ? "flex-col w-24" : "flex-row gap-8"
+              }`}
+            >
+              <Button
+                variant="ghost"
+                size={isLandscape ? "default" : "lg"}
+                className={`text-white hover:bg-white/20 gap-2 ${
+                  isLandscape ? "w-full" : ""
+                }`}
+                onClick={retake}
+              >
+                <RotateCcw className="h-5 w-5" />
+                {!isLandscape && "Retake"}
+              </Button>
+
+              <Button
+                size={isLandscape ? "default" : "lg"}
+                className={`gap-2 ${isLandscape ? "w-full" : ""}`}
+                onClick={step === "preview-front" ? acceptFront : acceptBack}
+              >
+                <Check className="h-5 w-5" />
+                {isLandscape
+                  ? cardType === "double" && step === "preview-front"
+                    ? "Next"
+                    : "Use"
+                  : cardType === "double" && step === "preview-front"
+                    ? "Next: Back"
+                    : "Use Photo"}
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SUBMITTING STEP */}
+      {step === "submitting" && (
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          <Loader2 className="h-12 w-12 text-white mb-4 animate-spin" />
+          <h1 className="text-xl font-semibold text-white mb-2">
+            Uploading Cards
+          </h1>
+          <p className="text-white/70 text-center mb-8">
+            Processing {capturedCards.length} card
+            {capturedCards.length !== 1 ? "s" : ""}...
+          </p>
+
+          <div className="w-full max-w-sm space-y-4">
+            {capturedCards.map(card => {
+              const state = uploadStates.get(card.id);
+              const status = state?.status || "pending";
+              const progress = state?.progress || 0;
+
+              return (
+                <div key={card.id} className="bg-white/10 rounded-lg p-3">
+                  <div className="flex items-center gap-3 mb-2">
+                    {status === "done" && (
+                      <CheckCircle2 className="h-5 w-5 text-green-400" />
+                    )}
+                    {status === "error" && (
+                      <AlertCircle className="h-5 w-5 text-red-400" />
+                    )}
+                    {status !== "done" && status !== "error" && (
+                      <Loader2 className="h-5 w-5 text-white animate-spin" />
+                    )}
+                    <span className="text-white text-sm flex-1">
+                      Card {capturedCards.indexOf(card) + 1}
+                    </span>
+                    <span className="text-white/60 text-xs capitalize">
+                      {status}
+                    </span>
+                  </div>
+                  <Progress value={progress} className="h-1" />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* COMPLETE STEP */}
+      {step === "complete" && (
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          <CheckCircle2 className="h-16 w-16 text-green-400 mb-4" />
+          <h1 className="text-xl font-semibold text-white mb-2">
+            Upload Complete!
+          </h1>
+          <p className="text-white/70 text-center mb-8">
+            Your cards have been uploaded and are being processed.
+          </p>
+
+          <div className="w-full max-w-sm space-y-4">
+            {/* Summary */}
+            <div className="bg-white/10 rounded-lg p-4">
+              <div className="flex justify-between text-white mb-2">
+                <span>Total Cards</span>
+                <span>{capturedCards.length}</span>
+              </div>
+              <div className="flex justify-between text-green-400">
+                <span>Successful</span>
+                <span>
+                  {
+                    Array.from(uploadStates.values()).filter(
+                      s => s.status === "done"
+                    ).length
+                  }
+                </span>
+              </div>
+              {Array.from(uploadStates.values()).some(
+                s => s.status === "error"
+              ) && (
+                <div className="flex justify-between text-red-400">
+                  <span>Failed</span>
+                  <span>
+                    {
+                      Array.from(uploadStates.values()).filter(
+                        s => s.status === "error"
+                      ).length
+                    }
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1 gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                onClick={resetWizard}
+              >
+                <Camera className="h-5 w-5" />
+                Scan More
+              </Button>
+              <Button
+                size="lg"
+                className="flex-1 gap-2"
+                onClick={() => setStep("finished")}
+              >
+                <Check className="h-5 w-5" />
+                Finished
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FINISHED STEP - Session complete guidance */}
+      {step === "finished" && (
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
+            <Check className="h-8 w-8 text-green-400" />
+          </div>
+          <h1 className="text-xl font-semibold text-white mb-2">All Done!</h1>
+
+          <div className="w-full max-w-sm space-y-4 mt-4">
+            {/* Direct instruction */}
+            <div className="bg-white/10 rounded-lg p-5 text-center">
+              <p className="text-white text-sm leading-relaxed">
+                Close this page and go to the{" "}
+                <span className="font-semibold text-primary">Review Queue</span>{" "}
+                on your computer to review and approve your cards.
+              </p>
+            </div>
+
+            {/* Option to scan more */}
+            <Button
+              variant="ghost"
+              className="w-full text-white/60 hover:text-white hover:bg-white/10"
+              onClick={resetWizard}
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Scan More Cards
+            </Button>
+          </div>
         </div>
       )}
     </div>

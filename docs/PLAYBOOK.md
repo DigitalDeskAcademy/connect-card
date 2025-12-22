@@ -271,6 +271,72 @@ const data = await prisma.model.findMany({
 });
 ```
 
+#### React Hooks Pattern
+
+**Rule: Always follow `exhaustive-deps` - no exceptions, no eslint-disable comments.**
+
+When a function needs to be called from `useEffect`, wrap it in `useCallback` with all dependencies:
+
+```typescript
+// ✅ CORRECT: Function memoized with all dependencies
+const handleCapture = useCallback(async () => {
+  const result = await captureImage();
+  if (step === "capture-front") {
+    setFrontImage(result);
+    setStep("preview-front");
+  }
+}, [captureImage, step]); // All dependencies listed
+
+// Effect includes the memoized function
+useEffect(() => {
+  if (!isReady) return;
+
+  const timer = setTimeout(() => {
+    handleCapture();
+  }, 500);
+
+  return () => clearTimeout(timer);
+}, [isReady, handleCapture]); // ✅ handleCapture included
+```
+
+```typescript
+// ❌ WRONG: Function not in dependency array
+useEffect(() => {
+  handleCapture(); // Called but not in deps
+}, [isReady]); // Missing handleCapture - LINT ERROR
+
+// ❌ WRONG: eslint-disable to suppress warning
+// eslint-disable-next-line react-hooks/exhaustive-deps
+useEffect(() => { ... }, [isReady]); // NEVER DO THIS
+```
+
+**Why large dependency arrays are OK:**
+
+- Guard conditions (`if (!isReady) return`) prevent unnecessary execution
+- React only re-runs when dependencies actually change
+- Correct behavior > fewer re-runs
+
+**When to use refs (escape hatch - rare):**
+
+Only use refs to store latest function when you need to decouple trigger from action (e.g., event emitters). This is an advanced pattern - prefer `useCallback` first.
+
+```typescript
+// Ref pattern (use sparingly)
+const handleCaptureRef = useRef<() => void>();
+handleCaptureRef.current = handleCapture;
+
+useEffect(() => {
+  handleCaptureRef.current?.(); // Always calls latest
+}, [trigger]); // Ref not in deps (refs don't trigger re-renders)
+```
+
+**Checklist for hooks:**
+
+- [ ] Every function called in useEffect is in the dependency array
+- [ ] Every function in deps is wrapped in useCallback
+- [ ] No eslint-disable comments for exhaustive-deps
+- [ ] Pure helpers moved outside the component
+
 ---
 
 ## 🔥 Production Blockers - Phase 1 (HISTORICAL - Complete)
