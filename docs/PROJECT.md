@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-17
+**Last Updated:** 2025-12-21
 
 ---
 
@@ -51,7 +51,7 @@ Churches lose 70% of first-time visitors because:
 > **New Requests:**
 >
 > - Planning Center API sync (real-time duplicate checking)
-> - Keyword detection (campaign triggers like "impacted", "coffee oasis")
+> - ~~Keyword detection~~ ✅ **Complete (PR #80)**
 > - Volunteer event tracking (capacity view, quick outreach)
 >
 > **Deprioritized:**
@@ -302,6 +302,27 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 21, 2025
+
+- ✅ **Phone Wizard UX Enhancements** (PR #83)
+  - Progress header showing card count during scanning
+  - Any team member can scan (removed admin restriction)
+  - Card type syncs from QR modal to phone
+  - Simplified QR modal with direct CTA to review queue
+- ✅ **Comprehensive E2E Test Suite** (PR #82)
+  - 108 passing tests across 19 test files
+  - Full coverage of auth, connect cards, volunteer, prayer, team management
+  - Smoke tests for all admin routes
+  - Export, contacts, settings page coverage
+- ✅ **Dead Code Removal** (PR #81)
+  - Removed LMS and shift scheduling dead code
+  - Cleaner codebase
+- ✅ **Campaign Keyword Detection** (PR #80)
+  - AI prompt extracts campaign keywords
+  - Keywords stored and displayed in review UI
+  - Filter connect cards by keyword
+  - Keywords included in exports and synced to contacts
 
 ### Week of Dec 17, 2025
 

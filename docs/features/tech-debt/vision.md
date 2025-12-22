@@ -1,9 +1,9 @@
 # Tech Debt - Production Blockers
 
-**Status:** 🟢 **Phase 1.5 Complete** - Caching deferred to scale
+**Status:** 🟢 **Keyword Detection Complete** - PR #80 merged
 **Worktree:** `/church-connect-hub/tech-debt`
 **Branch:** `feature/tech-debt`
-**Last Updated:** 2025-12-12
+**Last Updated:** 2025-12-21
 
 ---
 
@@ -12,6 +12,32 @@
 This worktree handles **global, cross-cutting technical issues** that affect the entire platform. These are NOT feature-specific - they impact all features equally.
 
 **Rule:** If it touches multiple features or is infrastructure-level, it belongs here.
+
+---
+
+## 🎉 Recent Completions (Dec 2025)
+
+### Campaign Keyword Detection (PR #80) ✅
+
+**Merged:** Dec 20, 2025
+
+Churches announce trigger words at services (e.g., "write 'impacted' on your card"). This feature extracts and surfaces them.
+
+| Task                                            | Status |
+| ----------------------------------------------- | ------ |
+| Update AI prompt to extract standalone keywords | [x]    |
+| Add `detectedKeywords: String[]` to schema      | [x]    |
+| Display keyword chips in review UI              | [x]    |
+| Filter connect cards by keyword                 | [x]    |
+| Include keywords in export                      | [x]    |
+| Sync keywords to ChurchMember profiles          | [x]    |
+
+**Files Changed:**
+
+- `prisma/schema.prisma` - Added detectedKeywords to ConnectCard and ChurchMember
+- `app/api/connect-cards/extract/route.ts` - Updated AI prompt
+- `lib/export/formats/` - Include keywords in CSV exports
+- Review UI displays keyword chips
 
 ---
 
@@ -443,4 +469,4 @@ try {
 
 ---
 
-**Last Updated:** 2025-11-30
+**Last Updated:** 2025-12-21

@@ -3,6 +3,7 @@
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
 **Last Updated:** 2025-12-21
 **Next Customer Meeting:** January 2026
+**Latest PR:** #83 - Phone wizard UX enhancements (Dec 21)
 
 ---
 
@@ -19,7 +20,7 @@
 > **New Requests:**
 >
 > - 🆕 Planning Center API sync (real-time duplicate checking)
-> - 🆕 Keyword detection (campaign triggers like "impacted", "coffee oasis")
+> - ✅ Keyword detection (campaign triggers like "impacted", "coffee oasis") - **PR #80 merged**
 > - 🆕 Volunteer event tracking (capacity view, quick outreach)
 >
 > **Deprioritized:**
@@ -142,22 +143,30 @@
 **Branch:** `feature/tech-debt`
 **Focus:** AI keyword extraction from connect cards
 
+**Recently Completed:**
+
+- ✅ PR #80 - Campaign keyword detection and tracking (Dec 20)
+  - AI prompt extracts standalone keywords
+  - `detectedKeywords: String[]` added to schema
+  - Keywords visible in review UI and exports
+  - Filter connect cards by keyword
+  - Keywords synced to ChurchMember profiles
+
 **What to Build:**
 
 | Task                                            | Status |
 | ----------------------------------------------- | ------ |
-| Update AI prompt to extract standalone keywords | [ ]    |
-| Add `detectedKeywords: String[]` to schema      | [ ]    |
-| Display keyword chips in review UI              | [ ]    |
-| Filter connect cards by keyword                 | [ ]    |
-| Include keywords in export                      | [ ]    |
-
-**Context:** Churches announce trigger words at services (e.g., "write 'impacted' on your card"). These need to be extracted and surfaced.
+| Update AI prompt to extract standalone keywords | [x]    |
+| Add `detectedKeywords: String[]` to schema      | [x]    |
+| Display keyword chips in review UI              | [x]    |
+| Filter connect cards by keyword                 | [x]    |
+| Include keywords in export                      | [x]    |
 
 **Wishlist:**
 
 - [ ] Keyword analytics/counts
 - [ ] Auto-tag contacts based on keywords
+- [ ] Keyword-triggered automation (GHL workflows)
 
 ---
 
@@ -166,15 +175,23 @@
 **Branch:** `feature/e2e`
 **Focus:** Comprehensive Playwright test coverage
 
+**Recently Completed:**
+
+- ✅ PR #82 - Comprehensive E2E test suite with 108 tests (Dec 20)
+  - Full test infrastructure with auth setup
+  - 19 test files covering all major features
+  - Smoke tests for all admin routes
+  - Export, contacts, settings page coverage
+
 **What to Build:**
 
 | Task                                       | Status |
 | ------------------------------------------ | ------ |
-| Auth flow tests (login, OTP, session)      | [ ]    |
-| Connect card upload → review → export flow | [ ]    |
-| Volunteer pipeline flow                    | [ ]    |
-| Prayer request flow                        | [ ]    |
-| Multi-tenant isolation tests               | [ ]    |
+| Auth flow tests (login, OTP, session)      | [x]    |
+| Connect card upload → review → export flow | [x]    |
+| Volunteer pipeline flow                    | [x]    |
+| Prayer request flow                        | [x]    |
+| Multi-tenant isolation tests               | [x]    |
 | CI/CD integration                          | [ ]    |
 
 **Test Credentials:**
