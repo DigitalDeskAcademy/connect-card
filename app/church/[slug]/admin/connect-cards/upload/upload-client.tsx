@@ -380,6 +380,9 @@ export function ConnectCardUploadClient({
     }
   };
 
+  // Build the full scan URL with card type
+  const fullScanUrl = scanUrl ? `${scanUrl}&cardType=${cardSide}` : null;
+
   const handleOpenQrModal = async () => {
     if (!scanUrl) {
       await generateQrCode();
@@ -388,8 +391,8 @@ export function ConnectCardUploadClient({
   };
 
   const copyLinkToClipboard = () => {
-    if (scanUrl) {
-      navigator.clipboard.writeText(scanUrl);
+    if (fullScanUrl) {
+      navigator.clipboard.writeText(fullScanUrl);
       toast.success("Link copied! Paste it in a text or email.");
     }
   };
@@ -1166,10 +1169,10 @@ export function ConnectCardUploadClient({
               <div className="h-64 w-64 flex items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
-            ) : scanUrl ? (
+            ) : fullScanUrl ? (
               <div className="bg-white p-4 rounded-lg">
                 <QRCodeSVG
-                  value={scanUrl}
+                  value={fullScanUrl}
                   size={256}
                   level="M"
                   marginSize={0}
@@ -1215,6 +1218,25 @@ export function ConnectCardUploadClient({
             <p className="text-xs text-center text-muted-foreground">
               Or copy the link and text/email it to yourself
             </p>
+          </div>
+
+          {/* Next steps - clear CTA */}
+          <div className="rounded-lg border bg-muted/30 p-4 mt-2">
+            <p className="text-sm font-medium mb-1">Done scanning?</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              After your phone shows &quot;All Done&quot;, review your cards
+              here.
+            </p>
+            <Button
+              className="w-full"
+              onClick={() => {
+                setQrModalOpen(false);
+                router.push(`/church/${slug}/admin/connect-cards?tab=batches`);
+              }}
+            >
+              <ClipboardCheck className="mr-2 h-4 w-4" />
+              Go to Review Queue
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

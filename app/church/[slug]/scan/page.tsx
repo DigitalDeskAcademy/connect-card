@@ -26,12 +26,12 @@ import { TokenExpiredError } from "./_components/token-expired-error";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ token?: string }>;
+  searchParams: Promise<{ token?: string; cardType?: string }>;
 }
 
 export default async function ScanPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
-  const { token } = await searchParams;
+  const { token, cardType } = await searchParams;
 
   let userId: string;
   let organizationId: string;
@@ -91,13 +91,8 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
     // (Server Components cannot modify cookies in Next.js 15)
   } else {
     // Session-based authentication (direct access when logged in)
-    const { session, organization, member } =
-      await requireDashboardAccess(slug);
-
-    // Block staff users - only owners and admins can scan connect cards
-    if (member && member.role === "member") {
-      redirect("/unauthorized");
-    }
+    // Any team member can scan cards - no role restriction
+    const { session, organization } = await requireDashboardAccess(slug);
 
     userId = session.user.id;
     organizationId = organization.id;
@@ -124,6 +119,10 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
       ? user.defaultLocationId
       : locations[0]?.id || null;
 
+  // Validate cardType from URL (single or double)
+  const defaultCardType =
+    cardType === "single" || cardType === "double" ? cardType : "single";
+
   // No PageContainer - scan wizard uses fixed positioning for full-screen camera
   return (
     <ScanWizardClient
@@ -131,6 +130,7 @@ export default async function ScanPage({ params, searchParams }: PageProps) {
       locations={locations}
       defaultLocationId={defaultLocationId}
       scanToken={token}
+      defaultCardType={defaultCardType}
     />
   );
 }

@@ -82,6 +82,8 @@ function validateOrigin(origin: string | null): boolean {
   const allowedPatterns = [
     /^http:\/\/localhost:\d+$/, // localhost:3000, :3001, etc.
     /^https:\/\/.*\.vercel\.app$/, // All Vercel preview deployments
+    /^https:\/\/.*\.ngrok-free\.dev$/, // ngrok tunnels for mobile testing
+    /^https:\/\/.*\.ngrok\.io$/, // legacy ngrok URLs
   ];
 
   // Add production domains from environment variable

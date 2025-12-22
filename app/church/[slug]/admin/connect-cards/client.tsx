@@ -41,12 +41,19 @@ interface Batch {
   };
 }
 
+interface Location {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 interface ConnectCardsClientProps {
   slug: string;
   defaultLocationId: string | null;
   batches: Batch[];
   pendingBatchCount: number;
   activeTab: string;
+  locations: Location[];
 }
 
 export default function ConnectCardsClient({
@@ -55,6 +62,7 @@ export default function ConnectCardsClient({
   batches,
   pendingBatchCount,
   activeTab,
+  locations,
 }: ConnectCardsClientProps) {
   return (
     <>
@@ -78,7 +86,7 @@ export default function ConnectCardsClient({
       )}
 
       {activeTab === "batches" && (
-        <BatchesClient batches={batches} slug={slug} />
+        <BatchesClient batches={batches} slug={slug} locations={locations} />
       )}
 
       {activeTab === "analytics" && (

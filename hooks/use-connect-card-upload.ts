@@ -12,24 +12,14 @@
 
 import { useState, useCallback } from "react";
 import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
+import { ExtractedData } from "@/lib/zodSchemas";
+
+// Re-export for convenience
+export type { ExtractedData };
 
 // ============================================================================
 // TYPES
 // ============================================================================
-
-export interface ExtractedData {
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-  prayer_request: string | null;
-  visit_status?: string | null;
-  first_time_visitor?: boolean | null;
-  interests: string[] | null;
-  address: string | null;
-  age_group: string | null;
-  family_info: string | null;
-  additional_notes: string | null;
-}
 
 export type CardUploadStatus =
   | "pending"
@@ -105,6 +95,9 @@ function normalizeExtractedData(data: Record<string, unknown>): ExtractedData {
         : null,
     interests: Array.isArray(data.interests)
       ? data.interests.filter((i): i is string => typeof i === "string")
+      : null,
+    keywords: Array.isArray(data.keywords)
+      ? data.keywords.filter((k): k is string => typeof k === "string")
       : null,
     address: typeof data.address === "string" ? data.address : null,
     age_group: typeof data.age_group === "string" ? data.age_group : null,

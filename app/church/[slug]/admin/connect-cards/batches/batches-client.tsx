@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Package,
   MapPin,
@@ -10,6 +17,7 @@ import {
   FileText,
   Trash2,
   Loader2,
+  Filter,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -44,16 +52,36 @@ interface Batch {
   };
 }
 
-interface BatchesClientProps {
-  batches: Batch[];
+interface Location {
+  id: string;
+  name: string;
   slug: string;
 }
 
-export function BatchesClient({ batches, slug }: BatchesClientProps) {
+interface BatchesClientProps {
+  batches: Batch[];
+  slug: string;
+  locations: Location[];
+}
+
+export function BatchesClient({
+  batches,
+  slug,
+  locations,
+}: BatchesClientProps) {
   const router = useRouter();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [batchToDelete, setBatchToDelete] = useState<Batch | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [selectedLocationId, setSelectedLocationId] = useState<string>("all");
+
+  // Filter batches by selected location
+  const filteredBatches = useMemo(() => {
+    if (selectedLocationId === "all") {
+      return batches;
+    }
+    return batches.filter(batch => batch.locationId === selectedLocationId);
+  }, [batches, selectedLocationId]);
 
   const handleDeleteClick = (batch: Batch) => {
     setBatchToDelete(batch);
@@ -77,33 +105,80 @@ export function BatchesClient({ batches, slug }: BatchesClientProps) {
     });
   };
 
+  // Get unique locations from batches to know if we should show filter
+  const uniqueLocationIds = useMemo(() => {
+    const ids = new Set(batches.map(b => b.locationId).filter(Boolean));
+    return ids;
+  }, [batches]);
+
+  // Only show filter if there are multiple locations
+  const showLocationFilter = uniqueLocationIds.size > 1;
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          Connect Card Batches
-        </h2>
-        <p className="text-muted-foreground">
-          Review and manage uploaded connect card batches
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Connect Card Batches
+          </h2>
+          <p className="text-muted-foreground">
+            Review and manage uploaded connect card batches
+          </p>
+        </div>
+
+        {/* Campus Filter - only show if user has access to multiple locations */}
+        {showLocationFilter && (
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select
+              value={selectedLocationId}
+              onValueChange={setSelectedLocationId}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="All Campuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Campuses</SelectItem>
+                {locations.map(location => (
+                  <SelectItem key={location.id} value={location.id}>
+                    {location.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* Batch list */}
-      {batches.length === 0 ? (
+      {filteredBatches.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No batches yet</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              {selectedLocationId !== "all"
+                ? "No batches for this campus"
+                : "No batches yet"}
+            </h3>
             <p className="text-sm text-muted-foreground max-w-md">
-              Upload connect cards to create your first batch. Cards are
-              automatically grouped into batches for easy review.
+              {selectedLocationId !== "all" ? (
+                <>
+                  There are no connect card batches for the selected campus. Try
+                  selecting a different campus or &quot;All Campuses&quot;.
+                </>
+              ) : (
+                <>
+                  Upload connect cards to create your first batch. Cards are
+                  automatically grouped into batches for easy review.
+                </>
+              )}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {batches.map(batch => (
+          {filteredBatches.map(batch => (
             <Card key={batch.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">

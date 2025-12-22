@@ -47,6 +47,7 @@ interface ScanWizardClientProps {
   locations: { id: string; name: string; slug: string }[];
   defaultLocationId: string | null;
   scanToken?: string;
+  defaultCardType?: "single" | "double";
 }
 
 type WizardStep =
@@ -56,7 +57,8 @@ type WizardStep =
   | "capture-back"
   | "preview-back"
   | "submitting"
-  | "complete";
+  | "complete"
+  | "finished";
 
 type CardType = "single" | "double";
 
@@ -70,10 +72,43 @@ export function ScanWizardClient({
   slug,
   locations,
   defaultLocationId,
+  scanToken,
+  defaultCardType = "single",
 }: ScanWizardClientProps) {
+  // Session state
+  const [sessionReady, setSessionReady] = useState(!scanToken); // Ready immediately if no token (logged in user)
+  const [sessionError, setSessionError] = useState<string | null>(null);
+
+  // Create scan session cookie when component mounts (for token-based auth)
+  useEffect(() => {
+    if (!scanToken) return; // Skip if no token (already logged in)
+
+    const createSession = async () => {
+      try {
+        const response = await fetch("/api/scan/session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token: scanToken, slug }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          setSessionError(data.error || "Failed to create session");
+          return;
+        }
+
+        setSessionReady(true);
+      } catch {
+        setSessionError("Network error. Please try again.");
+      }
+    };
+
+    createSession();
+  }, [scanToken, slug]);
+
   // Wizard state
   const [step, setStep] = useState<WizardStep>("setup");
-  const [cardType, setCardType] = useState<CardType>("single");
+  const [cardType, setCardType] = useState<CardType>(defaultCardType);
   const [locationId, setLocationId] = useState<string>(
     defaultLocationId || locations[0]?.id || ""
   );
@@ -102,6 +137,35 @@ export function ScanWizardClient({
     "environment"
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [isIOS, setIsIOS] = useState(false);
+
+  // Detect orientation and iOS
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+
+    // Check if iOS (fullscreen not supported)
+    const checkIOS = () => {
+      const ua = navigator.userAgent;
+      setIsIOS(
+        /iPad|iPhone|iPod/.test(ua) &&
+          !(window as unknown as { MSStream?: unknown }).MSStream
+      );
+    };
+
+    checkOrientation();
+    checkIOS();
+
+    window.addEventListener("resize", checkOrientation);
+    window.addEventListener("orientationchange", checkOrientation);
+
+    return () => {
+      window.removeEventListener("resize", checkOrientation);
+      window.removeEventListener("orientationchange", checkOrientation);
+    };
+  }, []);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -227,18 +291,49 @@ export function ScanWizardClient({
     };
   }, []);
 
-  // Capture current frame
+  // Capture current frame - crops to visible area (WYSIWYG)
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    // Get the display dimensions (what user sees)
+    const displayWidth = video.clientWidth;
+    const displayHeight = video.clientHeight;
+
+    // Get the actual video dimensions
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+
+    // Calculate aspect ratios
+    const displayAspect = displayWidth / displayHeight;
+    const videoAspect = videoWidth / videoHeight;
+
+    // Calculate the visible portion of the video (object-cover behavior)
+    let sx = 0,
+      sy = 0,
+      sWidth = videoWidth,
+      sHeight = videoHeight;
+
+    if (videoAspect > displayAspect) {
+      // Video is wider than display - crop horizontally
+      sWidth = videoHeight * displayAspect;
+      sx = (videoWidth - sWidth) / 2;
+    } else {
+      // Video is taller than display - crop vertically
+      sHeight = videoWidth / displayAspect;
+      sy = (videoHeight - sHeight) / 2;
+    }
+
+    // Set canvas to match the cropped dimensions (maintain quality)
+    canvas.width = sWidth;
+    canvas.height = sHeight;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
+
+    // Draw only the visible portion
+    ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
 
     const imageData = canvas.toDataURL("image/jpeg", 0.9);
 
@@ -343,49 +438,73 @@ export function ScanWizardClient({
 
   // ========== RENDER ==========
 
+  // Show loading while session is being created
+  if (!sessionReady) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center p-6">
+        <Loader2 className="h-12 w-12 text-white mb-4 animate-spin" />
+        <h1 className="text-xl font-semibold text-white mb-2">Setting up...</h1>
+        <p className="text-white/70 text-center">
+          Preparing your scanning session
+        </p>
+      </div>
+    );
+  }
+
+  // Show error if session creation failed
+  if (sessionError) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col items-center justify-center p-6">
+        <AlertCircle className="h-12 w-12 text-red-400 mb-4" />
+        <h1 className="text-xl font-semibold text-white mb-2">Session Error</h1>
+        <p className="text-white/70 text-center mb-4">{sessionError}</p>
+        <p className="text-white/50 text-sm text-center">
+          Please scan the QR code again to get a new link.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="fixed inset-0 bg-black flex flex-col">
       <canvas ref={canvasRef} className="hidden" />
 
       {/* SETUP STEP */}
       {step === "setup" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <Camera className="h-12 w-12 text-white mb-4" />
-          <h1 className="text-xl font-semibold text-white mb-2">
+        <div className="flex-1 flex flex-col items-center pt-8 p-4">
+          <Camera className="h-10 w-10 text-white mb-2" />
+          <h1 className="text-lg font-semibold text-white mb-4">
             Ready to Scan
           </h1>
-          <p className="text-white/70 text-center mb-8">
-            Configure your scanning session
-          </p>
 
-          <div className="w-full max-w-sm space-y-6">
+          <div className="w-full max-w-sm space-y-4">
             {/* Card Type */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-white">
                 Card Type
               </label>
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant={cardType === "single" ? "default" : "outline"}
-                  className="h-20 flex-col gap-2"
+                  className="h-14 flex-col gap-1"
                   onClick={() => setCardType("single")}
                 >
-                  <Square className="h-6 w-6" />
+                  <Square className="h-5 w-5" />
                   <span className="text-xs">1-Sided</span>
                 </Button>
                 <Button
                   variant={cardType === "double" ? "default" : "outline"}
-                  className="h-20 flex-col gap-2"
+                  className="h-14 flex-col gap-1"
                   onClick={() => setCardType("double")}
                 >
-                  <Layers className="h-6 w-6" />
+                  <Layers className="h-5 w-5" />
                   <span className="text-xs">2-Sided</span>
                 </Button>
               </div>
             </div>
 
             {/* Location */}
-            <div className="space-y-3">
+            <div className="space-y-2">
               <label className="text-sm font-medium text-white flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 Location
@@ -404,7 +523,7 @@ export function ScanWizardClient({
               </Select>
             </div>
 
-            {/* Start Button */}
+            {/* Start Button - full width */}
             <Button size="lg" className="w-full" onClick={startScanning}>
               <Camera className="mr-2 h-5 w-5" />
               Start Scanning
@@ -412,7 +531,7 @@ export function ScanWizardClient({
 
             {/* Show count if we have captured cards */}
             {capturedCards.length > 0 && (
-              <p className="text-white/50 text-center">
+              <p className="text-white/50 text-center text-sm">
                 {capturedCards.length} card
                 {capturedCards.length !== 1 ? "s" : ""} captured
               </p>
@@ -423,23 +542,41 @@ export function ScanWizardClient({
 
       {/* CAMERA / PREVIEW VIEW */}
       {(isCapturing || isPreviewing) && (
-        <>
-          {/* Header - shows which side we're capturing */}
-          <div className="bg-black/80 p-3 text-center">
+        <div className={`flex-1 flex ${isLandscape ? "flex-row" : "flex-col"}`}>
+          {/* Header - shows card progress and which side */}
+          <div
+            className={`bg-black/80 p-3 flex items-center justify-center gap-3 ${
+              isLandscape ? "hidden" : ""
+            }`}
+          >
+            {/* Card count */}
+            <span className="text-white text-sm font-medium">
+              Card {capturedCards.length + 1}
+            </span>
+
+            {capturedCards.length > 0 && (
+              <>
+                <span className="text-white/30">•</span>
+                <span className="text-white/60 text-sm">
+                  {capturedCards.length} done
+                </span>
+              </>
+            )}
+
+            <span className="text-white/30">|</span>
+
+            {/* Which side */}
             <span className="text-white font-medium">
-              {step === "capture-front" && "Front of Card"}
-              {step === "preview-front" && "Front of Card"}
-              {step === "capture-back" && "Back of Card"}
-              {step === "preview-back" && "Back of Card"}
+              {step.includes("front") ? "Front" : "Back"}
             </span>
             {cardType === "double" && (
-              <span className="text-white/60 ml-2">
-                ({step.includes("front") ? "1" : "2"} of 2)
+              <span className="text-white/60 text-sm">
+                ({step.includes("front") ? "1" : "2"}/2)
               </span>
             )}
           </div>
 
-          {/* Main view */}
+          {/* Main view - takes most space */}
           <div className="flex-1 relative">
             {/* Video (when capturing) */}
             <video
@@ -473,23 +610,59 @@ export function ScanWizardClient({
                 </div>
               </div>
             )}
+
+            {/* Landscape header overlay */}
+            {isLandscape && (
+              <div className="absolute top-0 left-0 right-0 bg-black/60 p-2 flex items-center justify-center gap-3">
+                <span className="text-white text-sm font-medium">
+                  Card {capturedCards.length + 1}
+                </span>
+
+                {capturedCards.length > 0 && (
+                  <>
+                    <span className="text-white/30">•</span>
+                    <span className="text-white/60 text-sm">
+                      {capturedCards.length} done
+                    </span>
+                  </>
+                )}
+
+                <span className="text-white/30">|</span>
+
+                <span className="text-white text-sm font-medium">
+                  {step.includes("front") ? "Front" : "Back"}
+                </span>
+                {cardType === "double" && (
+                  <span className="text-white/60 text-sm">
+                    ({step.includes("front") ? "1" : "2"}/2)
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Controls - Capture mode */}
           {isCapturing && isStreaming && (
-            <div className="bg-black p-4 flex items-center justify-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 text-white hover:bg-white/20"
-                onClick={toggleFullscreen}
-              >
-                {isFullscreen ? (
-                  <Minimize className="h-5 w-5" />
-                ) : (
-                  <Maximize className="h-5 w-5" />
-                )}
-              </Button>
+            <div
+              className={`bg-black p-4 flex items-center justify-center gap-4 ${
+                isLandscape ? "flex-col w-20" : "flex-row"
+              }`}
+            >
+              {/* Fullscreen - hide on iOS */}
+              {!isIOS && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 text-white hover:bg-white/20"
+                  onClick={toggleFullscreen}
+                >
+                  {isFullscreen ? (
+                    <Minimize className="h-5 w-5" />
+                  ) : (
+                    <Maximize className="h-5 w-5" />
+                  )}
+                </Button>
+              )}
 
               <Button
                 variant="ghost"
@@ -509,9 +682,14 @@ export function ScanWizardClient({
 
               {/* Done button - visible when cards are captured */}
               {capturedCards.length > 0 ? (
-                <Button size="sm" className="gap-1" onClick={submitCards}>
+                <Button
+                  size="sm"
+                  className={`gap-1 ${isLandscape ? "w-full" : ""}`}
+                  onClick={submitCards}
+                >
                   <Upload className="h-4 w-4" />
-                  Done ({capturedCards.length})
+                  <span className={isLandscape ? "hidden" : ""}>Done</span>
+                  <span>({capturedCards.length})</span>
                 </Button>
               ) : (
                 <Button
@@ -531,30 +709,40 @@ export function ScanWizardClient({
 
           {/* Controls - Preview mode */}
           {isPreviewing && (
-            <div className="bg-black p-4 flex items-center justify-center gap-8">
+            <div
+              className={`bg-black p-4 flex items-center justify-center gap-4 ${
+                isLandscape ? "flex-col w-24" : "flex-row gap-8"
+              }`}
+            >
               <Button
                 variant="ghost"
-                size="lg"
-                className="text-white hover:bg-white/20 gap-2"
+                size={isLandscape ? "default" : "lg"}
+                className={`text-white hover:bg-white/20 gap-2 ${
+                  isLandscape ? "w-full" : ""
+                }`}
                 onClick={retake}
               >
                 <RotateCcw className="h-5 w-5" />
-                Retake
+                {!isLandscape && "Retake"}
               </Button>
 
               <Button
-                size="lg"
-                className="gap-2"
+                size={isLandscape ? "default" : "lg"}
+                className={`gap-2 ${isLandscape ? "w-full" : ""}`}
                 onClick={step === "preview-front" ? acceptFront : acceptBack}
               >
                 <Check className="h-5 w-5" />
-                {cardType === "double" && step === "preview-front"
-                  ? "Next: Back"
-                  : "Use Photo"}
+                {isLandscape
+                  ? cardType === "double" && step === "preview-front"
+                    ? "Next"
+                    : "Use"
+                  : cardType === "double" && step === "preview-front"
+                    ? "Next: Back"
+                    : "Use Photo"}
               </Button>
             </div>
           )}
-        </>
+        </div>
       )}
 
       {/* SUBMITTING STEP */}
@@ -646,8 +834,54 @@ export function ScanWizardClient({
               )}
             </div>
 
-            <Button size="lg" className="w-full gap-2" onClick={resetWizard}>
-              <Camera className="h-5 w-5" />
+            <div className="flex gap-3">
+              <Button
+                size="lg"
+                variant="outline"
+                className="flex-1 gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                onClick={resetWizard}
+              >
+                <Camera className="h-5 w-5" />
+                Scan More
+              </Button>
+              <Button
+                size="lg"
+                className="flex-1 gap-2"
+                onClick={() => setStep("finished")}
+              >
+                <Check className="h-5 w-5" />
+                Finished
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FINISHED STEP - Session complete guidance */}
+      {step === "finished" && (
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
+            <Check className="h-8 w-8 text-green-400" />
+          </div>
+          <h1 className="text-xl font-semibold text-white mb-2">All Done!</h1>
+
+          <div className="w-full max-w-sm space-y-4 mt-4">
+            {/* Direct instruction */}
+            <div className="bg-white/10 rounded-lg p-5 text-center">
+              <p className="text-white text-sm leading-relaxed">
+                Close this page and go to the{" "}
+                <span className="font-semibold text-primary">Review Queue</span>{" "}
+                on your computer to review and approve your cards.
+              </p>
+            </div>
+
+            {/* Option to scan more */}
+            <Button
+              variant="ghost"
+              className="w-full text-white/60 hover:text-white hover:bg-white/10"
+              onClick={resetWizard}
+            >
+              <Camera className="h-4 w-4 mr-2" />
               Scan More Cards
             </Button>
           </div>

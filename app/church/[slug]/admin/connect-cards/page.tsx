@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { AlertCircle } from "lucide-react";
 import Link from "next/link";
 import ConnectCardsClient from "./client";
-import { redirect } from "next/navigation";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -28,13 +27,8 @@ export default async function ConnectCardsPage({
 }: PageProps) {
   const { slug } = await params;
   const { tab } = await searchParams;
-  const { session, organization, member } = await requireDashboardAccess(slug);
-
-  // Block staff users from accessing connect cards admin
-  // Only owners and admins can manage connect cards
-  if (member && member.role === "member") {
-    redirect("/unauthorized");
-  }
+  // Any team member can upload/scan connect cards - no role restriction
+  const { session, organization } = await requireDashboardAccess(slug);
 
   // Fetch locations for upload functionality
   const locations = await getOrganizationLocations(organization.id);
@@ -107,6 +101,7 @@ export default async function ConnectCardsPage({
         batches={batches}
         pendingBatchCount={pendingBatchCount}
         activeTab={activeTab}
+        locations={locations}
       />
     </PageContainer>
   );

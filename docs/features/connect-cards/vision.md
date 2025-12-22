@@ -362,6 +362,10 @@ REVIEW MODE (click image):
 - [ ] **SMS/Email Triggers** - Automated follow-up based on card interests
 - [ ] **Calendar Integration** - Auto-create follow-up tasks
 
+### Scan Performance Optimizations
+
+- [ ] **Async Scan Processing** - Upload to S3 as cards are captured (background), process via Claude Vision async. User sees "submitted for processing" instead of waiting 1 min per card at the end. Key for high-volume scanning sessions (50+ cards).
+
 ---
 
 ## 📚 Related Documentation
