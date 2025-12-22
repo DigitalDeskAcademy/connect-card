@@ -1,7 +1,7 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-17
+**Last Updated:** 2025-12-21
 **Next Customer Meeting:** January 2026
 
 ---
@@ -110,6 +110,14 @@
 **Branch:** `feature/connect-card`
 **Focus:** Polish the core connect card experience
 
+**Recently Completed:**
+
+- ✅ PR #83 - Phone wizard UX enhancements (Dec 21)
+  - Progress header showing card count during scanning
+  - Any team member can scan (removed admin restriction)
+  - Card type syncs from QR modal to phone
+  - Simplified QR modal with direct CTA to review queue
+
 **What to Build:**
 
 | Task                                       | Status |
@@ -117,8 +125,8 @@
 | Deduplication enhancement (fuzzy matching) | [ ]    |
 | Shared email detection (couples)           | [ ]    |
 | "Merge with existing" vs "Create new" UI   | [ ]    |
-| Upload UX improvements for non-tech staff  | [ ]    |
-| Better progress feedback during processing | [ ]    |
+| Upload UX improvements for non-tech staff  | [x]    |
+| Better progress feedback during processing | [x]    |
 
 **Wishlist:**
 
