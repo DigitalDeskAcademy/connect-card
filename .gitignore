@@ -119,3 +119,6 @@ types/jscanify.d.ts
 
 # Issue screenshots (dev-only debugging images)
 public/issue-screenshots/
+
+# Temporary files
+tmp/
