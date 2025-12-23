@@ -7,10 +7,15 @@ import type {
   ConnectCardAnalytics,
   ConnectCardChartDataPoint,
 } from "@/lib/data/connect-card-analytics";
+import type { OnboardingStatus } from "@/lib/data/onboarding";
 import { ConnectCardChart } from "./ConnectCardChart";
 import { TrendBadge } from "./TrendBadge";
 import { QuickActionsGrid } from "./QuickActionsGrid";
 import { CollapsibleSection } from "./CollapsibleSection";
+import {
+  OnboardingChecklist,
+  getDefaultOnboardingSteps,
+} from "./OnboardingChecklist";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface Location {
@@ -29,6 +34,7 @@ interface SectionState {
 interface DashboardClientProps {
   slug: string;
   organizationId: string;
+  organizationName: string;
   locations: Location[];
   cumulativeAnalytics: ConnectCardAnalytics;
   chartData: ConnectCardChartDataPoint[];
@@ -45,6 +51,8 @@ interface DashboardClientProps {
   activeTab: string;
   /** Count of batches with cards awaiting review */
   batchesNeedingReview: number;
+  /** Onboarding status for new church checklist */
+  onboardingStatus: OnboardingStatus;
 }
 
 /** Reusable KPI card for dashboard metrics */
@@ -187,6 +195,7 @@ function DashboardContent({
 
 export function DashboardClient({
   slug,
+  organizationName,
   locations,
   cumulativeAnalytics,
   chartData,
@@ -195,6 +204,7 @@ export function DashboardClient({
   canSeeAllLocations,
   activeTab,
   batchesNeedingReview,
+  onboardingStatus,
 }: DashboardClientProps) {
   // Section collapsed states (persisted to localStorage)
   const [sections, setSections] = useLocalStorage<SectionState>(
@@ -205,6 +215,19 @@ export function DashboardClient({
       chart: true,
       prayerCategories: true,
     }
+  );
+
+  // Track if user has dismissed onboarding checklist
+  const [checklistDismissed, setChecklistDismissed] = useLocalStorage(
+    `onboarding-dismissed-${slug}`,
+    false
+  );
+
+  // Build onboarding steps with completion states and skipped steps
+  const onboardingSteps = getDefaultOnboardingSteps(
+    slug,
+    onboardingStatus.completionState,
+    onboardingStatus.skippedSteps
   );
 
   const toggleSection = (key: keyof SectionState) => {
@@ -240,6 +263,9 @@ export function DashboardClient({
       ? undefined
       : visibleLocations.find(loc => loc.slug === activeTab)?.name;
 
+  // Show onboarding checklist if not dismissed and status says to show
+  const showOnboarding = onboardingStatus.showChecklist && !checklistDismissed;
+
   return (
     <>
       {/* Location Filter Tabs */}
@@ -250,6 +276,17 @@ export function DashboardClient({
       />
 
       <div className="space-y-6 pt-6">
+        {/* Onboarding Checklist for new churches */}
+        {showOnboarding && (
+          <OnboardingChecklist
+            slug={slug}
+            churchName={organizationName}
+            steps={onboardingSteps}
+            daysRemaining={onboardingStatus.daysRemaining ?? undefined}
+            onDismiss={() => setChecklistDismissed(true)}
+          />
+        )}
+
         {/* Quick Actions */}
         <CollapsibleSection
           title="Quick Actions"
