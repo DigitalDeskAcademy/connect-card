@@ -97,6 +97,10 @@ export function ReviewQueueClient({
   const { open: sidebarOpen, setOpen: setSidebarOpen } = useSidebar();
   const previousSidebarState = useRef<boolean>(true);
 
+  // Store setSidebarOpen in a ref to avoid effect re-runs when it changes
+  const setSidebarOpenRef = useRef(setSidebarOpen);
+  setSidebarOpenRef.current = setSidebarOpen;
+
   // Track cards in local state so we can remove them after processing
   const [cards, setCards] = useState(initialCards);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -213,13 +217,14 @@ export function ReviewQueueClient({
   }, [resetZoom, sidebarOpen]);
 
   // Handle sidebar state based on Review Mode
+  // Uses ref to avoid re-running when setSidebarOpen changes (it's not stable)
   useEffect(() => {
     if (isReviewMode) {
-      setSidebarOpen(false);
+      setSidebarOpenRef.current(false);
     } else if (previousSidebarState.current !== undefined) {
-      setSidebarOpen(previousSidebarState.current);
+      setSidebarOpenRef.current(previousSidebarState.current);
     }
-  }, [isReviewMode, setSidebarOpen]);
+  }, [isReviewMode]);
 
   // Keyboard handler for Escape to exit Review Mode
   useEffect(() => {

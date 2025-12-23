@@ -154,7 +154,7 @@ const fileUploadSchema = z.object({
   size: z.number().min(1, { message: "Size is required" }),
   isImage: z.boolean(),
   fileType: z
-    .enum(["thumbnail", "banner", "asset", "connect-card"])
+    .enum(["thumbnail", "banner", "asset", "connect-card", "test-image"])
     .default("asset"),
   organizationSlug: z.string().optional(),
   courseName: z.string().optional(),
@@ -390,6 +390,10 @@ export async function POST(request: Request) {
       const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
       const side = cardSide || "front";
       uniqueKey = `organizations/${organizationSlug}/connect-cards/${yearMonth}/${side}-${timestamp}-${secureId}.${fileExtension}`;
+    } else if (fileType === "test-image" && organizationSlug) {
+      // Test images: organizations/{org-slug}/test-images/{timestamp}-{secureId}.{ext}
+      // Used for building extraction test datasets
+      uniqueKey = `organizations/${organizationSlug}/test-images/${timestamp}-${secureId}.${fileExtension}`;
     } else if (courseName) {
       // Convert course name to URL-safe slug (e.g., "GHL Onboarding" -> "ghl-onboarding")
       const courseSlug = courseName
