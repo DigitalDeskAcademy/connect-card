@@ -174,38 +174,72 @@ export async function uploadToS3(
 }
 
 /**
- * Extract data from connect card image via Claude Vision
+ * Extract data from connect card image(s) via Claude Vision
  *
- * @param image - File object or base64 data URL
+ * @param frontImage - Front image (File or base64 data URL)
  * @param slug - Organization slug
- * @returns Extracted data and image hash
+ * @param backImage - Back image (File or base64 data URL, optional)
+ * @returns Extracted data and image hashes
  */
 export async function extractFromImage(
-  image: File | string,
-  slug: string
-): Promise<{ data: ExtractedData; imageHash: string } | null> {
+  frontImage: File | string,
+  slug: string,
+  backImage?: File | string | null
+): Promise<{
+  data: ExtractedData;
+  imageHash: string;
+  backImageHash?: string | null;
+} | null> {
   try {
-    // Get base64 data
-    let base64Data: string;
-    let mediaType: string;
+    // Get base64 data for front image
+    let frontBase64: string;
+    let frontMediaType: string;
 
-    if (typeof image === "string") {
-      const parts = image.split(",");
-      base64Data = parts[1];
-      mediaType = parts[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+    if (typeof frontImage === "string") {
+      const parts = frontImage.split(",");
+      frontBase64 = parts[1];
+      frontMediaType = parts[0].match(/:(.*?);/)?.[1] || "image/jpeg";
     } else {
-      base64Data = await fileToBase64(image);
-      mediaType = image.type;
+      frontBase64 = await fileToBase64(frontImage);
+      frontMediaType = frontImage.type;
+    }
+
+    // Get base64 data for back image if provided
+    let backBase64: string | null = null;
+    let backMediaType: string | null = null;
+
+    if (backImage) {
+      if (typeof backImage === "string") {
+        const parts = backImage.split(",");
+        backBase64 = parts[1];
+        backMediaType = parts[0].match(/:(.*?);/)?.[1] || "image/jpeg";
+      } else {
+        backBase64 = await fileToBase64(backImage);
+        backMediaType = backImage.type;
+      }
+    }
+
+    // Build request body - use two-sided format if back image provided
+    const requestBody: Record<string, string> = {
+      organizationSlug: slug,
+    };
+
+    if (backBase64 && backMediaType) {
+      // Two-sided format
+      requestBody.frontImageData = frontBase64;
+      requestBody.frontMediaType = frontMediaType;
+      requestBody.backImageData = backBase64;
+      requestBody.backMediaType = backMediaType;
+    } else {
+      // Single-sided format (backward compatible)
+      requestBody.imageData = frontBase64;
+      requestBody.mediaType = frontMediaType;
     }
 
     const response = await fetch("/api/connect-cards/extract", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        imageData: base64Data,
-        mediaType,
-        organizationSlug: slug,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     const result = await response.json();
@@ -222,6 +256,7 @@ export async function extractFromImage(
     return {
       data: normalizeExtractedData(result.data),
       imageHash: result.imageHash,
+      backImageHash: result.backImageHash || null,
     };
   } catch (error) {
     console.error("Extraction error:", error);
@@ -264,9 +299,9 @@ export async function processConnectCard(
       }
     }
 
-    // Stage 2: Extract data from front image
+    // Stage 2: Extract data from card image(s)
     onProgress?.("extracting", 50);
-    const extraction = await extractFromImage(frontImage, slug);
+    const extraction = await extractFromImage(frontImage, slug, backImage);
     if (!extraction) {
       return { error: "Failed to extract data from image" };
     }
@@ -279,7 +314,7 @@ export async function processConnectCard(
         imageKey: frontKey,
         imageHash: extraction.imageHash,
         backImageKey: backKey,
-        backImageHash: null,
+        backImageHash: extraction.backImageHash || null,
         extractedData: extraction.data,
       },
       locationId

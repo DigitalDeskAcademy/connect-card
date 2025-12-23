@@ -153,7 +153,59 @@ git status
 git diff --stat
 ```
 
-### 3.2: Create Commit
+### 3.2: Uncommitted Work Safety Check (CRITICAL)
+
+**Before committing, verify ALL work is staged.** This prevents accidentally leaving files out of the PR.
+
+```bash
+# Check for unstaged modified files
+UNSTAGED=$(git diff --name-only)
+if [ -n "$UNSTAGED" ]; then
+  echo "⚠️  WARNING: Unstaged modified files detected!"
+  echo "$UNSTAGED"
+  echo ""
+  echo "These files have changes that will NOT be in the commit."
+fi
+
+# Check for untracked files (excluding common patterns)
+UNTRACKED=$(git ls-files --others --exclude-standard | grep -v -E "^(node_modules|\.next|\.env|\.DS_Store)" | head -20)
+if [ -n "$UNTRACKED" ]; then
+  echo "⚠️  WARNING: Untracked files detected!"
+  echo "$UNTRACKED"
+  echo ""
+  echo "These files are new and will NOT be in the commit unless staged."
+fi
+
+# Summary
+UNSTAGED_COUNT=$(git diff --name-only | wc -l)
+UNTRACKED_COUNT=$(git ls-files --others --exclude-standard | grep -v -E "^(node_modules|\.next|\.env)" | wc -l)
+
+if [ "$UNSTAGED_COUNT" -gt 0 ] || [ "$UNTRACKED_COUNT" -gt 0 ]; then
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  UNCOMMITTED WORK DETECTED"
+  echo "  Unstaged modified files: $UNSTAGED_COUNT"
+  echo "  Untracked files: $UNTRACKED_COUNT"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "Options:"
+  echo "  1. Stage all: git add ."
+  echo "  2. Stage specific: git add <file>"
+  echo "  3. Review diffs: git diff <file>"
+  echo "  4. Discard changes: git checkout -- <file>"
+  echo ""
+fi
+```
+
+**STOP and resolve if uncommitted work is found:**
+
+- If files should be in this PR → stage them with `git add`
+- If files are WIP for later → stash them with `git stash push -m "WIP: description"`
+- If files are unintentional → discard with `git checkout -- <file>`
+
+**Only proceed to 3.3 when `git status` shows all intended changes are staged.**
+
+### 3.3: Create Commit
 
 Analyze changes and draft commit message:
 
@@ -173,12 +225,16 @@ EOF
 )"
 ```
 
-### 3.3: Verify Clean State
+### 3.4: Verify Clean State
 
 ```bash
 git log -1 --oneline
 git status
 ```
+
+**Expected:** `nothing to commit, working tree clean`
+
+If there are still uncommitted files after the commit, **STOP** - go back to 3.2 and resolve them before proceeding.
 
 ---
 
@@ -228,6 +284,66 @@ EOF
 
 Store PR number.
 
+### 5.3: Verify All Changes Are In PR (CRITICAL GATE)
+
+**This step prevents the race condition where PR is merged before all commits are pushed.**
+
+```bash
+# Verify what's in the PR
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  PR CONTENT VERIFICATION"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+
+# Show commits that will be in the PR
+echo "📦 COMMITS IN PR:"
+git log origin/main..HEAD --oneline
+echo ""
+
+# Show files changed
+echo "📄 FILES IN PR:"
+git diff origin/main..HEAD --name-only | head -30
+echo ""
+
+# Check for local uncommitted changes
+UNCOMMITTED=$(git status --short | wc -l)
+if [ "$UNCOMMITTED" -gt 0 ]; then
+  echo "⚠️  WARNING: You have $UNCOMMITTED uncommitted files!"
+  echo "   These will NOT be in the PR unless you commit and push again."
+  git status --short
+  echo ""
+fi
+
+# Check if local is ahead of remote branch
+CURRENT_BRANCH=$(git branch --show-current)
+AHEAD_OF_REMOTE=$(git rev-list origin/$CURRENT_BRANCH..HEAD --count 2>/dev/null || echo "0")
+if [ "$AHEAD_OF_REMOTE" -gt 0 ]; then
+  echo "⚠️  WARNING: Local has $AHEAD_OF_REMOTE unpushed commit(s)!"
+  echo "   Run 'git push' before merging."
+  echo ""
+fi
+
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+```
+
+**STOP HERE and explicitly confirm:**
+
+> **"All changes listed above are pushed and ready to merge. Proceed to merge? (yes/no)"**
+
+**Only proceed to Stage 6 after:**
+
+1. User confirms all expected commits are listed
+2. No uncommitted files warning
+3. No unpushed commits warning
+4. Explicit "yes" from user
+
+**If user says "no" or wants to add more changes:**
+
+1. Make additional changes
+2. Run `git add . && git commit -m "..."`
+3. Run `git push`
+4. Return to Step 5.3 to verify again
+
 ---
 
 ## Stage 6: Merge
@@ -271,17 +387,68 @@ gh pr view <pr-number> --json state | grep -q '"MERGED"' && echo "PR merged succ
 git fetch origin main
 ```
 
-### 7.3: Check for Any Uncommitted Work
+### 7.3: Check for Any Uncommitted Work (CRITICAL SAFETY CHECK)
+
+**This check BLOCKS the reset if any work would be lost.**
 
 ```bash
-UNCOMMITTED=$(git status --short | wc -l)
-if [ "$UNCOMMITTED" -gt 0 ]; then
-  echo "WARNING: You have $UNCOMMITTED uncommitted files!"
-  echo "These will be LOST if you reset. Commit or stash them first."
-  git status --short
+# Check for modified files (staged or unstaged)
+STAGED=$(git diff --cached --name-only | wc -l)
+UNSTAGED=$(git diff --name-only | wc -l)
+UNTRACKED=$(git ls-files --others --exclude-standard | grep -v -E "^(node_modules|\.next|\.env)" | wc -l)
+
+TOTAL=$((STAGED + UNSTAGED + UNTRACKED))
+
+if [ "$TOTAL" -gt 0 ]; then
+  echo ""
+  echo "🛑 RESET BLOCKED - UNCOMMITTED WORK DETECTED"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+
+  if [ "$STAGED" -gt 0 ]; then
+    echo "📦 STAGED files ($STAGED) - ready to commit:"
+    git diff --cached --name-only | sed 's/^/   /'
+    echo ""
+  fi
+
+  if [ "$UNSTAGED" -gt 0 ]; then
+    echo "📝 MODIFIED files ($UNSTAGED) - not staged:"
+    git diff --name-only | sed 's/^/   /'
+    echo ""
+  fi
+
+  if [ "$UNTRACKED" -gt 0 ]; then
+    echo "🆕 UNTRACKED files ($UNTRACKED) - new files:"
+    git ls-files --others --exclude-standard | grep -v -E "^(node_modules|\.next|\.env)" | head -10 | sed 's/^/   /'
+    echo ""
+  fi
+
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+  echo "These files will be PERMANENTLY LOST if you reset."
+  echo ""
+  echo "Options:"
+  echo "  1. Commit them:  git add . && git commit -m 'WIP: save work'"
+  echo "  2. Stash them:   git stash push -m 'WIP: description'"
+  echo "  3. Discard them: git checkout -- . && git clean -fd"
+  echo ""
+  echo "After resolving, re-run this stage."
   exit 1
 fi
+
+# Also warn about recent stashes (might be forgotten work)
+STASH_COUNT=$(git stash list | wc -l)
+if [ "$STASH_COUNT" -gt 0 ]; then
+  echo "ℹ️  Note: You have $STASH_COUNT stashed change(s):"
+  git stash list | head -3
+  echo "   (These are safe and won't be lost by reset)"
+  echo ""
+fi
+
+echo "✅ Working directory clean - safe to reset"
 ```
+
+**DO NOT PROCEED if this check fails.** The reset will permanently delete any uncommitted work.
 
 ### 7.4: Reset to Main
 
@@ -340,12 +507,44 @@ pnpm prisma generate
 
 **REQUIRED** - Run in MAIN worktree so doc changes are centralized.
 
-### 8.0: Switch to Main Worktree
+### 8.0: Switch to Main Worktree and Verify Branch (CRITICAL)
+
+**Common issue:** The main worktree may be on a different branch (e.g., `feature/production-deploy`).
+This causes push failures and wasted work. Always verify branch FIRST.
 
 ```bash
 cd /home/digitaldesk/Desktop/church-connect-hub/main
+
+# Step 1: Check current branch
+CURRENT_BRANCH=$(git branch --show-current)
+echo "Main worktree is on branch: $CURRENT_BRANCH"
+
+# Step 2: If not on main, handle it
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "⚠️  Main worktree is on '$CURRENT_BRANCH', not 'main'"
+
+  # Check for uncommitted changes
+  UNCOMMITTED=$(git status --short | wc -l)
+  if [ "$UNCOMMITTED" -gt 0 ]; then
+    echo "Stashing $UNCOMMITTED uncommitted files..."
+    git stash push -m "feature-wrap-up: auto-stash before switching to main"
+  fi
+
+  # Switch to main branch
+  echo "Switching to main branch..."
+  git checkout main
+fi
+
+# Step 3: Now safe to pull
+git fetch origin main
 git pull origin main
 ```
+
+**If checkout fails due to conflicts:** The main worktree has diverged. Resolve manually:
+
+1. Check `git status` for the issue
+2. Either commit, stash, or reset the changes
+3. Then `git checkout main`
 
 ### 8.1: Apply Deferred Doc Updates
 

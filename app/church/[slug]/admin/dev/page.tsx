@@ -675,6 +675,12 @@ export default async function DevDashboardPage({
             Component Library
           </Link>
         </Button>
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/church/${slug}/admin/dev/extraction-test`}>
+            <IconTestPipe className="mr-2 h-4 w-4" />
+            Extraction Test
+          </Link>
+        </Button>
       </div>
 
       <E2ETestStatus />

@@ -1,3 +1,0 @@
-undefined
- ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL  Command failed with EACCES: test:e2e tests/e2e/prayer-security-comprehensive.spec.ts
-spawn test:e2e EACCES

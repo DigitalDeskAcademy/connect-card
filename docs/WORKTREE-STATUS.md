@@ -1,9 +1,9 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-21
+**Last Updated:** 2025-12-22
 **Next Customer Meeting:** January 2026
-**Latest PR:** #83 - Phone wizard UX enhancements (Dec 21)
+**Latest PR:** #84 - Two-sided card extraction fix + dev test page (Dec 22)
 
 ---
 
@@ -113,6 +113,10 @@
 
 **Recently Completed:**
 
+- ✅ PR #84 - Two-sided extraction fix + dev test page (Dec 22)
+  - Fixed `useConnectCardUpload` hook to send both front and back images to Claude Vision
+  - Added extraction test page at `/dev/extraction-test` (simple two-column layout)
+  - DRY refactor: shared extraction utilities in `lib/utils/extraction.ts`
 - ✅ PR #83 - Phone wizard UX enhancements (Dec 21)
   - Progress header showing card count during scanning
   - Any team member can scan (removed admin restriction)
@@ -123,15 +127,19 @@
 
 | Task                                       | Status |
 | ------------------------------------------ | ------ |
+| **Async scan processing** (HIGH PRIORITY)  | [ ]    |
 | Deduplication enhancement (fuzzy matching) | [ ]    |
 | Shared email detection (couples)           | [ ]    |
 | "Merge with existing" vs "Create new" UI   | [ ]    |
 | Upload UX improvements for non-tech staff  | [x]    |
 | Better progress feedback during processing | [x]    |
 
+**Next Up - Async Scan Processing:**
+
+When staff scan 25-50 cards, they currently wait for the entire batch to upload/process. Goal: Upload to S3 and start Claude extraction as each card is captured, so earlier cards are processed while later ones are being scanned. Staff sees cards appearing in review queue in real-time.
+
 **Wishlist:**
 
-- [ ] Async scan processing - Upload to S3 as cards are captured, process in background (no wait at end)
 - [ ] Bulk re-process failed cards
 - [ ] Card template customization
 - [ ] Multi-language support
