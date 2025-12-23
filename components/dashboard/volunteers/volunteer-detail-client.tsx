@@ -4,11 +4,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VolunteerOverviewTab } from "./volunteer-overview-tab";
 import { IconUser, IconNotes } from "@tabler/icons-react";
-import type {
-  Volunteer,
-  VolunteerSkill,
-  VolunteerCategory,
-} from "@/lib/generated/prisma";
+import type { VolunteerDetail } from "@/lib/data/volunteers";
 
 /**
  * Volunteer Detail Client Component
@@ -21,24 +17,12 @@ import type {
  *
  * Note: Shift scheduling, availability, and service history are managed in Planning Center.
  * Background checks are handled in the Overview tab.
+ *
+ * Phase 3 (Dec 2025): Updated to use unified ChurchMember model types.
  */
 
 interface VolunteerDetailClientProps {
-  volunteer: Volunteer & {
-    churchMember: {
-      id: string;
-      name: string | null;
-      email: string | null;
-      phone: string | null;
-      address: string | null;
-    };
-    skills: VolunteerSkill[];
-    categories: Array<{
-      id: string;
-      category: VolunteerCategory["category"];
-    }>;
-    // REMOVED: availability, shifts (Dec 2025) - Shift scheduling moved to Planning Center
-  };
+  volunteer: VolunteerDetail;
 }
 
 export function VolunteerDetailClient({

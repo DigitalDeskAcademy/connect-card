@@ -21,7 +21,10 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTransition } from "react";
 import { useParams } from "next/navigation";
-import type { Volunteer } from "@/lib/generated/prisma";
+import type {
+  VolunteerDetail,
+  BackgroundCheckStatusDisplay,
+} from "@/lib/data/volunteers";
 import { updateBackgroundCheckStatus } from "@/actions/volunteers/volunteers";
 
 /**
@@ -40,18 +43,12 @@ import { updateBackgroundCheckStatus } from "@/actions/volunteers/volunteers";
  * - Start Background Check button: Triggers automated background check workflow (placeholder)
  *   - Will send SMS to volunteer with required documents and instructions
  *   - Tracks status updates throughout the process
+ *
+ * Phase 3 (Dec 2025): Updated to use unified ChurchMember model types.
  */
 
 interface VolunteerOverviewTabProps {
-  volunteer: Volunteer & {
-    churchMember: {
-      id: string;
-      name: string | null;
-      email: string | null;
-      phone: string | null;
-      address: string | null;
-    };
-  };
+  volunteer: VolunteerDetail;
 }
 
 export function VolunteerOverviewTab({ volunteer }: VolunteerOverviewTabProps) {
@@ -59,16 +56,21 @@ export function VolunteerOverviewTab({ volunteer }: VolunteerOverviewTabProps) {
   const slug = params.slug as string;
   const [isPending, startTransition] = useTransition();
 
-  // Background check status color mapping
-  const bgCheckStatusColor = {
+  // Background check status color mapping - exhaustive Record ensures all cases handled
+  // TypeScript will error if any BackgroundCheckStatusDisplay value is missing
+  const bgCheckStatusColor: Record<
+    BackgroundCheckStatusDisplay,
+    "secondary" | "default" | "outline" | "destructive"
+  > = {
     NOT_STARTED: "secondary",
     IN_PROGRESS: "default",
     PENDING_REVIEW: "outline",
     CLEARED: "default",
     FLAGGED: "destructive",
     EXPIRED: "destructive",
-  } as const;
+  };
 
+  // No fallback needed - type system guarantees valid value
   const statusColor = bgCheckStatusColor[volunteer.backgroundCheckStatus];
   const isPendingReview = volunteer.backgroundCheckStatus === "PENDING_REVIEW";
 
@@ -136,7 +138,9 @@ export function VolunteerOverviewTab({ volunteer }: VolunteerOverviewTabProps) {
           <div>
             <p className="text-sm text-muted-foreground">Start Date</p>
             <p className="text-sm font-medium">
-              {format(new Date(volunteer.startDate), "MMMM d, yyyy")}
+              {volunteer.startDate
+                ? format(new Date(volunteer.startDate), "MMMM d, yyyy")
+                : "Not set"}
             </p>
           </div>
 

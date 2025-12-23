@@ -4,39 +4,15 @@ import { useMemo } from "react";
 import { NavTabs } from "@/components/layout/nav-tabs";
 import { VolunteersTable } from "./volunteers-table";
 import { Users, Clock, ClipboardCheck } from "lucide-react";
+import type { VolunteerForList } from "@/lib/data/volunteers";
 
 /**
  * Volunteer with relations for display
  *
- * Flexible type that accepts the data from getVolunteersForScope()
+ * Phase 3 (Dec 2025): Now uses VolunteerForList type from unified ChurchMember model.
+ * The old type is kept as an alias for backward compatibility with VolunteersTable.
  */
-export type VolunteerWithRelations = {
-  id: string;
-  status: string;
-  startDate: Date;
-  backgroundCheckStatus: string;
-  readyForExport: boolean;
-  readyForExportDate: Date | null;
-  churchMember: {
-    name: string;
-    email: string | null;
-    phone: string | null;
-  } | null;
-  categories?: Array<{
-    id: string;
-    category: string;
-  }>;
-  skills?: Array<{
-    id: string;
-    skillName: string;
-  }>;
-  availability?: Array<{
-    id: string;
-  }>;
-  _count?: {
-    shifts: number;
-  };
-};
+export type VolunteerWithRelations = VolunteerForList;
 
 interface Location {
   id: string;

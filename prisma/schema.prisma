@@ -86,6 +86,8 @@ model Location {
   users              User[]
   prayerRequests     PrayerRequest[]
   prayerBatches      PrayerBatch[]
+  /// Church members at this location (for unified model)
+  churchMembers      ChurchMember[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -456,10 +458,21 @@ model ChurchMember {
   id             String                @id @default(uuid())
   /// Organization managing this member (the church)
   organizationId String
+  /// Location/campus for multi-campus churches (merged from Volunteer)
+  locationId     String?
   /// Type of member for business logic and filtering
+  /// @deprecated Use journeyStatus + role booleans instead (Phase 6 removal)
   memberType     MemberType            @default(VISITOR)
-  /// Member display name
+
+  // ============================================
+  // IDENTITY FIELDS
+  // ============================================
+  /// Member display name (legacy - use firstName + lastName)
   name           String
+  /// First name (split from name for Planning Center compatibility)
+  firstName      String?
+  /// Last name (split from name for Planning Center compatibility)
+  lastName       String?
   /// Primary email for communication and enrollment notifications
   email          String?
   /// Member phone number
@@ -468,9 +481,37 @@ model ChurchMember {
   address        String?
   /// Timezone for scheduling and notifications
   timezone       String?
+
+  // ============================================
+  // JOURNEY FIELDS (replaces MemberType enum)
+  // ============================================
+  /// Member journey status: visitor, returning, regular, member
+  journeyStatus      String?               @default("visitor")
+  /// Date of first visit to the church (legacy alias: visitDate)
+  firstVisitDate     DateTime?
+  /// Date they became an official member (legacy alias: memberSince)
+  memberSinceDate    DateTime?
+  /// Last activity date (updated on any interaction)
+  lastActivityDate   DateTime?
+
+  // ============================================
+  // ROLE BOOLEANS (additive, not exclusive)
+  // ============================================
+  /// Whether this person is a volunteer (has volunteer responsibilities)
+  isVolunteer        Boolean               @default(false)
+  /// Whether this person is paid staff
+  isStaff            Boolean               @default(false)
+  /// Whether this person is a ministry leader
+  isLeader           Boolean               @default(false)
+
+  // ============================================
+  // LEGACY JOURNEY FIELDS (keep for backwards compat)
+  // ============================================
   /// Date of first visit to the church
+  /// @deprecated Use firstVisitDate instead
   visitDate      DateTime?
   /// Date they became an official member
+  /// @deprecated Use memberSinceDate instead
   memberSince    DateTime?
   /// Small group or community group ID
   smallGroupId   String?
@@ -483,8 +524,75 @@ model ChurchMember {
   /// Auto-cleared after 30 days by cleanup job
   detectedKeywords Json                @default("[]")
   customFields   Json?
+
+  // ============================================
+  // VOLUNTEER FIELDS (merged from Volunteer model)
+  // Populated when isVolunteer = true
+  // ============================================
+  /// Volunteer status: active, on_break, inactive, pending
+  volunteerStatus           String?
+  /// Volunteer ministry categories (flattened from VolunteerCategory)
+  volunteerCategories       String[]              @default([])
+  /// Date the volunteer started serving
+  volunteerStartDate        DateTime?
+  /// Date the volunteer stopped serving (if inactive)
+  volunteerEndDate          DateTime?
+  /// Reason for leaving (if inactive)
+  volunteerInactiveReason   String?
+  /// Notes about the volunteer (preferences, restrictions, etc.)
+  volunteerNotes            String?
+
+  // Emergency contact (for volunteer safety)
+  /// Emergency contact name
+  emergencyContactName      String?
+  /// Emergency contact phone
+  emergencyContactPhone     String?
+
+  // Background check tracking
+  /// Background check status: not_started, in_progress, pending_review, cleared, flagged, expired
+  backgroundCheckStatus     String?
+  /// Background check completion date
+  backgroundCheckDate       DateTime?
+  /// Background check expiration date (typically 2-3 years)
+  backgroundCheckExpiry     DateTime?
+  /// Unique token for BG check self-report confirmation link
+  bgCheckToken              String?               @unique
+  /// When volunteer self-reported BG check completion
+  bgCheckConfirmedAt        DateTime?
+
+  // Export tracking (for ChMS sync)
+  /// Whether volunteer is ready to be exported to ChMS
+  readyForExport            Boolean               @default(false)
+  /// Date when volunteer was marked ready for export
+  readyForExportDate        DateTime?
+  /// When volunteer was exported to ChMS
+  volunteerExportedAt       DateTime?
+  /// When onboarding documents were emailed to volunteer
+  documentsSentAt           DateTime?
+
+  // Automation tracking (for general volunteer workflow)
+  /// Automation status: pending, day1_sent, day3_sent, responded, expired
+  automationStatus          String?
+  /// When automation sequence started
+  automationStartedAt       DateTime?
+  /// When volunteer responded to automation sequence
+  automationResponseAt      DateTime?
+
+  // Volunteer events tracking (for future feature)
+  /// Volunteer reliability score (0-100)
+  reliabilityScore          Float?
+  /// Total events served
+  totalEventsServed         Int                   @default(0)
+  /// Last date volunteer served at an event
+  lastServedDate            DateTime?
+
+  // ============================================
+  // RELATIONS
+  // ============================================
   /// External system integrations (GHL, etc.)
   integrations   MemberIntegration[]
+  /// Skills linked directly to ChurchMember (new relation for unified model)
+  skills         VolunteerSkill[]    @relation("ChurchMemberSkills")
   /// CRM relationships
   notes          MemberNote[]
   appointments   Appointment[]
@@ -502,10 +610,19 @@ model ChurchMember {
   /// Last profile update
   updatedAt      DateTime              @updatedAt
   organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Location/campus for multi-campus filtering
+  location       Location?             @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, email])
+  // Existing indexes
   @@index([organizationId])
   @@index([organizationId, memberType])
+  // New indexes for unified member model (Phase 1)
+  @@index([organizationId, journeyStatus])
+  @@index([organizationId, isVolunteer])
+  @@index([organizationId, isVolunteer, volunteerStatus])
+  @@index([organizationId, locationId])
+  // bgCheckToken has @unique which auto-creates index
   @@map("church_member")
 }
 
@@ -819,8 +936,12 @@ model ServingOpportunity {
 /// Examples: "Background Check Cleared", "Musical Ability", "CPR Certified"
 model VolunteerSkill {
   id             String   @id @default(uuid())
-  /// Volunteer this skill belongs to
+  /// Volunteer this skill belongs to (legacy relation)
+  /// @deprecated Use churchMemberId for unified model (Phase 6 removal)
   volunteerId    String
+  /// ChurchMember this skill belongs to (unified model relation)
+  /// Nullable during Phase 1-2 transition, will be required after migration
+  churchMemberId String?
   /// Skill name or qualification
   skillName      String
   /// Skill level or proficiency (beginner, intermediate, advanced)
@@ -838,9 +959,11 @@ model VolunteerSkill {
   /// Last update timestamp
   updatedAt      DateTime @updatedAt
   /// Relations
-  volunteer      Volunteer @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  volunteer      Volunteer    @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+  churchMember   ChurchMember? @relation("ChurchMemberSkills", fields: [churchMemberId], references: [id], onDelete: Cascade)
 
   @@index([volunteerId])
+  @@index([churchMemberId])
   @@index([skillName])
   @@map("volunteer_skill")
 }

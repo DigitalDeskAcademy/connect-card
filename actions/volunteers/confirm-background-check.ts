@@ -59,7 +59,12 @@ export async function confirmBackgroundCheck(
     // Find volunteer by token
     const volunteer = await prisma.volunteer.findUnique({
       where: { bgCheckToken: token },
-      include: {
+      select: {
+        id: true,
+        churchMemberId: true, // Added for dual-write
+        organizationId: true,
+        backgroundCheckStatus: true,
+        bgCheckConfirmedAt: true,
         churchMember: {
           select: {
             name: true,
@@ -97,22 +102,33 @@ export async function confirmBackgroundCheck(
       };
     }
 
-    // Update volunteer status to PENDING_REVIEW
-    await prisma.volunteer.update({
-      where: { id: volunteer.id },
-      data: {
-        backgroundCheckStatus: "PENDING_REVIEW",
-        bgCheckConfirmedAt: new Date(),
-      },
-    });
+    // DUAL-WRITE: Update volunteer status to PENDING_REVIEW on both models
+    const now = new Date();
+    await Promise.all([
+      // Legacy Volunteer model
+      prisma.volunteer.update({
+        where: { id: volunteer.id },
+        data: {
+          backgroundCheckStatus: "PENDING_REVIEW",
+          bgCheckConfirmedAt: now,
+        },
+      }),
+      // Unified ChurchMember model
+      prisma.churchMember.update({
+        where: { id: volunteer.churchMemberId },
+        data: {
+          backgroundCheckStatus: "pending_review",
+          bgCheckConfirmedAt: now,
+        },
+      }),
+    ]);
 
     return {
       success: true,
       volunteerName: volunteer.churchMember.name || "Volunteer",
       churchName,
     };
-  } catch (error) {
-    console.error("Error confirming background check:", error);
+  } catch {
     return {
       success: false,
       error: "An unexpected error occurred. Please try again.",

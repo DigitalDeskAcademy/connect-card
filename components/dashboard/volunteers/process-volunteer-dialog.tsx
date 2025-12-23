@@ -55,16 +55,20 @@ import { cn } from "@/lib/utils";
  * Used in Pending Volunteers tab for onboarding workflow.
  */
 
+/**
+ * Phase 3 (Dec 2025): Updated to match unified ChurchMember model.
+ * churchMember is always present (not nullable), but name can be null.
+ */
 interface ProcessVolunteerDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   volunteer: {
     id: string;
     churchMember: {
-      name: string;
+      name: string | null;
       email: string | null;
       phone: string | null;
-    } | null;
+    };
   };
   slug: string;
 }
