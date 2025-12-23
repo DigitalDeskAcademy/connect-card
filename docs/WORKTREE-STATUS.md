@@ -3,6 +3,7 @@
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
 **Last Updated:** 2025-12-21
 **Next Customer Meeting:** January 2026
+**Latest PR:** #83 - Phone wizard UX enhancements (Dec 21)
 
 ---
 
@@ -19,7 +20,7 @@
 > **New Requests:**
 >
 > - 🆕 Planning Center API sync (real-time duplicate checking)
-> - 🆕 Keyword detection (campaign triggers like "impacted", "coffee oasis")
+> - ✅ Keyword detection (campaign triggers like "impacted", "coffee oasis") - **PR #80 merged**
 > - 🆕 Volunteer event tracking (capacity view, quick outreach)
 >
 > **Deprioritized:**
@@ -47,7 +48,7 @@
 | **main**         | 🔴 Red    | `feature/production-deploy`    | 📋 PM     | Project management (no building) |
 | **integrations** | ⬜ Grey   | `feature/integrations`         | 🔨 Active | Planning Center / ChMS API sync  |
 | **connect-card** | 🟣 Purple | `feature/connect-card`         | 🔨 Active | Fine-tuning MVP                  |
-| **tech-debt**    | 🟡 Yellow | `feature/tech-debt`            | 🔨 Active | Keyword detection                |
+| **tech-debt**    | 🟡 Yellow | `feature/member-unification`   | 🔨 Active | Member model unification         |
 | **e2e**          | 🔵 Cyan   | `feature/e2e`                  | 🔨 Active | Playwright tests                 |
 | **volunteer**    | 🟢 Green  | `feature/volunteer-management` | 🔨 Active | Event tracking                   |
 | **prayer**       | 🔵 Blue   | `feature/prayer-enhancements`  | ⏸️ Paused | Deprioritized                    |
@@ -137,27 +138,43 @@
 
 ---
 
-### 🟡 tech-debt - Keyword Detection
+### 🟡 tech-debt - Member Unification
 
-**Branch:** `feature/tech-debt`
-**Focus:** AI keyword extraction from connect cards
+**Branch:** `feature/member-unification`
+**Focus:** Consolidate ChurchMember + Volunteer into unified model
 
-**What to Build:**
+**Architecture Doc:** `/docs/member-unification-architecture.md`
+**Implementation Plan:** `/docs/member-unification-implementation-plan.md`
 
-| Task                                            | Status |
-| ----------------------------------------------- | ------ |
-| Update AI prompt to extract standalone keywords | [ ]    |
-| Add `detectedKeywords: String[]` to schema      | [ ]    |
-| Display keyword chips in review UI              | [ ]    |
-| Filter connect cards by keyword                 | [ ]    |
-| Include keywords in export                      | [ ]    |
+**Why:**
 
-**Context:** Churches announce trigger words at services (e.g., "write 'impacted' on your card"). These need to be extracted and surfaced.
+- Eliminates JOINs on every volunteer query
+- Simplifies messaging, event invites, and exports
+- Matches Planning Center's architecture
+- Single profile view instead of assembling from multiple sources
 
-**Wishlist:**
+**Phases:**
 
-- [ ] Keyword analytics/counts
-- [ ] Auto-tag contacts based on keywords
+| Phase | Focus                           | Status |
+| ----- | ------------------------------- | ------ |
+| 1     | Schema additions (non-breaking) | [ ]    |
+| 2     | Data migration script           | [ ]    |
+| 3     | Update data layer               | [ ]    |
+| 4     | Update server actions           | [ ]    |
+| 5     | Update UI components            | [ ]    |
+| 6     | Cleanup & removal               | [ ]    |
+
+**Key Decisions:**
+
+- Keep `ChurchMember` name (rename later)
+- MemberType → journeyStatus + role booleans
+- VolunteerCategory → flatten to `String[]`
+- VolunteerSkill → keep model (expiring certs)
+- Split name → firstName + lastName
+
+**Previously Completed:**
+
+- ✅ PR #80 - Keyword detection (Dec 20)
 
 ---
 
@@ -166,15 +183,23 @@
 **Branch:** `feature/e2e`
 **Focus:** Comprehensive Playwright test coverage
 
+**Recently Completed:**
+
+- ✅ PR #82 - Comprehensive E2E test suite with 108 tests (Dec 20)
+  - Full test infrastructure with auth setup
+  - 19 test files covering all major features
+  - Smoke tests for all admin routes
+  - Export, contacts, settings page coverage
+
 **What to Build:**
 
 | Task                                       | Status |
 | ------------------------------------------ | ------ |
-| Auth flow tests (login, OTP, session)      | [ ]    |
-| Connect card upload → review → export flow | [ ]    |
-| Volunteer pipeline flow                    | [ ]    |
-| Prayer request flow                        | [ ]    |
-| Multi-tenant isolation tests               | [ ]    |
+| Auth flow tests (login, OTP, session)      | [x]    |
+| Connect card upload → review → export flow | [x]    |
+| Volunteer pipeline flow                    | [x]    |
+| Prayer request flow                        | [x]    |
+| Multi-tenant isolation tests               | [x]    |
 | CI/CD integration                          | [ ]    |
 
 **Test Credentials:**

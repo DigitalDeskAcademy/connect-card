@@ -30,12 +30,12 @@ echo "Unique commits (not in main): $UNIQUE"
 
 ## Step 2: Determine Strategy
 
-| Uncommitted | Unique Commits | Strategy                | Reason                           |
-| ----------- | -------------- | ----------------------- | -------------------------------- |
-| 0           | 0              | **RESET**               | No work to preserve, clean slate |
-| 0           | > 0            | **MERGE**               | Preserve unmerged work           |
-| > 0         | 0              | **STASH + RESET + POP** | Save work, reset, restore        |
-| > 0         | > 0            | **STASH + MERGE + POP** | Safe merge preserving all work   |
+| Uncommitted | Unique Commits | Strategy                       | Reason                           |
+| ----------- | -------------- | ------------------------------ | -------------------------------- |
+| 0           | 0              | **RESET + FORCE PUSH**         | No work to preserve, clean slate |
+| 0           | > 0            | **MERGE + PUSH**               | Preserve unmerged work           |
+| > 0         | 0              | **STASH + RESET + FORCE PUSH** | Save work, reset, restore        |
+| > 0         | > 0            | **STASH + MERGE + PUSH + POP** | Safe merge preserving all work   |
 
 ### Decision Tree
 
@@ -43,14 +43,13 @@ echo "Unique commits (not in main): $UNIQUE"
 Has uncommitted files?
 ├── YES → Stash first
 │   └── Has unique commits?
-│       ├── YES → MERGE (preserve commits)
-│       └── NO → RESET (clean slate)
-│   └── Pop stash after
+│       ├── YES → MERGE → Push → Pop stash
+│       └── NO → RESET → Force push → Pop stash
 │
 └── NO
     └── Has unique commits?
-        ├── YES → MERGE (preserve commits)
-        └── NO → RESET (clean slate, fastest)
+        ├── YES → MERGE → Push (preserve commits)
+        └── NO → RESET → Force push (clean slate)
 ```
 
 ---
@@ -79,6 +78,24 @@ fi
 
 echo "✅ Reset to main complete"
 ```
+
+### Step 3b: Update Remote Branch (RESET only)
+
+**After a RESET, the remote feature branch is stale.** Force push to sync it:
+
+```bash
+# Update remote to match local (prevents "49 commits ahead" on next PR)
+git push --force-with-lease origin $CURRENT_BRANCH
+
+echo "✅ Remote branch updated"
+```
+
+**Why this matters:**
+
+- Your PR merged → commits went to main
+- You reset local to main → local is current
+- Remote feature branch still points to old commit → causes confusion
+- Force push updates remote to match → clean slate for next feature
 
 ### If MERGE Strategy (has unique commits):
 
@@ -122,6 +139,19 @@ fi
 echo "✅ Merge complete"
 ```
 
+### Step 3c: Update Remote Branch (MERGE)
+
+**After a merge, push to sync the remote branch:**
+
+```bash
+# Push merge commit to remote (regular push, not force)
+git push origin $CURRENT_BRANCH
+
+echo "✅ Remote branch updated with merge"
+```
+
+**Why regular push (not force)?** You have unique commits that aren't in main yet. A regular push adds the merge commit on top of your existing remote history.
+
 ---
 
 ## Step 4: Regenerate Prisma Client
@@ -141,8 +171,11 @@ echo "=== Sync Complete ==="
 echo "HEAD: $(git log -1 --oneline)"
 echo "Ahead of main: $(git rev-list origin/main..HEAD --count)"
 echo "Behind main: $(git rev-list HEAD..origin/main --count)"
+echo "Ahead of remote branch: $(git rev-list origin/$CURRENT_BRANCH..HEAD --count)"
 echo "Uncommitted: $(git status --short | wc -l)"
 ```
+
+**All counts should be 0 after a successful RESET + FORCE PUSH.**
 
 ### Success Report
 
@@ -150,8 +183,10 @@ echo "Uncommitted: $(git status --short | wc -l)"
 SYNC COMPLETE
 =============
 Branch: feature/volunteer-management
-Strategy: RESET (no unique commits)
-Status: Clean - 0 ahead, 0 behind main
+Strategy: RESET + FORCE PUSH (no unique commits)
+Local: Synced with main ✅
+Remote: Updated to match ✅
+Status: 0 ahead, 0 behind (both local and remote)
 
 Ready for new work!
 ```
@@ -162,8 +197,10 @@ Or:
 SYNC COMPLETE
 =============
 Branch: feature/connect-card
-Strategy: MERGE (preserved 3 unique commits)
-Status: Synced - 3 ahead (your work), 0 behind main
+Strategy: MERGE + PUSH (preserved 3 unique commits)
+Local: Merged with main ✅
+Remote: Pushed merge commit ✅
+Status: 3 ahead (your work + merge), 0 behind main
 
 Continue your work!
 ```
