@@ -1,9 +1,9 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-22
+**Last Updated:** 2025-12-23
 **Next Customer Meeting:** January 2026
-**Latest PR:** #84 - Two-sided card extraction fix + dev test page (Dec 22)
+**Latest PR:** #87 - Member Unification Phases 1-4 (Dec 23)
 
 ---
 
@@ -48,7 +48,7 @@
 | **main**         | 🔴 Red    | `feature/production-deploy`    | 📋 PM     | Project management (no building) |
 | **integrations** | ⬜ Grey   | `feature/integrations`         | 🔨 Active | Planning Center / ChMS API sync  |
 | **connect-card** | 🟣 Purple | `feature/connect-card`         | 🔨 Active | Fine-tuning MVP                  |
-| **tech-debt**    | 🟡 Yellow | `feature/member-unification`   | 🔨 Active | Member model unification         |
+| **tech-debt**    | 🟡 Yellow | `feature/tech-debt`            | ✅ Done   | Member unification Phases 1-4    |
 | **e2e**          | 🔵 Cyan   | `feature/e2e`                  | 🔨 Active | Playwright tests                 |
 | **volunteer**    | 🟢 Green  | `feature/volunteer-management` | 🔨 Active | Event tracking                   |
 | **prayer**       | 🔵 Blue   | `feature/prayer-enhancements`  | ⏸️ Paused | Deprioritized                    |
@@ -146,10 +146,10 @@ When staff scan 25-50 cards, they currently wait for the entire batch to upload/
 
 ---
 
-### 🟡 tech-debt - Member Unification
+### 🟡 tech-debt - Member Unification ✅ Phases 1-4 Complete
 
-**Branch:** `feature/member-unification`
-**Focus:** Consolidate ChurchMember + Volunteer into unified model
+**Branch:** `feature/tech-debt`
+**Status:** ✅ PR #87 Merged (Dec 23, 2025)
 
 **Architecture Doc:** `/docs/member-unification-architecture.md`
 **Implementation Plan:** `/docs/member-unification-implementation-plan.md`
@@ -165,20 +165,26 @@ When staff scan 25-50 cards, they currently wait for the entire batch to upload/
 
 | Phase | Focus                           | Status |
 | ----- | ------------------------------- | ------ |
-| 1     | Schema additions (non-breaking) | [ ]    |
-| 2     | Data migration script           | [ ]    |
-| 3     | Update data layer               | [ ]    |
-| 4     | Update server actions           | [ ]    |
-| 5     | Update UI components            | [ ]    |
-| 6     | Cleanup & removal               | [ ]    |
+| 1     | Schema additions (non-breaking) | [x]    |
+| 2     | Data migration script           | [x]    |
+| 3     | Update data layer               | [x]    |
+| 4     | Server action dual-write        | [x]    |
+| 5     | Remove legacy writes            | [ ]    |
+| 6     | Drop Volunteer model            | [ ]    |
 
-**Key Decisions:**
+**Completed in PR #87:**
 
-- Keep `ChurchMember` name (rename later)
-- MemberType → journeyStatus + role booleans
-- VolunteerCategory → flatten to `String[]`
-- VolunteerSkill → keep model (expiring certs)
-- Split name → firstName + lastName
+- ✅ Added unified volunteer fields to ChurchMember schema
+- ✅ Created `lib/volunteer-dual-write.ts` helper module
+- ✅ All server actions now write to both Volunteer AND ChurchMember
+- ✅ Data migration script ready: `scripts/migrate-volunteer-to-churchmember.ts`
+- ✅ Updated data layer types to use ChurchMember
+
+**Next Steps (when ready to sunset legacy):**
+
+1. Run migration script in production
+2. Phase 5: Remove legacy Volunteer writes
+3. Phase 6: Drop Volunteer model from schema
 
 **Previously Completed:**
 
