@@ -16,15 +16,58 @@ git fetch origin main
 
 # Get metrics
 CURRENT_BRANCH=$(git branch --show-current)
-UNCOMMITTED=$(git status --short | wc -l)
 BEHIND=$(git rev-list HEAD..origin/main --count 2>/dev/null || echo "0")
 UNIQUE=$(git rev-list origin/main..HEAD --count 2>/dev/null || echo "0")
 
+# Detailed uncommitted work check
+STAGED=$(git diff --cached --name-only | wc -l)
+UNSTAGED=$(git diff --name-only | wc -l)
+UNTRACKED=$(git ls-files --others --exclude-standard | grep -v -E "^(node_modules|\.next|\.env)" | wc -l)
+UNCOMMITTED=$((STAGED + UNSTAGED + UNTRACKED))
+
 echo "Branch: $CURRENT_BRANCH"
-echo "Uncommitted files: $UNCOMMITTED"
 echo "Behind main: $BEHIND commits"
 echo "Unique commits (not in main): $UNIQUE"
+echo "Uncommitted files: $UNCOMMITTED"
 ```
+
+### 1b: Uncommitted Work Warning
+
+If uncommitted files are detected, show exactly what will be stashed:
+
+```bash
+if [ "$UNCOMMITTED" -gt 0 ]; then
+  echo ""
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo "  ⚠️  UNCOMMITTED WORK DETECTED - WILL BE STASHED"
+  echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+  echo ""
+
+  if [ "$STAGED" -gt 0 ]; then
+    echo "📦 STAGED files ($STAGED):"
+    git diff --cached --name-only | sed 's/^/   /'
+    echo ""
+  fi
+
+  if [ "$UNSTAGED" -gt 0 ]; then
+    echo "📝 MODIFIED files ($UNSTAGED):"
+    git diff --name-only | sed 's/^/   /'
+    echo ""
+  fi
+
+  if [ "$UNTRACKED" -gt 0 ]; then
+    echo "🆕 UNTRACKED files ($UNTRACKED):"
+    git ls-files --others --exclude-standard | grep -v -E "^(node_modules|\.next|\.env)" | head -10 | sed 's/^/   /'
+    echo ""
+  fi
+
+  echo "These files will be STASHED before sync and RESTORED after."
+  echo "If stash pop fails, your work is safe in: git stash list"
+  echo ""
+fi
+```
+
+**The stash protects your work**, but review the list above to ensure nothing unexpected is there.
 
 ---
 
