@@ -18,6 +18,7 @@
  * @property visit_status - Actual text of marked visit status option (e.g., "First Visit", "New Guest", "Returning")
  * @property first_time_visitor - (Legacy) Boolean flag for first-time church visitors - kept for backwards compatibility
  * @property interests - Array of ministry interests (Membership, Baptism, Service, Volunteer)
+ * @property keywords - Campaign keywords detected on card (e.g., "impacted", "coffee oasis")
  * @property address - Physical mailing address
  * @property age_group - Age range or demographic category
  * @property family_info - Family members, children, or household information
@@ -31,6 +32,7 @@ export interface ExtractedData {
   visit_status?: string | null; // NEW: Extract actual text from card
   first_time_visitor?: boolean | null; // Legacy field
   interests: string[] | null;
+  keywords?: string[] | null; // Campaign keywords
   address: string | null;
   age_group: string | null;
   family_info: string | null;

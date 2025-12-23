@@ -340,12 +340,44 @@ pnpm prisma generate
 
 **REQUIRED** - Run in MAIN worktree so doc changes are centralized.
 
-### 8.0: Switch to Main Worktree
+### 8.0: Switch to Main Worktree and Verify Branch (CRITICAL)
+
+**Common issue:** The main worktree may be on a different branch (e.g., `feature/production-deploy`).
+This causes push failures and wasted work. Always verify branch FIRST.
 
 ```bash
 cd /home/digitaldesk/Desktop/church-connect-hub/main
+
+# Step 1: Check current branch
+CURRENT_BRANCH=$(git branch --show-current)
+echo "Main worktree is on branch: $CURRENT_BRANCH"
+
+# Step 2: If not on main, handle it
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "⚠️  Main worktree is on '$CURRENT_BRANCH', not 'main'"
+
+  # Check for uncommitted changes
+  UNCOMMITTED=$(git status --short | wc -l)
+  if [ "$UNCOMMITTED" -gt 0 ]; then
+    echo "Stashing $UNCOMMITTED uncommitted files..."
+    git stash push -m "feature-wrap-up: auto-stash before switching to main"
+  fi
+
+  # Switch to main branch
+  echo "Switching to main branch..."
+  git checkout main
+fi
+
+# Step 3: Now safe to pull
+git fetch origin main
 git pull origin main
 ```
+
+**If checkout fails due to conflicts:** The main worktree has diverged. Resolve manually:
+
+1. Check `git status` for the issue
+2. Either commit, stash, or reset the changes
+3. Then `git checkout main`
 
 ### 8.1: Apply Deferred Doc Updates
 

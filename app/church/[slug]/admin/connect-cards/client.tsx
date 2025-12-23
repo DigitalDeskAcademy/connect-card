@@ -36,6 +36,7 @@ interface Batch {
     slug: string;
   } | null;
   createdAt: Date;
+  updatedAt: Date;
   _count: {
     cards: number;
   };

@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -13,7 +14,7 @@ import {
 import {
   Package,
   MapPin,
-  Calendar,
+  Clock,
   FileText,
   Trash2,
   Loader2,
@@ -30,7 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import Link from "next/link";
-import { formatDistanceToNow } from "date-fns";
+import { formatDistanceToNow, differenceInMinutes } from "date-fns";
 import { deleteBatchAction } from "@/actions/connect-card/batch-actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -47,6 +48,7 @@ interface Batch {
     slug: string;
   } | null;
   createdAt: Date;
+  updatedAt: Date;
   _count: {
     cards: number;
   };
@@ -186,6 +188,14 @@ export function BatchesClient({
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Package className="h-5 w-5 text-muted-foreground" />
                       {batch.name}
+                      {differenceInMinutes(
+                        new Date(),
+                        new Date(batch.updatedAt)
+                      ) <= 5 && (
+                        <Badge variant="default" className="text-xs">
+                          New
+                        </Badge>
+                      )}
                     </CardTitle>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       {batch.location && (
@@ -195,10 +205,13 @@ export function BatchesClient({
                         </div>
                       )}
                       <div className="flex items-center gap-1">
-                        <Calendar className="h-4 w-4" />
-                        {formatDistanceToNow(new Date(batch.createdAt), {
-                          addSuffix: true,
-                        })}
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          Last activity{" "}
+                          {formatDistanceToNow(new Date(batch.updatedAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
                       </div>
                       <div className="flex items-center gap-1">
                         <FileText className="h-4 w-4" />

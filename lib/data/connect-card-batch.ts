@@ -201,7 +201,7 @@ export async function getBatchesForReview(
       },
     },
     orderBy: {
-      createdAt: "desc",
+      updatedAt: "desc", // Most recently active batches first
     },
     take: 100, // Reasonable limit - most churches process <100 batches/quarter
   });
