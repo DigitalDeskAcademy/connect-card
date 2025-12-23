@@ -30,6 +30,7 @@ import {
   mergeKeywords,
   toMemberKeywordsJson,
 } from "@/lib/prisma/json-types";
+import { ensureIsVolunteerFlag } from "@/lib/volunteer-dual-write";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -263,6 +264,9 @@ export async function updateConnectCard(
             },
           });
 
+          // DUAL-WRITE: Set isVolunteer flag on ChurchMember
+          await ensureIsVolunteerFlag(existingMember.id);
+
           if (categoryType) {
             await prisma.volunteerCategory.create({
               data: {
@@ -310,6 +314,9 @@ export async function updateConnectCard(
             },
           });
 
+          // DUAL-WRITE: Set isVolunteer flag on ChurchMember
+          await ensureIsVolunteerFlag(newMember.id);
+
           if (categoryType) {
             await prisma.volunteerCategory.create({
               data: {
@@ -352,13 +359,24 @@ export async function updateConnectCard(
         });
 
         if (volunteer) {
-          await prisma.volunteer.update({
-            where: { id: volunteer.id },
-            data: {
-              readyForExport: true,
-              readyForExportDate: new Date(),
-            },
-          });
+          const now = new Date();
+          // DUAL-WRITE: Update both Volunteer and ChurchMember
+          await Promise.all([
+            prisma.volunteer.update({
+              where: { id: volunteer.id },
+              data: {
+                readyForExport: true,
+                readyForExportDate: now,
+              },
+            }),
+            prisma.churchMember.update({
+              where: { id: churchMemberId },
+              data: {
+                readyForExport: true,
+                readyForExportDate: now,
+              },
+            }),
+          ]);
         }
       }
     }
@@ -624,20 +642,28 @@ export async function updateConnectCard(
               const bgCheckCleared =
                 volunteer.backgroundCheckStatus === "CLEARED";
               const now = new Date();
+              const readyData =
+                bgCheckNotRequired || bgCheckCleared
+                  ? { readyForExport: true, readyForExportDate: now }
+                  : {};
 
-              await prisma.volunteer.update({
-                where: { id: volunteer.id },
-                data: {
-                  documentsSentAt: now,
-                  // Only mark ready if BG check not required OR already cleared
-                  ...(bgCheckNotRequired || bgCheckCleared
-                    ? {
-                        readyForExport: true,
-                        readyForExportDate: now,
-                      }
-                    : {}),
-                },
-              });
+              // DUAL-WRITE: Update both Volunteer and ChurchMember
+              await Promise.all([
+                prisma.volunteer.update({
+                  where: { id: volunteer.id },
+                  data: {
+                    documentsSentAt: now,
+                    ...readyData,
+                  },
+                }),
+                prisma.churchMember.update({
+                  where: { id: churchMemberId },
+                  data: {
+                    documentsSentAt: now,
+                    ...readyData,
+                  },
+                }),
+              ]);
             }
           }
         }

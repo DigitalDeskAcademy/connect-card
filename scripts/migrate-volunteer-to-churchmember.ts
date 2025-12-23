@@ -170,6 +170,9 @@ async function migrateVolunteers() {
         // Set role flag
         isVolunteer: true,
 
+        // Location (for multi-campus filtering)
+        locationId: volunteer.locationId,
+
         // Volunteer status
         volunteerStatus: mapVolunteerStatus(volunteer.status),
         volunteerStartDate: volunteer.startDate,

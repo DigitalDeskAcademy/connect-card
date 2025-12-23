@@ -86,6 +86,8 @@ model Location {
   users              User[]
   prayerRequests     PrayerRequest[]
   prayerBatches      PrayerBatch[]
+  /// Church members at this location (for unified model)
+  churchMembers      ChurchMember[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -456,6 +458,8 @@ model ChurchMember {
   id             String                @id @default(uuid())
   /// Organization managing this member (the church)
   organizationId String
+  /// Location/campus for multi-campus churches (merged from Volunteer)
+  locationId     String?
   /// Type of member for business logic and filtering
   /// @deprecated Use journeyStatus + role booleans instead (Phase 6 removal)
   memberType     MemberType            @default(VISITOR)
@@ -606,6 +610,8 @@ model ChurchMember {
   /// Last profile update
   updatedAt      DateTime              @updatedAt
   organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  /// Location/campus for multi-campus filtering
+  location       Location?             @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, email])
   // Existing indexes
@@ -615,6 +621,7 @@ model ChurchMember {
   @@index([organizationId, journeyStatus])
   @@index([organizationId, isVolunteer])
   @@index([organizationId, isVolunteer, volunteerStatus])
+  @@index([organizationId, locationId])
   // bgCheckToken has @unique which auto-creates index
   @@map("church_member")
 }

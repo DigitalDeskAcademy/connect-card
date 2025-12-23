@@ -18,6 +18,12 @@ import {
   getVolunteerDocumentsText,
 } from "@/lib/email/templates/volunteer-documents";
 import { getS3Url } from "@/lib/S3Client";
+import {
+  dualWriteVolunteerStatus,
+  dualWriteVolunteerCategories,
+  dualWriteDocumentsSent,
+  ensureIsVolunteerFlag,
+} from "@/lib/volunteer-dual-write";
 
 const aj = arcjet.withRule(
   fixedWindow({
@@ -156,8 +162,9 @@ export async function createVolunteer(
     }
 
     // 7. Create volunteer profile and category assignments in transaction
+    // Also update ChurchMember with isVolunteer=true and volunteer fields (DUAL-WRITE)
     const volunteer = await prisma.$transaction(async tx => {
-      // Create volunteer profile
+      // Create volunteer profile (legacy model)
       const newVolunteer = await tx.volunteer.create({
         data: {
           churchMemberId,
@@ -176,7 +183,7 @@ export async function createVolunteer(
         },
       });
 
-      // Create category assignments if provided
+      // Create category assignments if provided (legacy VolunteerCategory table)
       if (validatedData.categories && validatedData.categories.length > 0) {
         await tx.volunteerCategory.createMany({
           data: validatedData.categories.map(category => ({
@@ -186,6 +193,44 @@ export async function createVolunteer(
           })),
         });
       }
+
+      // DUAL-WRITE: Update ChurchMember with volunteer fields
+      // Map volunteer status enum to lowercase string for unified model
+      const statusToString: Record<string, string> = {
+        ACTIVE: "active",
+        INACTIVE: "inactive",
+        ON_BREAK: "on_break",
+        PENDING_APPROVAL: "pending",
+      };
+      const bgStatusToString: Record<string, string> = {
+        NOT_STARTED: "not_started",
+        IN_PROGRESS: "in_progress",
+        PENDING_REVIEW: "pending_review",
+        CLEARED: "cleared",
+        FLAGGED: "flagged",
+        EXPIRED: "expired",
+      };
+
+      await tx.churchMember.update({
+        where: { id: churchMemberId },
+        data: {
+          isVolunteer: true,
+          locationId: validatedData.locationId,
+          volunteerStatus: statusToString[validatedData.status] ?? "pending",
+          volunteerCategories: validatedData.categories ?? [],
+          volunteerStartDate: validatedData.startDate,
+          volunteerEndDate: validatedData.endDate,
+          volunteerInactiveReason: validatedData.inactiveReason,
+          volunteerNotes: validatedData.notes,
+          emergencyContactName: validatedData.emergencyContactName,
+          emergencyContactPhone: validatedData.emergencyContactPhone,
+          backgroundCheckStatus:
+            bgStatusToString[validatedData.backgroundCheckStatus] ??
+            "not_started",
+          backgroundCheckDate: validatedData.backgroundCheckDate,
+          backgroundCheckExpiry: validatedData.backgroundCheckExpiry,
+        },
+      });
 
       return newVolunteer;
     });
@@ -488,8 +533,10 @@ export async function deactivateVolunteer(
         id: volunteerId,
         organizationId: organization.id, // Multi-tenant isolation
       },
-      include: {
-        churchMember: true,
+      select: {
+        id: true,
+        churchMemberId: true, // Added for dual-write
+        churchMember: { select: { name: true } },
       },
     });
 
@@ -500,14 +547,11 @@ export async function deactivateVolunteer(
       };
     }
 
-    // 5. Update volunteer status to INACTIVE
-    await prisma.volunteer.update({
-      where: { id: volunteerId },
-      data: {
-        status: "INACTIVE",
-        endDate: new Date(),
-        inactiveReason: reason,
-      },
+    // 5. DUAL-WRITE: Update volunteer status to INACTIVE on both models
+    await dualWriteVolunteerStatus(volunteerId, volunteer.churchMemberId, {
+      status: "INACTIVE",
+      endDate: new Date(),
+      inactiveReason: reason,
     });
 
     // 6. Revalidate relevant pages
@@ -518,7 +562,7 @@ export async function deactivateVolunteer(
       status: "success",
       message: `${volunteer.churchMember.name} has been marked as inactive`,
     };
-  } catch (error) {
+  } catch {
     return {
       status: "error",
       message: "Failed to deactivate volunteer. Please try again.",
@@ -583,8 +627,10 @@ export async function reactivateVolunteer(
         id: volunteerId,
         organizationId: organization.id, // Multi-tenant isolation
       },
-      include: {
-        churchMember: true,
+      select: {
+        id: true,
+        churchMemberId: true, // Added for dual-write
+        churchMember: { select: { name: true } },
       },
     });
 
@@ -595,14 +641,11 @@ export async function reactivateVolunteer(
       };
     }
 
-    // 5. Update volunteer status to ACTIVE
-    await prisma.volunteer.update({
-      where: { id: volunteerId },
-      data: {
-        status: "ACTIVE",
-        endDate: null,
-        inactiveReason: null,
-      },
+    // 5. DUAL-WRITE: Update volunteer status to ACTIVE on both models
+    await dualWriteVolunteerStatus(volunteerId, volunteer.churchMemberId, {
+      status: "ACTIVE",
+      endDate: null,
+      inactiveReason: null,
     });
 
     // 6. Revalidate relevant pages
@@ -613,7 +656,7 @@ export async function reactivateVolunteer(
       status: "success",
       message: `${volunteer.churchMember.name} has been reactivated`,
     };
-  } catch (error) {
+  } catch {
     return {
       status: "error",
       message: "Failed to reactivate volunteer. Please try again.",
@@ -685,6 +728,7 @@ export async function processVolunteer(
       },
       select: {
         id: true,
+        churchMemberId: true, // Added for dual-write to ChurchMember
         documentsSentAt: true,
         churchMember: { select: { name: true, email: true } },
         categories: { select: { category: true } },
@@ -704,35 +748,38 @@ export async function processVolunteer(
     const canMarkReadyForExport =
       bgCheckCleared && volunteer.documentsSentAt !== null;
 
-    await prisma.volunteer.update({
-      where: { id: volunteerId },
-      data: {
-        status: "ACTIVE",
-        ...(backgroundCheckStatus && {
-          backgroundCheckStatus: backgroundCheckStatus as BackgroundCheckStatus,
-        }),
-        // Mark as ready for export when BG check is cleared AND docs were sent
-        ...(canMarkReadyForExport && {
-          readyForExport: true,
-          readyForExportDate: new Date(),
-        }),
-      },
-    });
+    // Build the status update payload
+    const statusUpdate: {
+      status: "ACTIVE";
+      backgroundCheckStatus?: BackgroundCheckStatus;
+      readyForExport?: boolean;
+      readyForExportDate?: Date;
+    } = {
+      status: "ACTIVE",
+      ...(backgroundCheckStatus && {
+        backgroundCheckStatus: backgroundCheckStatus as BackgroundCheckStatus,
+      }),
+      // Mark as ready for export when BG check is cleared AND docs were sent
+      ...(canMarkReadyForExport && {
+        readyForExport: true,
+        readyForExportDate: new Date(),
+      }),
+    };
 
-    // 6. Delete existing categories and add new ones
-    await prisma.volunteerCategory.deleteMany({
-      where: { volunteerId: volunteerId },
-    });
+    // DUAL-WRITE: Update both Volunteer (legacy) and ChurchMember (unified)
+    await dualWriteVolunteerStatus(
+      volunteerId,
+      volunteer.churchMemberId,
+      statusUpdate
+    );
 
-    if (categories.length > 0) {
-      await prisma.volunteerCategory.createMany({
-        data: categories.map(category => ({
-          volunteerId: volunteerId,
-          organizationId: organization.id,
-          category: category as VolunteerCategoryType,
-        })),
-      });
-    }
+    // 6. Delete existing categories and add new ones - DUAL-WRITE
+    await dualWriteVolunteerCategories(
+      volunteerId,
+      volunteer.churchMemberId,
+      organization.id,
+      categories
+    );
 
     // 7. Send welcome email with documents + BG check link (if volunteer has email)
     let documentsSent = false;
@@ -846,11 +893,8 @@ export async function processVolunteer(
 
         if (emailResult.success) {
           documentsSent = true;
-          // Update documentsSentAt timestamp
-          await prisma.volunteer.update({
-            where: { id: volunteerId },
-            data: { documentsSentAt: new Date() },
-          });
+          // DUAL-WRITE: Update documentsSentAt on both models
+          await dualWriteDocumentsSent(volunteerId, volunteer.churchMemberId);
         }
       }
     }
@@ -917,6 +961,7 @@ export async function updateBackgroundCheckStatus(
       },
       select: {
         id: true,
+        churchMemberId: true, // Added for dual-write
         backgroundCheckStatus: true,
         documentsSentAt: true,
         churchMember: { select: { name: true } },
@@ -930,7 +975,7 @@ export async function updateBackgroundCheckStatus(
       };
     }
 
-    // 4. Update background check status
+    // 4. Build update payload for background check status
     const updateData: {
       backgroundCheckStatus: BackgroundCheckStatus;
       backgroundCheckDate?: Date;
@@ -957,10 +1002,12 @@ export async function updateBackgroundCheckStatus(
       updateData.notes = notes;
     }
 
-    await prisma.volunteer.update({
-      where: { id: volunteerId },
-      data: updateData,
-    });
+    // DUAL-WRITE: Update both Volunteer (legacy) and ChurchMember (unified)
+    await dualWriteVolunteerStatus(
+      volunteerId,
+      volunteer.churchMemberId,
+      updateData
+    );
 
     // 5. Revalidate
     revalidatePath(`/church/${slug}/admin/volunteer`);
@@ -972,8 +1019,7 @@ export async function updateBackgroundCheckStatus(
       status: "success",
       message: `Background check ${statusLabel} for ${volunteer.churchMember.name}`,
     };
-  } catch (error) {
-    console.error("Error updating background check status:", error);
+  } catch {
     return {
       status: "error",
       message: "Failed to update background check status. Please try again.",

@@ -121,6 +121,7 @@ export async function getContacts(
   };
 
   // Execute queries in parallel
+  // Note: Using unified model fields (isVolunteer, volunteerStatus) instead of JOINs
   const [contacts, totalCount] = await Promise.all([
     prisma.churchMember.findMany({
       where,
@@ -135,11 +136,11 @@ export async function getContacts(
         createdAt: true,
         updatedAt: true,
         detectedKeywords: true,
+        // Unified model fields (Phase 3)
+        isVolunteer: true,
+        volunteerStatus: true,
         connectCards: {
           select: { id: true },
-        },
-        volunteer: {
-          select: { status: true },
         },
         // Get latest activity from messages
         messages: {
@@ -156,6 +157,7 @@ export async function getContacts(
   ]);
 
   // Transform to Contact type
+  // Using unified model fields (Phase 3) - no longer JOINing to Volunteer
   const transformedContacts: Contact[] = contacts.map(member => ({
     id: member.id,
     name: member.name,
@@ -169,8 +171,10 @@ export async function getContacts(
     updatedAt: member.updatedAt,
     lastActivityAt: member.messages[0]?.createdAt ?? member.updatedAt,
     connectCardCount: member.connectCards.length,
-    isVolunteer: member.volunteer !== null,
-    volunteerStatus: member.volunteer?.status ?? null,
+    // Unified model: use direct boolean instead of relation check
+    isVolunteer: member.isVolunteer,
+    // Unified model: use direct field instead of relation
+    volunteerStatus: member.volunteerStatus,
     detectedKeywords: fromMemberKeywordsJson(member.detectedKeywords),
   }));
 
