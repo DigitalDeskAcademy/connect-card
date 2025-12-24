@@ -1,9 +1,9 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-23
+**Last Updated:** 2025-12-24
 **Next Customer Meeting:** January 2026
-**Latest PR:** #87 - Member Unification Phases 1-4 (Dec 23)
+**Latest PR:** #88 - Interactive Onboarding Checklist (Dec 24)
 
 ---
 
