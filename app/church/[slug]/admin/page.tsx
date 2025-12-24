@@ -18,6 +18,7 @@ import {
 } from "@/lib/data/connect-card-analytics";
 import { getOrganizationLocations } from "@/lib/data/locations";
 import { countBatchesNeedingReview } from "@/lib/data/connect-card-batch";
+import { getOnboardingStatus } from "@/lib/data/onboarding";
 import { PageContainer } from "@/components/layout/page-container";
 import { DashboardClient } from "./_components/DashboardClient";
 
@@ -37,16 +38,18 @@ export default async function ChurchAdminDashboard({
   // Fetch locations first
   const locations = await getOrganizationLocations(organization.id);
 
-  // Fetch cumulative analytics, chart data, batch count, plus per-location data
+  // Fetch cumulative analytics, chart data, batch count, onboarding status, plus per-location data
   const [
     cumulativeAnalytics,
     chartData,
     batchesNeedingReview,
+    onboardingStatus,
     ...locationData
   ] = await Promise.all([
     getConnectCardAnalytics(organization.id), // No locationId = all locations
     getConnectCardChartData(organization.id), // Chart data for last 90 days
     countBatchesNeedingReview(organization.id, dataScope.filters.locationId),
+    getOnboardingStatus(organization.id),
     // Fetch analytics and chart data for each location
     ...locations.flatMap(loc => [
       getConnectCardAnalytics(organization.id, loc.id),
@@ -91,6 +94,7 @@ export default async function ChurchAdminDashboard({
       <DashboardClient
         slug={slug}
         organizationId={organization.id}
+        organizationName={organization.name}
         locations={locations}
         cumulativeAnalytics={cumulativeAnalytics}
         chartData={chartData}
@@ -99,6 +103,7 @@ export default async function ChurchAdminDashboard({
         canSeeAllLocations={dataScope.filters.canSeeAllLocations}
         activeTab={activeTab}
         batchesNeedingReview={batchesNeedingReview}
+        onboardingStatus={onboardingStatus}
       />
     </PageContainer>
   );
