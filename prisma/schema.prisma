@@ -59,6 +59,7 @@ model Organization {
   backgroundCheckConfig  BackgroundCheckConfig?
   messageTemplates       MessageTemplate[]
   scanTokens             ScanToken[]
+  volunteerEvents        VolunteerEvent[]
   /// Enable general volunteer automation sequence (Day 1/3/7 messages)
   /// When disabled, GENERAL volunteers are marked readyForExport immediately
   generalVolunteerAutomationEnabled Boolean @default(false)
@@ -93,6 +94,7 @@ model Location {
   prayerBatches      PrayerBatch[]
   /// Church members at this location (for unified model)
   churchMembers      ChurchMember[]
+  volunteerEvents    VolunteerEvent[]
 
   @@unique([organizationId, slug])
   @@index([organizationId])
@@ -195,6 +197,7 @@ model User {
   assignedPrayerRequests PrayerRequest[] @relation("AssignedPrayerRequests")
   assignedPrayerBatches  PrayerBatch[]   @relation("AssignedPrayerBatches")
   assignedConnectCards   ConnectCard[]   @relation("AssignedConnectCards")
+  ledVolunteerEvents     VolunteerEvent[] @relation("LedVolunteerEvents")
 
   @@index([defaultLocationId])
   @@map("user")
@@ -844,6 +847,17 @@ model Volunteer {
   customFields          Json?
   /// Optimistic locking version for concurrent edit protection
   version               Int                        @default(0)
+
+  // Reliability tracking (Phase 5 - Events)
+  /// Calculated reliability score (0-100), null until 5+ assignments
+  reliabilityScore      Float?
+  /// Total event assignments in rolling 12-month window
+  totalAssignments      Int                        @default(0)
+  /// Total times attended (not no-show) in rolling 12-month window
+  totalAttended         Int                        @default(0)
+  /// Last date volunteer served at an event
+  lastServedDate        DateTime?
+
   /// Volunteer creation timestamp
   createdAt             DateTime                   @default(now())
   /// Last update timestamp
@@ -852,6 +866,7 @@ model Volunteer {
   churchMember          ChurchMember               @relation(fields: [churchMemberId], references: [id], onDelete: Cascade)
   categories            VolunteerCategory[]
   skills                VolunteerSkill[]
+  eventAssignments      EventAssignment[]
 
   @@index([organizationId])
   @@index([organizationId, status])
@@ -974,6 +989,142 @@ model VolunteerSkill {
 }
 
 // ============================================================================
+// VOLUNTEER EVENTS SYSTEM
+// Low-friction event coordination with SMS automation
+// ============================================================================
+
+/// Volunteer event for one-off or recurring ministry needs
+/// Example: "Christmas Eve Service - Kids Check-in" or "Food Bank Saturday"
+model VolunteerEvent {
+  id                      String                @id @default(cuid())
+  /// Organization for multi-tenant isolation
+  organizationId          String
+  /// Location for multi-campus filtering (null = org-wide event)
+  locationId              String?
+  /// Event name (e.g., "Sunday Kids Check-in", "Christmas Eve Parking")
+  name                    String
+  /// Optional event description
+  description             String?
+  /// Event type for categorization and filtering
+  eventType               EventType             @default(OTHER)
+  /// Ministry category for filtering volunteers
+  category                VolunteerCategoryType?
+  /// User who manages this event (receives attendance confirmation email)
+  leaderId                String
+  /// Whether volunteers must have cleared background check
+  requiresBackgroundCheck Boolean               @default(false)
+  /// Pool scope: "location" = same campus only, "all" = entire org
+  volunteerPoolScope      String                @default("location")
+  /// Custom SMS invite template (with {{firstName}}, {{eventName}}, etc.)
+  inviteMessage           String?
+  /// Custom SMS confirmation template
+  confirmationMessage     String?
+  /// Event lifecycle status
+  status                  EventStatus           @default(DRAFT)
+  /// Event creation timestamp
+  createdAt               DateTime              @default(now())
+  /// Last update timestamp
+  updatedAt               DateTime              @updatedAt
+
+  /// Relations
+  organization     Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  location         Location?          @relation(fields: [locationId], references: [id])
+  leader           User               @relation("LedVolunteerEvents", fields: [leaderId], references: [id])
+  sessions         EventSession[]
+  attendanceTokens AttendanceToken[]
+
+  @@index([organizationId, status])
+  @@index([organizationId, locationId])
+  @@index([organizationId, eventType])
+  @@index([leaderId])
+  @@map("volunteer_event")
+}
+
+/// Session within an event (specific date/time slot needing volunteers)
+/// Example: 9:00 AM service on Dec 24 needs 5 volunteers
+model EventSession {
+  id          String    @id @default(cuid())
+  /// Event this session belongs to
+  eventId     String
+  /// Session date
+  date        DateTime  @db.Date
+  /// Session start time
+  startTime   DateTime  @db.Time(0)
+  /// Session end time
+  endTime     DateTime  @db.Time(0)
+  /// Number of volunteers needed for this session
+  slotsNeeded Int       @default(1)
+  /// Denormalized count of filled slots (ASSIGNED, CONFIRMED, ATTENDED)
+  slotsFilled Int       @default(0)
+  /// Session creation timestamp
+  createdAt   DateTime  @default(now())
+  /// Last update timestamp
+  updatedAt   DateTime  @updatedAt
+
+  /// Relations
+  event       VolunteerEvent    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  assignments EventAssignment[]
+
+  @@index([eventId])
+  @@index([date])
+  @@map("event_session")
+}
+
+/// Assignment linking a volunteer to an event session
+/// Tracks invite status, response, and attendance
+model EventAssignment {
+  id                    String           @id @default(cuid())
+  /// Session this assignment belongs to
+  sessionId             String
+  /// Volunteer assigned to this session
+  volunteerId           String
+  /// Assignment status (tracks SMS response flow)
+  status                AssignmentStatus @default(ASSIGNED)
+  /// When SMS invite was sent (null for direct assignments)
+  invitedAt             DateTime?
+  /// When volunteer responded (YES/NO)
+  respondedAt           DateTime?
+  /// When attendance was confirmed by leader
+  attendanceConfirmedAt DateTime?
+  /// Assignment creation timestamp
+  createdAt             DateTime         @default(now())
+  /// Last update timestamp
+  updatedAt             DateTime         @updatedAt
+
+  /// Relations
+  session   EventSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  volunteer Volunteer    @relation(fields: [volunteerId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, volunteerId])
+  @@index([status, invitedAt])
+  @@index([volunteerId])
+  @@map("event_assignment")
+}
+
+/// Magic link token for leader to confirm attendance post-event
+/// Auto-expires after 7 days (optimistic attendance assumed if not used)
+model AttendanceToken {
+  id        String    @id @default(cuid())
+  /// Unique token for URL
+  token     String    @unique @default(cuid())
+  /// Event this token is for
+  eventId   String
+  /// Token expiration (7 days from event completion)
+  expiresAt DateTime
+  /// When leader used the token to confirm attendance
+  usedAt    DateTime?
+  /// Token creation timestamp
+  createdAt DateTime  @default(now())
+
+  /// Relations
+  event     VolunteerEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+  @@map("attendance_token")
+}
+
+// ============================================================================
 // REMOVED: Shift Scheduling Models (Dec 2025)
 // ServingOpportunitySkill, VolunteerAvailability, VolunteerShift moved to Planning Center
 // ============================================================================
@@ -1067,6 +1218,64 @@ enum VolunteerCategoryType {
   PRAYER_TEAM
   /// Other ministry not listed above
   OTHER
+}
+
+// ============================================================================
+// VOLUNTEER EVENTS ENUMS
+// ============================================================================
+
+/// Event lifecycle status for volunteer events
+enum EventStatus {
+  /// Event is being drafted, not yet visible
+  DRAFT
+  /// Event is published and accepting volunteers
+  PUBLISHED
+  /// Event has started (first session in progress)
+  IN_PROGRESS
+  /// Event has completed (all sessions done)
+  COMPLETED
+  /// Event is archived (30+ days after completion)
+  ARCHIVED
+  /// Event was cancelled
+  CANCELLED
+}
+
+/// Event type for categorizing volunteer events
+enum EventType {
+  /// Regular Sunday service (worship, kids, etc.)
+  SUNDAY_SERVICE
+  /// Midweek services or bible studies
+  MIDWEEK_SERVICE
+  /// Youth ministry events
+  YOUTH
+  /// Kids ministry events
+  KIDS
+  /// Outreach and community events
+  OUTREACH
+  /// Special one-time events
+  SPECIAL_EVENT
+  /// Holiday services (Easter, Christmas, etc.)
+  HOLIDAY
+  /// Other events that don't fit categories
+  OTHER
+}
+
+/// Assignment status tracking volunteer response to event invites
+enum AssignmentStatus {
+  /// Direct assign by staff (no SMS invite)
+  ASSIGNED
+  /// SMS invite sent, awaiting response
+  INVITED
+  /// Volunteer replied YES
+  CONFIRMED
+  /// Volunteer replied NO
+  DECLINED
+  /// 48h timeout reached with no response
+  NO_RESPONSE
+  /// Showed up (auto-set on completion or confirmed by leader)
+  ATTENDED
+  /// Didn't show up (marked by leader via magic link)
+  NO_SHOW
 }
 
 // REMOVED: AvailabilityType, RecurrencePattern, ShiftStatus enums (Dec 2025)
