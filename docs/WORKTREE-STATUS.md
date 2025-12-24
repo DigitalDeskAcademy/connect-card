@@ -1,9 +1,9 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-22
+**Last Updated:** 2025-12-24
 **Next Customer Meeting:** January 2026
-**Latest PR:** #83 - Phone wizard UX enhancements (Dec 21)
+**Latest PR:** #89 - Events UI with toolbar, filtering, and card views (Dec 24)
 
 ---
 
@@ -21,7 +21,7 @@
 >
 > - 🆕 Planning Center API sync (real-time duplicate checking)
 > - ✅ Keyword detection (campaign triggers like "impacted", "coffee oasis") - **PR #80 merged**
-> - 🆕 Volunteer event tracking (capacity view, quick outreach)
+> - ✅ Volunteer event tracking (capacity view, quick outreach) - **PR #89 merged**
 >
 > **Deprioritized:**
 >
@@ -209,30 +209,27 @@
 **Spec:** `/docs/features/volunteer/volunteer-events-feature-spec.md`
 **Implementation Plan:** `/docs/features/volunteer/events-implementation-plan.md`
 
+**Recently Completed:**
+
+- ✅ PR #89 - Events UI with toolbar, filtering, and card views (Dec 24)
+  - Events list page with card layout
+  - Reusable Toolbar component with responsive overflow
+  - Date period filtering (Upcoming/Past/This Week/This Month)
+  - Event type filtering with Add New Type placeholder
+  - Event creation dialog with multi-session support
+  - Event detail page with assignment modal
+
 **Implementation Phases:**
 
-| Phase | Name                    | Description                                                | Status         |
-| ----- | ----------------------- | ---------------------------------------------------------- | -------------- |
-| 0     | Schema Preparation      | Add VolunteerEvent, EventSession, EventAssignment models   | 🔨 In Progress |
-| 1     | Core Event CRUD         | Create/edit/delete events, events list page                | [ ] Pending    |
-| 2     | Assignment System       | Direct assign + invite pool, volunteer selection modal     | [ ] Pending    |
-| 3     | GHL SMS Automation      | Invite via SMS, parse YES/NO responses, auto-confirm       | [ ] Pending    |
-| 4     | Attendance Confirmation | Magic link for leader to confirm attendance                | [ ] Pending    |
-| 5     | Reliability Score       | Calculate & display volunteer reliability (attended/total) | [ ] Pending    |
-| 6     | Polish & Edge Cases     | Cancel flow, archive old events, filters, empty states     | [ ] Pending    |
-
-**Phase 0 Tasks (Current):**
-
-| Task                                | Status |
-| ----------------------------------- | ------ |
-| Add EventStatus enum                | [ ]    |
-| Add AssignmentStatus enum           | [ ]    |
-| Add VolunteerEvent model            | [ ]    |
-| Add EventSession model              | [ ]    |
-| Add EventAssignment model           | [ ]    |
-| Add AttendanceToken model           | [ ]    |
-| Add reliability fields to Volunteer | [ ]    |
-| Run prisma generate + db push       | [ ]    |
+| Phase | Name                    | Description                                                | Status      |
+| ----- | ----------------------- | ---------------------------------------------------------- | ----------- |
+| 0     | Schema Preparation      | Add VolunteerEvent, EventSession, EventAssignment models   | ✅ Complete |
+| 1     | Core Event CRUD         | Create/edit/delete events, events list page                | ✅ Complete |
+| 2     | Assignment System       | Direct assign + invite pool, volunteer selection modal     | ✅ Complete |
+| 3     | GHL SMS Automation      | Invite via SMS, parse YES/NO responses, auto-confirm       | [ ] Pending |
+| 4     | Attendance Confirmation | Magic link for leader to confirm attendance                | [ ] Pending |
+| 5     | Reliability Score       | Calculate & display volunteer reliability (attended/total) | [ ] Pending |
+| 6     | Polish & Edge Cases     | Cancel flow, archive old events, filters, empty states     | [ ] Pending |
 
 **Key Design Decisions:**
 
