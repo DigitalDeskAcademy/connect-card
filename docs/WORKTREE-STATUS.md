@@ -1,9 +1,9 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-24
+**Last Updated:** 2025-12-22
 **Next Customer Meeting:** January 2026
-**Latest PR:** #88 - Interactive Onboarding Checklist (Dec 24)
+**Latest PR:** #83 - Phone wizard UX enhancements (Dec 21)
 
 ---
 
@@ -48,7 +48,7 @@
 | **main**         | 🔴 Red    | `feature/production-deploy`    | 📋 PM     | Project management (no building) |
 | **integrations** | ⬜ Grey   | `feature/integrations`         | 🔨 Active | Planning Center / ChMS API sync  |
 | **connect-card** | 🟣 Purple | `feature/connect-card`         | 🔨 Active | Fine-tuning MVP                  |
-| **tech-debt**    | 🟡 Yellow | `feature/tech-debt`            | ✅ Done   | Member unification Phases 1-4    |
+| **tech-debt**    | 🟡 Yellow | `feature/tech-debt`            | 🔨 Active | Keyword detection                |
 | **e2e**          | 🔵 Cyan   | `feature/e2e`                  | 🔨 Active | Playwright tests                 |
 | **volunteer**    | 🟢 Green  | `feature/volunteer-management` | 🔨 Active | Event tracking                   |
 | **prayer**       | 🔵 Blue   | `feature/prayer-enhancements`  | ⏸️ Paused | Deprioritized                    |
@@ -113,10 +113,6 @@
 
 **Recently Completed:**
 
-- ✅ PR #84 - Two-sided extraction fix + dev test page (Dec 22)
-  - Fixed `useConnectCardUpload` hook to send both front and back images to Claude Vision
-  - Added extraction test page at `/dev/extraction-test` (simple two-column layout)
-  - DRY refactor: shared extraction utilities in `lib/utils/extraction.ts`
 - ✅ PR #83 - Phone wizard UX enhancements (Dec 21)
   - Progress header showing card count during scanning
   - Any team member can scan (removed admin restriction)
@@ -127,68 +123,50 @@
 
 | Task                                       | Status |
 | ------------------------------------------ | ------ |
-| **Async scan processing** (HIGH PRIORITY)  | [ ]    |
 | Deduplication enhancement (fuzzy matching) | [ ]    |
 | Shared email detection (couples)           | [ ]    |
 | "Merge with existing" vs "Create new" UI   | [ ]    |
 | Upload UX improvements for non-tech staff  | [x]    |
 | Better progress feedback during processing | [x]    |
 
-**Next Up - Async Scan Processing:**
-
-When staff scan 25-50 cards, they currently wait for the entire batch to upload/process. Goal: Upload to S3 and start Claude extraction as each card is captured, so earlier cards are processed while later ones are being scanned. Staff sees cards appearing in review queue in real-time.
-
 **Wishlist:**
 
+- [ ] Async scan processing - Upload to S3 as cards are captured, process in background (no wait at end)
 - [ ] Bulk re-process failed cards
 - [ ] Card template customization
 - [ ] Multi-language support
 
 ---
 
-### 🟡 tech-debt - Member Unification ✅ Phases 1-4 Complete
+### 🟡 tech-debt - Keyword Detection
 
 **Branch:** `feature/tech-debt`
-**Status:** ✅ PR #87 Merged (Dec 23, 2025)
+**Focus:** AI keyword extraction from connect cards
 
-**Architecture Doc:** `/docs/member-unification-architecture.md`
-**Implementation Plan:** `/docs/member-unification-implementation-plan.md`
+**Recently Completed:**
 
-**Why:**
+- ✅ PR #80 - Campaign keyword detection and tracking (Dec 20)
+  - AI prompt extracts standalone keywords
+  - `detectedKeywords: String[]` added to schema
+  - Keywords visible in review UI and exports
+  - Filter connect cards by keyword
+  - Keywords synced to ChurchMember profiles
 
-- Eliminates JOINs on every volunteer query
-- Simplifies messaging, event invites, and exports
-- Matches Planning Center's architecture
-- Single profile view instead of assembling from multiple sources
+**What to Build:**
 
-**Phases:**
+| Task                                            | Status |
+| ----------------------------------------------- | ------ |
+| Update AI prompt to extract standalone keywords | [x]    |
+| Add `detectedKeywords: String[]` to schema      | [x]    |
+| Display keyword chips in review UI              | [x]    |
+| Filter connect cards by keyword                 | [x]    |
+| Include keywords in export                      | [x]    |
 
-| Phase | Focus                           | Status |
-| ----- | ------------------------------- | ------ |
-| 1     | Schema additions (non-breaking) | [x]    |
-| 2     | Data migration script           | [x]    |
-| 3     | Update data layer               | [x]    |
-| 4     | Server action dual-write        | [x]    |
-| 5     | Remove legacy writes            | [ ]    |
-| 6     | Drop Volunteer model            | [ ]    |
+**Wishlist:**
 
-**Completed in PR #87:**
-
-- ✅ Added unified volunteer fields to ChurchMember schema
-- ✅ Created `lib/volunteer-dual-write.ts` helper module
-- ✅ All server actions now write to both Volunteer AND ChurchMember
-- ✅ Data migration script ready: `scripts/migrate-volunteer-to-churchmember.ts`
-- ✅ Updated data layer types to use ChurchMember
-
-**Next Steps (when ready to sunset legacy):**
-
-1. Run migration script in production
-2. Phase 5: Remove legacy Volunteer writes
-3. Phase 6: Drop Volunteer model from schema
-
-**Previously Completed:**
-
-- ✅ PR #80 - Keyword detection (Dec 20)
+- [ ] Keyword analytics/counts
+- [ ] Auto-tag contacts based on keywords
+- [ ] Keyword-triggered automation (GHL workflows)
 
 ---
 
@@ -227,27 +205,47 @@ When staff scan 25-50 cards, they currently wait for the entire batch to upload/
 ### 🟢 volunteer - Event Tracking
 
 **Branch:** `feature/volunteer-management`
-**Focus:** Simple event capacity management
+**Focus:** Low-friction event coordination with SMS automation
+**Spec:** `/docs/features/volunteer/volunteer-events-feature-spec.md`
+**Implementation Plan:** `/docs/features/volunteer/events-implementation-plan.md`
 
-**What to Build:**
+**Implementation Phases:**
 
-| Task                                       | Status |
-| ------------------------------------------ | ------ |
-| Event data model (name, date, capacity)    | [ ]    |
-| Simple capacity view (X needed / Y filled) | [ ]    |
-| Quick outreach button (GHL SMS)            | [ ]    |
-| Event list page                            | [ ]    |
+| Phase | Name                    | Description                                                | Status         |
+| ----- | ----------------------- | ---------------------------------------------------------- | -------------- |
+| 0     | Schema Preparation      | Add VolunteerEvent, EventSession, EventAssignment models   | 🔨 In Progress |
+| 1     | Core Event CRUD         | Create/edit/delete events, events list page                | [ ] Pending    |
+| 2     | Assignment System       | Direct assign + invite pool, volunteer selection modal     | [ ] Pending    |
+| 3     | GHL SMS Automation      | Invite via SMS, parse YES/NO responses, auto-confirm       | [ ] Pending    |
+| 4     | Attendance Confirmation | Magic link for leader to confirm attendance                | [ ] Pending    |
+| 5     | Reliability Score       | Calculate & display volunteer reliability (attended/total) | [ ] Pending    |
+| 6     | Polish & Edge Cases     | Cancel flow, archive old events, filters, empty states     | [ ] Pending    |
 
-**Wishlist:**
+**Phase 0 Tasks (Current):**
 
-- [ ] Volunteer self-signup
-- [ ] Recurring events
-- [ ] Shift management
-- [ ] Bulk messaging to event volunteers
+| Task                                | Status |
+| ----------------------------------- | ------ |
+| Add EventStatus enum                | [ ]    |
+| Add AssignmentStatus enum           | [ ]    |
+| Add VolunteerEvent model            | [ ]    |
+| Add EventSession model              | [ ]    |
+| Add EventAssignment model           | [ ]    |
+| Add AttendanceToken model           | [ ]    |
+| Add reliability fields to Volunteer | [ ]    |
+| Run prisma generate + db push       | [ ]    |
 
-**Previously Completed (for reference):**
+**Key Design Decisions:**
+
+- Staff dips in, takes action, leaves - system handles everything between
+- SMS automation via existing GHL integration
+- Optimistic attendance (auto-confirm, staff marks no-shows)
+- NOT building: full scheduling, shifts, recurring availability (Planning Center's job)
+
+**Previously Completed:**
 
 - ✅ Phase 2 MVP: Auto-send welcome email, BG check confirmation, review workflow
+- ✅ Volunteer CRUD, pipeline, export tracking
+- ✅ GHL integration for SMS/email automation
 
 ---
 
@@ -289,15 +287,17 @@ cd /home/digitaldesk/Desktop/church-connect-hub/WORKTREE && git fetch origin && 
 
 ## 📞 Quick Reference
 
-| Need               | Location                                   |
-| ------------------ | ------------------------------------------ |
-| **Demo Briefing**  | `/docs/features/demo-feedback-dec-2025.md` |
-| Technical patterns | `/docs/PLAYBOOK.md`                        |
-| Project roadmap    | `/docs/PROJECT.md`                         |
-| Testing strategy   | `/docs/technical/testing-strategy.md`      |
-| Connect card spec  | `/docs/features/connect-cards/vision.md`   |
-| Volunteer spec     | `/docs/features/volunteer/vision.md`       |
-| Integrations spec  | `/docs/features/integrations/vision.md`    |
+| Need                 | Location                                                    |
+| -------------------- | ----------------------------------------------------------- |
+| **Demo Briefing**    | `/docs/features/demo-feedback-dec-2025.md`                  |
+| Technical patterns   | `/docs/PLAYBOOK.md`                                         |
+| Project roadmap      | `/docs/PROJECT.md`                                          |
+| Testing strategy     | `/docs/technical/testing-strategy.md`                       |
+| Connect card spec    | `/docs/features/connect-cards/vision.md`                    |
+| Volunteer spec       | `/docs/features/volunteer/vision.md`                        |
+| **Volunteer Events** | `/docs/features/volunteer/volunteer-events-feature-spec.md` |
+| **Events Impl Plan** | `/docs/features/volunteer/events-implementation-plan.md`    |
+| Integrations spec    | `/docs/features/integrations/vision.md`                     |
 
 ---
 

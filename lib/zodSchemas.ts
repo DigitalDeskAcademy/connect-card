@@ -444,3 +444,137 @@ export type DeletePrayerRequestSchemaType = z.infer<
   typeof deletePrayerRequestSchema
 >;
 export type TogglePrivacySchemaType = z.infer<typeof togglePrivacySchema>;
+
+// ============================================================================
+// VOLUNTEER EVENTS SCHEMAS
+// ============================================================================
+
+// Event type enum (for categorizing events)
+export const eventTypes = [
+  "SUNDAY_SERVICE",
+  "MIDWEEK_SERVICE",
+  "YOUTH",
+  "KIDS",
+  "OUTREACH",
+  "SPECIAL_EVENT",
+  "HOLIDAY",
+  "OTHER",
+] as const;
+
+// Event lifecycle status enum
+export const eventStatuses = [
+  "DRAFT",
+  "PUBLISHED",
+  "IN_PROGRESS",
+  "COMPLETED",
+  "ARCHIVED",
+  "CANCELLED",
+] as const;
+
+// Assignment status enum (SMS invite flow)
+export const assignmentStatuses = [
+  "ASSIGNED",
+  "INVITED",
+  "CONFIRMED",
+  "DECLINED",
+  "NO_RESPONSE",
+  "ATTENDED",
+  "NO_SHOW",
+] as const;
+
+// Volunteer pool scope options
+export const volunteerPoolScopes = ["location", "all"] as const;
+
+// Event session schema (time slot within an event)
+export const eventSessionSchema = z.object({
+  id: z.string().cuid().optional(), // Optional for new sessions
+  date: z.coerce.date({ message: "Session date is required" }),
+  startTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, { message: "Start time must be HH:mm format" }),
+  endTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, { message: "End time must be HH:mm format" }),
+  slotsNeeded: z.coerce
+    .number()
+    .int({ message: "Must be a whole number" })
+    .min(1, { message: "At least 1 volunteer needed" })
+    .max(100, { message: "Maximum 100 volunteers per session" }),
+});
+
+// Create/update event schema
+export const eventSchema = z.object({
+  name: z
+    .string()
+    .min(1, { message: "Event name is required" })
+    .max(100, { message: "Event name must be at most 100 characters" }),
+  description: z
+    .string()
+    .max(500, { message: "Description must be at most 500 characters" })
+    .nullable()
+    .optional(),
+  eventType: z
+    .enum(eventTypes, { message: "Invalid event type" })
+    .default("OTHER"),
+  locationId: z
+    .string()
+    .cuid({ message: "Invalid location ID" })
+    .nullable()
+    .optional(),
+  category: z
+    .enum(volunteerCategoryTypes, { message: "Invalid category" })
+    .nullable()
+    .optional(),
+  leaderId: z.string().min(1, { message: "Event leader is required" }),
+  requiresBackgroundCheck: z.boolean().default(false),
+  volunteerPoolScope: z
+    .enum(volunteerPoolScopes, { message: "Invalid pool scope" })
+    .default("location"),
+  inviteMessage: z
+    .string()
+    .max(160, { message: "SMS invite must be at most 160 characters" })
+    .nullable()
+    .optional(),
+  confirmationMessage: z
+    .string()
+    .max(160, { message: "SMS confirmation must be at most 160 characters" })
+    .nullable()
+    .optional(),
+  sessions: z
+    .array(eventSessionSchema)
+    .min(1, { message: "At least one session is required" }),
+});
+
+// Update event schema (allows partial updates)
+export const updateEventSchema = eventSchema.partial().extend({
+  id: z.string().cuid({ message: "Invalid event ID" }),
+});
+
+// Publish event schema
+export const publishEventSchema = z.object({
+  id: z.string().cuid({ message: "Invalid event ID" }),
+});
+
+// Cancel event schema
+export const cancelEventSchema = z.object({
+  id: z.string().cuid({ message: "Invalid event ID" }),
+  notifyVolunteers: z.boolean().default(true),
+});
+
+// Delete event schema (only DRAFT events)
+export const deleteEventSchema = z.object({
+  id: z.string().cuid({ message: "Invalid event ID" }),
+});
+
+// Export types
+// Input types (for form handling - fields with defaults are optional)
+export type EventSessionInput = z.input<typeof eventSessionSchema>;
+export type EventSchemaInput = z.input<typeof eventSchema>;
+
+// Output types (after parsing - defaults are applied)
+export type EventSessionSchemaType = z.infer<typeof eventSessionSchema>;
+export type EventSchemaType = z.infer<typeof eventSchema>;
+export type UpdateEventSchemaType = z.infer<typeof updateEventSchema>;
+export type PublishEventSchemaType = z.infer<typeof publishEventSchema>;
+export type CancelEventSchemaType = z.infer<typeof cancelEventSchema>;
+export type DeleteEventSchemaType = z.infer<typeof deleteEventSchema>;
