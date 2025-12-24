@@ -158,6 +158,13 @@ export async function POST(nextRequest: NextRequest) {
     const frontImageHash = calculateImageHash(frontImage);
     const backImageHash = backImage ? calculateImageHash(backImage) : null;
 
+    console.log(
+      "[DEBUG SERVER EXTRACT] Front image base64 length:",
+      frontImage.length
+    );
+    console.log("[DEBUG SERVER EXTRACT] Front image hash:", frontImageHash);
+    console.log("[DEBUG SERVER EXTRACT] Organization ID:", organizationId);
+
     // 6. Check for duplicate image in database (check front image hash)
     const existingCard = await prisma.connectCard.findFirst({
       where: {
@@ -172,6 +179,18 @@ export async function POST(nextRequest: NextRequest) {
         status: true,
       },
     });
+
+    console.log(
+      "[DEBUG SERVER EXTRACT] Existing card found:",
+      existingCard ? "YES" : "NO"
+    );
+    if (existingCard) {
+      console.log("[DEBUG SERVER EXTRACT] Matching card ID:", existingCard.id);
+      console.log(
+        "[DEBUG SERVER EXTRACT] Matching card scannedAt:",
+        existingCard.scannedAt
+      );
+    }
 
     if (existingCard) {
       return NextResponse.json(

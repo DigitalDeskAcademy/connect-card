@@ -23,7 +23,7 @@ import { PageContainer } from "@/components/layout/page-container";
 import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { ScanWizardClient } from "./scan-wizard-client";
-import { TokenExpiredError } from "./_components/token-expired-error";
+import { TokenExpiredError } from "@/components/dashboard/connect-cards/scan";
 
 interface PageProps {
   params: Promise<{ slug: string }>;

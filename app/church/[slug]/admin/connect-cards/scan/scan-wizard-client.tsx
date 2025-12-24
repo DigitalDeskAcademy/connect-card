@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useTransition, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -28,24 +28,15 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 import { useCamera } from "@/hooks/use-camera";
-import { saveConnectCard } from "@/actions/connect-card/save-connect-card";
-import { getActiveBatchAction } from "@/actions/connect-card/batch-actions";
-
-// Type for extracted connect card data (matches Zod schema)
-interface ExtractedData {
-  name: string | null;
-  email: string | null;
-  phone: string | null;
-  prayer_request: string | null;
-  visit_status?: string | null;
-  first_time_visitor?: boolean | null;
-  interests: string[] | null;
-  keywords: string[] | null;
-  address: string | null;
-  age_group: string | null;
-  family_info: string | null;
-  additional_notes: string | null;
-}
+import {
+  useAsyncCardProcessor,
+  CapturedImage,
+} from "@/hooks/use-async-card-processor";
+import {
+  ProcessingStatsDisplay,
+  QueueDrawer,
+  SessionRecoveryDialog,
+} from "@/components/dashboard/connect-cards/scan";
 
 // Wizard steps - simplified for continuous scanning
 type WizardStep =
@@ -56,29 +47,6 @@ type WizardStep =
   | "preview-back"; // Review back capture (2-sided only)
 
 type CardType = "single" | "double";
-
-interface CapturedImage {
-  blob: Blob;
-  dataUrl: string;
-  file?: File;
-}
-
-// Queue item for background processing
-type QueueStatus =
-  | "pending"
-  | "uploading"
-  | "extracting"
-  | "saving"
-  | "complete"
-  | "failed";
-
-interface QueuedCard {
-  id: string;
-  frontImage: CapturedImage;
-  backImage: CapturedImage | null;
-  status: QueueStatus;
-  error?: string;
-}
 
 interface Location {
   id: string;
@@ -93,15 +61,41 @@ interface ScanWizardClientProps {
   scanToken?: string; // Token from QR code scan (for phone auth)
 }
 
-// Session storage key for persistence
-const SESSION_KEY = "connect-card-scan-session";
+// Session storage key for setup preferences
+const SETUP_SESSION_KEY = "connect-card-scan-setup";
 
-interface ScanSession {
+interface SetupSession {
   cardType: CardType;
   locationId: string;
-  cardsScanned: number;
-  batchId?: string;
-  batchName?: string;
+}
+
+// Helper to get initial setup from sessionStorage (client-side only)
+function getInitialSetup(
+  defaultLocationId: string | null,
+  firstLocationId: string
+): { cardType: CardType; locationId: string } {
+  if (typeof window === "undefined") {
+    return {
+      cardType: "single",
+      locationId: defaultLocationId || firstLocationId,
+    };
+  }
+  try {
+    const saved = sessionStorage.getItem(SETUP_SESSION_KEY);
+    if (saved) {
+      const setup: SetupSession = JSON.parse(saved);
+      return {
+        cardType: setup.cardType || "single",
+        locationId: setup.locationId || defaultLocationId || firstLocationId,
+      };
+    }
+  } catch {
+    // Invalid session, use defaults
+  }
+  return {
+    cardType: "single",
+    locationId: defaultLocationId || firstLocationId,
+  };
 }
 
 export function ScanWizardClient({
@@ -111,29 +105,44 @@ export function ScanWizardClient({
   scanToken,
 }: ScanWizardClientProps) {
   const router = useRouter();
-  const [, startTransition] = useTransition();
 
-  // Wizard state
-  const [step, setStep] = useState<WizardStep>("setup");
-  const [cardType, setCardType] = useState<CardType>("single");
-  const [locationId, setLocationId] = useState<string>(
-    defaultLocationId || locations[0]?.id || ""
+  // Get initial values (only runs once on mount)
+  const initialSetup = getInitialSetup(
+    defaultLocationId,
+    locations[0]?.id || ""
   );
+
+  // Wizard state - initialized from sessionStorage
+  const [step, setStep] = useState<WizardStep>("setup");
+  const [cardType, setCardType] = useState<CardType>(initialSetup.cardType);
+  const [locationId, setLocationId] = useState<string>(initialSetup.locationId);
 
   // Captured images (current card being captured)
   const [frontImage, setFrontImage] = useState<CapturedImage | null>(null);
   const [backImage, setBackImage] = useState<CapturedImage | null>(null);
 
-  // Background processing queue
-  const [queue, setQueue] = useState<QueuedCard[]>([]);
-  const processingRef = useRef(false); // Lock to prevent concurrent processing
+  // Queue drawer state
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Session tracking
-  const [cardsScanned, setCardsScanned] = useState(0);
-  const [activeBatch, setActiveBatch] = useState<{
-    id: string;
-    name: string;
-  } | null>(null);
+  // Async card processor hook
+  const processor = useAsyncCardProcessor({
+    slug,
+    locationId,
+    onCardComplete: () => {
+      // Card completed - could track for analytics
+    },
+    onFailure: (itemId, error) => {
+      // Show toast on failure
+      const itemIndex = processor.items.findIndex(i => i.id === itemId);
+      toast.error(`Card #${itemIndex + 1} failed`, {
+        description: error,
+        action: {
+          label: "Retry",
+          onClick: () => processor.retryCard(itemId),
+        },
+      });
+    },
+  });
 
   // Camera hook
   const {
@@ -147,7 +156,6 @@ export function ScanWizardClient({
   } = useCamera();
 
   // Create scan session cookie on mount (for phone QR code flow)
-  // This enables subsequent API calls to authenticate via cookie
   useEffect(() => {
     if (!scanToken) return;
 
@@ -158,59 +166,19 @@ export function ScanWizardClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: scanToken, slug }),
         });
-        // Cookie is now set - API calls will work
       } catch {
         // Session creation failed - API calls may fail
-        // but page is already loaded so don't block
       }
     };
 
     createSession();
   }, [scanToken, slug]);
 
-  // Restore session from storage on mount
-  useEffect(() => {
-    const savedSession = sessionStorage.getItem(SESSION_KEY);
-    if (savedSession) {
-      try {
-        const session: ScanSession = JSON.parse(savedSession);
-        setCardType(session.cardType);
-        setLocationId(session.locationId);
-        setCardsScanned(session.cardsScanned);
-        if (session.batchId && session.batchName) {
-          setActiveBatch({ id: session.batchId, name: session.batchName });
-        }
-      } catch {
-        // Invalid session, ignore
-      }
-    }
-  }, []);
-
-  // Save session to storage
-  const saveSession = useCallback(() => {
-    const session: ScanSession = {
-      cardType,
-      locationId,
-      cardsScanned,
-      batchId: activeBatch?.id,
-      batchName: activeBatch?.name,
-    };
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-  }, [cardType, locationId, cardsScanned, activeBatch]);
-
-  // Save session when relevant state changes
-  useEffect(() => {
-    if (step !== "setup") {
-      saveSession();
-    }
-  }, [cardsScanned, activeBatch, saveSession, step]);
-
-  // Clear session
-  const clearSession = useCallback(() => {
-    sessionStorage.removeItem(SESSION_KEY);
-    setCardsScanned(0);
-    setActiveBatch(null);
-  }, []);
+  // Save setup preferences when they change
+  const saveSetupPreferences = useCallback(() => {
+    const setup: SetupSession = { cardType, locationId };
+    sessionStorage.setItem(SETUP_SESSION_KEY, JSON.stringify(setup));
+  }, [cardType, locationId]);
 
   // Start camera when entering capture step
   useEffect(() => {
@@ -227,7 +195,6 @@ export function ScanWizardClient({
 
   // Handle capture button press - crops to card alignment guide
   const handleCapture = async () => {
-    // Capture image from camera
     const result = await captureImage(true);
     if (!result) {
       toast.error("Failed to capture image");
@@ -254,7 +221,7 @@ export function ScanWizardClient({
     }
   };
 
-  // Handle accept - add to queue and continue scanning
+  // Handle accept - add to processing queue and continue scanning
   const handleAccept = () => {
     if (step === "preview-front") {
       if (cardType === "double") {
@@ -270,16 +237,9 @@ export function ScanWizardClient({
     }
   };
 
-  // Add card to processing queue
+  // Add card to async processing queue
   const addToQueue = (front: CapturedImage, back: CapturedImage | null) => {
-    const newItem: QueuedCard = {
-      id: crypto.randomUUID(),
-      frontImage: front,
-      backImage: back,
-      status: "pending",
-    };
-    setQueue(prev => [...prev, newItem]);
-    setCardsScanned(prev => prev + 1);
+    processor.addCard(front, back);
 
     // Reset for next card
     setFrontImage(null);
@@ -288,253 +248,62 @@ export function ScanWizardClient({
     toast.success("Card queued - keep scanning!");
   };
 
-  // Update queue item status
-  const updateQueueItem = useCallback(
-    (id: string, updates: Partial<QueuedCard>) => {
-      setQueue(prev =>
-        prev.map(item => (item.id === id ? { ...item, ...updates } : item))
-      );
-    },
-    []
-  );
-
-  // Process a single queue item
-  const processQueueItem = useCallback(
-    async (item: QueuedCard) => {
-      try {
-        // Step 1: Upload front image
-        updateQueueItem(item.id, { status: "uploading" });
-        const frontKey = await uploadImage(item.frontImage.blob, "front");
-        if (!frontKey) throw new Error("Failed to upload front image");
-
-        // Step 2: Upload back image if exists
-        let backKey: string | null = null;
-        if (item.backImage) {
-          backKey = await uploadImage(item.backImage.blob, "back");
-          if (!backKey) throw new Error("Failed to upload back image");
-        }
-
-        // Step 3: Extract data with Claude Vision
-        updateQueueItem(item.id, { status: "extracting" });
-        const { extractedData, frontImageHash, backImageHash } =
-          await extractData(item.frontImage.blob, item.backImage?.blob || null);
-
-        // Step 4: Save to database
-        updateQueueItem(item.id, { status: "saving" });
-        const saveResult = await saveConnectCard(
-          slug,
-          {
-            imageKey: frontKey,
-            imageHash: frontImageHash,
-            backImageKey: backKey,
-            backImageHash: backImageHash,
-            extractedData,
-          },
-          locationId
-        );
-
-        if (saveResult.status !== "success") {
-          throw new Error(saveResult.message || "Failed to save card");
-        }
-
-        // Update batch info on first success
-        if (!activeBatch) {
-          startTransition(async () => {
-            const batchResult = await getActiveBatchAction(slug);
-            if (batchResult.status === "success" && batchResult.data) {
-              setActiveBatch(batchResult.data);
-            }
-          });
-        }
-
-        // Success!
-        updateQueueItem(item.id, { status: "complete" });
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Processing failed";
-        updateQueueItem(item.id, { status: "failed", error: message });
-      }
-    },
-    [slug, locationId, activeBatch, startTransition, updateQueueItem]
-  );
-
-  // Background queue processor
-  useEffect(() => {
-    const processNext = async () => {
-      // Don't start if already processing
-      if (processingRef.current) return;
-
-      // Find next pending item
-      const pendingItem = queue.find(item => item.status === "pending");
-      if (!pendingItem) return;
-
-      // Lock and process
-      processingRef.current = true;
-      await processQueueItem(pendingItem);
-      processingRef.current = false;
-    };
-
-    processNext();
-  }, [queue, processQueueItem]);
-
-  // Retry a failed card (used by retry button in queue list)
-  const retryCard = useCallback(
-    (id: string) => {
-      updateQueueItem(id, { status: "pending", error: undefined });
-    },
-    [updateQueueItem]
-  );
-
-  // Remove a failed card from queue (used by remove button in queue list)
-  const removeFromQueue = useCallback((id: string) => {
-    setQueue(prev => prev.filter(item => item.id !== id));
-  }, []);
-
-  // Expose retry/remove for future UI use
-  void retryCard;
-  void removeFromQueue;
-
-  // Upload image to S3
-  const uploadImage = async (
-    blob: Blob,
-    side: "front" | "back"
-  ): Promise<string | null> => {
-    try {
-      const fileName = `connect-card-${side}-${Date.now()}.jpg`;
-
-      const presignedResponse = await fetch("/api/s3/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fileName,
-          contentType: "image/jpeg",
-          size: blob.size,
-          isImage: true,
-          fileType: "connect-card", // Use connect-card type for proper S3 organization
-          organizationSlug: slug,
-          cardSide: side, // front or back for two-sided cards
-        }),
-      });
-
-      if (!presignedResponse.ok) {
-        throw new Error("Failed to get presigned URL");
-      }
-
-      const { presignedUrl, key } = await presignedResponse.json();
-
-      const uploadResponse = await fetch(presignedUrl, {
-        method: "PUT",
-        headers: { "Content-Type": "image/jpeg" },
-        body: blob,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload to S3");
-      }
-
-      return key;
-    } catch {
-      return null;
-    }
+  // Start scanning - save preferences and move to camera
+  const handleStartScanning = () => {
+    saveSetupPreferences();
+    setStep("capture-front");
   };
-
-  // Extract data using Claude Vision API
-  const extractData = async (
-    frontBlob: Blob,
-    backBlob: Blob | null
-  ): Promise<{
-    extractedData: ExtractedData;
-    frontImageHash: string;
-    backImageHash: string | null;
-  }> => {
-    // Convert blobs to base64
-    const frontBase64 = await blobToBase64(frontBlob);
-    const backBase64 = backBlob ? await blobToBase64(backBlob) : null;
-
-    const requestBody: Record<string, unknown> = {
-      organizationSlug: slug,
-    };
-
-    if (backBase64) {
-      // Two-sided format
-      requestBody.frontImageData = frontBase64;
-      requestBody.frontMediaType = "image/jpeg";
-      requestBody.backImageData = backBase64;
-      requestBody.backMediaType = "image/jpeg";
-    } else {
-      // Single-sided format (backward compatible)
-      requestBody.imageData = frontBase64;
-      requestBody.mediaType = "image/jpeg";
-    }
-
-    const response = await fetch("/api/connect-cards/extract", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
-
-    const result = await response.json();
-
-    if (response.status === 409 && result.duplicate) {
-      throw new Error(result.message || "Duplicate image detected");
-    }
-
-    if (!response.ok) {
-      throw new Error(result.error || "Extraction failed");
-    }
-
-    return {
-      extractedData: result.data,
-      frontImageHash: result.imageHash,
-      backImageHash: result.backImageHash || null,
-    };
-  };
-
-  // Helper: Blob to base64
-  const blobToBase64 = (blob: Blob): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Remove data URL prefix
-        const base64 = result.split(",")[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  };
-
-  // Computed queue stats
-  const queueStats = {
-    pending: queue.filter(q => q.status === "pending").length,
-    processing: queue.filter(q =>
-      ["uploading", "extracting", "saving"].includes(q.status)
-    ).length,
-    complete: queue.filter(q => q.status === "complete").length,
-    failed: queue.filter(q => q.status === "failed").length,
-    total: queue.length,
-  };
-
-  // For future use: show failed cards with retry option
-  const _failedCards = queue.filter(q => q.status === "failed");
-  void _failedCards;
 
   // Finish batch and go to review
   const handleFinishBatch = () => {
-    clearSession();
-    if (activeBatch) {
+    if (processor.batchInfo) {
       router.push(
-        `/church/${slug}/admin/connect-cards/review/${activeBatch.id}`
+        `/church/${slug}/admin/connect-cards/review/${processor.batchInfo.id}`
       );
     } else {
       router.push(`/church/${slug}/admin/connect-cards`);
     }
   };
 
+  // Handle session recovery
+  const handleResumeSession = () => {
+    processor.resumeSession();
+    // Go directly to capture mode after resuming
+    setStep("capture-front");
+  };
+
+  const handleDiscardSession = () => {
+    processor.discardSession();
+  };
+
+  // Computed values
+  const canFinish =
+    processor.stats.total > 0 &&
+    !processor.isProcessing &&
+    processor.stats.queued === 0;
+  const allComplete =
+    processor.stats.total > 0 &&
+    processor.stats.complete === processor.stats.total;
+
   // Render based on current step
   return (
     <div className="flex flex-col min-h-[calc(100vh-12rem)]">
+      {/* Session recovery dialog */}
+      <SessionRecoveryDialog
+        isOpen={processor.hasPendingSession}
+        onResume={handleResumeSession}
+        onDiscard={handleDiscardSession}
+      />
+
+      {/* Queue drawer */}
+      <QueueDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        items={processor.items}
+        onRetry={processor.retryCard}
+        onRemove={processor.removeCard}
+      />
+
       {/* Main content area */}
       <div className="flex-1 flex flex-col">
         {/* SETUP STEP */}
@@ -609,18 +378,18 @@ export function ScanWizardClient({
               <Button
                 size="lg"
                 className="w-full mt-6"
-                onClick={() => setStep("capture-front")}
+                onClick={handleStartScanning}
               >
                 <Camera className="mr-2 h-5 w-5" />
                 Start Scanning
               </Button>
 
-              {/* Resume indicator */}
-              {cardsScanned > 0 && activeBatch && (
+              {/* Resume indicator (if has batch info from previous session) */}
+              {processor.batchInfo && (
                 <Alert>
                   <AlertDescription className="text-sm">
-                    Resuming session: {cardsScanned} cards in &quot;
-                    {activeBatch.name}&quot;
+                    Resuming batch: &quot;{processor.batchInfo.name}&quot; (
+                    {processor.stats.complete} cards complete)
                   </AlertDescription>
                 </Alert>
               )}
@@ -679,7 +448,7 @@ export function ScanWizardClient({
             {/* Live viewfinder */}
             {cameraState.isSupported && !cameraState.error && (
               <>
-                {/* Header row with back button, card indicator, and review button */}
+                {/* Header row with back button, card indicator, stats, and done button */}
                 <div className="flex items-center justify-between px-4 mb-4">
                   <Button variant="outline" size="sm" asChild>
                     <Link href={`/church/${slug}/admin/connect-cards`}>
@@ -689,26 +458,35 @@ export function ScanWizardClient({
                   </Button>
 
                   {/* Center: Current card indicator */}
-                  <div className="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium">
-                    {queue.length > 0
-                      ? `Card #${queue.length + 1}`
-                      : step === "capture-front"
-                        ? cardType === "double"
-                          ? "Front of Card"
-                          : "Capture Card"
-                        : "Back of Card"}
+                  <div className="flex items-center gap-3">
+                    <div className="bg-primary text-primary-foreground px-4 py-1.5 rounded-full text-sm font-medium">
+                      {processor.stats.total > 0
+                        ? `Card #${processor.stats.total + 1}`
+                        : step === "capture-front"
+                          ? cardType === "double"
+                            ? "Front of Card"
+                            : "Capture Card"
+                          : "Back of Card"}
+                    </div>
+
+                    {/* Compact stats - tappable to open drawer */}
+                    <ProcessingStatsDisplay
+                      stats={processor.stats}
+                      isProcessing={processor.isProcessing}
+                      onClick={() => setIsDrawerOpen(true)}
+                    />
                   </div>
 
-                  {/* Right: Review Batch button */}
-                  {queue.length > 0 ? (
+                  {/* Right: Done button */}
+                  {processor.stats.total > 0 ? (
                     <Button
                       size="sm"
                       onClick={handleFinishBatch}
-                      disabled={
-                        queueStats.processing > 0 || queueStats.pending > 0
-                      }
+                      disabled={!canFinish}
+                      variant={allComplete ? "default" : "outline"}
+                      className={allComplete ? "animate-pulse" : ""}
                     >
-                      Review Batch
+                      {allComplete ? "Review Batch" : "Done"}
                     </Button>
                   ) : (
                     <div className="w-24" />
@@ -823,42 +601,6 @@ export function ScanWizardClient({
             </div>
           </div>
         )}
-
-        {/* QUEUE LIST - Shows all cards with status */}
-        {queue.length > 0 &&
-          (step === "capture-front" || step === "capture-back") && (
-            <div className="bg-muted/50 border-t px-4 py-3 max-h-48 overflow-y-auto">
-              <div className="max-w-md mx-auto space-y-1">
-                {/* Card list - simple one line per card */}
-                {queue.map((card, index) => (
-                  <div
-                    key={card.id}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span>Card #{index + 1}</span>
-                    <span
-                      className={
-                        card.status === "complete"
-                          ? "text-green-600"
-                          : card.status === "failed"
-                            ? "text-destructive"
-                            : card.status === "pending"
-                              ? "text-muted-foreground"
-                              : "text-primary"
-                      }
-                    >
-                      {card.status === "complete" && "Uploaded"}
-                      {card.status === "failed" && "Failed"}
-                      {card.status === "pending" && "Queued"}
-                      {card.status === "uploading" && "Uploading..."}
-                      {card.status === "extracting" && "Analyzing..."}
-                      {card.status === "saving" && "Saving..."}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
       </div>
     </div>
   );

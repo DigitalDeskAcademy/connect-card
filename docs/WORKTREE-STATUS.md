@@ -216,6 +216,12 @@ When staff scan 25-50 cards, they currently wait for the entire batch to upload/
 | Multi-tenant isolation tests               | [x]    |
 | CI/CD integration                          | [ ]    |
 
+**Tech Debt (handle with test updates):**
+
+| Task                           | Notes                                                                                        |
+| ------------------------------ | -------------------------------------------------------------------------------------------- |
+| Rename `admin/` → `dashboard/` | Misleading name - any staff can access, not just admins. Update all paths, links, and tests. |
+
 **Test Credentials:**
 
 - `test@playwright.dev` (church owner)
