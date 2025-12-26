@@ -1,9 +1,9 @@
 # Worktree Project Dashboard
 
 **Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-22
+**Last Updated:** 2025-12-25
 **Next Customer Meeting:** January 2026
-**Latest PR:** #83 - Phone wizard UX enhancements (Dec 21)
+**Latest PR:** #89 - Events UI with toolbar, filtering, and card views (Dec 24)
 
 ---
 
@@ -43,15 +43,18 @@
 
 ## 🚦 Worktree Status
 
-| Worktree         | Color     | Branch                         | Status    | Focus                            |
-| ---------------- | --------- | ------------------------------ | --------- | -------------------------------- |
-| **main**         | 🔴 Red    | `feature/production-deploy`    | 📋 PM     | Project management (no building) |
-| **integrations** | ⬜ Grey   | `feature/integrations`         | 🔨 Active | Planning Center / ChMS API sync  |
-| **connect-card** | 🟣 Purple | `feature/connect-card`         | 🔨 Active | Fine-tuning MVP                  |
-| **tech-debt**    | 🟡 Yellow | `feature/tech-debt`            | 🔨 Active | Keyword detection                |
-| **e2e**          | 🔵 Cyan   | `feature/e2e`                  | 🔨 Active | Playwright tests                 |
-| **volunteer**    | 🟢 Green  | `feature/volunteer-management` | 🔨 Active | Event tracking                   |
-| **prayer**       | 🔵 Blue   | `feature/prayer-enhancements`  | ⏸️ Paused | Deprioritized                    |
+> **Note:** Only `main`, `connect-card`, and `volunteer` worktrees are active on the travel laptop.
+> Other worktrees (`integrations`, `tech-debt`, `e2e`, `prayer`) exist on the desktop setup.
+
+| Worktree         | Color     | Branch                         | Status     | Focus                            |
+| ---------------- | --------- | ------------------------------ | ---------- | -------------------------------- |
+| **main**         | 🔴 Red    | `main`                         | 📋 PM      | Project management (no building) |
+| **connect-card** | 🟣 Purple | `feature/connect-card`         | 🔨 Active  | Async processing, deduplication  |
+| **volunteer**    | 🟢 Green  | `feature/volunteer-management` | 🔨 Active  | Events Phase 2 (Assignment)      |
+| **integrations** | ⬜ Grey   | `feature/integrations`         | 💻 Desktop | Planning Center / ChMS API sync  |
+| **tech-debt**    | 🟡 Yellow | `feature/tech-debt`            | 💻 Desktop | Keyword detection (complete)     |
+| **e2e**          | 🔵 Cyan   | `feature/e2e`                  | 💻 Desktop | Playwright tests (complete)      |
+| **prayer**       | 🔵 Blue   | `feature/prayer-enhancements`  | ⏸️ Paused  | Deprioritized                    |
 
 ---
 
@@ -61,7 +64,7 @@
 
 ### 📋 main - Project Management
 
-**Branch:** `feature/production-deploy`
+**Branch:** `main`
 **Role:** Coordination only - NO feature building
 
 **Responsibilities:**
@@ -109,11 +112,20 @@
 ### 🟣 connect-card - MVP Fine-Tuning
 
 **Branch:** `feature/connect-card`
-**Focus:** Polish the core connect card experience
+**Focus:** Async processing and deduplication enhancements
+
+**Open PR:**
+
+- 🔄 PR #90 - Async card processing with background queue (awaiting review)
+  - Cards process in background while staff continues scanning
+  - Real-time progress stats display
+  - Queue drawer showing all card statuses
+  - Session recovery for interrupted scans
 
 **Recently Completed:**
 
-- ✅ PR #83 - Phone wizard UX enhancements (Dec 21)
+- ✅ PR #84 - Two-sided card extraction + dev test page (Dec 22)
+- ✅ PR #83 - Phone wizard UX enhancements (Dec 22)
   - Progress header showing card count during scanning
   - Any team member can scan (removed admin restriction)
   - Card type syncs from QR modal to phone
@@ -121,17 +133,18 @@
 
 **What to Build:**
 
-| Task                                       | Status |
-| ------------------------------------------ | ------ |
-| Deduplication enhancement (fuzzy matching) | [ ]    |
-| Shared email detection (couples)           | [ ]    |
-| "Merge with existing" vs "Create new" UI   | [ ]    |
-| Upload UX improvements for non-tech staff  | [x]    |
-| Better progress feedback during processing | [x]    |
+| Task                                       | Status     |
+| ------------------------------------------ | ---------- |
+| Async scan processing (background queue)   | [x] PR #90 |
+| Two-sided card extraction                  | [x]        |
+| Deduplication enhancement (fuzzy matching) | [ ]        |
+| Shared email detection (couples)           | [ ]        |
+| "Merge with existing" vs "Create new" UI   | [ ]        |
+| Upload UX improvements for non-tech staff  | [x]        |
+| Better progress feedback during processing | [x]        |
 
 **Wishlist:**
 
-- [ ] Async scan processing - Upload to S3 as cards are captured, process in background (no wait at end)
 - [ ] Bulk re-process failed cards
 - [ ] Card template customization
 - [ ] Multi-language support
@@ -209,30 +222,38 @@
 **Spec:** `/docs/features/volunteer/volunteer-events-feature-spec.md`
 **Implementation Plan:** `/docs/features/volunteer/events-implementation-plan.md`
 
+**Recently Completed:**
+
+- ✅ PR #89 - Events UI with toolbar, filtering, and card views (Dec 24)
+  - Events list page with card-based layout
+  - Reusable Toolbar component (search, view toggle, filters)
+  - Event creation dialog with multi-session support
+  - Event detail page with assignment modal
+  - Date period filtering (Upcoming/Past/This Week/This Month)
+
 **Implementation Phases:**
 
 | Phase | Name                    | Description                                                | Status         |
 | ----- | ----------------------- | ---------------------------------------------------------- | -------------- |
-| 0     | Schema Preparation      | Add VolunteerEvent, EventSession, EventAssignment models   | 🔨 In Progress |
-| 1     | Core Event CRUD         | Create/edit/delete events, events list page                | [ ] Pending    |
-| 2     | Assignment System       | Direct assign + invite pool, volunteer selection modal     | [ ] Pending    |
+| 0     | Schema Preparation      | Add VolunteerEvent, EventSession, EventAssignment models   | ✅ Complete    |
+| 1     | Core Event CRUD         | Create/edit/delete events, events list page                | ✅ Complete    |
+| 2     | Assignment System       | Direct assign + invite pool, volunteer selection modal     | 🔨 In Progress |
 | 3     | GHL SMS Automation      | Invite via SMS, parse YES/NO responses, auto-confirm       | [ ] Pending    |
 | 4     | Attendance Confirmation | Magic link for leader to confirm attendance                | [ ] Pending    |
 | 5     | Reliability Score       | Calculate & display volunteer reliability (attended/total) | [ ] Pending    |
 | 6     | Polish & Edge Cases     | Cancel flow, archive old events, filters, empty states     | [ ] Pending    |
 
-**Phase 0 Tasks (Current):**
+**Phase 2 Tasks (Current):**
 
-| Task                                | Status |
-| ----------------------------------- | ------ |
-| Add EventStatus enum                | [ ]    |
-| Add AssignmentStatus enum           | [ ]    |
-| Add VolunteerEvent model            | [ ]    |
-| Add EventSession model              | [ ]    |
-| Add EventAssignment model           | [ ]    |
-| Add AttendanceToken model           | [ ]    |
-| Add reliability fields to Volunteer | [ ]    |
-| Run prisma generate + db push       | [ ]    |
+| Task                            | Status |
+| ------------------------------- | ------ |
+| EventAssignment model           | [x]    |
+| Invite pool query (all filters) | [x]    |
+| Invite modal UI                 | [x]    |
+| Direct assign action            | [x]    |
+| Assignment status display       | [ ]    |
+| slotsFilled calculation         | [ ]    |
+| Send invite SMS action          | [ ]    |
 
 **Key Design Decisions:**
 
@@ -243,7 +264,7 @@
 
 **Previously Completed:**
 
-- ✅ Phase 2 MVP: Auto-send welcome email, BG check confirmation, review workflow
+- ✅ Volunteer onboarding MVP: Auto-send welcome email, BG check confirmation, review workflow
 - ✅ Volunteer CRUD, pipeline, export tracking
 - ✅ GHL integration for SMS/email automation
 
@@ -271,16 +292,21 @@
 ## 🔧 Quick Commands
 
 ```bash
-# Check all worktree status
+# Check all worktree status (laptop)
+for wt in main connect-card volunteer; do
+  echo "=== $wt ===" && cd /home/labadmin/church-connect-hub/$wt && git status -s
+done
+
+# Check all worktree status (desktop)
 for wt in main connect-card prayer volunteer tech-debt e2e integrations; do
   echo "=== $wt ===" && cd /home/digitaldesk/Desktop/church-connect-hub/$wt && git status -s
 done
 
 # Start any worktree
-cd /home/digitaldesk/Desktop/church-connect-hub/WORKTREE && pnpm dev
+cd /path/to/church-connect-hub/WORKTREE && pnpm dev
 
 # Sync worktree with main
-cd /home/digitaldesk/Desktop/church-connect-hub/WORKTREE && git fetch origin && git merge origin/main
+cd /path/to/church-connect-hub/WORKTREE && git fetch origin && git merge origin/main
 ```
 
 ---
