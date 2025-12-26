@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Scan Wizard v2 - Clean Implementation
+ * QR/Mobile Scan Wizard - Async Processing Implementation
  *
  * Flow:
  * 1. Setup - Select card type (1-sided/2-sided) and location
@@ -9,13 +9,13 @@
  * 3. Preview Front - Review, retake or accept
  * 4. Capture Back (if 2-sided) - Take photo of back
  * 5. Preview Back - Review, retake or accept
- * 6. Card complete - Add to queue, continue to next card
- * 7. Done - Upload all cards and process via Claude Vision
+ * 6. Card complete - Add to async queue (processes in background)
+ * 7. Continue scanning while earlier cards process
+ * 8. Done - Go to finish screen when ready
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -34,13 +34,19 @@ import {
   Square,
   Layers,
   MapPin,
-  Upload,
   Loader2,
-  CheckCircle2,
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useConnectCardUpload } from "@/hooks/use-connect-card-upload";
+import {
+  useAsyncCardProcessor,
+  CapturedImage,
+} from "@/hooks/use-async-card-processor";
+import {
+  ProcessingStatsDisplay,
+  QueueDrawer,
+  SessionRecoveryDialog,
+} from "@/components/dashboard/connect-cards/scan";
 
 interface ScanWizardClientProps {
   slug: string;
@@ -56,17 +62,9 @@ type WizardStep =
   | "preview-front"
   | "capture-back"
   | "preview-back"
-  | "submitting"
-  | "complete"
   | "finished";
 
 type CardType = "single" | "double";
-
-interface CapturedCard {
-  id: string;
-  frontImage: string;
-  backImage: string | null;
-}
 
 export function ScanWizardClient({
   slug,
@@ -76,12 +74,12 @@ export function ScanWizardClient({
   defaultCardType = "single",
 }: ScanWizardClientProps) {
   // Session state
-  const [sessionReady, setSessionReady] = useState(!scanToken); // Ready immediately if no token (logged in user)
+  const [sessionReady, setSessionReady] = useState(!scanToken);
   const [sessionError, setSessionError] = useState<string | null>(null);
 
   // Create scan session cookie when component mounts (for token-based auth)
   useEffect(() => {
-    if (!scanToken) return; // Skip if no token (already logged in)
+    if (!scanToken) return;
 
     const createSession = async () => {
       try {
@@ -113,21 +111,30 @@ export function ScanWizardClient({
     defaultLocationId || locations[0]?.id || ""
   );
 
-  // Current card being captured
-  const [frontImage, setFrontImage] = useState<string | null>(null);
-  const [backImage, setBackImage] = useState<string | null>(null);
+  // Current card being captured (store both dataUrl for preview and blob for upload)
+  const [frontImage, setFrontImage] = useState<CapturedImage | null>(null);
+  const [backImage, setBackImage] = useState<CapturedImage | null>(null);
 
-  // Queue of completed cards
-  const [capturedCards, setCapturedCards] = useState<CapturedCard[]>([]);
+  // Queue drawer state
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Upload hook
-  const {
-    uploadStates,
-    processCards,
-    reset: resetUpload,
-  } = useConnectCardUpload({
+  // Async card processor hook
+  const processor = useAsyncCardProcessor({
     slug,
     locationId,
+    onCardComplete: () => {
+      // Card completed - could track for analytics
+    },
+    onFailure: (itemId, error) => {
+      const itemIndex = processor.items.findIndex(i => i.id === itemId);
+      toast.error(`Card #${itemIndex + 1} failed`, {
+        description: error,
+        action: {
+          label: "Retry",
+          onClick: () => processor.retryCard(itemId),
+        },
+      });
+    },
   });
 
   // Camera state
@@ -146,7 +153,6 @@ export function ScanWizardClient({
       setIsLandscape(window.innerWidth > window.innerHeight);
     };
 
-    // Check if iOS (fullscreen not supported)
     const checkIOS = () => {
       const ua = navigator.userAgent;
       setIsIOS(
@@ -184,7 +190,7 @@ export function ScanWizardClient({
         setIsFullscreen(false);
       }
     } catch {
-      console.log("Fullscreen not supported");
+      // Fullscreen not supported
     }
   }, []);
 
@@ -243,20 +249,17 @@ export function ScanWizardClient({
     setIsStreaming(false);
   }, []);
 
-  // Switch camera - stops current stream, updates facing mode, restarts
+  // Switch camera
   const switchCamera = useCallback(async () => {
     const newFacingMode = facingMode === "environment" ? "user" : "environment";
     setFacingMode(newFacingMode);
 
-    // Restart camera with new facing mode if currently streaming
     if (isStreaming) {
       try {
-        // Stop current stream
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
         }
 
-        // Get new stream with new facing mode
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: newFacingMode,
@@ -291,11 +294,26 @@ export function ScanWizardClient({
     };
   }, []);
 
+  // Debug: Quick fingerprint of dataUrl for tracing
+  const getFingerprint = (dataUrl: string) => {
+    // Use a slice from the middle of the data (after header, into actual image data)
+    const start = dataUrl.indexOf(",") + 1000; // Skip base64 header + some data
+    return dataUrl.slice(start, start + 32);
+  };
+
   // Capture current frame - crops to visible area (WYSIWYG)
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
+
+    console.log("[DEBUG CAPTURE] Starting capture...");
+    console.log(
+      "[DEBUG CAPTURE] Video dimensions:",
+      video.videoWidth,
+      "x",
+      video.videoHeight
+    );
 
     // Get the display dimensions (what user sees)
     const displayWidth = video.clientWidth;
@@ -316,34 +334,57 @@ export function ScanWizardClient({
       sHeight = videoHeight;
 
     if (videoAspect > displayAspect) {
-      // Video is wider than display - crop horizontally
       sWidth = videoHeight * displayAspect;
       sx = (videoWidth - sWidth) / 2;
     } else {
-      // Video is taller than display - crop vertically
       sHeight = videoWidth / displayAspect;
       sy = (videoHeight - sHeight) / 2;
     }
 
-    // Set canvas to match the cropped dimensions (maintain quality)
     canvas.width = sWidth;
     canvas.height = sHeight;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw only the visible portion
     ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
 
-    const imageData = canvas.toDataURL("image/jpeg", 0.9);
+    // Get both dataUrl and blob
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
 
-    if (step === "capture-front") {
-      setFrontImage(imageData);
-      setStep("preview-front");
-    } else if (step === "capture-back") {
-      setBackImage(imageData);
-      setStep("preview-back");
-    }
+    // DEBUG: Log fingerprint of the captured image
+    const fingerprint = getFingerprint(dataUrl);
+    console.log("[DEBUG CAPTURE] DataUrl length:", dataUrl.length);
+    console.log("[DEBUG CAPTURE] Fingerprint (middle 32 chars):", fingerprint);
+    console.log("[DEBUG CAPTURE] Step:", step);
+
+    canvas.toBlob(
+      blob => {
+        if (!blob) {
+          toast.error("Failed to capture image");
+          return;
+        }
+
+        console.log("[DEBUG CAPTURE] Blob size:", blob.size, "bytes");
+
+        const capturedImage: CapturedImage = {
+          blob,
+          dataUrl,
+        };
+
+        if (step === "capture-front") {
+          console.log("[DEBUG CAPTURE] Setting as FRONT image");
+          setFrontImage(capturedImage);
+          setStep("preview-front");
+        } else if (step === "capture-back") {
+          console.log("[DEBUG CAPTURE] Setting as BACK image");
+          setBackImage(capturedImage);
+          setStep("preview-back");
+        }
+      },
+      "image/jpeg",
+      0.9
+    );
   }, [step]);
 
   // Start scanning (from setup)
@@ -355,32 +396,44 @@ export function ScanWizardClient({
   // Accept front image
   const acceptFront = useCallback(() => {
     if (cardType === "double") {
+      console.log("[DEBUG ACCEPT] Front accepted, moving to capture-back");
       setStep("capture-back");
     } else {
-      // Single-sided card complete - add to queue
-      const newCard: CapturedCard = {
-        id: crypto.randomUUID(),
-        frontImage: frontImage!,
-        backImage: null,
-      };
-      setCapturedCards(prev => [...prev, newCard]);
+      // Single-sided card complete - add to async queue
+      console.log("[DEBUG ACCEPT] Single-sided card - adding to processor");
+      console.log("[DEBUG ACCEPT] Front blob size:", frontImage?.blob.size);
+      console.log(
+        "[DEBUG ACCEPT] Front fingerprint:",
+        frontImage?.dataUrl ? getFingerprint(frontImage.dataUrl) : "N/A"
+      );
+      processor.addCard(frontImage!, null);
       setFrontImage(null);
-      setStep("capture-front"); // Continue scanning
+      setStep("capture-front");
+      toast.success("Card queued - keep scanning!");
     }
-  }, [cardType, frontImage]);
+  }, [cardType, frontImage, processor]);
 
   // Accept back image (card complete)
   const acceptBack = useCallback(() => {
-    const newCard: CapturedCard = {
-      id: crypto.randomUUID(),
-      frontImage: frontImage!,
-      backImage: backImage,
-    };
-    setCapturedCards(prev => [...prev, newCard]);
+    console.log(
+      "[DEBUG ACCEPT] Double-sided card complete - adding to processor"
+    );
+    console.log("[DEBUG ACCEPT] Front blob size:", frontImage?.blob.size);
+    console.log(
+      "[DEBUG ACCEPT] Front fingerprint:",
+      frontImage?.dataUrl ? getFingerprint(frontImage.dataUrl) : "N/A"
+    );
+    console.log("[DEBUG ACCEPT] Back blob size:", backImage?.blob.size);
+    console.log(
+      "[DEBUG ACCEPT] Back fingerprint:",
+      backImage?.dataUrl ? getFingerprint(backImage.dataUrl) : "N/A"
+    );
+    processor.addCard(frontImage!, backImage);
     setFrontImage(null);
     setBackImage(null);
-    setStep("capture-front"); // Continue scanning
-  }, [frontImage, backImage]);
+    setStep("capture-front");
+    toast.success("Card queued - keep scanning!");
+  }, [frontImage, backImage, processor]);
 
   // Retake current image
   const retake = useCallback(() => {
@@ -393,48 +446,45 @@ export function ScanWizardClient({
     }
   }, [step]);
 
-  // Submit all captured cards
-  const submitCards = useCallback(async () => {
-    if (capturedCards.length === 0) return;
-
+  // Finish scanning - stop camera and show completion
+  const finishScanning = useCallback(() => {
     stopCamera();
-    setStep("submitting");
-
-    const cardsToProcess = capturedCards.map(card => ({
-      id: card.id,
-      frontImage: card.frontImage,
-      backImage: card.backImage,
-    }));
-
-    const { successCount, errorCount } = await processCards(cardsToProcess);
-
-    setStep("complete");
-
-    if (successCount > 0) {
-      toast.success(
-        `${successCount} card${successCount !== 1 ? "s" : ""} uploaded successfully!`
-      );
-    }
-    if (errorCount > 0) {
-      toast.error(
-        `${errorCount} card${errorCount !== 1 ? "s" : ""} failed to upload`
-      );
-    }
-  }, [capturedCards, stopCamera, processCards]);
+    setStep("finished");
+  }, [stopCamera]);
 
   // Reset wizard to start over
   const resetWizard = useCallback(() => {
-    setCapturedCards([]);
+    processor.reset();
     setFrontImage(null);
     setBackImage(null);
-    resetUpload();
     setStep("setup");
-  }, [resetUpload]);
+  }, [processor]);
+
+  // Handle session recovery
+  const handleResumeSession = useCallback(() => {
+    processor.resumeSession();
+    setStep("capture-front");
+    startCamera();
+  }, [processor, startCamera]);
+
+  const handleDiscardSession = useCallback(() => {
+    processor.discardSession();
+  }, [processor]);
 
   // Get current preview image
-  const currentPreviewImage = step === "preview-front" ? frontImage : backImage;
+  const currentPreviewImage =
+    step === "preview-front" ? frontImage?.dataUrl : backImage?.dataUrl;
   const isCapturing = step === "capture-front" || step === "capture-back";
   const isPreviewing = step === "preview-front" || step === "preview-back";
+
+  // Can finish when all processing is done
+  const canFinish =
+    processor.stats.total > 0 &&
+    !processor.isProcessing &&
+    processor.stats.queued === 0;
+  const allComplete =
+    processor.stats.total > 0 &&
+    processor.stats.complete === processor.stats.total;
 
   // ========== RENDER ==========
 
@@ -468,6 +518,22 @@ export function ScanWizardClient({
   return (
     <div ref={containerRef} className="fixed inset-0 bg-black flex flex-col">
       <canvas ref={canvasRef} className="hidden" />
+
+      {/* Session recovery dialog */}
+      <SessionRecoveryDialog
+        isOpen={processor.hasPendingSession}
+        onResume={handleResumeSession}
+        onDiscard={handleDiscardSession}
+      />
+
+      {/* Queue drawer */}
+      <QueueDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        items={processor.items}
+        onRetry={processor.retryCard}
+        onRemove={processor.removeCard}
+      />
 
       {/* SETUP STEP */}
       {step === "setup" && (
@@ -523,17 +589,16 @@ export function ScanWizardClient({
               </Select>
             </div>
 
-            {/* Start Button - full width */}
+            {/* Start Button */}
             <Button size="lg" className="w-full" onClick={startScanning}>
               <Camera className="mr-2 h-5 w-5" />
               Start Scanning
             </Button>
 
-            {/* Show count if we have captured cards */}
-            {capturedCards.length > 0 && (
+            {/* Show batch info if resuming */}
+            {processor.batchInfo && (
               <p className="text-white/50 text-center text-sm">
-                {capturedCards.length} card
-                {capturedCards.length !== 1 ? "s" : ""} captured
+                Resuming: {processor.stats.complete} cards complete
               </p>
             )}
           </div>
@@ -543,37 +608,37 @@ export function ScanWizardClient({
       {/* CAMERA / PREVIEW VIEW */}
       {(isCapturing || isPreviewing) && (
         <div className={`flex-1 flex ${isLandscape ? "flex-row" : "flex-col"}`}>
-          {/* Header - shows card progress and which side */}
+          {/* Header - shows card progress, stats, and which side */}
           <div
-            className={`bg-black/80 p-3 flex items-center justify-center gap-3 ${
+            className={`bg-black/80 p-3 flex items-center justify-between ${
               isLandscape ? "hidden" : ""
             }`}
           >
-            {/* Card count */}
-            <span className="text-white text-sm font-medium">
-              Card {capturedCards.length + 1}
-            </span>
-
-            {capturedCards.length > 0 && (
-              <>
-                <span className="text-white/30">•</span>
-                <span className="text-white/60 text-sm">
-                  {capturedCards.length} done
-                </span>
-              </>
-            )}
-
-            <span className="text-white/30">|</span>
-
-            {/* Which side */}
-            <span className="text-white font-medium">
-              {step.includes("front") ? "Front" : "Back"}
-            </span>
-            {cardType === "double" && (
-              <span className="text-white/60 text-sm">
-                ({step.includes("front") ? "1" : "2"}/2)
+            <div className="flex items-center gap-3">
+              {/* Card count */}
+              <span className="text-white text-sm font-medium">
+                Card {processor.stats.total + 1}
               </span>
-            )}
+
+              <span className="text-white/30">|</span>
+
+              {/* Which side */}
+              <span className="text-white font-medium">
+                {step.includes("front") ? "Front" : "Back"}
+              </span>
+              {cardType === "double" && (
+                <span className="text-white/60 text-sm">
+                  ({step.includes("front") ? "1" : "2"}/2)
+                </span>
+              )}
+            </div>
+
+            {/* Compact stats - tappable to open drawer */}
+            <ProcessingStatsDisplay
+              stats={processor.stats}
+              isProcessing={processor.isProcessing}
+              onClick={() => setIsDrawerOpen(true)}
+            />
           </div>
 
           {/* Main view - takes most space */}
@@ -612,31 +677,30 @@ export function ScanWizardClient({
             )}
 
             {/* Landscape header overlay */}
-            {isLandscape && (
-              <div className="absolute top-0 left-0 right-0 bg-black/60 p-2 flex items-center justify-center gap-3">
-                <span className="text-white text-sm font-medium">
-                  Card {capturedCards.length + 1}
-                </span>
-
-                {capturedCards.length > 0 && (
-                  <>
-                    <span className="text-white/30">•</span>
-                    <span className="text-white/60 text-sm">
-                      {capturedCards.length} done
-                    </span>
-                  </>
-                )}
-
-                <span className="text-white/30">|</span>
-
-                <span className="text-white text-sm font-medium">
-                  {step.includes("front") ? "Front" : "Back"}
-                </span>
-                {cardType === "double" && (
-                  <span className="text-white/60 text-sm">
-                    ({step.includes("front") ? "1" : "2"}/2)
+            {isLandscape && (isCapturing || isPreviewing) && (
+              <div className="absolute top-0 left-0 right-0 bg-black/60 p-2 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-white text-sm font-medium">
+                    Card {processor.stats.total + 1}
                   </span>
-                )}
+
+                  <span className="text-white/30">|</span>
+
+                  <span className="text-white text-sm font-medium">
+                    {step.includes("front") ? "Front" : "Back"}
+                  </span>
+                  {cardType === "double" && (
+                    <span className="text-white/60 text-sm">
+                      ({step.includes("front") ? "1" : "2"}/2)
+                    </span>
+                  )}
+                </div>
+
+                <ProcessingStatsDisplay
+                  stats={processor.stats}
+                  isProcessing={processor.isProcessing}
+                  onClick={() => setIsDrawerOpen(true)}
+                />
               </div>
             )}
           </div>
@@ -681,15 +745,18 @@ export function ScanWizardClient({
               </button>
 
               {/* Done button - visible when cards are captured */}
-              {capturedCards.length > 0 ? (
+              {processor.stats.total > 0 ? (
                 <Button
                   size="sm"
-                  className={`gap-1 ${isLandscape ? "w-full" : ""}`}
-                  onClick={submitCards}
+                  className={`gap-1 ${isLandscape ? "w-full" : ""} ${
+                    allComplete ? "animate-pulse" : ""
+                  }`}
+                  onClick={finishScanning}
+                  disabled={!canFinish}
+                  variant={allComplete ? "default" : "secondary"}
                 >
-                  <Upload className="h-4 w-4" />
+                  <Check className="h-4 w-4" />
                   <span className={isLandscape ? "hidden" : ""}>Done</span>
-                  <span>({capturedCards.length})</span>
                 </Button>
               ) : (
                 <Button
@@ -745,118 +812,6 @@ export function ScanWizardClient({
         </div>
       )}
 
-      {/* SUBMITTING STEP */}
-      {step === "submitting" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <Loader2 className="h-12 w-12 text-white mb-4 animate-spin" />
-          <h1 className="text-xl font-semibold text-white mb-2">
-            Uploading Cards
-          </h1>
-          <p className="text-white/70 text-center mb-8">
-            Processing {capturedCards.length} card
-            {capturedCards.length !== 1 ? "s" : ""}...
-          </p>
-
-          <div className="w-full max-w-sm space-y-4">
-            {capturedCards.map(card => {
-              const state = uploadStates.get(card.id);
-              const status = state?.status || "pending";
-              const progress = state?.progress || 0;
-
-              return (
-                <div key={card.id} className="bg-white/10 rounded-lg p-3">
-                  <div className="flex items-center gap-3 mb-2">
-                    {status === "done" && (
-                      <CheckCircle2 className="h-5 w-5 text-green-400" />
-                    )}
-                    {status === "error" && (
-                      <AlertCircle className="h-5 w-5 text-red-400" />
-                    )}
-                    {status !== "done" && status !== "error" && (
-                      <Loader2 className="h-5 w-5 text-white animate-spin" />
-                    )}
-                    <span className="text-white text-sm flex-1">
-                      Card {capturedCards.indexOf(card) + 1}
-                    </span>
-                    <span className="text-white/60 text-xs capitalize">
-                      {status}
-                    </span>
-                  </div>
-                  <Progress value={progress} className="h-1" />
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* COMPLETE STEP */}
-      {step === "complete" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <CheckCircle2 className="h-16 w-16 text-green-400 mb-4" />
-          <h1 className="text-xl font-semibold text-white mb-2">
-            Upload Complete!
-          </h1>
-          <p className="text-white/70 text-center mb-8">
-            Your cards have been uploaded and are being processed.
-          </p>
-
-          <div className="w-full max-w-sm space-y-4">
-            {/* Summary */}
-            <div className="bg-white/10 rounded-lg p-4">
-              <div className="flex justify-between text-white mb-2">
-                <span>Total Cards</span>
-                <span>{capturedCards.length}</span>
-              </div>
-              <div className="flex justify-between text-green-400">
-                <span>Successful</span>
-                <span>
-                  {
-                    Array.from(uploadStates.values()).filter(
-                      s => s.status === "done"
-                    ).length
-                  }
-                </span>
-              </div>
-              {Array.from(uploadStates.values()).some(
-                s => s.status === "error"
-              ) && (
-                <div className="flex justify-between text-red-400">
-                  <span>Failed</span>
-                  <span>
-                    {
-                      Array.from(uploadStates.values()).filter(
-                        s => s.status === "error"
-                      ).length
-                    }
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                size="lg"
-                variant="outline"
-                className="flex-1 gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                onClick={resetWizard}
-              >
-                <Camera className="h-5 w-5" />
-                Scan More
-              </Button>
-              <Button
-                size="lg"
-                className="flex-1 gap-2"
-                onClick={() => setStep("finished")}
-              >
-                <Check className="h-5 w-5" />
-                Finished
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* FINISHED STEP - Session complete guidance */}
       {step === "finished" && (
         <div className="flex-1 flex flex-col items-center justify-center p-6">
@@ -865,7 +820,25 @@ export function ScanWizardClient({
           </div>
           <h1 className="text-xl font-semibold text-white mb-2">All Done!</h1>
 
+          {/* Summary */}
           <div className="w-full max-w-sm space-y-4 mt-4">
+            <div className="bg-white/10 rounded-lg p-4">
+              <div className="flex justify-between text-white mb-2">
+                <span>Total Cards</span>
+                <span>{processor.stats.total}</span>
+              </div>
+              <div className="flex justify-between text-green-400">
+                <span>Successful</span>
+                <span>{processor.stats.complete}</span>
+              </div>
+              {processor.stats.failed > 0 && (
+                <div className="flex justify-between text-red-400">
+                  <span>Failed</span>
+                  <span>{processor.stats.failed}</span>
+                </div>
+              )}
+            </div>
+
             {/* Direct instruction */}
             <div className="bg-white/10 rounded-lg p-5 text-center">
               <p className="text-white text-sm leading-relaxed">
@@ -884,6 +857,17 @@ export function ScanWizardClient({
               <Camera className="h-4 w-4 mr-2" />
               Scan More Cards
             </Button>
+
+            {/* View failed cards */}
+            {processor.stats.failed > 0 && (
+              <Button
+                variant="outline"
+                className="w-full border-white/20 text-white hover:bg-white/10"
+                onClick={() => setIsDrawerOpen(true)}
+              >
+                View Failed Cards ({processor.stats.failed})
+              </Button>
+            )}
           </div>
         </div>
       )}

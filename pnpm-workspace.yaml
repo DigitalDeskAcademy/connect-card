@@ -1,3 +1,6 @@
+# Not a monorepo - single package project
+packages: []
+
 ignoredBuiltDependencies:
   - "@prisma/client"
   - "@prisma/engines"

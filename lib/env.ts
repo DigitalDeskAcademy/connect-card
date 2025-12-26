@@ -48,4 +48,8 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_S3_BUCKET_NAME_IMAGES,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
   },
+
+  // Skip validation in CI - secrets aren't needed for build verification
+  // Runtime validation still occurs when the app starts
+  skipValidation: !!process.env.CI,
 });

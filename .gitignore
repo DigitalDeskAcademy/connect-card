@@ -31,8 +31,11 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files - secrets in .env.local, template in .env.example
+.env
+.env.local
+.env.*.local
+!.env.example
 
 # env backups (local only)
 .env-backups/
