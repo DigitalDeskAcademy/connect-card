@@ -78,6 +78,11 @@ export function getChurchNavigation(slug: string): NavigationConfig {
         icon: IconHeart,
       },
       {
+        title: "Events",
+        url: `/church/${slug}/admin/volunteer/events`,
+        icon: IconCalendarMonth,
+      },
+      {
         title: "Prayer",
         url: `/church/${slug}/admin/prayer`,
         icon: IconPray,
@@ -323,6 +328,13 @@ export function getPageTitle(
   }
   if (normalizedPath.includes("/prayer-batches/")) {
     return "Prayer Batch";
+  }
+  // Volunteer Events routes
+  if (normalizedPath.includes("/volunteer/events/")) {
+    return "Event Details";
+  }
+  if (normalizedPath.endsWith("/volunteer/events")) {
+    return "Volunteer Events";
   }
 
   // Convert kebab-case to Title Case

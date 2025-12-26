@@ -33,11 +33,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, type LucideIcon } from "lucide-react";
+import type { Icon as TablerIcon } from "@tabler/icons-react";
+import type { ReactNode } from "react";
 
 export interface NavTab {
   label: string;
   value: string;
-  icon?: LucideIcon;
+  icon?: LucideIcon | TablerIcon;
   count?: number;
 }
 
@@ -46,6 +48,8 @@ interface NavTabsProps {
   baseUrl: string;
   paramName?: string; // Default: "tab"
   className?: string;
+  /** Optional actions to display on the right side of the tabs */
+  actions?: ReactNode;
 }
 
 /**
@@ -68,6 +72,7 @@ export function NavTabs({
   baseUrl,
   paramName = "tab",
   className,
+  actions,
 }: NavTabsProps) {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get(paramName) || tabs[0]?.value || "";
@@ -129,110 +134,120 @@ export function NavTabs({
 
   return (
     <div className={cn("border-b bg-card -mx-4 md:-mx-6", className)}>
-      {/* Container with overflow-hidden - GitHub pattern */}
-      <div ref={containerRef} className="relative overflow-hidden">
-        <nav
-          ref={tabsListRef}
-          className="flex items-center gap-4 px-4 lg:px-6 pr-16"
-          aria-label="Page navigation"
-        >
-          {/* All tabs rendered - overflow-hidden clips them */}
-          {tabs.map(tab => {
-            const isActive = activeTab === tab.value;
-            const isOverflowing = overflowTabs.some(t => t.value === tab.value);
-            const Icon = tab.icon;
-            const href = getTabHref(tab, tabs, baseUrl, paramName);
-
-            return (
-              <div
-                key={tab.value}
-                data-tab-item={tab.value}
-                className={cn(
-                  // Hide overflowing tabs visually but keep in DOM for measurement
-                  isOverflowing && "invisible"
-                )}
-              >
-                <Link
-                  href={href}
-                  className={cn(
-                    "border-b-2 py-3 text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2",
-                    isActive
-                      ? "border-primary text-foreground"
-                      : "border-transparent text-muted-foreground"
-                  )}
-                  tabIndex={isOverflowing ? -1 : 0}
-                >
-                  <span className="px-2 py-1 rounded hover:bg-accent transition-colors flex items-center gap-2">
-                    {Icon && <Icon className="h-4 w-4" />}
-                    {tab.label}
-                    {tab.count !== undefined && (
-                      <Badge className="text-xs px-1.5 py-0 min-w-[1.25rem] h-5 justify-center">
-                        {tab.count}
-                      </Badge>
-                    )}
-                  </span>
-                </Link>
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Overflow button - position-absolute right like GitHub */}
+      <div className="flex items-center justify-between">
+        {/* Container with overflow-hidden - GitHub pattern */}
         <div
-          ref={overflowButtonRef}
-          className={cn(
-            "absolute right-4 lg:right-6 top-1/2 -translate-y-1/2 bg-card",
-            // Use visibility like GitHub - keeps space reserved
-            hasOverflow ? "visible" : "invisible"
-          )}
+          ref={containerRef}
+          className="relative overflow-hidden flex-1 min-w-0"
         >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="icon"
-                className={cn(
-                  "h-8 w-8",
-                  isActiveInOverflow && "border-primary"
-                )}
-                aria-label={`${overflowTabs.length} more tabs`}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
+          <nav
+            ref={tabsListRef}
+            className="flex items-center gap-4 px-4 lg:px-6 pr-16"
+            aria-label="Page navigation"
+          >
+            {/* All tabs rendered - overflow-hidden clips them */}
+            {tabs.map(tab => {
+              const isActive = activeTab === tab.value;
+              const isOverflowing = overflowTabs.some(
+                t => t.value === tab.value
+              );
+              const Icon = tab.icon;
+              const href = getTabHref(tab, tabs, baseUrl, paramName);
 
-            <DropdownMenuContent align="end" className="min-w-[180px]">
-              {overflowTabs.map(tab => {
-                const isActive = activeTab === tab.value;
-                const Icon = tab.icon;
-                const href = getTabHref(tab, tabs, baseUrl, paramName);
-
-                return (
-                  <DropdownMenuItem key={tab.value} asChild>
-                    <Link
-                      href={href}
-                      className={cn(
-                        "flex items-center gap-2 w-full",
-                        isActive && "bg-accent"
-                      )}
-                    >
+              return (
+                <div
+                  key={tab.value}
+                  data-tab-item={tab.value}
+                  className={cn(
+                    // Hide overflowing tabs visually but keep in DOM for measurement
+                    isOverflowing && "invisible"
+                  )}
+                >
+                  <Link
+                    href={href}
+                    className={cn(
+                      "border-b-2 py-3 text-sm font-medium transition-colors whitespace-nowrap flex items-center gap-2",
+                      isActive
+                        ? "border-primary text-foreground"
+                        : "border-transparent text-muted-foreground"
+                    )}
+                    tabIndex={isOverflowing ? -1 : 0}
+                  >
+                    <span className="px-2 py-1 rounded hover:bg-accent transition-colors flex items-center gap-2">
                       {Icon && <Icon className="h-4 w-4" />}
-                      <span className="flex-1">{tab.label}</span>
+                      {tab.label}
                       {tab.count !== undefined && (
-                        <Badge
-                          variant="secondary"
-                          className="text-xs px-1.5 py-0 min-w-[1.25rem] h-5 justify-center"
-                        >
+                        <Badge className="text-xs px-1.5 py-0 min-w-[1.25rem] h-5 justify-center">
                           {tab.count}
                         </Badge>
                       )}
-                    </Link>
-                  </DropdownMenuItem>
-                );
-              })}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    </span>
+                  </Link>
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Overflow button - position-absolute right like GitHub */}
+          <div
+            ref={overflowButtonRef}
+            className={cn(
+              "absolute right-4 lg:right-6 top-1/2 -translate-y-1/2 bg-card",
+              // Use visibility like GitHub - keeps space reserved
+              hasOverflow ? "visible" : "invisible"
+            )}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className={cn(
+                    "h-8 w-8",
+                    isActiveInOverflow && "border-primary"
+                  )}
+                  aria-label={`${overflowTabs.length} more tabs`}
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end" className="min-w-[180px]">
+                {overflowTabs.map(tab => {
+                  const isActive = activeTab === tab.value;
+                  const Icon = tab.icon;
+                  const href = getTabHref(tab, tabs, baseUrl, paramName);
+
+                  return (
+                    <DropdownMenuItem key={tab.value} asChild>
+                      <Link
+                        href={href}
+                        className={cn(
+                          "flex items-center gap-2 w-full",
+                          isActive && "bg-accent"
+                        )}
+                      >
+                        {Icon && <Icon className="h-4 w-4" />}
+                        <span className="flex-1">{tab.label}</span>
+                        {tab.count !== undefined && (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs px-1.5 py-0 min-w-[1.25rem] h-5 justify-center"
+                          >
+                            {tab.count}
+                          </Badge>
+                        )}
+                      </Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
+
+        {/* Actions slot */}
+        {actions && <div className="shrink-0 px-4 lg:px-6 py-2">{actions}</div>}
       </div>
     </div>
   );
