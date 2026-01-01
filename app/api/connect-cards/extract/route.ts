@@ -18,8 +18,10 @@ function calculateImageHash(base64Data: string): string {
 }
 
 // Initialize Anthropic client
+// Use placeholder key in CI to allow build to succeed
+// Actual API calls won't work without a real key
 const anthropic = new Anthropic({
-  apiKey: env.ANTHROPIC_API_KEY,
+  apiKey: env.ANTHROPIC_API_KEY || "sk-ant-placeholder",
 });
 
 /// Rate limiting: Allow batch processing while preventing abuse
