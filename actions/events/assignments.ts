@@ -557,6 +557,25 @@ export async function inviteVolunteersToSession(
           });
 
           if (syncResult.success && syncResult.ghlContactId) {
+            // Store GHL contact ID in MemberIntegration for webhook lookup
+            await prisma.memberIntegration.upsert({
+              where: {
+                provider_externalId: {
+                  provider: "ghl",
+                  externalId: syncResult.ghlContactId,
+                },
+              },
+              create: {
+                churchMemberId: member.id,
+                provider: "ghl",
+                externalId: syncResult.ghlContactId,
+                lastSyncAt: new Date(),
+              },
+              update: {
+                lastSyncAt: new Date(),
+              },
+            });
+
             // Send invite SMS
             const message = smsTemplates.eventInvitation({
               firstName,
