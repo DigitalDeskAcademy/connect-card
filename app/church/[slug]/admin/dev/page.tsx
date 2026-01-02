@@ -297,6 +297,7 @@ function DemoReadyChecklist() {
         { label: "Component library page", completed: true },
         { label: "E2E workflow tests (PR #60)", completed: true },
         { label: "Sample data seeded", completed: false },
+        { label: "Demo video recorded", completed: false },
       ],
     },
     {

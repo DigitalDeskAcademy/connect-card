@@ -78,6 +78,10 @@ Each worktree has a **stable purpose** (folder name) but branches may change as 
 2. Volunteer event tracking (capacity view, quick outreach)
 3. Member unification (single source of truth)
 
+**Marketing:**
+
+- [ ] Record demo video (see `/docs/technical/demo-video-guide.md`)
+
 **Deprioritized:**
 
 - Prayer enhancements (pilot church uses Planning Center)
