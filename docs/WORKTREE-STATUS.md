@@ -137,11 +137,25 @@
 | ------------------------------------------ | ---------- |
 | Async scan processing (background queue)   | [x] PR #90 |
 | Two-sided card extraction                  | [x]        |
-| Deduplication enhancement (fuzzy matching) | [ ]        |
+| Deduplication enhancement (fuzzy matching) | [x]        |
 | Shared email detection (couples)           | [ ]        |
 | "Merge with existing" vs "Create new" UI   | [ ]        |
 | Upload UX improvements for non-tech staff  | [x]        |
 | Better progress feedback during processing | [x]        |
+
+**Shared Email Issue (Couples):**
+
+> Older couples often share a single email address. Current system treats email as unique identifier,
+> so husband and wife get merged into one ChurchMember record. Planning Center handles this with
+> a Household model (multiple people per email).
+>
+> **Current behavior:** Second person with same email auto-links to first person's record
+>
+> **Options to fix:**
+>
+> - Quick: "Create as separate person" override button when name differs significantly
+> - Proper: Household model with primary contact + additional members
+> - Export: Ensure both people sync to Planning Center as separate entries
 
 **Wishlist:**
 
