@@ -198,15 +198,14 @@ export const smsTemplates = {
 
   /**
    * Volunteer event invitation
+   * Note: Asks for YES/NO reply for SMS automation
    */
   eventInvitation: (params: {
     firstName: string;
     eventName: string;
     eventDate: string;
-    rsvpUrl?: string;
   }) => {
-    const rsvpText = params.rsvpUrl ? ` RSVP: ${params.rsvpUrl}` : "";
-    return `Hi ${params.firstName}! You're invited to ${params.eventName} on ${params.eventDate}.${rsvpText} Reply STOP to opt out.`;
+    return `Hi ${params.firstName}! Can you serve at ${params.eventName} on ${params.eventDate}? Reply YES or NO. Reply STOP to opt out.`;
   },
 
   /**
@@ -218,6 +217,32 @@ export const smsTemplates = {
     contactInfo: string;
   }) => {
     return `[URGENT] ${params.ministryName} needs help: ${params.needDescription}. Contact ${params.contactInfo} if you can help. Reply STOP to opt out.`;
+  },
+
+  /**
+   * Event confirmation SMS (sent when volunteer replies YES)
+   */
+  eventConfirmation: (params: {
+    firstName: string;
+    eventName: string;
+    eventDate: string;
+    leaderName?: string;
+  }) => {
+    const leaderText = params.leaderName
+      ? ` Questions? Contact ${params.leaderName}.`
+      : "";
+    return `Thanks ${params.firstName}! You're confirmed for ${params.eventName} on ${params.eventDate}.${leaderText} Reply STOP to opt out.`;
+  },
+
+  /**
+   * Event cancellation SMS (sent when event is cancelled)
+   */
+  eventCancellation: (params: {
+    firstName: string;
+    eventName: string;
+    eventDate: string;
+  }) => {
+    return `Hi ${params.firstName}, ${params.eventName} on ${params.eventDate} has been cancelled. Sorry for any inconvenience. Reply STOP to opt out.`;
   },
 };
 

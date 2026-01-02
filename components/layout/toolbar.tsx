@@ -13,7 +13,9 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -100,38 +102,6 @@ function ViewToggleButton({
 }
 
 // =============================================================================
-// View Toggle Dropdown Item (for overflow menu)
-// =============================================================================
-
-interface ViewToggleDropdownItemProps {
-  view: ViewMode;
-  activeView: ViewMode;
-  onViewChange: (view: ViewMode) => void;
-  icon: React.ElementType;
-  label: string;
-}
-
-function ViewToggleDropdownItem({
-  view,
-  activeView,
-  onViewChange,
-  icon: Icon,
-  label,
-}: ViewToggleDropdownItemProps) {
-  const isActive = activeView === view;
-
-  return (
-    <DropdownMenuItem
-      className={cn("flex items-center gap-2", isActive && "bg-accent")}
-      onClick={() => onViewChange(view)}
-    >
-      <Icon className="h-4 w-4" />
-      <span>{label}</span>
-    </DropdownMenuItem>
-  );
-}
-
-// =============================================================================
 // Toolbar Component
 // =============================================================================
 
@@ -185,20 +155,16 @@ export function Toolbar({
       <div
         ref={containerRef}
         className={cn(
-          "flex flex-wrap items-center gap-3 py-3 px-4 bg-muted/40 rounded-lg border",
+          "flex flex-wrap items-center gap-3 py-3 px-4",
+          "bg-card/80 backdrop-blur-sm rounded-xl border-2 shadow-sm",
           className
         )}
       >
         {/* Left Actions (Create, etc.) - Always visible */}
         {actions && <div className="flex items-center gap-2">{actions}</div>}
 
-        {/* Search Input - Always visible but responsive width */}
-        <div
-          className={cn(
-            "relative flex-1 min-w-[140px]",
-            isCompact ? "max-w-[180px]" : "max-w-[320px]"
-          )}
-        >
+        {/* Search Input - Fills available space */}
+        <div className="relative flex-1 min-w-[140px]">
           <IconSearch className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
@@ -214,9 +180,6 @@ export function Toolbar({
           <div className="flex items-center gap-2">{filters}</div>
         )}
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
         {/* Right Actions Slot - Hidden when compact */}
         {rightActions && !isCompact && (
           <div className="flex items-center gap-2">{rightActions}</div>
@@ -224,7 +187,7 @@ export function Toolbar({
 
         {/* View Toggle - Hidden when compact */}
         {showViewToggle && onViewChange && !isCompact && (
-          <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+          <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-lg border">
             <ViewToggleButton
               view="card"
               activeView={activeView}
@@ -258,45 +221,43 @@ export function Toolbar({
                   <IconDotsVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[180px]">
+              <DropdownMenuContent align="end" className="min-w-[200px]">
                 {/* View Toggle in dropdown */}
                 {showViewToggle && onViewChange && (
                   <>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                       View
-                    </div>
-                    <ViewToggleDropdownItem
-                      view="card"
-                      activeView={activeView}
-                      onViewChange={onViewChange}
-                      icon={IconLayoutGrid}
-                      label="Card View"
-                    />
-                    <ViewToggleDropdownItem
-                      view="list"
-                      activeView={activeView}
-                      onViewChange={onViewChange}
-                      icon={IconList}
-                      label="List View"
-                    />
-                    <ViewToggleDropdownItem
-                      view="calendar"
-                      activeView={activeView}
-                      onViewChange={onViewChange}
-                      icon={IconCalendar}
-                      label="Calendar View"
-                    />
+                    </DropdownMenuLabel>
+                    <DropdownMenuRadioGroup
+                      value={activeView}
+                      onValueChange={value => onViewChange(value as ViewMode)}
+                    >
+                      <DropdownMenuRadioItem value="card" className="gap-2">
+                        <IconLayoutGrid className="h-4 w-4" />
+                        Card View
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="list" className="gap-2">
+                        <IconList className="h-4 w-4" />
+                        List View
+                      </DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="calendar" className="gap-2">
+                        <IconCalendar className="h-4 w-4" />
+                        Calendar View
+                      </DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
                     {(filters || rightActions) && <DropdownMenuSeparator />}
                   </>
                 )}
 
-                {/* Filters in dropdown - render as info since we can't easily port ReactNode */}
+                {/* Filters in dropdown */}
                 {filters && (
                   <>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                       Filters
+                    </DropdownMenuLabel>
+                    <div className="px-2 py-2 space-y-2 bg-muted/30 rounded-md mx-1 mb-1">
+                      {filters}
                     </div>
-                    <div className="px-2 py-2">{filters}</div>
                     {rightActions && <DropdownMenuSeparator />}
                   </>
                 )}
@@ -304,10 +265,12 @@ export function Toolbar({
                 {/* Right Actions in dropdown */}
                 {rightActions && (
                   <>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    <DropdownMenuLabel className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
                       Actions
+                    </DropdownMenuLabel>
+                    <div className="px-2 py-2 space-y-2 bg-muted/30 rounded-md mx-1 mb-1">
+                      {rightActions}
                     </div>
-                    <div className="px-2 py-2">{rightActions}</div>
                   </>
                 )}
               </DropdownMenuContent>

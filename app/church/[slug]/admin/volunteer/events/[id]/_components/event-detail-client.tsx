@@ -43,6 +43,8 @@ import {
 } from "@/actions/events/events";
 import { removeAssignment } from "@/actions/events/assignments";
 import { AssignModal } from "./assign-modal";
+// TODO: Uncomment when EventResource schema is pushed to DB
+// import { ResourcesSection } from "./resources-section";
 
 // =============================================================================
 // Types
@@ -557,6 +559,21 @@ export function EventDetailClient({
           })}
         </div>
       </div>
+
+      {/* TODO: Uncomment when EventResource schema is pushed to DB */}
+      {/* <ResourcesSection
+        eventId={event.id}
+        resources={event.resources.map(r => ({
+          id: r.id,
+          name: r.name,
+          quantity: r.quantity,
+          notes: r.notes,
+          status: r.status,
+          isCommon: r.isCommon,
+        }))}
+        slug={slug}
+        isEditable={["DRAFT", "PUBLISHED"].includes(event.status)}
+      /> */}
 
       {/* Assign Modal */}
       {assignSession && (

@@ -456,7 +456,7 @@ export default function ContactsClient({
               value={memberTypeFilter}
               onValueChange={handleMemberTypeChange}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="min-w-[140px] w-auto shrink-0">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
@@ -472,7 +472,7 @@ export default function ContactsClient({
             {/* Keyword filter (only show if keywords exist) */}
             {availableKeywords.length > 0 && (
               <Select value={keywordFilter} onValueChange={handleKeywordChange}>
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="min-w-[160px] w-auto shrink-0">
                   <SelectValue placeholder="All Keywords" />
                 </SelectTrigger>
                 <SelectContent>

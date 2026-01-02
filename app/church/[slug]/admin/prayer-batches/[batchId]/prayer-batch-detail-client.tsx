@@ -365,7 +365,7 @@ export function PrayerBatchDetailClient({
         <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
             <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger className="w-[300px]">
+              <SelectTrigger className="min-w-[300px] w-auto shrink-0">
                 <SelectValue placeholder="Select team member" />
               </SelectTrigger>
               <SelectContent>

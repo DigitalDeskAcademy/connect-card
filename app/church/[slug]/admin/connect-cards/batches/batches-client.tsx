@@ -137,7 +137,7 @@ export function BatchesClient({
               value={selectedLocationId}
               onValueChange={setSelectedLocationId}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="min-w-[180px] w-auto shrink-0">
                 <SelectValue placeholder="All Campuses" />
               </SelectTrigger>
               <SelectContent>

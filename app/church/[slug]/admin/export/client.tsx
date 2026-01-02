@@ -470,7 +470,7 @@ export function ExportClient({
                       handleFormatChange(v as DataExportFormat)
                     }
                   >
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="min-w-[180px] w-auto shrink-0">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -488,7 +488,7 @@ export function ExportClient({
                   <div className="space-y-2">
                     <Label>Location</Label>
                     <Select value={locationId} onValueChange={setLocationId}>
-                      <SelectTrigger className="w-[180px]">
+                      <SelectTrigger className="min-w-[180px] w-auto shrink-0">
                         <SelectValue placeholder="All locations" />
                       </SelectTrigger>
                       <SelectContent>

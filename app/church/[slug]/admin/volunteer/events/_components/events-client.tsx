@@ -10,7 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { EventCard } from "./event-card";
+import {
+  EventCard,
+  getCapacityStatus,
+  type CapacityStatus,
+} from "./event-card";
 import { EventFormDialog } from "./event-form-dialog";
 import {
   IconPlus,
@@ -20,6 +24,7 @@ import {
   IconSettings,
   IconChartBar,
   IconClock,
+  IconUsers,
 } from "@tabler/icons-react";
 import { NavTabs } from "@/components/layout/nav-tabs";
 import {
@@ -35,6 +40,7 @@ import type { EventType } from "@/lib/generated/prisma";
 // =============================================================================
 
 type DatePeriod = "all" | "upcoming" | "past" | "thisWeek" | "thisMonth";
+type CapacityFilter = "all" | "urgent" | "partial" | "full";
 
 interface Location {
   id: string;
@@ -73,6 +79,13 @@ const DATE_PERIOD_OPTIONS: { value: DatePeriod; label: string }[] = [
   { value: "past", label: "Past" },
   { value: "thisWeek", label: "This Week" },
   { value: "thisMonth", label: "This Month" },
+];
+
+const CAPACITY_FILTER_OPTIONS: { value: CapacityFilter; label: string }[] = [
+  { value: "all", label: "All Capacity" },
+  { value: "urgent", label: "Needs Volunteers" },
+  { value: "partial", label: "Partially Filled" },
+  { value: "full", label: "Fully Staffed" },
 ];
 
 // =============================================================================
@@ -155,6 +168,36 @@ function filterByDatePeriod(
   });
 }
 
+/**
+ * Get capacity status for an event
+ */
+function getEventCapacityStatus(event: EventListItem): CapacityStatus {
+  const totalSlotsFilled = event.sessions.reduce(
+    (sum, s) => sum + s.slotsFilled,
+    0
+  );
+  const totalSlotsNeeded = event.sessions.reduce(
+    (sum, s) => sum + s.slotsNeeded,
+    0
+  );
+  return getCapacityStatus(totalSlotsFilled, totalSlotsNeeded).status;
+}
+
+/**
+ * Filter events by capacity status
+ */
+function filterByCapacity(
+  events: EventListItem[],
+  capacityFilter: CapacityFilter
+): EventListItem[] {
+  if (capacityFilter === "all") return events;
+
+  return events.filter(event => {
+    const status = getEventCapacityStatus(event);
+    return status === capacityFilter;
+  });
+}
+
 // =============================================================================
 // Main Component
 // =============================================================================
@@ -195,7 +238,10 @@ export function EventsClient({
   // Date period filter state
   const [datePeriod, setDatePeriod] = useState<DatePeriod>("upcoming");
 
-  // Filter events by type, date period, and search
+  // Capacity filter state
+  const [capacityFilter, setCapacityFilter] = useState<CapacityFilter>("all");
+
+  // Filter events by type, date period, capacity, and search
   const filteredEvents = useMemo(() => {
     let filtered = events;
 
@@ -206,6 +252,9 @@ export function EventsClient({
 
     // Filter by date period
     filtered = filterByDatePeriod(filtered, datePeriod);
+
+    // Filter by capacity status
+    filtered = filterByCapacity(filtered, capacityFilter);
 
     // Filter by search query
     if (searchQuery.trim()) {
@@ -219,7 +268,7 @@ export function EventsClient({
     }
 
     return filtered;
-  }, [events, eventTypeFilter, datePeriod, searchQuery]);
+  }, [events, eventTypeFilter, datePeriod, capacityFilter, searchQuery]);
 
   // Handle filter change
   const handleFilterChange = (value: string) => {
@@ -279,8 +328,8 @@ export function EventsClient({
               value={datePeriod}
               onValueChange={v => setDatePeriod(v as DatePeriod)}
             >
-              <SelectTrigger className="w-[140px] h-9 bg-background">
-                <IconClock className="h-4 w-4 mr-2 text-muted-foreground" />
+              <SelectTrigger className="min-w-[140px] w-auto h-9 bg-background shrink-0">
+                <IconClock className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
                 <SelectValue placeholder="All Dates" />
               </SelectTrigger>
               <SelectContent>
@@ -294,7 +343,7 @@ export function EventsClient({
 
             {/* Event Type Filter */}
             <Select value={eventTypeFilter} onValueChange={handleFilterChange}>
-              <SelectTrigger className="w-[160px] h-9 bg-background">
+              <SelectTrigger className="min-w-[120px] w-auto h-9 bg-background shrink-0">
                 <SelectValue placeholder="All Types" />
               </SelectTrigger>
               <SelectContent>
@@ -315,6 +364,24 @@ export function EventsClient({
                   <IconPlus className="h-4 w-4 mr-2" />
                   Add New Type
                 </button>
+              </SelectContent>
+            </Select>
+
+            {/* Capacity Filter */}
+            <Select
+              value={capacityFilter}
+              onValueChange={v => setCapacityFilter(v as CapacityFilter)}
+            >
+              <SelectTrigger className="min-w-[140px] w-auto h-9 bg-background shrink-0">
+                <IconUsers className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="All Capacity" />
+              </SelectTrigger>
+              <SelectContent>
+                {CAPACITY_FILTER_OPTIONS.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </>
@@ -339,6 +406,7 @@ export function EventsClient({
           onClearFilters={() => {
             handleFilterChange("all");
             setDatePeriod("all");
+            setCapacityFilter("all");
           }}
         />
       ) : (
