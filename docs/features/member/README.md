@@ -228,8 +228,8 @@ Churches struggle to track visitor journey from first-time visitor → returning
 
 - **Database Schema**: `/prisma/schema.prisma` - ChurchMember model
 - **Project Roadmap**: `/docs/PROJECT.md` - Timeline and phases
-- **Connect Cards**: `/docs/features/connect-cards/vision.md` - Integration point
-- **Volunteer**: `/docs/features/volunteer/vision.md` - Integration point
+- **Connect Cards**: `/docs/features/connect-cards/README.md` - Integration point
+- **Volunteer**: `/docs/features/volunteer/README.md` - Integration point
 
 ---
 

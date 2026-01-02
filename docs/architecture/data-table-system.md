@@ -442,7 +442,7 @@ After migration:
 
 ## Related Documents
 
-- [Export Feature Vision](../features/integrations/vision.md)
+- [Export Feature](../features/integrations/README.md)
 - [Coding Patterns](../../PLAYBOOK.md)
 - [Component Guidelines](../../PLAYBOOK.md#components)
 

@@ -142,8 +142,8 @@ Tailwind classes use colons (print:hidden, md:flex). NEVER escape them in raw CS
 
 ### Feature Specs
 
-- Connect Cards: @docs/features/connect-cards/vision.md
-- Integrations: @docs/features/integrations/vision.md
-- Volunteer: @docs/features/volunteer/vision.md
-- Prayer: @docs/features/prayer/vision.md
-- GHL Integration: @docs/features/ghl-integration/vision.md
+- Connect Cards: @docs/features/connect-cards/README.md
+- Integrations: @docs/features/integrations/README.md
+- Volunteer: @docs/features/volunteer/README.md
+- Prayer: @docs/features/prayer/README.md
+- GHL Integration: @docs/features/ghl-integration/README.md

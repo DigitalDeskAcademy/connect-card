@@ -57,20 +57,20 @@ Each worktree has a **stable purpose** (folder name) but branches may change as 
 
 ## 📋 Feature Ownership
 
-| Feature Area        | Worktree       | Vision Doc                               |
+| Feature Area        | Worktree       | Feature Doc                              |
 | ------------------- | -------------- | ---------------------------------------- |
-| Connect Cards       | `connect-card` | `/docs/features/connect-cards/vision.md` |
-| Volunteer & Events  | `volunteer`    | `/docs/features/volunteer/vision.md`     |
-| Planning Center API | `integrations` | `/docs/features/integrations/vision.md`  |
-| Member Unification  | `tech-debt`    | `/docs/features/member/vision.md`        |
-| E2E Testing         | `e2e`          | `/docs/features/e2e/vision.md`           |
-| Prayer              | `prayer`       | `/docs/features/prayer/vision.md`        |
+| Connect Cards       | `connect-card` | `/docs/features/connect-cards/README.md` |
+| Volunteer & Events  | `volunteer`    | `/docs/features/volunteer/README.md`     |
+| Planning Center API | `integrations` | `/docs/features/integrations/README.md`  |
+| Member Unification  | `tech-debt`    | `/docs/features/member/README.md`        |
+| E2E Testing         | `e2e`          | `/docs/features/e2e/README.md`           |
+| Prayer              | `prayer`       | `/docs/features/prayer/README.md`        |
 
 ---
 
 ## 📣 Current Priorities (Post-Demo Dec 2025)
 
-> **Full briefing:** `/docs/features/demo-feedback-dec-2025.md`
+> **Full briefing:** `/docs/archive/2025-12-demo-feedback.md`
 
 **High Priority:**
 
@@ -110,12 +110,12 @@ gh pr create --fill
 
 ## 📞 Quick Reference
 
-| Need               | Location                                   |
-| ------------------ | ------------------------------------------ |
-| **Demo Briefing**  | `/docs/features/demo-feedback-dec-2025.md` |
-| Technical patterns | `/docs/PLAYBOOK.md`                        |
-| Project roadmap    | `/docs/PROJECT.md`                         |
-| Testing strategy   | `/docs/technical/testing-strategy.md`      |
+| Need               | Location                                 |
+| ------------------ | ---------------------------------------- |
+| **Demo Briefing**  | `/docs/archive/2025-12-demo-feedback.md` |
+| Technical patterns | `/docs/PLAYBOOK.md`                      |
+| Project roadmap    | `/docs/PROJECT.md`                       |
+| Testing strategy   | `/docs/technical/testing-strategy.md`    |
 
 ---
 

@@ -123,7 +123,7 @@ Churches lose 70% of first-time visitors because:
 - Service layer for SMS/Email automation
 - Contact sync on card review
 - Volunteer onboarding SMS
-- Vision doc: `/docs/features/ghl-integration/vision.md`
+- Vision doc: `/docs/features/ghl-integration/README.md`
 
 **Production Readiness**
 
@@ -170,7 +170,7 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 - [x] Dashboard UI/UX - Quick action cards for staff workflows → `main` ✅
 - [x] Theme system with multiple variants (PR #54, #55) → `main` ✅
 - [ ] **GHL Integration Phase 1** → `tech-debt` worktree (DEMO PRIORITY)
-  - Vision doc: `/docs/features/ghl-integration/vision.md`
+  - Vision doc: `/docs/features/ghl-integration/README.md`
   - GHL MCP connected ✅
   - Service layer for contacts + messaging
   - Contact sync on Save & Next

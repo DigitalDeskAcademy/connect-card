@@ -36,7 +36,7 @@
 
 ### Design Decision: Unified Export
 
-**No separate volunteer export.** A volunteer is just a person with additional attributes. The existing export includes all ChurchMember data; volunteer-specific columns (category, BG check status) are included when the member has a volunteer profile. See `/docs/features/integrations/vision.md` for details.
+**No separate volunteer export.** A volunteer is just a person with additional attributes. The existing export includes all ChurchMember data; volunteer-specific columns (category, BG check status) are included when the member has a volunteer profile. See `/docs/features/integrations/README.md` for details.
 
 ### Interface Contract
 
@@ -877,7 +877,7 @@ Based on pilot church demo feedback (Dec 2025), churches need simple event capac
 - Track confirmations and attendance
 
 **NOT building:** Full scheduling, shift management, time tracking (Planning Center's job).
-**See:** [Events MVP Spec](./events-mvp-spec.md) for detailed requirements.
+**See:** [Events Spec](/docs/archive/2025-12-volunteer-events-spec.md) for detailed requirements.
 
 **📋 Future (Planning Center Integration):**
 
@@ -911,7 +911,7 @@ Based on pilot church demo feedback (Dec 2025), churches need simple event capac
 
 ## 📚 Related Documentation
 
-- [Events MVP Spec](./events-mvp-spec.md) - Volunteer event capacity tracking (Phase 3 - HIGH PRIORITY)
+- [Volunteer Events Spec](/docs/archive/2025-12-volunteer-events-spec.md) - Event capacity tracking (Phase 3)
 - [Bulk Messaging Spec](./bulk-messaging-spec.md) - Detailed spec for volunteer outreach feature
-- [Church Software Sync](/docs/features/integrations/church-software-sync-spec.md) - Export volunteers to Planning Center
-- [Demo Feedback](/docs/features/demo-feedback-dec-2025.md) - Pilot church requirements
+- [ChMS Export](/docs/features/integrations/README.md) - Export volunteers to Planning Center
+- [Demo Feedback](/docs/archive/2025-12-demo-feedback.md) - Pilot church requirements

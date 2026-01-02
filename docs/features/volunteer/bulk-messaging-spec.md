@@ -295,5 +295,5 @@ model VolunteerNeedConfig {
 
 **Related Docs:**
 
-- [Volunteer Vision](./vision.md) - Overall volunteer feature
-- [Church Software Sync](/docs/features/integrations/church-software-sync-spec.md) - Export to ChMS
+- [Volunteer](./README.md) - Overall volunteer feature
+- [ChMS Export](/docs/features/integrations/README.md) - Export to ChMS

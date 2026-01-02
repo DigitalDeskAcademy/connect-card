@@ -388,5 +388,5 @@ GET  /api/integrations/planning-center/status     → Connection status
 
 ## Related Documents
 
-- [Connect Cards Vision](../connect-cards/vision.md) - Source data for exports
-- [Volunteer Vision](../volunteer/vision.md) - Volunteer export data
+- [Connect Cards](../connect-cards/README.md) - Source data for exports
+- [Volunteer](../volunteer/README.md) - Volunteer export data

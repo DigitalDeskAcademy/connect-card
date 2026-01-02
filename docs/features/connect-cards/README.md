@@ -322,7 +322,7 @@ REVIEW MODE (click image):
 
 ### Church Software Sync (Phase 4) → COMPLETE ✅
 
-**Spec:** `/docs/features/integrations/church-software-sync-spec.md`
+**Spec:** `/docs/features/integrations/README.md`
 
 **CSV Export (Complete - PR #48, #58):**
 
