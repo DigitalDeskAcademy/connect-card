@@ -1,9 +1,9 @@
 # Member Unification Implementation Plan
 
 **Created:** December 22, 2025
+**Status:** ✅ Complete (PR #87 merged Dec 23, 2025)
 **Based on:** `/docs/member-unification-architecture.md`
-**Worktree:** tech-debt
-**Branch:** feature/tech-debt
+**Worktree:** `tech-debt`
 
 ---
 

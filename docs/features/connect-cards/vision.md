@@ -2,9 +2,8 @@
 
 **Status:** ✅ **FEATURE COMPLETE** - Ready for Production Testing
 **Current Phase:** Phase 5 Complete - QR Code Digital Cards + GHL Integration
-**Worktree:** `/church-connect-hub/connect-card`
-**Branch:** `feature/connect-card`
-**Last Updated:** 2025-12-14
+**Worktree:** `connect-card`
+**Last Updated:** 2026-01-01
 
 ### Recent Work (Dec 2025)
 

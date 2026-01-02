@@ -4,7 +4,7 @@
 **Status:** MVP Complete, Production Prep In Progress
 **Target Launch:** January 2026 (after technical fixes)
 **Market:** Churches with 100-5000 members
-**Last Updated:** 2025-12-21
+**Last Updated:** 2026-01-01
 
 ---
 
@@ -131,13 +131,16 @@ Churches lose 70% of first-time visitors because:
 - Setting up production environment
 - Load testing for Sunday rush
 
-### ❌ Not Built Yet
+### 🟡 In Progress
 
-**Member Management** (Next Priority)
+**Member Unification** (PR #87 merged Dec 23)
 
-- Member directory and profiles
-- Visitor → Member tracking
-- Duplicate detection
+- ✅ Schema: Member model as single source of truth
+- ✅ Data layer with dual-write support
+- ✅ MemberIntegration model for external system sync
+- [ ] Member directory UI
+- [ ] Profile pages
+- [ ] Duplicate merge UI
 
 **GHL Bulk Messaging** (Phase 3)
 
@@ -302,6 +305,31 @@ See PLAYBOOK.md for Phase 2 performance improvements.
 ---
 
 ## 📝 Recent Updates
+
+### Week of Dec 24, 2025
+
+- ✅ **Events UI with Toolbar and Filtering** (PR #89)
+  - Events list page with card-based layout
+  - Reusable Toolbar component (search, view toggle, filters)
+  - Event creation dialog with multi-session support
+  - Event detail page with assignment modal
+  - Date period filtering (Upcoming/Past/This Week/This Month)
+- ✅ **Interactive Onboarding Checklist** (PR #88)
+  - Yes/No question flow for church setup
+  - Progressive disclosure of features
+  - Persistent state tracking
+- ✅ **Member Unification Schema** (PR #87)
+  - Phases 1-4: Schema, migration, data layer, dual-write
+  - Single source of truth for people data
+  - MemberIntegration model for external system sync
+- ✅ **GitHub Actions CI** (PR #85)
+  - Automated build and lint checks
+  - Health endpoint for monitoring
+- ✅ **Two-Sided Card Extraction** (PR #84)
+  - Dev test page for extraction debugging
+  - Front/back image support in review queue
+- ✅ **PR Workflow Safety Checks** (PR #86)
+  - Prevents data loss in PR workflow commands
 
 ### Week of Dec 21, 2025
 
