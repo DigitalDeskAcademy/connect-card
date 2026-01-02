@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Scan Wizard v2 - Clean Implementation
+ * QR/Mobile Scan Wizard - Async Processing Implementation
  *
  * Flow:
  * 1. Setup - Select card type (1-sided/2-sided) and location
@@ -9,13 +9,13 @@
  * 3. Preview Front - Review, retake or accept
  * 4. Capture Back (if 2-sided) - Take photo of back
  * 5. Preview Back - Review, retake or accept
- * 6. Card complete - Add to queue, continue to next card
- * 7. Done - Upload all cards and process via Claude Vision
+ * 6. Card complete - Add to async queue (processes in background)
+ * 7. Continue scanning while earlier cards process
+ * 8. Done - Go to finish screen when ready
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -34,13 +34,19 @@ import {
   Square,
   Layers,
   MapPin,
-  Upload,
   Loader2,
-  CheckCircle2,
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useConnectCardUpload } from "@/hooks/use-connect-card-upload";
+import {
+  useAsyncCardProcessor,
+  CapturedImage,
+} from "@/hooks/use-async-card-processor";
+import {
+  ProcessingStatsDisplay,
+  QueueDrawer,
+  SessionRecoveryDialog,
+} from "@/components/dashboard/connect-cards/scan";
 
 interface ScanWizardClientProps {
   slug: string;
@@ -56,17 +62,9 @@ type WizardStep =
   | "preview-front"
   | "capture-back"
   | "preview-back"
-  | "submitting"
-  | "complete"
   | "finished";
 
 type CardType = "single" | "double";
-
-interface CapturedCard {
-  id: string;
-  frontImage: string;
-  backImage: string | null;
-}
 
 export function ScanWizardClient({
   slug,
@@ -76,12 +74,12 @@ export function ScanWizardClient({
   defaultCardType = "single",
 }: ScanWizardClientProps) {
   // Session state
-  const [sessionReady, setSessionReady] = useState(!scanToken); // Ready immediately if no token (logged in user)
+  const [sessionReady, setSessionReady] = useState(!scanToken);
   const [sessionError, setSessionError] = useState<string | null>(null);
 
   // Create scan session cookie when component mounts (for token-based auth)
   useEffect(() => {
-    if (!scanToken) return; // Skip if no token (already logged in)
+    if (!scanToken) return;
 
     const createSession = async () => {
       try {
@@ -113,21 +111,30 @@ export function ScanWizardClient({
     defaultLocationId || locations[0]?.id || ""
   );
 
-  // Current card being captured
-  const [frontImage, setFrontImage] = useState<string | null>(null);
-  const [backImage, setBackImage] = useState<string | null>(null);
+  // Current card being captured (store both dataUrl for preview and blob for upload)
+  const [frontImage, setFrontImage] = useState<CapturedImage | null>(null);
+  const [backImage, setBackImage] = useState<CapturedImage | null>(null);
 
-  // Queue of completed cards
-  const [capturedCards, setCapturedCards] = useState<CapturedCard[]>([]);
+  // Queue drawer state
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Upload hook
-  const {
-    uploadStates,
-    processCards,
-    reset: resetUpload,
-  } = useConnectCardUpload({
+  // Async card processor hook
+  const processor = useAsyncCardProcessor({
     slug,
     locationId,
+    onCardComplete: () => {
+      // Card completed - could track for analytics
+    },
+    onFailure: (itemId, error) => {
+      const itemIndex = processor.items.findIndex(i => i.id === itemId);
+      toast.error(`Card #${itemIndex + 1} failed`, {
+        description: error,
+        action: {
+          label: "Retry",
+          onClick: () => processor.retryCard(itemId),
+        },
+      });
+    },
   });
 
   // Camera state
@@ -146,7 +153,6 @@ export function ScanWizardClient({
       setIsLandscape(window.innerWidth > window.innerHeight);
     };
 
-    // Check if iOS (fullscreen not supported)
     const checkIOS = () => {
       const ua = navigator.userAgent;
       setIsIOS(
@@ -184,7 +190,7 @@ export function ScanWizardClient({
         setIsFullscreen(false);
       }
     } catch {
-      console.log("Fullscreen not supported");
+      // Fullscreen not supported
     }
   }, []);
 
@@ -243,20 +249,17 @@ export function ScanWizardClient({
     setIsStreaming(false);
   }, []);
 
-  // Switch camera - stops current stream, updates facing mode, restarts
+  // Switch camera
   const switchCamera = useCallback(async () => {
     const newFacingMode = facingMode === "environment" ? "user" : "environment";
     setFacingMode(newFacingMode);
 
-    // Restart camera with new facing mode if currently streaming
     if (isStreaming) {
       try {
-        // Stop current stream
         if (streamRef.current) {
           streamRef.current.getTracks().forEach(track => track.stop());
         }
 
-        // Get new stream with new facing mode
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: newFacingMode,
@@ -316,34 +319,47 @@ export function ScanWizardClient({
       sHeight = videoHeight;
 
     if (videoAspect > displayAspect) {
-      // Video is wider than display - crop horizontally
       sWidth = videoHeight * displayAspect;
       sx = (videoWidth - sWidth) / 2;
     } else {
-      // Video is taller than display - crop vertically
       sHeight = videoWidth / displayAspect;
       sy = (videoHeight - sHeight) / 2;
     }
 
-    // Set canvas to match the cropped dimensions (maintain quality)
     canvas.width = sWidth;
     canvas.height = sHeight;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw only the visible portion
     ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, sWidth, sHeight);
 
-    const imageData = canvas.toDataURL("image/jpeg", 0.9);
+    // Get both dataUrl and blob
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
 
-    if (step === "capture-front") {
-      setFrontImage(imageData);
-      setStep("preview-front");
-    } else if (step === "capture-back") {
-      setBackImage(imageData);
-      setStep("preview-back");
-    }
+    canvas.toBlob(
+      blob => {
+        if (!blob) {
+          toast.error("Failed to capture image");
+          return;
+        }
+
+        const capturedImage: CapturedImage = {
+          blob,
+          dataUrl,
+        };
+
+        if (step === "capture-front") {
+          setFrontImage(capturedImage);
+          setStep("preview-front");
+        } else if (step === "capture-back") {
+          setBackImage(capturedImage);
+          setStep("preview-back");
+        }
+      },
+      "image/jpeg",
+      0.9
+    );
   }, [step]);
 
   // Start scanning (from setup)
@@ -357,30 +373,22 @@ export function ScanWizardClient({
     if (cardType === "double") {
       setStep("capture-back");
     } else {
-      // Single-sided card complete - add to queue
-      const newCard: CapturedCard = {
-        id: crypto.randomUUID(),
-        frontImage: frontImage!,
-        backImage: null,
-      };
-      setCapturedCards(prev => [...prev, newCard]);
+      // Single-sided card complete - add to async queue
+      processor.addCard(frontImage!, null);
       setFrontImage(null);
-      setStep("capture-front"); // Continue scanning
+      setStep("capture-front");
+      toast.success("Card queued - keep scanning!");
     }
-  }, [cardType, frontImage]);
+  }, [cardType, frontImage, processor]);
 
   // Accept back image (card complete)
   const acceptBack = useCallback(() => {
-    const newCard: CapturedCard = {
-      id: crypto.randomUUID(),
-      frontImage: frontImage!,
-      backImage: backImage,
-    };
-    setCapturedCards(prev => [...prev, newCard]);
+    processor.addCard(frontImage!, backImage);
     setFrontImage(null);
     setBackImage(null);
-    setStep("capture-front"); // Continue scanning
-  }, [frontImage, backImage]);
+    setStep("capture-front");
+    toast.success("Card queued - keep scanning!");
+  }, [frontImage, backImage, processor]);
 
   // Retake current image
   const retake = useCallback(() => {
@@ -393,48 +401,49 @@ export function ScanWizardClient({
     }
   }, [step]);
 
-  // Submit all captured cards
-  const submitCards = useCallback(async () => {
-    if (capturedCards.length === 0) return;
-
+  // Finish scanning - stop camera and show completion
+  const finishScanning = useCallback(() => {
     stopCamera();
-    setStep("submitting");
-
-    const cardsToProcess = capturedCards.map(card => ({
-      id: card.id,
-      frontImage: card.frontImage,
-      backImage: card.backImage,
-    }));
-
-    const { successCount, errorCount } = await processCards(cardsToProcess);
-
-    setStep("complete");
-
-    if (successCount > 0) {
-      toast.success(
-        `${successCount} card${successCount !== 1 ? "s" : ""} uploaded successfully!`
-      );
-    }
-    if (errorCount > 0) {
-      toast.error(
-        `${errorCount} card${errorCount !== 1 ? "s" : ""} failed to upload`
-      );
-    }
-  }, [capturedCards, stopCamera, processCards]);
+    setStep("finished");
+  }, [stopCamera]);
 
   // Reset wizard to start over
   const resetWizard = useCallback(() => {
-    setCapturedCards([]);
+    processor.reset();
     setFrontImage(null);
     setBackImage(null);
-    resetUpload();
     setStep("setup");
-  }, [resetUpload]);
+  }, [processor]);
+
+  // Handle session recovery
+  const handleResumeSession = useCallback(() => {
+    processor.resumeSession();
+    setStep("capture-front");
+    startCamera();
+  }, [processor, startCamera]);
+
+  const handleDiscardSession = useCallback(() => {
+    processor.discardSession();
+  }, [processor]);
 
   // Get current preview image
-  const currentPreviewImage = step === "preview-front" ? frontImage : backImage;
+  const currentPreviewImage =
+    step === "preview-front" ? frontImage?.dataUrl : backImage?.dataUrl;
   const isCapturing = step === "capture-front" || step === "capture-back";
   const isPreviewing = step === "preview-front" || step === "preview-back";
+
+  // Can finish when all processing is done
+  const canFinish =
+    processor.stats.total > 0 &&
+    !processor.isProcessing &&
+    processor.stats.queued === 0;
+  // All cards processed (complete, duplicate, or failed - none pending)
+  const allComplete =
+    processor.stats.total > 0 &&
+    processor.stats.complete +
+      processor.stats.duplicate +
+      processor.stats.failed ===
+      processor.stats.total;
 
   // ========== RENDER ==========
 
@@ -468,6 +477,22 @@ export function ScanWizardClient({
   return (
     <div ref={containerRef} className="fixed inset-0 bg-black flex flex-col">
       <canvas ref={canvasRef} className="hidden" />
+
+      {/* Session recovery dialog */}
+      <SessionRecoveryDialog
+        isOpen={processor.hasPendingSession}
+        onResume={handleResumeSession}
+        onDiscard={handleDiscardSession}
+      />
+
+      {/* Queue drawer */}
+      <QueueDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        items={processor.items}
+        onRetry={processor.retryCard}
+        onRemove={processor.removeCard}
+      />
 
       {/* SETUP STEP */}
       {step === "setup" && (
@@ -523,17 +548,16 @@ export function ScanWizardClient({
               </Select>
             </div>
 
-            {/* Start Button - full width */}
+            {/* Start Button */}
             <Button size="lg" className="w-full" onClick={startScanning}>
               <Camera className="mr-2 h-5 w-5" />
               Start Scanning
             </Button>
 
-            {/* Show count if we have captured cards */}
-            {capturedCards.length > 0 && (
+            {/* Show batch info if resuming */}
+            {processor.batchInfo && (
               <p className="text-white/50 text-center text-sm">
-                {capturedCards.length} card
-                {capturedCards.length !== 1 ? "s" : ""} captured
+                Resuming: {processor.stats.complete} cards complete
               </p>
             )}
           </div>
@@ -543,37 +567,37 @@ export function ScanWizardClient({
       {/* CAMERA / PREVIEW VIEW */}
       {(isCapturing || isPreviewing) && (
         <div className={`flex-1 flex ${isLandscape ? "flex-row" : "flex-col"}`}>
-          {/* Header - shows card progress and which side */}
+          {/* Header - shows card progress, stats, and which side */}
           <div
-            className={`bg-black/80 p-3 flex items-center justify-center gap-3 ${
+            className={`bg-black/80 p-3 flex items-center justify-between ${
               isLandscape ? "hidden" : ""
             }`}
           >
-            {/* Card count */}
-            <span className="text-white text-sm font-medium">
-              Card {capturedCards.length + 1}
-            </span>
-
-            {capturedCards.length > 0 && (
-              <>
-                <span className="text-white/30">•</span>
-                <span className="text-white/60 text-sm">
-                  {capturedCards.length} done
-                </span>
-              </>
-            )}
-
-            <span className="text-white/30">|</span>
-
-            {/* Which side */}
-            <span className="text-white font-medium">
-              {step.includes("front") ? "Front" : "Back"}
-            </span>
-            {cardType === "double" && (
-              <span className="text-white/60 text-sm">
-                ({step.includes("front") ? "1" : "2"}/2)
+            <div className="flex items-center gap-3">
+              {/* Card count */}
+              <span className="text-white text-sm font-medium">
+                Card {processor.stats.total + 1}
               </span>
-            )}
+
+              <span className="text-white/30">|</span>
+
+              {/* Which side */}
+              <span className="text-white font-medium">
+                {step.includes("front") ? "Front" : "Back"}
+              </span>
+              {cardType === "double" && (
+                <span className="text-white/60 text-sm">
+                  ({step.includes("front") ? "1" : "2"}/2)
+                </span>
+              )}
+            </div>
+
+            {/* Compact stats - tappable to open drawer */}
+            <ProcessingStatsDisplay
+              stats={processor.stats}
+              isProcessing={processor.isProcessing}
+              onClick={() => setIsDrawerOpen(true)}
+            />
           </div>
 
           {/* Main view - takes most space */}
@@ -612,31 +636,30 @@ export function ScanWizardClient({
             )}
 
             {/* Landscape header overlay */}
-            {isLandscape && (
-              <div className="absolute top-0 left-0 right-0 bg-black/60 p-2 flex items-center justify-center gap-3">
-                <span className="text-white text-sm font-medium">
-                  Card {capturedCards.length + 1}
-                </span>
-
-                {capturedCards.length > 0 && (
-                  <>
-                    <span className="text-white/30">•</span>
-                    <span className="text-white/60 text-sm">
-                      {capturedCards.length} done
-                    </span>
-                  </>
-                )}
-
-                <span className="text-white/30">|</span>
-
-                <span className="text-white text-sm font-medium">
-                  {step.includes("front") ? "Front" : "Back"}
-                </span>
-                {cardType === "double" && (
-                  <span className="text-white/60 text-sm">
-                    ({step.includes("front") ? "1" : "2"}/2)
+            {isLandscape && (isCapturing || isPreviewing) && (
+              <div className="absolute top-0 left-0 right-0 bg-black/60 p-2 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-white text-sm font-medium">
+                    Card {processor.stats.total + 1}
                   </span>
-                )}
+
+                  <span className="text-white/30">|</span>
+
+                  <span className="text-white text-sm font-medium">
+                    {step.includes("front") ? "Front" : "Back"}
+                  </span>
+                  {cardType === "double" && (
+                    <span className="text-white/60 text-sm">
+                      ({step.includes("front") ? "1" : "2"}/2)
+                    </span>
+                  )}
+                </div>
+
+                <ProcessingStatsDisplay
+                  stats={processor.stats}
+                  isProcessing={processor.isProcessing}
+                  onClick={() => setIsDrawerOpen(true)}
+                />
               </div>
             )}
           </div>
@@ -644,64 +667,80 @@ export function ScanWizardClient({
           {/* Controls - Capture mode */}
           {isCapturing && isStreaming && (
             <div
-              className={`bg-black p-4 flex items-center justify-center gap-4 ${
-                isLandscape ? "flex-col w-20" : "flex-row"
+              className={`bg-black p-4 flex items-center justify-center gap-3 ${
+                isLandscape ? "flex-col w-28" : "flex-row"
               }`}
             >
               {/* Fullscreen - hide on iOS */}
               {!isIOS && (
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 text-white hover:bg-white/20"
+                  size={isLandscape ? "sm" : "icon"}
+                  className={`text-white bg-white/10 hover:bg-white/20 ${
+                    isLandscape ? "w-full justify-start gap-2" : "h-10 w-10"
+                  }`}
                   onClick={toggleFullscreen}
                 >
                   {isFullscreen ? (
-                    <Minimize className="h-5 w-5" />
+                    <Minimize className="h-4 w-4" />
                   ) : (
-                    <Maximize className="h-5 w-5" />
+                    <Maximize className="h-4 w-4" />
+                  )}
+                  {isLandscape && (
+                    <span className="text-xs">
+                      {isFullscreen ? "Exit" : "Fullscreen"}
+                    </span>
                   )}
                 </Button>
               )}
 
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-10 w-10 text-white hover:bg-white/20"
+                size={isLandscape ? "sm" : "icon"}
+                className={`text-white bg-white/10 hover:bg-white/20 ${
+                  isLandscape ? "w-full justify-start gap-2" : "h-10 w-10"
+                }`}
                 onClick={switchCamera}
               >
-                <FlipHorizontal className="h-5 w-5" />
+                <FlipHorizontal className="h-4 w-4" />
+                {isLandscape && <span className="text-xs">Flip</span>}
               </Button>
 
               <button
-                className="h-16 w-16 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform"
+                className="h-16 w-16 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform shrink-0"
                 onClick={captureFrame}
               >
                 <div className="h-14 w-14 rounded-full border-4 border-black" />
               </button>
 
               {/* Done button - visible when cards are captured */}
-              {capturedCards.length > 0 ? (
+              {processor.stats.total > 0 ? (
                 <Button
                   size="sm"
-                  className={`gap-1 ${isLandscape ? "w-full" : ""}`}
-                  onClick={submitCards}
+                  className={`gap-2 ${isLandscape ? "w-full" : ""} ${
+                    allComplete ? "animate-pulse" : ""
+                  }`}
+                  onClick={finishScanning}
+                  disabled={!canFinish}
+                  variant={allComplete ? "default" : "secondary"}
                 >
-                  <Upload className="h-4 w-4" />
-                  <span className={isLandscape ? "hidden" : ""}>Done</span>
-                  <span>({capturedCards.length})</span>
+                  <Check className="h-4 w-4" />
+                  <span>{isLandscape ? "Finish" : "Done"}</span>
                 </Button>
               ) : (
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 text-white hover:bg-white/20"
+                  size={isLandscape ? "sm" : "icon"}
+                  className={`text-white bg-white/10 hover:bg-white/20 ${
+                    isLandscape ? "w-full justify-start gap-2" : "h-10 w-10"
+                  }`}
                   onClick={() => {
                     stopCamera();
                     setStep("setup");
                   }}
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
+                  {isLandscape && <span className="text-xs">Cancel</span>}
                 </Button>
               )}
             </div>
@@ -711,163 +750,80 @@ export function ScanWizardClient({
           {isPreviewing && (
             <div
               className={`bg-black p-4 flex items-center justify-center gap-4 ${
-                isLandscape ? "flex-col w-24" : "flex-row gap-8"
+                isLandscape ? "flex-col w-28" : "flex-row gap-8"
               }`}
             >
               <Button
                 variant="ghost"
-                size={isLandscape ? "default" : "lg"}
-                className={`text-white hover:bg-white/20 gap-2 ${
+                size={isLandscape ? "sm" : "lg"}
+                className={`text-white bg-white/10 hover:bg-white/20 gap-2 ${
                   isLandscape ? "w-full" : ""
                 }`}
                 onClick={retake}
               >
-                <RotateCcw className="h-5 w-5" />
-                {!isLandscape && "Retake"}
+                <RotateCcw className="h-4 w-4" />
+                <span>Retake</span>
               </Button>
 
               <Button
-                size={isLandscape ? "default" : "lg"}
+                size={isLandscape ? "sm" : "lg"}
                 className={`gap-2 ${isLandscape ? "w-full" : ""}`}
                 onClick={step === "preview-front" ? acceptFront : acceptBack}
               >
-                <Check className="h-5 w-5" />
-                {isLandscape
-                  ? cardType === "double" && step === "preview-front"
-                    ? "Next"
-                    : "Use"
-                  : cardType === "double" && step === "preview-front"
-                    ? "Next: Back"
-                    : "Use Photo"}
+                <Check className="h-4 w-4" />
+                <span>
+                  {cardType === "double" && step === "preview-front"
+                    ? isLandscape
+                      ? "Next"
+                      : "Next: Back"
+                    : isLandscape
+                      ? "Use"
+                      : "Use Photo"}
+                </span>
               </Button>
             </div>
           )}
         </div>
       )}
 
-      {/* SUBMITTING STEP */}
-      {step === "submitting" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <Loader2 className="h-12 w-12 text-white mb-4 animate-spin" />
-          <h1 className="text-xl font-semibold text-white mb-2">
-            Uploading Cards
-          </h1>
-          <p className="text-white/70 text-center mb-8">
-            Processing {capturedCards.length} card
-            {capturedCards.length !== 1 ? "s" : ""}...
-          </p>
-
-          <div className="w-full max-w-sm space-y-4">
-            {capturedCards.map(card => {
-              const state = uploadStates.get(card.id);
-              const status = state?.status || "pending";
-              const progress = state?.progress || 0;
-
-              return (
-                <div key={card.id} className="bg-white/10 rounded-lg p-3">
-                  <div className="flex items-center gap-3 mb-2">
-                    {status === "done" && (
-                      <CheckCircle2 className="h-5 w-5 text-green-400" />
-                    )}
-                    {status === "error" && (
-                      <AlertCircle className="h-5 w-5 text-red-400" />
-                    )}
-                    {status !== "done" && status !== "error" && (
-                      <Loader2 className="h-5 w-5 text-white animate-spin" />
-                    )}
-                    <span className="text-white text-sm flex-1">
-                      Card {capturedCards.indexOf(card) + 1}
-                    </span>
-                    <span className="text-white/60 text-xs capitalize">
-                      {status}
-                    </span>
-                  </div>
-                  <Progress value={progress} className="h-1" />
-                </div>
-              );
-            })}
+      {/* FINISHED STEP - Session complete guidance */}
+      {step === "finished" && (
+        <div className="flex-1 flex flex-col items-center p-4 pt-8 overflow-y-auto">
+          {/* Compact header - icon and title inline */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+              <Check className="h-5 w-5 text-green-400" />
+            </div>
+            <h1 className="text-xl font-semibold text-white">All Done!</h1>
           </div>
-        </div>
-      )}
 
-      {/* COMPLETE STEP */}
-      {step === "complete" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <CheckCircle2 className="h-16 w-16 text-green-400 mb-4" />
-          <h1 className="text-xl font-semibold text-white mb-2">
-            Upload Complete!
-          </h1>
-          <p className="text-white/70 text-center mb-8">
-            Your cards have been uploaded and are being processed.
-          </p>
-
-          <div className="w-full max-w-sm space-y-4">
-            {/* Summary */}
-            <div className="bg-white/10 rounded-lg p-4">
-              <div className="flex justify-between text-white mb-2">
-                <span>Total Cards</span>
-                <span>{capturedCards.length}</span>
+          {/* Summary */}
+          <div className="w-full max-w-sm space-y-3">
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="flex justify-between text-white mb-1">
+                <span className="text-sm">Total Cards</span>
+                <span className="text-sm">{processor.stats.total}</span>
               </div>
               <div className="flex justify-between text-green-400">
-                <span>Successful</span>
-                <span>
-                  {
-                    Array.from(uploadStates.values()).filter(
-                      s => s.status === "done"
-                    ).length
-                  }
-                </span>
+                <span className="text-sm">Successful</span>
+                <span className="text-sm">{processor.stats.complete}</span>
               </div>
-              {Array.from(uploadStates.values()).some(
-                s => s.status === "error"
-              ) && (
+              {processor.stats.duplicate > 0 && (
+                <div className="flex justify-between text-yellow-400">
+                  <span className="text-sm">Duplicates (skipped)</span>
+                  <span className="text-sm">{processor.stats.duplicate}</span>
+                </div>
+              )}
+              {processor.stats.failed > 0 && (
                 <div className="flex justify-between text-red-400">
-                  <span>Failed</span>
-                  <span>
-                    {
-                      Array.from(uploadStates.values()).filter(
-                        s => s.status === "error"
-                      ).length
-                    }
-                  </span>
+                  <span className="text-sm">Failed</span>
+                  <span className="text-sm">{processor.stats.failed}</span>
                 </div>
               )}
             </div>
 
-            <div className="flex gap-3">
-              <Button
-                size="lg"
-                variant="outline"
-                className="flex-1 gap-2 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                onClick={resetWizard}
-              >
-                <Camera className="h-5 w-5" />
-                Scan More
-              </Button>
-              <Button
-                size="lg"
-                className="flex-1 gap-2"
-                onClick={() => setStep("finished")}
-              >
-                <Check className="h-5 w-5" />
-                Finished
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* FINISHED STEP - Session complete guidance */}
-      {step === "finished" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
-            <Check className="h-8 w-8 text-green-400" />
-          </div>
-          <h1 className="text-xl font-semibold text-white mb-2">All Done!</h1>
-
-          <div className="w-full max-w-sm space-y-4 mt-4">
             {/* Direct instruction */}
-            <div className="bg-white/10 rounded-lg p-5 text-center">
+            <div className="bg-white/10 rounded-lg p-4 text-center">
               <p className="text-white text-sm leading-relaxed">
                 Close this page and go to the{" "}
                 <span className="font-semibold text-primary">Review Queue</span>{" "}
@@ -884,6 +840,17 @@ export function ScanWizardClient({
               <Camera className="h-4 w-4 mr-2" />
               Scan More Cards
             </Button>
+
+            {/* View failed cards */}
+            {processor.stats.failed > 0 && (
+              <Button
+                variant="outline"
+                className="w-full border-white/20 text-white hover:bg-white/10"
+                onClick={() => setIsDrawerOpen(true)}
+              >
+                View Failed Cards ({processor.stats.failed})
+              </Button>
+            )}
           </div>
         </div>
       )}

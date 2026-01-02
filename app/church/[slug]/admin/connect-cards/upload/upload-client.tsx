@@ -60,6 +60,7 @@ import {
   FolderOpen,
   FolderSync,
   ExternalLink,
+  RotateCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
@@ -1195,13 +1196,25 @@ export function ConnectCardUploadClient({
             )}
 
             {qrExpiry && (
-              <p className="text-xs text-muted-foreground mt-4">
-                Expires at{" "}
-                {qrExpiry.toLocaleTimeString([], {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </p>
+              <div className="flex items-center gap-2 mt-4">
+                <p className="text-xs text-muted-foreground">
+                  Expires at{" "}
+                  {qrExpiry.toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={generateQrCode}
+                  disabled={qrLoading}
+                >
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  New Code
+                </Button>
+              </div>
             )}
           </div>
 
