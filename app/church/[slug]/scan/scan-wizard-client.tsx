@@ -294,26 +294,11 @@ export function ScanWizardClient({
     };
   }, []);
 
-  // Debug: Quick fingerprint of dataUrl for tracing
-  const getFingerprint = (dataUrl: string) => {
-    // Use a slice from the middle of the data (after header, into actual image data)
-    const start = dataUrl.indexOf(",") + 1000; // Skip base64 header + some data
-    return dataUrl.slice(start, start + 32);
-  };
-
   // Capture current frame - crops to visible area (WYSIWYG)
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
-
-    console.log("[DEBUG CAPTURE] Starting capture...");
-    console.log(
-      "[DEBUG CAPTURE] Video dimensions:",
-      video.videoWidth,
-      "x",
-      video.videoHeight
-    );
 
     // Get the display dimensions (what user sees)
     const displayWidth = video.clientWidth;
@@ -352,12 +337,6 @@ export function ScanWizardClient({
     // Get both dataUrl and blob
     const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
 
-    // DEBUG: Log fingerprint of the captured image
-    const fingerprint = getFingerprint(dataUrl);
-    console.log("[DEBUG CAPTURE] DataUrl length:", dataUrl.length);
-    console.log("[DEBUG CAPTURE] Fingerprint (middle 32 chars):", fingerprint);
-    console.log("[DEBUG CAPTURE] Step:", step);
-
     canvas.toBlob(
       blob => {
         if (!blob) {
@@ -365,19 +344,15 @@ export function ScanWizardClient({
           return;
         }
 
-        console.log("[DEBUG CAPTURE] Blob size:", blob.size, "bytes");
-
         const capturedImage: CapturedImage = {
           blob,
           dataUrl,
         };
 
         if (step === "capture-front") {
-          console.log("[DEBUG CAPTURE] Setting as FRONT image");
           setFrontImage(capturedImage);
           setStep("preview-front");
         } else if (step === "capture-back") {
-          console.log("[DEBUG CAPTURE] Setting as BACK image");
           setBackImage(capturedImage);
           setStep("preview-back");
         }
@@ -396,16 +371,9 @@ export function ScanWizardClient({
   // Accept front image
   const acceptFront = useCallback(() => {
     if (cardType === "double") {
-      console.log("[DEBUG ACCEPT] Front accepted, moving to capture-back");
       setStep("capture-back");
     } else {
       // Single-sided card complete - add to async queue
-      console.log("[DEBUG ACCEPT] Single-sided card - adding to processor");
-      console.log("[DEBUG ACCEPT] Front blob size:", frontImage?.blob.size);
-      console.log(
-        "[DEBUG ACCEPT] Front fingerprint:",
-        frontImage?.dataUrl ? getFingerprint(frontImage.dataUrl) : "N/A"
-      );
       processor.addCard(frontImage!, null);
       setFrontImage(null);
       setStep("capture-front");
@@ -415,19 +383,6 @@ export function ScanWizardClient({
 
   // Accept back image (card complete)
   const acceptBack = useCallback(() => {
-    console.log(
-      "[DEBUG ACCEPT] Double-sided card complete - adding to processor"
-    );
-    console.log("[DEBUG ACCEPT] Front blob size:", frontImage?.blob.size);
-    console.log(
-      "[DEBUG ACCEPT] Front fingerprint:",
-      frontImage?.dataUrl ? getFingerprint(frontImage.dataUrl) : "N/A"
-    );
-    console.log("[DEBUG ACCEPT] Back blob size:", backImage?.blob.size);
-    console.log(
-      "[DEBUG ACCEPT] Back fingerprint:",
-      backImage?.dataUrl ? getFingerprint(backImage.dataUrl) : "N/A"
-    );
     processor.addCard(frontImage!, backImage);
     setFrontImage(null);
     setBackImage(null);
@@ -482,9 +437,13 @@ export function ScanWizardClient({
     processor.stats.total > 0 &&
     !processor.isProcessing &&
     processor.stats.queued === 0;
+  // All cards processed (complete, duplicate, or failed - none pending)
   const allComplete =
     processor.stats.total > 0 &&
-    processor.stats.complete === processor.stats.total;
+    processor.stats.complete +
+      processor.stats.duplicate +
+      processor.stats.failed ===
+      processor.stats.total;
 
   // ========== RENDER ==========
 
@@ -708,37 +667,47 @@ export function ScanWizardClient({
           {/* Controls - Capture mode */}
           {isCapturing && isStreaming && (
             <div
-              className={`bg-black p-4 flex items-center justify-center gap-4 ${
-                isLandscape ? "flex-col w-20" : "flex-row"
+              className={`bg-black p-4 flex items-center justify-center gap-3 ${
+                isLandscape ? "flex-col w-28" : "flex-row"
               }`}
             >
               {/* Fullscreen - hide on iOS */}
               {!isIOS && (
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 text-white hover:bg-white/20"
+                  size={isLandscape ? "sm" : "icon"}
+                  className={`text-white bg-white/10 hover:bg-white/20 ${
+                    isLandscape ? "w-full justify-start gap-2" : "h-10 w-10"
+                  }`}
                   onClick={toggleFullscreen}
                 >
                   {isFullscreen ? (
-                    <Minimize className="h-5 w-5" />
+                    <Minimize className="h-4 w-4" />
                   ) : (
-                    <Maximize className="h-5 w-5" />
+                    <Maximize className="h-4 w-4" />
+                  )}
+                  {isLandscape && (
+                    <span className="text-xs">
+                      {isFullscreen ? "Exit" : "Fullscreen"}
+                    </span>
                   )}
                 </Button>
               )}
 
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-10 w-10 text-white hover:bg-white/20"
+                size={isLandscape ? "sm" : "icon"}
+                className={`text-white bg-white/10 hover:bg-white/20 ${
+                  isLandscape ? "w-full justify-start gap-2" : "h-10 w-10"
+                }`}
                 onClick={switchCamera}
               >
-                <FlipHorizontal className="h-5 w-5" />
+                <FlipHorizontal className="h-4 w-4" />
+                {isLandscape && <span className="text-xs">Flip</span>}
               </Button>
 
               <button
-                className="h-16 w-16 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform"
+                className="h-16 w-16 rounded-full bg-white flex items-center justify-center active:scale-95 transition-transform shrink-0"
                 onClick={captureFrame}
               >
                 <div className="h-14 w-14 rounded-full border-4 border-black" />
@@ -748,7 +717,7 @@ export function ScanWizardClient({
               {processor.stats.total > 0 ? (
                 <Button
                   size="sm"
-                  className={`gap-1 ${isLandscape ? "w-full" : ""} ${
+                  className={`gap-2 ${isLandscape ? "w-full" : ""} ${
                     allComplete ? "animate-pulse" : ""
                   }`}
                   onClick={finishScanning}
@@ -756,19 +725,22 @@ export function ScanWizardClient({
                   variant={allComplete ? "default" : "secondary"}
                 >
                   <Check className="h-4 w-4" />
-                  <span className={isLandscape ? "hidden" : ""}>Done</span>
+                  <span>{isLandscape ? "Finish" : "Done"}</span>
                 </Button>
               ) : (
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 text-white hover:bg-white/20"
+                  size={isLandscape ? "sm" : "icon"}
+                  className={`text-white bg-white/10 hover:bg-white/20 ${
+                    isLandscape ? "w-full justify-start gap-2" : "h-10 w-10"
+                  }`}
                   onClick={() => {
                     stopCamera();
                     setStep("setup");
                   }}
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" />
+                  {isLandscape && <span className="text-xs">Cancel</span>}
                 </Button>
               )}
             </div>
@@ -778,34 +750,36 @@ export function ScanWizardClient({
           {isPreviewing && (
             <div
               className={`bg-black p-4 flex items-center justify-center gap-4 ${
-                isLandscape ? "flex-col w-24" : "flex-row gap-8"
+                isLandscape ? "flex-col w-28" : "flex-row gap-8"
               }`}
             >
               <Button
                 variant="ghost"
-                size={isLandscape ? "default" : "lg"}
-                className={`text-white hover:bg-white/20 gap-2 ${
+                size={isLandscape ? "sm" : "lg"}
+                className={`text-white bg-white/10 hover:bg-white/20 gap-2 ${
                   isLandscape ? "w-full" : ""
                 }`}
                 onClick={retake}
               >
-                <RotateCcw className="h-5 w-5" />
-                {!isLandscape && "Retake"}
+                <RotateCcw className="h-4 w-4" />
+                <span>Retake</span>
               </Button>
 
               <Button
-                size={isLandscape ? "default" : "lg"}
+                size={isLandscape ? "sm" : "lg"}
                 className={`gap-2 ${isLandscape ? "w-full" : ""}`}
                 onClick={step === "preview-front" ? acceptFront : acceptBack}
               >
-                <Check className="h-5 w-5" />
-                {isLandscape
-                  ? cardType === "double" && step === "preview-front"
-                    ? "Next"
-                    : "Use"
-                  : cardType === "double" && step === "preview-front"
-                    ? "Next: Back"
-                    : "Use Photo"}
+                <Check className="h-4 w-4" />
+                <span>
+                  {cardType === "double" && step === "preview-front"
+                    ? isLandscape
+                      ? "Next"
+                      : "Next: Back"
+                    : isLandscape
+                      ? "Use"
+                      : "Use Photo"}
+                </span>
               </Button>
             </div>
           )}
@@ -814,33 +788,42 @@ export function ScanWizardClient({
 
       {/* FINISHED STEP - Session complete guidance */}
       {step === "finished" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mb-4">
-            <Check className="h-8 w-8 text-green-400" />
+        <div className="flex-1 flex flex-col items-center p-4 pt-8 overflow-y-auto">
+          {/* Compact header - icon and title inline */}
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+              <Check className="h-5 w-5 text-green-400" />
+            </div>
+            <h1 className="text-xl font-semibold text-white">All Done!</h1>
           </div>
-          <h1 className="text-xl font-semibold text-white mb-2">All Done!</h1>
 
           {/* Summary */}
-          <div className="w-full max-w-sm space-y-4 mt-4">
-            <div className="bg-white/10 rounded-lg p-4">
-              <div className="flex justify-between text-white mb-2">
-                <span>Total Cards</span>
-                <span>{processor.stats.total}</span>
+          <div className="w-full max-w-sm space-y-3">
+            <div className="bg-white/10 rounded-lg p-3">
+              <div className="flex justify-between text-white mb-1">
+                <span className="text-sm">Total Cards</span>
+                <span className="text-sm">{processor.stats.total}</span>
               </div>
               <div className="flex justify-between text-green-400">
-                <span>Successful</span>
-                <span>{processor.stats.complete}</span>
+                <span className="text-sm">Successful</span>
+                <span className="text-sm">{processor.stats.complete}</span>
               </div>
+              {processor.stats.duplicate > 0 && (
+                <div className="flex justify-between text-yellow-400">
+                  <span className="text-sm">Duplicates (skipped)</span>
+                  <span className="text-sm">{processor.stats.duplicate}</span>
+                </div>
+              )}
               {processor.stats.failed > 0 && (
                 <div className="flex justify-between text-red-400">
-                  <span>Failed</span>
-                  <span>{processor.stats.failed}</span>
+                  <span className="text-sm">Failed</span>
+                  <span className="text-sm">{processor.stats.failed}</span>
                 </div>
               )}
             </div>
 
             {/* Direct instruction */}
-            <div className="bg-white/10 rounded-lg p-5 text-center">
+            <div className="bg-white/10 rounded-lg p-4 text-center">
               <p className="text-white text-sm leading-relaxed">
                 Close this page and go to the{" "}
                 <span className="font-semibold text-primary">Review Queue</span>{" "}

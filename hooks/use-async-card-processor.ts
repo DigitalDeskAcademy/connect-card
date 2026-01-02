@@ -53,6 +53,7 @@ export interface ProcessingStats {
   processing: number; // uploading + creating + extracting
   complete: number;
   failed: number;
+  duplicate: number;
   total: number;
 }
 
@@ -624,6 +625,7 @@ export function useAsyncCardProcessor(
     ).length,
     complete: items.filter(i => i.status === "complete").length,
     failed: items.filter(i => i.status === "failed").length,
+    duplicate: items.filter(i => i.status === "duplicate").length,
     total: items.length,
   };
 

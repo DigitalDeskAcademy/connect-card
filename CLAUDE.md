@@ -129,6 +129,7 @@ Tailwind classes use colons (print:hidden, md:flex). NEVER escape them in raw CS
 - ❌ Create TODO files (use `docs/` structure)
 - ❌ Add time estimates to plans
 - ❌ Edit `.env` files or credentials
+- ❌ Start `pnpm dev` - User runs dev server manually (needs to see OTP codes in console)
 
 ---
 

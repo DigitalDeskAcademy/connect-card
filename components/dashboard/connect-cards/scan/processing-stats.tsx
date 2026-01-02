@@ -19,7 +19,7 @@ export function ProcessingStatsDisplay({
   isProcessing,
   onClick,
 }: ProcessingStatsProps) {
-  const { complete, processing, queued, failed } = stats;
+  const { complete, processing, queued, failed, duplicate } = stats;
   const totalProcessing = processing + queued;
 
   // Don't show anything if nothing to display
@@ -28,12 +28,12 @@ export function ProcessingStatsDisplay({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/80 hover:bg-muted transition-colors text-sm font-medium"
+      className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors text-sm font-medium"
       aria-label="View processing queue"
     >
       {/* Complete count - always show if > 0 */}
       {complete > 0 && (
-        <span className="flex items-center gap-1 text-green-600">
+        <span className="flex items-center gap-1 text-green-400">
           <span>✓</span>
           <span>{complete}</span>
         </span>
@@ -43,7 +43,7 @@ export function ProcessingStatsDisplay({
       {totalProcessing > 0 && (
         <span
           className={cn(
-            "flex items-center gap-1 text-primary",
+            "flex items-center gap-1 text-blue-400",
             isProcessing && "animate-pulse"
           )}
         >
@@ -52,9 +52,17 @@ export function ProcessingStatsDisplay({
         </span>
       )}
 
+      {/* Duplicate count - only show if > 0 */}
+      {duplicate > 0 && (
+        <span className="flex items-center gap-1 text-yellow-400">
+          <span>⚠</span>
+          <span>{duplicate}</span>
+        </span>
+      )}
+
       {/* Failed count - only show if > 0 */}
       {failed > 0 && (
-        <span className="flex items-center gap-1 text-destructive">
+        <span className="flex items-center gap-1 text-red-400">
           <span>❌</span>
           <span>{failed}</span>
         </span>

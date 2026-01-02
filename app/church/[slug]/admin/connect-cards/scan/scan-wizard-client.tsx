@@ -281,9 +281,13 @@ export function ScanWizardClient({
     processor.stats.total > 0 &&
     !processor.isProcessing &&
     processor.stats.queued === 0;
+  // All cards processed (complete, duplicate, or failed - none pending)
   const allComplete =
     processor.stats.total > 0 &&
-    processor.stats.complete === processor.stats.total;
+    processor.stats.complete +
+      processor.stats.duplicate +
+      processor.stats.failed ===
+      processor.stats.total;
 
   // Render based on current step
   return (

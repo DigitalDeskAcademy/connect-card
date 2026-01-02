@@ -168,10 +168,13 @@ export async function POST(nextRequest: NextRequest) {
     console.log("[DEBUG SERVER EXTRACT] Organization ID:", organizationId);
 
     // 6. Check for duplicate image in database (check front image hash)
+    // NOTE: Exclude PENDING cards - they may be the card we're currently processing
+    // (createPendingCard creates the card with hash BEFORE extraction runs)
     const existingCard = await prisma.connectCard.findFirst({
       where: {
         organizationId: organizationId!,
         imageHash: frontImageHash,
+        status: { not: "PENDING" }, // Exclude pending cards (may be our own card)
       },
       select: {
         id: true,
