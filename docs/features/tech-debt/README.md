@@ -1,9 +1,8 @@
 # Tech Debt - Production Blockers
 
-**Status:** 🟢 **Keyword Detection Complete** - PR #80 merged
-**Worktree:** `/church-connect-hub/tech-debt`
-**Branch:** `feature/tech-debt`
-**Last Updated:** 2025-12-21
+**Status:** 🟢 **Member Unification Complete** - PR #87 merged (Dec 23)
+**Worktree:** `tech-debt`
+**Last Updated:** 2026-01-01
 
 ---
 

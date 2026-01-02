@@ -1,8 +1,8 @@
 # ChMS Integration - Feature Vision
 
 **Status:** 🟢 Phase 2 Complete (PR #48, #58, #65 merged)
-**Worktree:** `feature/integrations`
-**Last Updated:** 2025-12-12
+**Worktree:** `integrations`
+**Last Updated:** 2026-01-01
 
 ---
 

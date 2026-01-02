@@ -1,16 +1,15 @@
 # Volunteer Onboarding Pipeline - Product Vision
 
-**Status:** 🟡 **Phase 3 Planning** - Events MVP spec complete, ready for implementation
-**Worktree:** `/church-connect-hub/volunteer`
-**Branch:** `feature/volunteer-management`
-**Last Updated:** 2025-12-17
-**Focus:** Volunteer Events MVP (Demo Feedback Priority)
+**Status:** 🟢 **Events Phase 2** - Events UI complete (PR #89), working on assignment system
+**Worktree:** `volunteer`
+**Last Updated:** 2026-01-01
+**Focus:** Volunteer Events - Assignment System & SMS Automation
 
 ---
 
 ## 🔄 Worktree Coordination: Export Feature
 
-**Export UI lives in `feature/integrations` worktree.** This worktree provides the data layer.
+**Export UI lives in `integrations` worktree.** This worktree provides the data layer.
 
 ### This Worktree Owns
 

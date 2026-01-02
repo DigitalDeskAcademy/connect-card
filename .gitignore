@@ -113,7 +113,8 @@ tests/.auth/
 .env.production.template
 
 # Archived/experimental code (local development backups)
-archive/
+# Only ignores root /archive/ folder, not docs/archive/
+/archive/
 
 # Experimental hooks (not in use)
 hooks/use-document-detection.ts

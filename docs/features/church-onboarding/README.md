@@ -1,9 +1,8 @@
 # Agency → Church Migration Plan
 
-**Status:** 📋 Planning
-**Branch:** `feature/church-onboarding`
+**Status:** 🟡 In Progress - Interactive checklist added (PR #88)
 **Priority:** HIGH (before demo)
-**Last Updated:** 2025-12-22
+**Last Updated:** 2026-01-01
 
 ---
 

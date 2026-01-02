@@ -7,11 +7,9 @@
 > Keyword Detection, and Volunteer Event Tracking.
 > Platform admin modernization deferred until those are complete.
 
-**Status:** Planning
-**Priority:** Future (post-MVP)
-**Branch:** `feature/platform-admin` (not yet created)
-**Port:** 3005
-**Last Updated:** 2025-12-17
+**Status:** 📋 Planning (Future Work)
+**Priority:** Post-MVP
+**Last Updated:** 2026-01-01
 
 ---
 
