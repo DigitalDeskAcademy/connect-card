@@ -117,7 +117,7 @@ export function EventFormDialog({
     defaultValues: {
       name: "",
       description: "",
-      eventType: "OTHER",
+      eventType: "SUNDAY_SERVICE",
       locationId: null,
       category: null,
       leaderId: "",

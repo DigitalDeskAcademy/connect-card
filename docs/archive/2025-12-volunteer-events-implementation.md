@@ -457,6 +457,121 @@ Implement trigger/function to update `session.slotsFilled` when assignments chan
 
 ---
 
+## Phase 2.5: Event Resources & Equipment ✅ COMPLETE
+
+**Goal:** Simple resource tracking with status workflow
+**Status:** ✅ Complete (January 2026)
+
+### Tasks
+
+#### 2.5.1 Add EventResource Model
+
+```prisma
+model EventResource {
+  id            String         @id @default(cuid())
+  eventId       String
+  name          String         // e.g., "Folding Chairs"
+  quantity      Int            @default(1)
+  notes         String?
+  status        ResourceStatus @default(NEEDED)
+  isCommon      Boolean        @default(false)
+  sortOrder     Int            @default(0)
+  statusUpdatedAt DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  event         VolunteerEvent @relation(...)
+
+  @@index([eventId, status])
+  @@map("event_resource")
+}
+
+enum ResourceStatus {
+  NEEDED     // Not yet secured
+  CONFIRMED  // Reserved/secured
+  READY      // On-site and ready
+}
+```
+
+#### 2.5.2 Create Resource Server Actions
+
+**File:** `actions/events/resources.ts`
+
+| Action                 | Description                  |
+| ---------------------- | ---------------------------- |
+| `addResource`          | Add single custom resource   |
+| `addCommonResources`   | Bulk add from preset library |
+| `updateResourceStatus` | NEEDED → CONFIRMED → READY   |
+| `updateResource`       | Edit name, quantity, notes   |
+| `deleteResource`       | Remove resource from event   |
+
+#### 2.5.3 Create ResourcesSection UI
+
+**File:** `app/church/[slug]/admin/volunteer/events/[id]/_components/resources-section.tsx`
+
+**Features:**
+
+- Add from preset list (20 common church items)
+- Add custom resources with name, quantity, notes
+- Status dropdown (NEEDED → CONFIRMED → READY)
+- Status badges with counts
+- Delete resources
+- Only editable for DRAFT/PUBLISHED events
+
+### Common Resource Presets
+
+```typescript
+export const COMMON_RESOURCES = [
+  { name: "Folding Chairs", defaultQuantity: 50 },
+  { name: "Round Tables", defaultQuantity: 10 },
+  { name: "Rectangular Tables", defaultQuantity: 5 },
+  { name: "Projector", defaultQuantity: 1 },
+  { name: "Projector Screen", defaultQuantity: 1 },
+  { name: "Microphone (Wireless)", defaultQuantity: 2 },
+  { name: "Microphone (Wired)", defaultQuantity: 2 },
+  { name: "Sound System", defaultQuantity: 1 },
+  { name: "Extension Cords", defaultQuantity: 5 },
+  { name: "Power Strips", defaultQuantity: 5 },
+  { name: "Tablecloths", defaultQuantity: 10 },
+  { name: "Name Tags", defaultQuantity: 50 },
+  { name: "Sign-in Table", defaultQuantity: 1 },
+  { name: "Welcome Banner", defaultQuantity: 1 },
+  { name: "Coffee Maker", defaultQuantity: 1 },
+  { name: "Water Dispenser", defaultQuantity: 1 },
+  { name: "Snack Table Supplies", defaultQuantity: 1 },
+  { name: "First Aid Kit", defaultQuantity: 1 },
+  { name: "Cleaning Supplies", defaultQuantity: 1 },
+  { name: "Trash Bags", defaultQuantity: 20 },
+];
+```
+
+### Files Created
+
+| File                                                           | Purpose        |
+| -------------------------------------------------------------- | -------------- |
+| `actions/events/resources.ts`                                  | Server actions |
+| `app/church/.../events/[id]/_components/resources-section.tsx` | UI component   |
+
+### Files Modified
+
+| File                                                             | Changes                    |
+| ---------------------------------------------------------------- | -------------------------- |
+| `prisma/schema.prisma`                                           | EventResource model + enum |
+| `lib/data/events.ts`                                             | Include resources in query |
+| `app/church/.../events/[id]/_components/event-detail-client.tsx` | Integrate ResourcesSection |
+
+### Validation Checklist
+
+- [x] Can add common resources from preset list
+- [x] Can add custom resources
+- [x] Status dropdown updates correctly
+- [x] Can delete resources
+- [x] Summary badges show counts
+- [x] Only editable for DRAFT/PUBLISHED
+- [x] Multi-tenant isolation verified
+
+---
+
 ## Phase 3: GHL SMS Automation
 
 **Goal:** Invite via SMS, parse responses, auto-confirm

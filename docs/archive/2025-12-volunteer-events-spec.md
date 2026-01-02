@@ -93,6 +93,30 @@ A **low-friction event coordination system** that lets church staff:
 - usedAt: datetime (nullable, but reusable within window)
 ```
 
+**EventResource** (equipment/supplies needed for event)
+
+```
+- id
+- eventId → VolunteerEvent
+- name: string (e.g., "Folding Chairs")
+- quantity: int (default: 1)
+- notes: string? (optional notes like "Located in storage room B")
+- status: ResourceStatus (NEEDED → CONFIRMED → READY)
+- isCommon: boolean (true if from preset list)
+- sortOrder: int
+- statusUpdatedAt: datetime?
+- createdAt
+- updatedAt
+```
+
+**ResourceStatus Enum**
+
+```
+NEEDED     - Resource identified but not yet secured
+CONFIRMED  - Resource has been located/reserved
+READY      - Resource is on-site and ready for event
+```
+
 ### Models to Modify
 
 **Volunteer**
@@ -294,6 +318,36 @@ Legend:
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+### Resources & Equipment
+
+Simple checklist-style resource tracking with status workflow:
+
+**Status Workflow:** `NEEDED` → `CONFIRMED` → `READY`
+
+| Status    | Color  | Meaning                               |
+| --------- | ------ | ------------------------------------- |
+| NEEDED    | Yellow | Resource required but not yet secured |
+| CONFIRMED | Blue   | Resource secured/reserved             |
+| READY     | Green  | Resource on-site and ready to use     |
+
+**Common Resource Presets:**
+
+- Folding Chairs, Round Tables, Rectangular Tables
+- Projector, Projector Screen, Sound System
+- Microphones (Wireless/Wired), Extension Cords, Power Strips
+- Tablecloths, Name Tags, Sign-in Table, Welcome Banner
+- Coffee Maker, Water Dispenser, Snack Table Supplies
+- First Aid Kit, Cleaning Supplies, Trash Bags
+
+**Features:**
+
+- Add from preset list (bulk select with quantities)
+- Add custom resources (name, quantity, notes)
+- Status dropdown to update workflow state
+- Delete resources
+- Summary badges (count per status)
+- Only editable for DRAFT/PUBLISHED events
 
 ---
 

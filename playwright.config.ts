@@ -55,6 +55,18 @@ export default defineConfig({
       },
       dependencies: ["setup"],
     },
+
+    // Visual demo project - NO auth setup dependency (handles its own login)
+    {
+      name: "visual-demo",
+      testMatch: /visual-demo\.spec\.ts/,
+      use: {
+        ...devices["Desktop Chrome"],
+        // Fresh session - no saved auth
+        storageState: { cookies: [], origins: [] },
+      },
+      // No dependencies - skips auth setup entirely
+    },
   ],
 
   // Start dev server before running tests

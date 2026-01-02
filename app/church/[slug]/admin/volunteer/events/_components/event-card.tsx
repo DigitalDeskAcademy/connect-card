@@ -2,13 +2,7 @@
 
 import Link from "next/link";
 import { format, isToday, isTomorrow, isFuture } from "date-fns";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Progress } from "@/components/ui/progress";
 import {
   IconCalendar,
   IconClock,
@@ -29,7 +22,6 @@ import {
   IconSend,
   IconCircleX,
   IconTrash,
-  IconUserPlus,
 } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
 import { EVENT_TYPE_LABELS, type EventListItem } from "@/lib/event-types";
@@ -51,6 +43,8 @@ interface EventCardProps {
   canDelete: boolean;
 }
 
+export type CapacityStatus = "full" | "partial" | "urgent" | "empty";
+
 // =============================================================================
 // Helpers
 // =============================================================================
@@ -58,13 +52,19 @@ interface EventCardProps {
 /**
  * Get capacity status based on fill percentage
  */
-function getCapacityStatus(filled: number, needed: number) {
+export function getCapacityStatus(
+  filled: number,
+  needed: number
+): {
+  label: string;
+  status: CapacityStatus;
+  percentage: number;
+} {
   if (needed === 0) {
     return {
       label: "No slots defined",
+      status: "empty",
       percentage: 0,
-      variant: "muted" as const,
-      urgent: false,
     };
   }
 
@@ -73,24 +73,21 @@ function getCapacityStatus(filled: number, needed: number) {
   if (percentage >= 100) {
     return {
       label: "Fully staffed",
+      status: "full",
       percentage: 100,
-      variant: "success" as const,
-      urgent: false,
     };
   }
   if (percentage >= 50) {
     return {
       label: `${needed - filled} more needed`,
+      status: "partial",
       percentage,
-      variant: "warning" as const,
-      urgent: false,
     };
   }
   return {
     label: `Needs ${needed - filled} volunteers`,
+    status: "urgent",
     percentage,
-    variant: "destructive" as const,
-    urgent: true,
   };
 }
 
@@ -104,42 +101,87 @@ function formatEventDate(date: Date): string {
 }
 
 /**
- * Get status dot configuration
+ * Get status configuration
  */
 function getStatusConfig(status: string) {
   switch (status) {
     case "DRAFT":
-      return { label: "Draft", color: "bg-yellow-500" };
+      return {
+        label: "Draft",
+        className:
+          "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
+      };
     case "PUBLISHED":
-      return { label: "Published", color: "bg-green-500" };
+      return {
+        label: "Published",
+        className:
+          "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
+      };
     case "IN_PROGRESS":
-      return { label: "In Progress", color: "bg-blue-500" };
+      return {
+        label: "In Progress",
+        className:
+          "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+      };
     case "COMPLETED":
-      return { label: "Completed", color: "bg-muted-foreground" };
+      return {
+        label: "Completed",
+        className: "bg-muted text-muted-foreground border-muted",
+      };
     case "CANCELLED":
-      return { label: "Cancelled", color: "bg-red-500" };
+      return {
+        label: "Cancelled",
+        className:
+          "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+      };
     case "ARCHIVED":
-      return { label: "Archived", color: "bg-muted-foreground" };
+      return {
+        label: "Archived",
+        className: "bg-muted text-muted-foreground border-muted",
+      };
     default:
-      return { label: status, color: "bg-muted-foreground" };
+      return {
+        label: status,
+        className: "bg-muted text-muted-foreground border-muted",
+      };
   }
 }
 
 /**
- * Get progress bar color class based on capacity variant
+ * Get capacity status colors
  */
-function getProgressColor(
-  variant: "success" | "warning" | "destructive" | "muted"
-) {
-  switch (variant) {
-    case "success":
-      return "[&>[data-slot=progress-indicator]]:bg-green-500";
-    case "warning":
-      return "[&>[data-slot=progress-indicator]]:bg-yellow-500";
-    case "destructive":
-      return "[&>[data-slot=progress-indicator]]:bg-red-500";
-    case "muted":
-      return "[&>[data-slot=progress-indicator]]:bg-muted-foreground";
+function getCapacityColors(status: CapacityStatus) {
+  switch (status) {
+    case "full":
+      return {
+        bg: "bg-green-500/20",
+        fill: "bg-green-500",
+        text: "text-green-600 dark:text-green-400",
+        badge:
+          "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20",
+      };
+    case "partial":
+      return {
+        bg: "bg-yellow-500/20",
+        fill: "bg-yellow-500",
+        text: "text-yellow-600 dark:text-yellow-400",
+        badge:
+          "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20",
+      };
+    case "urgent":
+      return {
+        bg: "bg-red-500/20",
+        fill: "bg-red-500",
+        text: "text-red-600 dark:text-red-400",
+        badge: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+      };
+    case "empty":
+      return {
+        bg: "bg-muted",
+        fill: "bg-muted-foreground",
+        text: "text-muted-foreground",
+        badge: "bg-muted text-muted-foreground border-muted",
+      };
   }
 }
 
@@ -150,11 +192,11 @@ function getProgressColor(
 /**
  * Event Card Component
  *
- * Modern card design with:
- * - Progress bar showing volunteer fill status
- * - Clear visual hierarchy
- * - Action-oriented CTA for events needing volunteers
- * - Inline metadata for compact display
+ * Hierarchy-focused card design:
+ * 1. Event name + status (what is it?)
+ * 2. Date/time/location (when/where?)
+ * 3. Volunteer status (how are we doing?)
+ * 4. Actions
  */
 export function EventCard({ event, slug, canDelete }: EventCardProps) {
   const router = useRouter();
@@ -170,6 +212,7 @@ export function EventCard({ event, slug, canDelete }: EventCardProps) {
   );
   const capacityStatus = getCapacityStatus(totalSlotsFilled, totalSlotsNeeded);
   const statusConfig = getStatusConfig(event.status);
+  const capacityColors = getCapacityColors(capacityStatus.status);
 
   // Get the next upcoming session (or the first session if all are past)
   const upcomingSessions = event.sessions.filter(
@@ -214,162 +257,173 @@ export function EventCard({ event, slug, canDelete }: EventCardProps) {
   };
 
   return (
-    <Card className="group relative overflow-hidden flex flex-col">
-      {/* Progress Bar Header */}
-      <div className="px-4 pt-4 pb-2">
-        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-          <span className="flex items-center gap-1.5">
-            <IconUsers className="h-3.5 w-3.5" />
-            {totalSlotsFilled} / {totalSlotsNeeded}
-          </span>
-          <span
-            className={cn(
-              "font-medium",
-              capacityStatus.variant === "success" && "text-green-600",
-              capacityStatus.variant === "warning" && "text-yellow-600",
-              capacityStatus.variant === "destructive" && "text-red-600"
-            )}
-          >
-            {capacityStatus.label}
-          </span>
-        </div>
-        <Progress
-          value={capacityStatus.percentage}
-          className={cn("h-2", getProgressColor(capacityStatus.variant))}
-        />
-      </div>
+    <Link
+      href={`/church/${slug}/admin/volunteer/events/${event.id}`}
+      className={cn(
+        "group relative flex flex-col rounded-xl border bg-card overflow-hidden",
+        "shadow-sm hover:shadow-md transition-all duration-200",
+        "hover:border-primary/30 cursor-pointer"
+      )}
+    >
+      {/* Header - Title + Badges + Menu */}
+      <div className="p-4 pb-2">
+        <div className="flex items-center gap-3">
+          {/* Title */}
+          <h3 className="font-semibold text-base leading-tight line-clamp-1 min-w-0 truncate">
+            {event.name}
+          </h3>
 
-      <CardHeader className="pb-2 pt-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1 min-w-0">
-            <CardTitle className="text-base font-semibold leading-tight">
-              {event.name}
-            </CardTitle>
-            <span className="text-xs font-medium text-muted-foreground">
+          {/* Badges + Menu - pushed right */}
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <Badge variant="secondary" className="text-xs font-medium">
               {EVENT_TYPE_LABELS[event.eventType] ?? event.eventType}
+            </Badge>
+            <Badge
+              variant="outline"
+              className={cn("text-xs font-medium", statusConfig.className)}
+            >
+              {statusConfig.label}
+            </Badge>
+
+            {/* 3-dot Menu - stopPropagation prevents card navigation */}
+            <div onClick={e => e.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                  >
+                    <IconDotsVertical className="h-4 w-4" />
+                    <span className="sr-only">More actions</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href={`/church/${slug}/admin/volunteer/events/${event.id}`}
+                    >
+                      <IconEye className="h-4 w-4 mr-2" />
+                      View Details
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href={`/church/${slug}/admin/volunteer/events/${event.id}/edit`}
+                    >
+                      <IconEdit className="h-4 w-4 mr-2" />
+                      Edit Event
+                    </Link>
+                  </DropdownMenuItem>
+
+                  {event.status === "DRAFT" && (
+                    <DropdownMenuItem onClick={handlePublish}>
+                      <IconSend className="h-4 w-4 mr-2" />
+                      Publish Event
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator />
+
+                  {["DRAFT", "PUBLISHED", "IN_PROGRESS"].includes(
+                    event.status
+                  ) && (
+                    <DropdownMenuItem
+                      onClick={handleCancel}
+                      className="text-orange-600 focus:text-orange-600"
+                    >
+                      <IconCircleX className="h-4 w-4 mr-2" />
+                      Cancel Event
+                    </DropdownMenuItem>
+                  )}
+
+                  {canDelete &&
+                    ["DRAFT", "CANCELLED"].includes(event.status) && (
+                      <DropdownMenuItem
+                        onClick={handleDelete}
+                        className="text-red-600 focus:text-red-600"
+                      >
+                        <IconTrash className="h-4 w-4 mr-2" />
+                        Delete Event
+                      </DropdownMenuItem>
+                    )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+
+        {/* Date/Time/Location - Below title row */}
+        {nextSession && (
+          <div className="flex items-center gap-4 text-sm mt-1">
+            <span className="flex items-center gap-1.5 font-medium">
+              <IconCalendar className="h-4 w-4 text-primary" />
+              {formatEventDate(nextSession.date)}
+            </span>
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <IconClock className="h-4 w-4" />
+              {format(nextSession.startTime, "h:mm a")}
             </span>
           </div>
-          {/* Status Dot + Menu */}
-          <div className="flex items-center gap-1 shrink-0">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span
-                className={cn("h-2 w-2 rounded-full", statusConfig.color)}
-              />
-              <span>{statusConfig.label}</span>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7 -mr-2">
-                  <IconDotsVertical className="h-4 w-4" />
-                  <span className="sr-only">More actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
-                  <Link
-                    href={`/church/${slug}/admin/volunteer/events/${event.id}`}
-                  >
-                    <IconEye className="h-4 w-4 mr-2" />
-                    View Details
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link
-                    href={`/church/${slug}/admin/volunteer/events/${event.id}/edit`}
-                  >
-                    <IconEdit className="h-4 w-4 mr-2" />
-                    Edit Event
-                  </Link>
-                </DropdownMenuItem>
-
-                {event.status === "DRAFT" && (
-                  <DropdownMenuItem onClick={handlePublish}>
-                    <IconSend className="h-4 w-4 mr-2" />
-                    Publish Event
-                  </DropdownMenuItem>
-                )}
-
-                <DropdownMenuSeparator />
-
-                {["DRAFT", "PUBLISHED", "IN_PROGRESS"].includes(
-                  event.status
-                ) && (
-                  <DropdownMenuItem
-                    onClick={handleCancel}
-                    className="text-orange-600 focus:text-orange-600"
-                  >
-                    <IconCircleX className="h-4 w-4 mr-2" />
-                    Cancel Event
-                  </DropdownMenuItem>
-                )}
-
-                {canDelete && ["DRAFT", "CANCELLED"].includes(event.status) && (
-                  <DropdownMenuItem
-                    onClick={handleDelete}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <IconTrash className="h-4 w-4 mr-2" />
-                    Delete Event
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        {event.description && (
-          <CardDescription className="line-clamp-2 text-sm">
-            {event.description}
-          </CardDescription>
         )}
-      </CardHeader>
+        {event.location && (
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-1.5">
+            <IconMapPin className="h-4 w-4" />
+            <span className="truncate">{event.location.name}</span>
+          </div>
+        )}
+        {event._count.sessions > 1 && (
+          <p className="text-xs text-muted-foreground/70 mt-1.5">
+            {event._count.sessions} sessions total
+          </p>
+        )}
+      </div>
 
-      <CardContent className="flex-1 flex flex-col justify-between gap-3 pt-0">
-        {/* Metadata */}
-        <div className="space-y-1.5 text-sm text-muted-foreground">
-          {nextSession && (
-            <div className="flex items-center gap-4">
-              <span className="flex items-center gap-1.5">
-                <IconCalendar className="h-4 w-4 shrink-0" />
-                {formatEventDate(nextSession.date)}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <IconClock className="h-4 w-4 shrink-0" />
-                {format(nextSession.startTime, "h:mm a")}
-              </span>
-            </div>
-          )}
-          {event.location && (
-            <div className="flex items-center gap-1.5">
-              <IconMapPin className="h-4 w-4 shrink-0" />
-              <span className="truncate">{event.location.name}</span>
-            </div>
-          )}
-          {event._count.sessions > 1 && (
-            <p className="text-xs text-muted-foreground/70">
-              {event._count.sessions} sessions total
-            </p>
-          )}
+      {/* Description (if any) */}
+      {event.description && (
+        <div className="px-4 pb-3">
+          <p className="text-sm text-muted-foreground line-clamp-2">
+            {event.description}
+          </p>
         </div>
+      )}
 
-        {/* Action Footer */}
-        <div className="pt-2 border-t">
-          {capacityStatus.urgent ? (
-            <Button asChild className="w-full" size="sm">
-              <Link href={`/church/${slug}/admin/volunteer/events/${event.id}`}>
-                <IconUserPlus className="h-4 w-4 mr-1.5" />
-                Fill Volunteer Slots
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild variant="outline" className="w-full" size="sm">
-              <Link href={`/church/${slug}/admin/volunteer/events/${event.id}`}>
-                <IconEye className="h-4 w-4 mr-1.5" />
-                View Details
-              </Link>
-            </Button>
-          )}
+      {/* Volunteer Status - Secondary Info */}
+      <div className="px-4 py-3 mt-auto border-t bg-muted/30">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <IconUsers className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span className="text-sm">
+              <span className="font-medium">{totalSlotsFilled}</span>
+              <span className="text-muted-foreground">
+                {" "}
+                / {totalSlotsNeeded}
+              </span>
+            </span>
+          </div>
+          <Badge
+            variant="outline"
+            className={cn("text-xs font-medium shrink-0", capacityColors.badge)}
+          >
+            {capacityStatus.label}
+          </Badge>
         </div>
-      </CardContent>
-    </Card>
+        {/* Compact progress bar */}
+        <div
+          className={cn(
+            "h-1.5 rounded-full overflow-hidden mt-2",
+            capacityColors.bg
+          )}
+        >
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-300",
+              capacityColors.fill
+            )}
+            style={{ width: `${capacityStatus.percentage}%` }}
+          />
+        </div>
+      </div>
+    </Link>
   );
 }

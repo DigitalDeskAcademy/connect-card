@@ -51,6 +51,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendSMS, smsTemplates } from "@/lib/ghl/messages";
+import { parseResponse } from "@/lib/ghl/sms-parsing";
 import { format } from "date-fns";
 
 // ============================================================================
@@ -89,34 +90,6 @@ interface WebhookResponse {
   volunteerId?: string;
   assignmentId?: string;
   newStatus?: string;
-}
-
-// ============================================================================
-// RESPONSE PARSING
-// ============================================================================
-
-/**
- * Parse volunteer response from SMS message
- * Returns 'YES', 'NO', or null for unrecognized responses
- *
- * For MVP: Exact match only (case-insensitive)
- * Future: Add fuzzy matching for "yeah", "yep", "nope", etc.
- */
-function parseResponse(message: string): "YES" | "NO" | null {
-  const normalized = message.trim().toUpperCase();
-
-  // Exact YES matches
-  if (normalized === "YES" || normalized === "Y") {
-    return "YES";
-  }
-
-  // Exact NO matches
-  if (normalized === "NO" || normalized === "N") {
-    return "NO";
-  }
-
-  // Unrecognized - don't process
-  return null;
 }
 
 // ============================================================================
