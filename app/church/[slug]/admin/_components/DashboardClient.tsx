@@ -275,7 +275,7 @@ export function DashboardClient({
         tabs={tabs}
       />
 
-      <div className="space-y-6 pt-6">
+      <div className="space-y-6">
         {/* Onboarding Checklist for new churches */}
         {showOnboarding && (
           <OnboardingChecklist

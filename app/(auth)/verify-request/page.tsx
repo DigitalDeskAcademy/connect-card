@@ -49,9 +49,15 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { authClient } from "@/lib/auth-client";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState, useTransition } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 
 /**
@@ -90,6 +96,8 @@ function VerifyRequest() {
   const router = useRouter();
   const [otp, setOtp] = useState("");
   const [emailPending, startTransition] = useTransition();
+  const [resendPending, startResendTransition] = useTransition();
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
   // Extract email from URL parameters (passed from login form)
   // Email is needed for OTP verification context
@@ -98,6 +106,44 @@ function VerifyRequest() {
 
   // Validation helper: OTP must be exactly 6 digits
   const isOtpCompleted = otp.length === 6;
+
+  // Cooldown timer effect
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+
+    const timer = setInterval(() => {
+      setCooldownSeconds(prev => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [cooldownSeconds]);
+
+  /**
+   * Resend OTP Handler
+   *
+   * Sends a new OTP code to the user's email address.
+   * Implements a 60-second cooldown to prevent spam.
+   */
+  const resendOtp = useCallback(() => {
+    if (cooldownSeconds > 0 || resendPending) return;
+
+    startResendTransition(async () => {
+      await authClient.emailOtp.sendVerificationOtp({
+        email: email,
+        type: "sign-in",
+        fetchOptions: {
+          onSuccess: () => {
+            toast.success("New code sent! Check your inbox.");
+            setCooldownSeconds(60); // 60-second cooldown
+            setOtp(""); // Clear current OTP input
+          },
+          onError: () => {
+            toast.error("Failed to resend code. Please try again.");
+          },
+        },
+      });
+    });
+  }, [cooldownSeconds, email, resendPending]);
 
   /**
    * OTP Verification Handler
@@ -186,9 +232,9 @@ function VerifyRequest() {
           </p>
         </div>
 
-        {/* 
+        {/*
           Verification Submit Button
-          
+
           Disabled until OTP is complete and not processing to prevent
           invalid submissions and double-clicks during verification
         */}
@@ -207,6 +253,41 @@ function VerifyRequest() {
             "Verify Account"
           )}
         </Button>
+
+        {/*
+          Resend Code Section
+
+          Allows users to request a new OTP if:
+          - They didn't receive the email
+          - The code expired
+          Includes a cooldown timer to prevent spam
+        */}
+        <div className="text-center space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Didn&apos;t receive the code?
+          </p>
+          <Button
+            onClick={resendOtp}
+            disabled={resendPending || cooldownSeconds > 0}
+            variant="ghost"
+            size="sm"
+            className="text-primary"
+          >
+            {resendPending ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                <span>Sending...</span>
+              </>
+            ) : cooldownSeconds > 0 ? (
+              <span>Resend code in {cooldownSeconds}s</span>
+            ) : (
+              <>
+                <RefreshCw className="size-4" />
+                <span>Resend code</span>
+              </>
+            )}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

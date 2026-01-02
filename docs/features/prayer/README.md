@@ -6,11 +6,9 @@
 > Pilot church uses Planning Center for prayer management.
 > This worktree is paused until further notice.
 
-**Status:** ✅ **COMPLETE** - PR #49 merged Dec 4, PR #51 fixed N+1, PR #56 added privacy redaction, PR #57 added My Prayer Sheet
-**Worktree:** `/church-connect-hub/prayer`
-**Branch:** `feature/prayer-enhancements`
-**Last Updated:** 2025-12-17
-**Owner:** Church Operations Team
+**Status:** ✅ **COMPLETE** (⏸️ Deprioritized - pilot uses Planning Center)
+**Worktree:** `prayer`
+**Last Updated:** 2026-01-01
 
 ---
 

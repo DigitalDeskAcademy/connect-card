@@ -4,7 +4,7 @@
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 **For Any Worktree Session:**
 
@@ -19,67 +19,71 @@
 3. Read `PLAYBOOK.md` - THE technical guide (patterns, blockers, debt)
 4. Read `PROJECT.md` - Business context and roadmap
 
-**For AI Sessions:**
-
-1. **Start with `/CLAUDE.md`** - Technical context and patterns
-2. Check `WORKTREE-STATUS.md` - Know which worktree needs work
-3. Reference `PLAYBOOK.md` - Technical single source of truth
-4. Reference `features/{feature}/vision.md` - Detailed feature planning
-
 ---
 
-## 📁 Documentation Structure
+## Documentation Structure
 
 ```
-/CLAUDE.md                       # ← AI ASSISTANT: Read first (project context)
+/CLAUDE.md                       # AI ASSISTANT: Read first (project context)
 
 docs/
-├── WORKTREE-STATUS.md           # ← PROJECT DASHBOARD: What to work on
-├── 🔴 PLAYBOOK.md               # ← THE LAW: Technical patterns & standards
-├── PROJECT.md                   # ← Business overview (vision, status, roadmap)
+├── README.md                    # THIS FILE - Navigation index
+├── WORKTREE-STATUS.md           # PROJECT DASHBOARD: What to work on
+├── PLAYBOOK.md                  # THE LAW: Technical patterns & standards
+├── PROJECT.md                   # Business overview (vision, status, roadmap)
 │
-├── features/                    # ← Feature specs (detailed planning)
-│   ├── connect-cards/vision.md
-│   ├── prayer/vision.md
-│   ├── volunteer/vision.md
-│   ├── tech-debt/vision.md
-│   ├── integrations/vision.md
-│   ├── member/vision.md
-│   └── onboarding/implementation-plan.md
+├── features/                    # Feature specs (one README per feature)
+│   ├── connect-cards/README.md  # AI-powered connect card scanning
+│   ├── volunteer/README.md      # Volunteer onboarding + events
+│   ├── prayer/README.md         # Prayer request tracking
+│   ├── integrations/README.md   # ChMS export & Planning Center API
+│   ├── ghl-integration/README.md# GoHighLevel SMS/automation
+│   ├── tech-debt/README.md      # Production blockers & fixes
+│   ├── member/README.md         # Member unification (complete)
+│   ├── platform-admin/README.md # Platform admin modernization
+│   ├── church-onboarding/README.md # Church setup & migration
+│   └── e2e/README.md            # Playwright testing
 │
-├── architecture/                # ← System architecture
-│   └── data-table-system.md     # Unified DataTable component spec
+├── architecture/                # System architecture docs
+│   ├── data-table-system.md     # Unified DataTable component spec
+│   └── member-unification.md    # ChurchMember model architecture
 │
-└── technical/                   # ← Implementation guides
-    └── testing-strategy.md      # Vitest/Playwright testing approach
+├── technical/                   # Implementation guides
+│   ├── testing-strategy.md      # Vitest/Playwright testing approach
+│   ├── production-readiness-plan.md
+│   └── quality-control-guide.md
+│
+├── reference/                   # External API docs & config reference
+│   ├── planning-center-api.md   # Planning Center API documentation
+│   ├── environment-configuration.md
+│   └── s3-bucket-structure.md
+│
+└── archive/                     # Completed plans & one-time reviews
+    ├── 2025-12-strategic-review.md
+    ├── 2025-12-member-unification-plan.md
+    ├── 2025-12-volunteer-events-*.md
+    └── ... (historical specs)
 ```
 
 ---
 
-## 📊 Core Documents
+## Core Documents
 
-### 🔴 PLAYBOOK.md - Technical Single Source of Truth
+### PLAYBOOK.md - Technical Single Source of Truth
 
 **Purpose:** THE authoritative guide for building Church Connect Hub. If there's a conflict, this document wins.
 
 **Contains:**
 
-- Critical production blockers (MUST FIX)
+- Critical production blockers
 - Technical debt register
 - Code patterns and standards
 - Performance issues and fixes
 - Architecture decisions
 
-**When to update:**
-
-- After every feature wrap-up (automatic)
-- When discovering critical issues
-- When establishing new patterns
-- When making architectural decisions
-
 ### PROJECT.md - Business & Product Overview
 
-**Purpose:** Combined business/product documentation (what we're building, why, and when)
+**Purpose:** Business/product documentation (what we're building, why, and when)
 
 **Contains:**
 
@@ -87,92 +91,85 @@ docs/
 - Current status (working/broken features)
 - Roadmap and priorities
 - Success metrics
-- Team information
 
-**When to update:**
+### WORKTREE-STATUS.md - Project Dashboard
 
-- Feature completed
-- Priorities changed
-- Business decisions made
-- Metrics updated
+**Purpose:** Central status board for all worktrees. Check here first to know what to work on.
 
----
+**Contains:**
 
-## 🎯 Feature Documentation
-
-All feature planning lives in `/docs/features/{feature}/vision.md`:
-
-- **Connect Cards** - AI-powered connect card scanning (PRODUCTION-READY)
-- **Member Management** - Member directory and N2N workflow (PLANNED)
-- **Prayer Management** - Prayer request tracking (COMPLETE)
-- **Volunteer Management** - Volunteer onboarding automation (COMPLETE)
-
-**Each vision doc contains:**
-
-- Problem statement
-- Solution overview
-- Current status
-- Planned features
-- Success metrics
-- Implementation details
+- Active worktree assignments
+- Current sprint priorities
+- Recent PRs and completions
+- Pre-launch checklist
 
 ---
 
-## 🛠️ Essential Guides
+## Feature Documentation
 
-All essential patterns are now consolidated in:
+All feature planning lives in `/docs/features/{feature}/README.md`:
 
-- **`/CLAUDE.md`** - Project context, tech stack, critical rules
-- **`PLAYBOOK.md`** - Code patterns, server actions, UI patterns, responsive design
-- **`architecture/data-table-system.md`** - Unified DataTable component spec
-- **`technical/testing-strategy.md`** - Vitest/Playwright testing approach
+| Feature               | Status           | Description                            |
+| --------------------- | ---------------- | -------------------------------------- |
+| **connect-cards**     | Production Ready | AI-powered connect card scanning       |
+| **volunteer**         | Active           | Volunteer onboarding + event tracking  |
+| **integrations**      | Planning         | Planning Center API sync               |
+| **ghl-integration**   | Phase 1 Complete | GoHighLevel SMS/automation             |
+| **prayer**            | Complete/Paused  | Prayer request tracking                |
+| **tech-debt**         | Ongoing          | Production blockers & fixes            |
+| **member**            | Complete         | ChurchMember model unification         |
+| **platform-admin**    | Future           | Platform admin modernization           |
+| **church-onboarding** | In Progress      | Church setup & agency→church migration |
+| **e2e**               | Complete         | Playwright test suite                  |
 
 ---
 
-## ⚠️ Documentation Rules (STRICT)
+## Archive (Completed Work)
+
+The `archive/` directory contains completed implementation plans and one-time reviews. These are kept for historical reference but are no longer actively maintained.
+
+**Convention:** Files are prefixed with date: `YYYY-MM-description.md`
+
+---
+
+## Reference (External Docs)
+
+The `reference/` directory contains external API documentation, configuration references, and other static reference material.
+
+---
+
+## Documentation Rules
 
 ### For Main Branch:
 
 - ✅ Edit PLAYBOOK.md and PROJECT.md ONLY in main
-- ✅ Update after feature merges via feature-wrap-up
+- ✅ Update after feature merges via `/feature-wrap-up`
 - ❌ NEVER edit these files in feature worktrees
 
 ### For Feature Worktrees:
 
 - ✅ ONLY edit `/docs/features/{your-feature}/`
 - ❌ NEVER edit PLAYBOOK.md or PROJECT.md
-- ❌ NEVER create `.worktree/` directories
 - ✅ Merge main frequently to stay in sync
 
-### Documentation Ownership:
+### Documentation Lifecycle:
 
-| Document         | Location                 | Who Edits        | When                 |
-| ---------------- | ------------------------ | ---------------- | -------------------- |
-| **PLAYBOOK.md**  | `/docs/`                 | Main branch only | After features merge |
-| **PROJECT.md**   | `/docs/`                 | Main branch only | Business changes     |
-| **Feature Docs** | `/docs/features/{name}/` | Feature worktree | During development   |
-
----
-
-## ✅ Documentation Principles
-
-1. **Two Documents Rule** - Technical (PLAYBOOK) + Business (PROJECT)
-2. **Single Source of Truth** - Each piece of info exists in ONE place
-3. **Feature-First** - Detailed planning in feature vision docs
-4. **No .worktree Directories** - Use git-native `/docs/` structure
-5. **Clear Ownership** - Main owns architecture, features own their docs
+| Document Type            | Location            | When to Archive           |
+| ------------------------ | ------------------- | ------------------------- |
+| **Core docs**            | `/docs/`            | Never (living documents)  |
+| **Feature README**       | `/docs/features/*/` | Never (update in place)   |
+| **Implementation plans** | `/docs/archive/`    | When PR merged            |
+| **One-time reviews**     | `/docs/archive/`    | After decisions finalized |
 
 ---
 
-## 🚫 What NOT to Do
+## Documentation Principles
 
-- ❌ Create new TODO files (use PROJECT.md roadmap section)
-- ❌ Edit PLAYBOOK/PROJECT in feature worktrees
-- ❌ Create `.worktree/` directories
-- ❌ Duplicate information (reference, don't copy)
-- ❌ Leave contradictions (delete outdated docs)
+1. **One README per feature** - Consolidate specs into single living document
+2. **Archive completed work** - Move implementation plans after completion
+3. **Reference external docs** - Keep API docs separate from feature work
+4. **Clear ownership** - Main owns core docs, features own their README
 
 ---
 
-**Last Updated:** 2025-12-12
-**Total Files:** CLAUDE.md + 3 core docs + feature docs
+**Last Updated:** 2026-01-01

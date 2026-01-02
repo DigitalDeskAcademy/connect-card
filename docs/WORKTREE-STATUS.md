@@ -1,33 +1,24 @@
 # Worktree Project Dashboard
 
-**Purpose:** Central status board for all worktrees. Check here first to know what to work on.
-**Last Updated:** 2025-12-24
+**Purpose:** Worktree conventions and quick reference. For current work status, see GitHub.
 **Next Customer Meeting:** January 2026
-**Latest PR:** #89 - Events UI with toolbar, filtering, and card views (Dec 24)
 
 ---
 
-## 📣 POST-DEMO PRIORITIES
+## 🔍 Current State (Query Git)
 
-> **Pilot church demo completed Dec 15, 2025.**
->
-> **Key Validated:**
->
-> - ✅ Time savings: 10-15 hrs/week per location
-> - ✅ Deduplication is THE biggest selling point
-> - ✅ Planning Center API integration path confirmed
->
-> **New Requests:**
->
-> - 🆕 Planning Center API sync (real-time duplicate checking)
-> - ✅ Keyword detection (campaign triggers like "impacted", "coffee oasis") - **PR #80 merged**
-> - ✅ Volunteer event tracking (capacity view, quick outreach) - **PR #89 merged**
->
-> **Deprioritized:**
->
-> - ⬇️ Prayer enhancements (Planning Center handles it)
->
-> **📄 Full briefing:** `/docs/features/demo-feedback-dec-2025.md`
+```bash
+# See all worktrees and their branches
+git -C /home/digitaldesk/Desktop/church-connect-hub/.bare worktree list
+
+# See open PRs
+gh pr list --state open
+
+# See recent merged PRs
+gh pr list --state merged --limit 10
+```
+
+**Don't hardcode branch names in docs** - branches get renamed/repurposed. Query git instead.
 
 ---
 
@@ -41,227 +32,55 @@
 
 ---
 
-## 🚦 Worktree Status
+## 🚦 Worktree Conventions
 
-| Worktree         | Color     | Branch                         | Status    | Focus                            |
-| ---------------- | --------- | ------------------------------ | --------- | -------------------------------- |
-| **main**         | 🔴 Red    | `feature/production-deploy`    | 📋 PM     | Project management (no building) |
-| **integrations** | ⬜ Grey   | `feature/integrations`         | 🔨 Active | Planning Center / ChMS API sync  |
-| **connect-card** | 🟣 Purple | `feature/connect-card`         | 🔨 Active | Fine-tuning MVP                  |
-| **tech-debt**    | 🟡 Yellow | `feature/tech-debt`            | 🔨 Active | Keyword detection                |
-| **e2e**          | 🔵 Cyan   | `feature/e2e`                  | 🔨 Active | Playwright tests                 |
-| **volunteer**    | 🟢 Green  | `feature/volunteer-management` | 🔨 Active | Event tracking                   |
-| **prayer**       | 🔵 Blue   | `feature/prayer-enhancements`  | ⏸️ Paused | Deprioritized                    |
+Each worktree has a **stable purpose** (folder name) but branches may change as work evolves.
 
----
+| Worktree         | Color     | Purpose                            | Port |
+| ---------------- | --------- | ---------------------------------- | ---- |
+| **main**         | 🔴 Red    | Project management, PRs, docs      | 3000 |
+| **connect-card** | 🟣 Purple | Connect card scanning & review     | 3001 |
+| **volunteer**    | 🟢 Green  | Volunteer management & events      | 3003 |
+| **integrations** | ⬜ Grey   | ChMS API integrations              | 3006 |
+| **tech-debt**    | 🟡 Yellow | Refactoring & infrastructure       | 3004 |
+| **e2e**          | 🔵 Cyan   | Playwright tests                   | 3005 |
+| **prayer**       | 🔵 Blue   | Prayer features (⏸️ deprioritized) | 3002 |
 
-## 📋 Worktree Details
+### Worktree Rules
 
----
-
-### 📋 main - Project Management
-
-**Branch:** `feature/production-deploy`
-**Role:** Coordination only - NO feature building
-
-**Responsibilities:**
-
-- Drive production readiness
-- Coordinate cross-worktree work
-- Review and merge PRs
-- Keep documentation updated
-- Landing page updates
-
-**Current Tasks:**
-
-- [ ] Coordinate January meeting deliverables
-- [ ] Track progress across all worktrees
-- [ ] Production deployment when ready
+1. **main** = PM only, no feature building
+2. **One feature per worktree** - don't mix concerns
+3. **Merge to main frequently** - avoid long-lived branches
+4. **Sync before starting work** - `git fetch origin && git merge origin/main`
 
 ---
 
-### ⬜ integrations - ChMS API Sync
+## 📋 Feature Ownership
 
-**Branch:** `feature/integrations`
-**Focus:** Planning Center and other ChMS integrations
-
-**What to Build:**
-
-| Task                                           | Status |
-| ---------------------------------------------- | ------ |
-| Planning Center OAuth flow                     | [ ]    |
-| PC connection settings UI                      | [ ]    |
-| People API client (`lib/planning-center/`)     | [ ]    |
-| Query PC for duplicates before creating        | [ ]    |
-| Push approved contacts to PC                   | [ ]    |
-| Add person to intake list (triggers workflows) | [ ]    |
-| Store `remote_id` mapping                      | [ ]    |
-| Handle OAuth token refresh                     | [ ]    |
-
-**Wishlist:**
-
-- [ ] Breeze API integration
-- [ ] CCB API integration
-- [ ] Generic webhook push
+| Feature Area        | Worktree       | Vision Doc                               |
+| ------------------- | -------------- | ---------------------------------------- |
+| Connect Cards       | `connect-card` | `/docs/features/connect-cards/vision.md` |
+| Volunteer & Events  | `volunteer`    | `/docs/features/volunteer/vision.md`     |
+| Planning Center API | `integrations` | `/docs/features/integrations/vision.md`  |
+| Member Unification  | `tech-debt`    | `/docs/features/member/vision.md`        |
+| E2E Testing         | `e2e`          | `/docs/features/e2e/vision.md`           |
+| Prayer              | `prayer`       | `/docs/features/prayer/vision.md`        |
 
 ---
 
-### 🟣 connect-card - MVP Fine-Tuning
+## 📣 Current Priorities (Post-Demo Dec 2025)
 
-**Branch:** `feature/connect-card`
-**Focus:** Polish the core connect card experience
+> **Full briefing:** `/docs/features/demo-feedback-dec-2025.md`
 
-**Recently Completed:**
+**High Priority:**
 
-- ✅ PR #83 - Phone wizard UX enhancements (Dec 21)
-  - Progress header showing card count during scanning
-  - Any team member can scan (removed admin restriction)
-  - Card type syncs from QR modal to phone
-  - Simplified QR modal with direct CTA to review queue
+1. Planning Center API integration (real-time duplicate checking)
+2. Volunteer event tracking (capacity view, quick outreach)
+3. Member unification (single source of truth)
 
-**What to Build:**
+**Deprioritized:**
 
-| Task                                       | Status |
-| ------------------------------------------ | ------ |
-| Deduplication enhancement (fuzzy matching) | [ ]    |
-| Shared email detection (couples)           | [ ]    |
-| "Merge with existing" vs "Create new" UI   | [ ]    |
-| Upload UX improvements for non-tech staff  | [x]    |
-| Better progress feedback during processing | [x]    |
-
-**Wishlist:**
-
-- [ ] Async scan processing - Upload to S3 as cards are captured, process in background (no wait at end)
-- [ ] Bulk re-process failed cards
-- [ ] Card template customization
-- [ ] Multi-language support
-
----
-
-### 🟡 tech-debt - Keyword Detection
-
-**Branch:** `feature/tech-debt`
-**Focus:** AI keyword extraction from connect cards
-
-**Recently Completed:**
-
-- ✅ PR #80 - Campaign keyword detection and tracking (Dec 20)
-  - AI prompt extracts standalone keywords
-  - `detectedKeywords: String[]` added to schema
-  - Keywords visible in review UI and exports
-  - Filter connect cards by keyword
-  - Keywords synced to ChurchMember profiles
-
-**What to Build:**
-
-| Task                                            | Status |
-| ----------------------------------------------- | ------ |
-| Update AI prompt to extract standalone keywords | [x]    |
-| Add `detectedKeywords: String[]` to schema      | [x]    |
-| Display keyword chips in review UI              | [x]    |
-| Filter connect cards by keyword                 | [x]    |
-| Include keywords in export                      | [x]    |
-
-**Wishlist:**
-
-- [ ] Keyword analytics/counts
-- [ ] Auto-tag contacts based on keywords
-- [ ] Keyword-triggered automation (GHL workflows)
-
----
-
-### 🔵 e2e - Testing & Production Hardening
-
-**Branch:** `feature/e2e`
-**Focus:** Comprehensive Playwright test coverage
-
-**Recently Completed:**
-
-- ✅ PR #82 - Comprehensive E2E test suite with 108 tests (Dec 20)
-  - Full test infrastructure with auth setup
-  - 19 test files covering all major features
-  - Smoke tests for all admin routes
-  - Export, contacts, settings page coverage
-
-**What to Build:**
-
-| Task                                       | Status |
-| ------------------------------------------ | ------ |
-| Auth flow tests (login, OTP, session)      | [x]    |
-| Connect card upload → review → export flow | [x]    |
-| Volunteer pipeline flow                    | [x]    |
-| Prayer request flow                        | [x]    |
-| Multi-tenant isolation tests               | [x]    |
-| CI/CD integration                          | [ ]    |
-
-**Test Credentials:**
-
-- `test@playwright.dev` (church owner)
-- `admin@newlife.test` (church admin)
-- `staff@newlife.test` (staff)
-
----
-
-### 🟢 volunteer - Event Tracking
-
-**Branch:** `feature/volunteer-management`
-**Focus:** Low-friction event coordination with SMS automation
-**Spec:** `/docs/features/volunteer/volunteer-events-feature-spec.md`
-**Implementation Plan:** `/docs/features/volunteer/events-implementation-plan.md`
-
-**Recently Completed:**
-
-- ✅ PR #89 - Events UI with toolbar, filtering, and card views (Dec 24)
-  - Events list page with card layout
-  - Reusable Toolbar component with responsive overflow
-  - Date period filtering (Upcoming/Past/This Week/This Month)
-  - Event type filtering with Add New Type placeholder
-  - Event creation dialog with multi-session support
-  - Event detail page with assignment modal
-
-**Implementation Phases:**
-
-| Phase | Name                    | Description                                                | Status      |
-| ----- | ----------------------- | ---------------------------------------------------------- | ----------- |
-| 0     | Schema Preparation      | Add VolunteerEvent, EventSession, EventAssignment models   | ✅ Complete |
-| 1     | Core Event CRUD         | Create/edit/delete events, events list page                | ✅ Complete |
-| 2     | Assignment System       | Direct assign + invite pool, volunteer selection modal     | ✅ Complete |
-| 3     | GHL SMS Automation      | Invite via SMS, parse YES/NO responses, auto-confirm       | [ ] Pending |
-| 4     | Attendance Confirmation | Magic link for leader to confirm attendance                | [ ] Pending |
-| 5     | Reliability Score       | Calculate & display volunteer reliability (attended/total) | [ ] Pending |
-| 6     | Polish & Edge Cases     | Cancel flow, archive old events, filters, empty states     | [ ] Pending |
-
-**Key Design Decisions:**
-
-- Staff dips in, takes action, leaves - system handles everything between
-- SMS automation via existing GHL integration
-- Optimistic attendance (auto-confirm, staff marks no-shows)
-- NOT building: full scheduling, shifts, recurring availability (Planning Center's job)
-
-**Previously Completed:**
-
-- ✅ Phase 2 MVP: Auto-send welcome email, BG check confirmation, review workflow
-- ✅ Volunteer CRUD, pipeline, export tracking
-- ✅ GHL integration for SMS/email automation
-
----
-
-### 🔵 prayer - Deprioritized
-
-**Branch:** `feature/prayer-enhancements`
-**Status:** ⏸️ Paused - Pilot church uses Planning Center for prayer
-
-**Completed (kept for reference):**
-
-- ✅ All server actions (create, update, assign, delete, privacy)
-- ✅ Inbox bulk assignment workflow
-- ✅ My Prayers redesign with categories
-- ✅ Critical prayer auto-detection
-- ✅ N+1 query optimization
-
-**Wishlist (future):**
-
-- [ ] Connect card → auto-create prayer integration
+- Prayer enhancements (pilot church uses Planning Center)
 
 ---
 
@@ -269,33 +88,60 @@
 
 ```bash
 # Check all worktree status
-for wt in main connect-card prayer volunteer tech-debt e2e integrations; do
-  echo "=== $wt ===" && cd /home/digitaldesk/Desktop/church-connect-hub/$wt && git status -s
+for wt in main connect-card volunteer tech-debt integrations e2e prayer; do
+  echo "=== $wt ==="
+  cd /home/digitaldesk/Desktop/church-connect-hub/$wt 2>/dev/null && {
+    echo "Branch: $(git branch --show-current)"
+    echo "Status: $(git status -s | wc -l) uncommitted files"
+  } || echo "Not available"
 done
 
 # Start any worktree
-cd /home/digitaldesk/Desktop/church-connect-hub/WORKTREE && pnpm dev
+cd /path/to/church-connect-hub/WORKTREE && pnpm dev
 
 # Sync worktree with main
-cd /home/digitaldesk/Desktop/church-connect-hub/WORKTREE && git fetch origin && git merge origin/main
+cd /path/to/church-connect-hub/WORKTREE && git fetch origin && git merge origin/main
+
+# Create PR from worktree
+gh pr create --fill
 ```
 
 ---
 
 ## 📞 Quick Reference
 
-| Need                 | Location                                                    |
-| -------------------- | ----------------------------------------------------------- |
-| **Demo Briefing**    | `/docs/features/demo-feedback-dec-2025.md`                  |
-| Technical patterns   | `/docs/PLAYBOOK.md`                                         |
-| Project roadmap      | `/docs/PROJECT.md`                                          |
-| Testing strategy     | `/docs/technical/testing-strategy.md`                       |
-| Connect card spec    | `/docs/features/connect-cards/vision.md`                    |
-| Volunteer spec       | `/docs/features/volunteer/vision.md`                        |
-| **Volunteer Events** | `/docs/features/volunteer/volunteer-events-feature-spec.md` |
-| **Events Impl Plan** | `/docs/features/volunteer/events-implementation-plan.md`    |
-| Integrations spec    | `/docs/features/integrations/vision.md`                     |
+| Need               | Location                                   |
+| ------------------ | ------------------------------------------ |
+| **Demo Briefing**  | `/docs/features/demo-feedback-dec-2025.md` |
+| Technical patterns | `/docs/PLAYBOOK.md`                        |
+| Project roadmap    | `/docs/PROJECT.md`                         |
+| Testing strategy   | `/docs/technical/testing-strategy.md`      |
 
 ---
 
-**Remember:** This is the post-demo version. Focus on Planning Center integration and deduplication - these are THE selling points.
+## 🏛️ Architecture Decisions
+
+### Why Worktrees?
+
+- **Parallel development** - Work on multiple features without stashing
+- **Isolated environments** - Each worktree has its own node_modules, .env
+- **Clean PRs** - One feature = one branch = one PR
+- **Database isolation** - Each worktree can use a separate Neon branch
+
+### Naming Convention
+
+- Worktree folder = stable purpose (e.g., `volunteer`)
+- Branch name = current work (e.g., `feature/volunteer-events`)
+- Branches change, folders don't
+
+### When to Create New Worktree
+
+- Starting a new major feature area
+- Need isolated database for destructive testing
+- Parallel work that would conflict
+
+### When NOT to Create New Worktree
+
+- Small fixes (use existing worktree)
+- Documentation updates (use `main`)
+- Hotfixes (branch from main directly)

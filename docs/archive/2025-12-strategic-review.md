@@ -1,6 +1,5 @@
 # Strategic Architecture Review: Church Connect Hub
 
-**Branch:** `feature/production-deploy`
 **Analysis Date:** 2025-12-18
 **Type:** Strategic Assessment (not implementation planning)
 

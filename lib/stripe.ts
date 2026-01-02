@@ -3,7 +3,12 @@
 import { env } from "./env";
 import Stripe from "stripe";
 
-export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-07-30.basil",
-  typescript: true,
-});
+// Use placeholder key in CI to allow build to succeed
+// Actual Stripe operations won't work without a real key
+export const stripe = new Stripe(
+  env.STRIPE_SECRET_KEY || "sk_test_placeholder",
+  {
+    apiVersion: "2025-07-30.basil",
+    typescript: true,
+  }
+);

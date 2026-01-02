@@ -18,8 +18,10 @@ function calculateImageHash(base64Data: string): string {
 }
 
 // Initialize Anthropic client
+// Use placeholder key in CI to allow build to succeed
+// Actual API calls won't work without a real key
 const anthropic = new Anthropic({
-  apiKey: env.ANTHROPIC_API_KEY,
+  apiKey: env.ANTHROPIC_API_KEY || "sk-ant-placeholder",
 });
 
 /// Rate limiting: Allow batch processing while preventing abuse
@@ -158,11 +160,21 @@ export async function POST(nextRequest: NextRequest) {
     const frontImageHash = calculateImageHash(frontImage);
     const backImageHash = backImage ? calculateImageHash(backImage) : null;
 
+    console.log(
+      "[DEBUG SERVER EXTRACT] Front image base64 length:",
+      frontImage.length
+    );
+    console.log("[DEBUG SERVER EXTRACT] Front image hash:", frontImageHash);
+    console.log("[DEBUG SERVER EXTRACT] Organization ID:", organizationId);
+
     // 6. Check for duplicate image in database (check front image hash)
+    // NOTE: Exclude PENDING cards - they may be the card we're currently processing
+    // (createPendingCard creates the card with hash BEFORE extraction runs)
     const existingCard = await prisma.connectCard.findFirst({
       where: {
         organizationId: organizationId!,
         imageHash: frontImageHash,
+        status: { not: "PENDING" }, // Exclude pending cards (may be our own card)
       },
       select: {
         id: true,
@@ -172,6 +184,18 @@ export async function POST(nextRequest: NextRequest) {
         status: true,
       },
     });
+
+    console.log(
+      "[DEBUG SERVER EXTRACT] Existing card found:",
+      existingCard ? "YES" : "NO"
+    );
+    if (existingCard) {
+      console.log("[DEBUG SERVER EXTRACT] Matching card ID:", existingCard.id);
+      console.log(
+        "[DEBUG SERVER EXTRACT] Matching card scannedAt:",
+        existingCard.scannedAt
+      );
+    }
 
     if (existingCard) {
       return NextResponse.json(
