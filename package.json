@@ -5,6 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "dotenv -e .env -- next dev --turbopack -p 3003",
+    "clean": "rm -rf .turbo .next node_modules/.vite .vitest",
+    "env:check": "direnv exec . env | grep DATABASE_URL | grep -o 'ep-[^.]*'",
+    "prisma:push": "direnv exec . pnpm prisma db push",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
