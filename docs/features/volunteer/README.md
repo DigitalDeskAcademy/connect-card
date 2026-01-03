@@ -1,9 +1,9 @@
 # Volunteer Onboarding Pipeline - Product Vision
 
-**Status:** 🟢 **Events Phase 2** - Events UI complete (PR #89), working on assignment system
+**Status:** 🟢 **Events Phase 2** - Events UI complete (PR #89), resources tracking added (PR #92)
 **Worktree:** `volunteer`
-**Last Updated:** 2026-01-01
-**Focus:** Volunteer Events - Assignment System & SMS Automation
+**Last Updated:** 2026-01-03
+**Focus:** Volunteer Events - Resources, SMS Automation & Testing
 
 ---
 
@@ -270,6 +270,9 @@ model Organization {
 | 10       | Vitest test suite (37 tests)  | ✅     | #61 |
 | 11       | Arcjet rate limiting (public) | ✅     | #61 |
 | 12       | Volunteer Assignment UX       | ✅     | -   |
+| 13       | Event resources tracking      | ✅     | #92 |
+| 14       | GHL SMS parsing module        | ✅     | #92 |
+| 15       | E2E tests for events UI       | ✅     | #92 |
 
 ---
 
