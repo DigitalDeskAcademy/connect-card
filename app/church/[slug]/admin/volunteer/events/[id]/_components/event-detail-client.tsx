@@ -43,8 +43,7 @@ import {
 } from "@/actions/events/events";
 import { removeAssignment } from "@/actions/events/assignments";
 import { AssignModal } from "./assign-modal";
-// TODO: Uncomment when EventResource schema is pushed to DB
-// import { ResourcesSection } from "./resources-section";
+import { ResourcesSection } from "./resources-section";
 
 // =============================================================================
 // Types
@@ -560,8 +559,7 @@ export function EventDetailClient({
         </div>
       </div>
 
-      {/* TODO: Uncomment when EventResource schema is pushed to DB */}
-      {/* <ResourcesSection
+      <ResourcesSection
         eventId={event.id}
         resources={event.resources.map(r => ({
           id: r.id,
@@ -573,7 +571,7 @@ export function EventDetailClient({
         }))}
         slug={slug}
         isEditable={["DRAFT", "PUBLISHED"].includes(event.status)}
-      /> */}
+      />
 
       {/* Assign Modal */}
       {assignSession && (

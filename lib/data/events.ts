@@ -144,10 +144,9 @@ export async function getEventById(dataScope: DataScope, eventId: string) {
         },
         orderBy: [{ date: "asc" }, { startTime: "asc" }],
       },
-      // TODO: Uncomment when EventResource schema is pushed to DB
-      // resources: {
-      //   orderBy: [{ status: "asc" }, { sortOrder: "asc" }],
-      // },
+      resources: {
+        orderBy: [{ status: "asc" }, { sortOrder: "asc" }],
+      },
     },
   });
 }

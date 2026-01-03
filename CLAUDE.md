@@ -28,12 +28,58 @@
 pnpm install          # Install dependencies
 pnpm dev              # Start dev server (Turbopack)
 pnpm prisma generate  # Generate Prisma client after schema changes
-pnpm prisma db push   # Push schema changes (dev only)
+pnpm prisma:push      # Push schema changes (uses direnv for correct DATABASE_URL)
 pnpm seed:all         # Seed test data
 pnpm build            # Build for production (run before commit)
 pnpm lint             # ESLint
 pnpm format           # Prettier
+pnpm clean            # Clear Turbopack/Vite cache
+pnpm env:check        # Verify which database you're connected to
 ```
+
+---
+
+## Environment Management (direnv)
+
+This project uses **direnv** to manage environment variables per worktree.
+
+### How It Works
+
+1. Each worktree has `.envrc` with `watch_file .env` + `dotenv`
+2. direnv loads `.env` values into the shell environment
+3. All worktrees share the same Neon database (`ep-falling-unit-adhn1juc`)
+
+### Common Issues & Fixes
+
+**"Prisma connects to wrong database"**
+
+```bash
+# direnv caches old .env values. Force reload:
+direnv deny . && direnv allow .
+
+# Or use the wrapper script:
+pnpm prisma:push  # Uses direnv exec for correct env
+```
+
+**"Changes not appearing after switching worktrees"**
+
+```bash
+pnpm clean        # Clear Turbopack cache
+direnv reload     # Reload environment
+```
+
+**"Verify current database connection"**
+
+```bash
+pnpm env:check    # Shows: ep-falling-unit-adhn1juc (shared main)
+```
+
+### Key Rules
+
+- `.envrc` MUST include `watch_file .env` to detect changes
+- Use `pnpm prisma:push` instead of raw `pnpm prisma db push`
+- Run `pnpm clean` when switching between worktrees
+- All main worktrees (main, connect-card, volunteer, tech-debt) share one database
 
 ---
 

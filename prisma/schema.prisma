@@ -1021,6 +1021,12 @@ model VolunteerEvent {
   confirmationMessage     String?
   /// Event lifecycle status
   status                  EventStatus           @default(DRAFT)
+  /// Physical location/room where the event takes place (e.g., "Fellowship Hall", "Room 203")
+  eventLocation           String?
+  /// Setup instructions or notes
+  setupNotes              String?
+  /// Teardown instructions or notes
+  teardownNotes           String?
   /// Event creation timestamp
   createdAt               DateTime              @default(now())
   /// Last update timestamp
@@ -1032,6 +1038,7 @@ model VolunteerEvent {
   leader           User               @relation("LedVolunteerEvents", fields: [leaderId], references: [id])
   sessions         EventSession[]
   attendanceTokens AttendanceToken[]
+  resources        EventResource[]
 
   @@index([organizationId, status])
   @@index([organizationId, locationId])
@@ -1122,6 +1129,39 @@ model AttendanceToken {
   @@index([token])
   @@index([expiresAt])
   @@map("attendance_token")
+}
+
+/// Resources/equipment needed for a volunteer event
+/// Simple checklist with status workflow: NEEDED → CONFIRMED → READY
+model EventResource {
+  id          String         @id @default(cuid())
+  /// Event this resource belongs to
+  eventId     String
+  /// Resource name (e.g., "Folding Chairs", "Projector", "Tables")
+  name        String
+  /// Quantity needed (e.g., 50 chairs, 2 projectors)
+  quantity    Int            @default(1)
+  /// Optional notes (e.g., "Need the round tables from storage room B")
+  notes       String?
+  /// Current status in workflow
+  status      ResourceStatus @default(NEEDED)
+  /// Whether this is from the common presets (vs custom one-off)
+  isCommon    Boolean        @default(false)
+  /// Sort order for display
+  sortOrder   Int            @default(0)
+  /// When status was last updated
+  statusUpdatedAt DateTime?
+  /// Resource creation timestamp
+  createdAt   DateTime       @default(now())
+  /// Last update timestamp
+  updatedAt   DateTime       @updatedAt
+
+  /// Relations
+  event       VolunteerEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId])
+  @@index([eventId, status])
+  @@map("event_resource")
 }
 
 // ============================================================================
@@ -1276,6 +1316,16 @@ enum AssignmentStatus {
   ATTENDED
   /// Didn't show up (marked by leader via magic link)
   NO_SHOW
+}
+
+/// Resource status for event equipment/supplies checklist
+enum ResourceStatus {
+  /// Resource is needed but not yet confirmed
+  NEEDED
+  /// Resource has been confirmed/secured
+  CONFIRMED
+  /// Resource is ready/in place for the event
+  READY
 }
 
 // REMOVED: AvailabilityType, RecurrencePattern, ShiftStatus enums (Dec 2025)
